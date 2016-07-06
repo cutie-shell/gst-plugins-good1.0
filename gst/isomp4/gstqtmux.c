@@ -3509,9 +3509,10 @@ gst_qt_mux_audio_sink_set_caps (GstQTPad * qtpad, GstCaps * caps)
               "assuming 'raw'");
         }
 
-        if (!codec_data || gst_buffer_get_size ((GstBuffer *) codec_data) < 2)
+        if (!codec_data || gst_buffer_get_size ((GstBuffer *) codec_data) < 2) {
           GST_WARNING_OBJECT (qtmux, "no (valid) codec_data for AAC audio");
-        else {
+          goto refuse_caps;
+        } else {
           guint8 profile;
 
           gst_buffer_extract ((GstBuffer *) codec_data, 0, &profile, 1);
@@ -4084,7 +4085,7 @@ gst_qt_mux_video_sink_set_caps (GstQTPad * qtpad, GstCaps * caps)
   } else if (strcmp (mimetype, "video/x-prores") == 0) {
     const gchar *variant;
 
-    variant = gst_structure_get_string (structure, "format");
+    variant = gst_structure_get_string (structure, "variant");
     if (!variant || !g_strcmp0 (variant, "standard"))
       entry.fourcc = FOURCC_apcn;
     else if (!g_strcmp0 (variant, "lt"))

@@ -7,7 +7,7 @@
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-rtpj2kpay.html" title="rtpj2kpay">
-<link rel="next" href="gst-plugins-good-plugins-rtpjpegpay.html" title="rtpjpegpay">
+<link rel="next" href="gst-plugins-good-plugins-rtpjpegdepay.html" title="rtpjpegdepay">
 <meta name="generator" content="GTK-Doc V1.25 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
@@ -23,7 +23,7 @@
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
 <td><a accesskey="p" href="gst-plugins-good-plugins-rtpj2kpay.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
-<td><a accesskey="n" href="gst-plugins-good-plugins-rtpjpegpay.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
+<td><a accesskey="n" href="gst-plugins-good-plugins-rtpjpegdepay.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="gst-plugins-good-plugins-rtpjitterbuffer"></a><div class="titlepage"></div>
@@ -64,7 +64,7 @@
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#RTPJitterBufferMode" title="enum RTPJitterBufferMode"><span class="type">RTPJitterBufferMode</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/gst-plugins-good-plugins-1.0gst-plugins-good-plugins-rtpbin.html#RTPJitterBufferMode"><span class="type">RTPJitterBufferMode</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--mode" title="The “mode” property">mode</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -137,6 +137,11 @@
 <tr>
 <td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--max-rtcp-rtp-time-diff" title="The “max-rtcp-rtp-time-diff” property">max-rtcp-rtp-time-diff</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rfc7273-sync" title="The “rfc7273-sync” property">rfc7273-sync</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 </tbody>
@@ -253,7 +258,7 @@ schedule a lost packet as discussed above.</p>
 to the pipeline.</p>
 <p>This element will automatically be used inside rtpbin.</p>
 <div class="refsect2">
-<a name="id-1.2.134.8.11"></a><h3>Example pipelines</h3>
+<a name="id-1.2.167.8.11"></a><h3>Example pipelines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -271,7 +276,7 @@ out-of-order RTP packets.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.134.8.12.1"></a><h3>Element Information</h3>
+<a name="id-1.2.167.8.12.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -297,7 +302,7 @@ out-of-order RTP packets.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.134.8.12.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.167.8.12.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -424,7 +429,7 @@ This is mainly used to ensure interstream synchronisation.</p>
 <hr>
 <div class="refsect2">
 <a name="GstRtpJitterBuffer--mode"></a><h3>The <code class="literal">“mode”</code> property</h3>
-<pre class="programlisting">  “mode”                     <a class="link" href="gst-plugins-good-plugins-rtpbin.html#RTPJitterBufferMode" title="enum RTPJitterBufferMode"><span class="type">RTPJitterBufferMode</span></a></pre>
+<pre class="programlisting">  “mode”                     <a href="/usr/share/gtk-doc/html/gst-plugins-good-plugins-1.0gst-plugins-good-plugins-rtpbin.html#RTPJitterBufferMode"><span class="type">RTPJitterBufferMode</span></a></pre>
 <p>Control the buffering and timestamping mode used by the jitterbuffer.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: Slave receiver to sender clock</p>
@@ -596,6 +601,14 @@ is allowed to be ahead of the last RTP packet we received. Use
 <p>Allowed values: &gt;= G_MAXULONG</p>
 <p>Default value: 1000</p>
 <p class="since">Since: 1.8</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpJitterBuffer--rfc7273-sync"></a><h3>The <code class="literal">“rfc7273-sync”</code> property</h3>
+<pre class="programlisting">  “rfc7273-sync”             <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<p>Synchronize received streams to the RFC7273 clock (requires clock and offset to be provided).</p>
+<p>Flags: Read / Write</p>
+<p>Default value: FALSE</p>
 </div>
 </div>
 <div class="refsect1">

@@ -6,7 +6,7 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
-<link rel="prev" href="gst-plugins-good-plugins-gamma.html" title="gamma">
+<link rel="prev" href="gst-plugins-good-plugins-gdkpixbufoverlay.html" title="gdkpixbufoverlay">
 <link rel="next" href="gst-plugins-good-plugins-goom2k1.html" title="goom2k1">
 <meta name="generator" content="GTK-Doc V1.25 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
@@ -21,7 +21,7 @@
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
-<td><a accesskey="p" href="gst-plugins-good-plugins-gamma.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="p" href="gst-plugins-good-plugins-gdkpixbufoverlay.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
 <td><a accesskey="n" href="gst-plugins-good-plugins-goom2k1.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
@@ -82,10 +82,84 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-gdkpixbufsink.description"></a><h2>Description</h2>
+<p>This sink element takes RGB or RGBA images as input and wraps them into
+<a href="/usr/share/gtk-doc/html/gdk-pixbufgdk-pixbuf-The-GdkPixbuf-Structure.html#GdkPixbuf-struct"><span class="type">GdkPixbuf</span></a> objects, for easy saving to file via the
+GdkPixbuf library API or displaying in Gtk+ applications (e.g. using
+the <a href="/usr/share/gtk-doc/html/gtk3GtkImage.html#GtkImage-struct"><span class="type">GtkImage</span></a> widget).</p>
+<p>There are two ways to use this element and obtain the <a href="/usr/share/gtk-doc/html/gdk-pixbufgdk-pixbuf-The-GdkPixbuf-Structure.html#GdkPixbuf-struct"><span class="type">GdkPixbuf</span></a> objects
+created:</p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+Watching for element messages named <code class="classname">"preroll-pixbuf"
+</code> or <code class="classname">"pixbuf"</code> on the bus, which
+will be posted whenever an image would usually be rendered. See below for
+more details on these messages and how to extract the pixbuf object
+contained in them.
+</li>
+<li class="listitem">
+Retrieving the current pixbuf via the <a class="link" href="gst-plugins-good-plugins-gdkpixbufsink.html#GstGdkPixbufSink--last-pixbuf" title="The “last-pixbuf” property"><span class="type">“last-pixbuf”</span></a> property
+when needed. This is the easiest way to get at pixbufs for snapshotting
+purposes - just wait until the pipeline is prerolled (ASYNC_DONE message
+on the bus), then read the property. If you use this method, you may want
+to disable message posting by setting the <a class="link" href="gst-plugins-good-plugins-gdkpixbufsink.html#GstGdkPixbufSink--post-messages" title="The “post-messages” property"><span class="type">“post-messages”</span></a>
+property to <a href="/usr/share/gtk-doc/html/glibglib-Standard-Macros.html#FALSE:CAPS"><span class="type">FALSE</span></a>. This avoids unnecessary memory overhead.
+</li>
+</ul></div>
+<p>The primary purpose of this element is to abstract away the <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstBuffer.html#GstBuffer-struct"><span class="type">GstBuffer</span></a> to
+<a href="/usr/share/gtk-doc/html/gdk-pixbufgdk-pixbuf-The-GdkPixbuf-Structure.html#GdkPixbuf-struct"><span class="type">GdkPixbuf</span></a> conversion. Other than that it's very similar to the fakesink
+element.</p>
+<p>This element is meant for easy no-hassle video snapshotting. It is not
+suitable for video playback or video display at high framerates. Use
+ximagesink, xvimagesink or some other suitable video sink in connection
+with the <span class="type">GstXOverlay</span> interface instead if you want to do video playback.</p>
+<div class="refsect2">
+<a name="id-1.2.67.7.7"></a><h3>Message details</h3>
+As mentioned above, this element will by default post element messages
+containing structures named <code class="classname">"preroll-pixbuf"
+</code> or <code class="classname">"pixbuf"</code> on the bus (this
+can be disabled by setting the <a class="link" href="gst-plugins-good-plugins-gdkpixbufsink.html#GstGdkPixbufSink--post-messages" title="The “post-messages” property"><span class="type">“post-messages”</span></a> property
+to <a href="/usr/share/gtk-doc/html/glibglib-Standard-Macros.html#FALSE:CAPS"><span class="type">FALSE</span></a> though). The element message structure has the following fields:
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+<code class="classname">"pixbuf"</code>: the <a href="/usr/share/gtk-doc/html/gdk-pixbufgdk-pixbuf-The-GdkPixbuf-Structure.html#GdkPixbuf-struct"><span class="type">GdkPixbuf</span></a> object
+</li>
+<li class="listitem">
+<code class="classname">"pixel-aspect-ratio"</code>: the pixel aspect
+  ratio (PAR) of the input image (this field contains a <span class="type">GstFraction</span>); the
+  PAR is usually 1:1 for images, but is often something non-1:1 in the case
+  of video input. In this case the image may be distorted and you may need
+  to rescale it accordingly before saving it to file or displaying it. This
+  can easily be done using <a href="/usr/share/gtk-doc/html/gdk-pixbufgdk-pixbuf-Scaling.html#gdk-pixbuf-scale"><code class="function">gdk_pixbuf_scale()</code></a> (the reason this is not done
+  automatically is that the application will often scale the image anyway
+  according to the size of the output window, in which case it is much more
+  efficient to only scale once rather than twice). You can put a videoscale
+  element and a capsfilter element with
+  <code class="literal">video/x-raw-rgb,pixel-aspect-ratio=(fraction)1/1</code> caps
+  in front of this element to make sure the pixbufs always have a 1:1 PAR.
+</li>
+</ul></div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="id-1.2.67.7.8"></a><h3>Example pipeline</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>m <span class="gtkdoc opt">-</span>v videotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">1</span> <span class="gtkdoc opt">!</span> gdkpixbufsink</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ Process one single test image as pixbuf (note that the output you see will
+be slightly misleading. The message structure does contain a valid pixbuf
+object even if the structure string says '(NULL)').
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.61.7.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.67.7.9.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -111,7 +185,7 @@
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.61.7.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.67.7.9.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -152,6 +226,7 @@
 <div class="refsect2">
 <a name="GstGdkPixbufSink-struct"></a><h3>struct GstGdkPixbufSink</h3>
 <pre class="programlisting">struct GstGdkPixbufSink;</pre>
+<p>Opaque element structure.</p>
 </div>
 </div>
 <div class="refsect1">

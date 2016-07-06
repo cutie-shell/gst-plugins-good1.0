@@ -255,13 +255,17 @@ parse_flv_demux_parse_date_string (const gchar * s)
   GstDateTime *dt = NULL;
   gchar **tokens;
   guint64 d;
-  gchar *endptr;
+  gchar *endptr, *stripped;
   gint i, hh, mm, ss;
   gint year = -1, month = -1, day = -1;
   gint hour = -1, minute = -1, seconds = -1;
 
+  stripped = g_strstrip (g_strdup (s));
+
   /* "Fri Oct 15 15:13:16 2004" needs to be parsed */
-  tokens = g_strsplit (s, " ", -1);
+  tokens = g_strsplit (stripped, " ", -1);
+
+  g_free (stripped);
 
   if (g_strv_length (tokens) != 5)
     goto out;
@@ -1054,12 +1058,14 @@ gst_flv_demux_parse_tag_audio (GstFlvDemux * demux, GstBuffer * buffer)
         if (demux->audio_codec_data) {
           gst_buffer_unref (demux->audio_codec_data);
         }
-        demux->audio_codec_data = gst_buffer_copy_region (buffer, GST_BUFFER_COPY_MEMORY,
+        demux->audio_codec_data =
+            gst_buffer_copy_region (buffer, GST_BUFFER_COPY_MEMORY,
             7 + codec_data, demux->tag_data_size - codec_data);
 
         /* Use that buffer data in the caps */
         if (demux->audio_pad)
-          gst_flv_demux_audio_negotiate (demux, codec_tag, rate, channels, width);
+          gst_flv_demux_audio_negotiate (demux, codec_tag, rate, channels,
+              width);
         goto beach;
       }
       case 1:
@@ -1296,6 +1302,18 @@ gst_flv_demux_video_negotiate (GstFlvDemux * demux, guint32 codec_tag)
       caps =
           gst_caps_new_simple ("video/x-h264", "stream-format", G_TYPE_STRING,
           "avc", NULL);
+      break;
+      /* The following two are non-standard but apparently used, see in ffmpeg
+       * https://git.videolan.org/?p=ffmpeg.git;a=blob;f=libavformat/flvdec.c;h=2bf1e059e1cbeeb79e4af9542da23f4560e1cf59;hb=b18d6c58000beed872d6bb1fe7d0fbe75ae26aef#l254
+       * https://git.videolan.org/?p=ffmpeg.git;a=blob;f=libavformat/flvdec.c;h=2bf1e059e1cbeeb79e4af9542da23f4560e1cf59;hb=b18d6c58000beed872d6bb1fe7d0fbe75ae26aef#l282
+       */
+    case 8:
+      caps = gst_caps_new_empty_simple ("video/x-h263");
+      break;
+    case 9:
+      caps =
+          gst_caps_new_simple ("video/mpeg", "mpegversion", G_TYPE_INT, 4,
+          "systemstream", G_TYPE_BOOLEAN, FALSE, NULL);
       break;
     default:
       GST_WARNING_OBJECT (demux, "unsupported video codec tag %u", codec_tag);
@@ -3541,15 +3559,14 @@ gst_flv_demux_class_init (GstFlvDemuxClass * klass)
   gstelement_class->get_index = GST_DEBUG_FUNCPTR (gst_flv_demux_get_index);
 #endif
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&flv_sink_template));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&audio_src_template));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&video_src_template));
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &flv_sink_template);
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &audio_src_template);
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &video_src_template);
   gst_element_class_set_static_metadata (gstelement_class, "FLV Demuxer",
-      "Codec/Demuxer",
-      "Demux FLV feeds into digital streams",
+      "Codec/Demuxer", "Demux FLV feeds into digital streams",
       "Julien Moutte <julien@moutte.net>");
 }
 

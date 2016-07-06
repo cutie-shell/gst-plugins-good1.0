@@ -96,10 +96,29 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-vp8dec.description"></a><h2>Description</h2>
+<p>This element decodes VP8 streams into raw video.</p>
+<a class="ulink" href="http://www.webmproject.org" target="_top">VP8</a> is a royalty-free
+<p>video codec maintained by <a class="ulink" href="http://www.google.com/" target="_top">Google
+</a>. It's the successor of On2 VP3, which was the base of the
+Theora video codec.</p>
+<div class="refsect2">
+<a name="id-1.2.257.7.5"></a><h3>Example pipeline</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v filesrc location<span class="gtkdoc opt">=</span>videotestsrc<span class="gtkdoc opt">.</span>webm <span class="gtkdoc opt">!</span> matroskademux <span class="gtkdoc opt">!</span> vp8dec <span class="gtkdoc opt">!</span> videoconvert <span class="gtkdoc opt">!</span> videoscale <span class="gtkdoc opt">!</span> autovideosink</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ This example pipeline will decode a WebM stream and decodes the VP8 video.
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.180.7.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.257.7.6.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -125,7 +144,7 @@
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.180.7.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.257.7.6.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -232,6 +251,10 @@
 <p>Allowed values: [1,16]</p>
 <p>Default value: 1</p>
 </div>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-vp8dec.see-also"></a><h2>See Also</h2>
+<p>vp8enc, matroskademux</p>
 </div>
 </div>
 <div class="footer">

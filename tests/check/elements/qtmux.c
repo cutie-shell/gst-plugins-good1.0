@@ -577,6 +577,7 @@ GST_START_TEST (test_reuse)
   fail_unless (gst_pad_push_event (mysrcpad, gst_event_new_eos ()) == TRUE);
 
   cleanup_qtmux (qtmux, "video_%u");
+  gst_check_drop_buffers ();
 }
 
 GST_END_TEST;
@@ -671,10 +672,8 @@ test_mp3_enc_class_init (TestMp3EncClass * klass)
 {
   GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
 
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&sink_template));
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&src_template));
+  gst_element_class_add_static_pad_template (element_class, &sink_template);
+  gst_element_class_add_static_pad_template (element_class, &src_template);
 
   gst_element_class_set_metadata (element_class, "MPEG1 Audio Encoder",
       "Codec/Encoder/Audio", "Pretends to encode mp3", "Foo Bar <foo@bar.com>");
@@ -881,6 +880,7 @@ test_average_bitrate_custom (const gchar * elementname,
   gst_element_set_state (qtmux, GST_STATE_NULL);
   gst_element_set_state (filesink, GST_STATE_NULL);
 
+  gst_check_drop_buffers ();
   gst_pad_set_active (mysrcpad, FALSE);
   teardown_src_pad (mysrcpad);
   gst_object_unref (filesink);
@@ -1292,9 +1292,7 @@ GST_START_TEST (test_muxing)
   input2.input = NULL;
   input2.input =
       g_list_append (input2.input, gst_event_new_stream_start ("test-2"));
-  caps = gst_caps_from_string
-      ("audio/mpeg, rate=(int)44100, channels=(int)1, mpegversion=(int)4, "
-      "stream-format=(string)raw, framed=(boolean)true");
+  caps = gst_caps_from_string (AUDIO_AAC_CAPS_STRING);
   input2.input = g_list_append (input2.input, gst_event_new_caps (caps));
   gst_caps_unref (caps);
   gst_segment_init (&input2.segment, GST_FORMAT_TIME);
@@ -1353,9 +1351,7 @@ GST_START_TEST (test_muxing_non_zero_segment)
   input2.input = NULL;
   input2.input =
       g_list_append (input2.input, gst_event_new_stream_start ("test-2"));
-  caps = gst_caps_from_string
-      ("audio/mpeg, rate=(int)44100, channels=(int)1, mpegversion=(int)4, "
-      "stream-format=(string)raw, framed=(boolean)true");
+  caps = gst_caps_from_string (AUDIO_AAC_CAPS_STRING);
   input2.input = g_list_append (input2.input, gst_event_new_caps (caps));
   gst_caps_unref (caps);
   gst_segment_init (&input2.segment, GST_FORMAT_TIME);
@@ -1417,9 +1413,7 @@ GST_START_TEST (test_muxing_non_zero_segment_different)
   input2.input = NULL;
   input2.input =
       g_list_append (input2.input, gst_event_new_stream_start ("test-2"));
-  caps = gst_caps_from_string
-      ("audio/mpeg, rate=(int)44100, channels=(int)1, mpegversion=(int)4, "
-      "stream-format=(string)raw, framed=(boolean)true");
+  caps = gst_caps_from_string (AUDIO_AAC_CAPS_STRING);
   input2.input = g_list_append (input2.input, gst_event_new_caps (caps));
   gst_caps_unref (caps);
   gst_segment_init (&input2.segment, GST_FORMAT_TIME);
@@ -1485,9 +1479,7 @@ GST_START_TEST (test_muxing_dts_outside_segment)
   input2.input = NULL;
   input2.input =
       g_list_append (input2.input, gst_event_new_stream_start ("test-2"));
-  caps = gst_caps_from_string
-      ("audio/mpeg, rate=(int)44100, channels=(int)1, mpegversion=(int)4, "
-      "stream-format=(string)raw, framed=(boolean)true");
+  caps = gst_caps_from_string (AUDIO_AAC_CAPS_STRING);
   input2.input = g_list_append (input2.input, gst_event_new_caps (caps));
   gst_caps_unref (caps);
   gst_segment_init (&input2.segment, GST_FORMAT_TIME);
@@ -1554,9 +1546,7 @@ GST_START_TEST (test_muxing_initial_gap)
   input2.input = NULL;
   input2.input =
       g_list_append (input2.input, gst_event_new_stream_start ("test-2"));
-  caps = gst_caps_from_string
-      ("audio/mpeg, rate=(int)44100, channels=(int)1, mpegversion=(int)4, "
-      "stream-format=(string)raw, framed=(boolean)true");
+  caps = gst_caps_from_string (AUDIO_AAC_CAPS_STRING);
   input2.input = g_list_append (input2.input, gst_event_new_caps (caps));
   gst_caps_unref (caps);
   gst_segment_init (&input2.segment, GST_FORMAT_TIME);

@@ -102,13 +102,11 @@ GST_STATIC_PAD_TEMPLATE ("src",
     /* "dec-parallel-cap = (string) ANY, " */
     );
 
-#define DEFAULT_SPROP_PARAMETER_SETS    NULL
 #define DEFAULT_CONFIG_INTERVAL		      0
 
 enum
 {
   PROP_0,
-  PROP_SPROP_PARAMETER_SETS,
   PROP_CONFIG_INTERVAL
 };
 
@@ -150,14 +148,6 @@ gst_rtp_h265_pay_class_init (GstRtpH265PayClass * klass)
   gobject_class->get_property = gst_rtp_h265_pay_get_property;
 
   g_object_class_install_property (G_OBJECT_CLASS (klass),
-      PROP_SPROP_PARAMETER_SETS, g_param_spec_string ("sprop-parameter-sets",
-          "sprop-parameter-sets",
-          "The base64 sprop-parameter-sets to set in out caps (set to NULL to "
-          "extract from stream)",
-          DEFAULT_SPROP_PARAMETER_SETS,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-
-  g_object_class_install_property (G_OBJECT_CLASS (klass),
       PROP_CONFIG_INTERVAL,
       g_param_spec_int ("config-interval",
           "VPS SPS PPS Send Interval",
@@ -170,10 +160,10 @@ gst_rtp_h265_pay_class_init (GstRtpH265PayClass * klass)
 
   gobject_class->finalize = gst_rtp_h265_pay_finalize;
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&gst_rtp_h265_pay_src_template));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&gst_rtp_h265_pay_sink_template));
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &gst_rtp_h265_pay_src_template);
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &gst_rtp_h265_pay_sink_template);
 
   gst_element_class_set_static_metadata (gstelement_class, "RTP H265 payloader",
       "Codec/Payloader/Network/RTP",
@@ -229,8 +219,6 @@ gst_rtp_h265_pay_finalize (GObject * object)
   g_ptr_array_free (rtph265pay->sps, TRUE);
   g_ptr_array_free (rtph265pay->pps, TRUE);
   g_ptr_array_free (rtph265pay->vps, TRUE);
-
-  g_free (rtph265pay->sprop_parameter_sets);
 
   g_object_unref (rtph265pay->adapter);
 
@@ -723,53 +711,6 @@ error:
   }
 }
 
-static void
-gst_rtp_h265_pay_parse_sprop_parameter_sets (GstRtpH265Pay * rtph265pay)
-{
-  const gchar *ps;
-  gchar **params;
-  guint len;
-  gint i;
-  GstBuffer *buf;
-
-  ps = rtph265pay->sprop_parameter_sets;
-  if (ps == NULL)
-    return;
-
-  gst_rtp_h265_pay_clear_vps_sps_pps (rtph265pay);
-
-  params = g_strsplit (ps, ",", 0);
-  len = g_strv_length (params);
-
-  GST_DEBUG_OBJECT (rtph265pay, "we have %d params", len);
-
-  for (i = 0; params[i]; i++) {
-    gsize nal_len;
-    GstMapInfo map;
-    guint8 *nalp;
-    guint save = 0;
-    gint state = 0;
-
-    nal_len = strlen (params[i]);
-    buf = gst_buffer_new_and_alloc (nal_len);
-
-    gst_buffer_map (buf, &map, GST_MAP_WRITE);
-    nalp = map.data;
-    nal_len = g_base64_decode_step (params[i], nal_len, nalp, &state, &save);
-    gst_buffer_unmap (buf, &map);
-    gst_buffer_resize (buf, 0, nal_len);
-
-    if (!nal_len) {
-      gst_buffer_unref (buf);
-      continue;
-    }
-
-    gst_rtp_h265_add_vps_sps_pps (GST_ELEMENT (rtph265pay), rtph265pay->vps,
-        rtph265pay->sps, rtph265pay->pps, buf);
-  }
-  g_strfreev (params);
-}
-
 static guint
 next_start_code (const guint8 * data, guint size)
 {
@@ -813,16 +754,15 @@ static gboolean
 gst_rtp_h265_pay_decode_nal (GstRtpH265Pay * payloader,
     const guint8 * data, guint size, GstClockTime dts, GstClockTime pts)
 {
-  guint8 header, type;
+  guint8 type;
   gboolean updated;
 
   /* default is no update */
   updated = FALSE;
 
-  GST_DEBUG ("NAL payload len=%u", size);
+  GST_DEBUG_OBJECT (payloader, "NAL payload size %u", size);
 
-  header = data[0];
-  type = header & 0x3f;
+  type = (data[0] >> 1) & 0x3f;
 
   /* We record the timestamp of the last SPS/PPS so
    * that we can insert them at regular intervals and when needed. */
@@ -831,10 +771,9 @@ gst_rtp_h265_pay_decode_nal (GstRtpH265Pay * payloader,
     GstBuffer *nal;
 
     /* encode the entire NAL in base64 */
-    GST_DEBUG ("Found %s %x %x %x Len=%u",
-        type == GST_H265_NAL_VPS ? "VPS" : type ==
-        GST_H265_NAL_SPS ? "SPS" : "PPS", (header >> 7), (header >> 5) & 3,
-        type, size);
+    GST_DEBUG_OBJECT (payloader, "found %s (type 0x%x), size %u",
+        type == GST_H265_NAL_VPS ? "VPS" : type == GST_H265_NAL_SPS ?
+            "SPS" : "PPS", type, size);
 
     nal = gst_buffer_new_allocate (NULL, size, NULL);
     gst_buffer_fill (nal, 0, data, size);
@@ -846,8 +785,7 @@ gst_rtp_h265_pay_decode_nal (GstRtpH265Pay * payloader,
     if (updated && pts != -1)
       payloader->last_vps_sps_pps = pts;
   } else {
-    GST_DEBUG ("NAL: %x %x %x Len = %u", (header >> 7),
-        (header >> 5) & 3, type, size);
+    GST_DEBUG_OBJECT (payloader, "NALU type 0x%x, size %u", type, size);
   }
 
   return updated;
@@ -1278,30 +1216,13 @@ gst_rtp_h265_pay_handle_buffer (GstRTPBasePayload * basepayload,
       GST_DEBUG_OBJECT (basepayload, "found next start at %u of size %u", next,
           nal_len);
 
-      if (rtph265pay->sprop_parameter_sets != NULL) {
-        /* explicitly set profile and sprop, use those */
-        if (rtph265pay->update_caps) {
-          if (!gst_rtp_base_payload_set_outcaps (basepayload,
-                  "sprop-parameter-sets", G_TYPE_STRING,
-                  rtph265pay->sprop_parameter_sets, NULL))
-            goto caps_rejected;
+      /* We know our stream is a valid H265 NAL packet,
+       * go parse it for SPS/PPS to enrich the caps */
+      /* order: make sure to check nal */
+      update =
+          gst_rtp_h265_pay_decode_nal (rtph265pay, data, nal_len, dts, pts)
+          || update;
 
-          /* parse SPS and PPS from provided parameter set (for insertion) */
-          gst_rtp_h265_pay_parse_sprop_parameter_sets (rtph265pay);
-
-          rtph265pay->update_caps = FALSE;
-
-          GST_DEBUG ("outcaps update: sprop-parameter-sets=%s",
-              rtph265pay->sprop_parameter_sets);
-        }
-      } else {
-        /* We know our stream is a valid H265 NAL packet,
-         * go parse it for SPS/PPS to enrich the caps */
-        /* order: make sure to check nal */
-        update =
-            gst_rtp_h265_pay_decode_nal (rtph265pay, data, nal_len, dts, pts)
-            || update;
-      }
       /* move to next NAL packet */
       data += nal_len;
       size -= nal_len;
@@ -1466,11 +1387,6 @@ gst_rtp_h265_pay_set_property (GObject * object, guint prop_id,
   rtph265pay = GST_RTP_H265_PAY (object);
 
   switch (prop_id) {
-    case PROP_SPROP_PARAMETER_SETS:
-      g_free (rtph265pay->sprop_parameter_sets);
-      rtph265pay->sprop_parameter_sets = g_value_dup_string (value);
-      rtph265pay->update_caps = TRUE;
-      break;
     case PROP_CONFIG_INTERVAL:
       rtph265pay->vps_sps_pps_interval = g_value_get_int (value);
       break;
@@ -1489,9 +1405,6 @@ gst_rtp_h265_pay_get_property (GObject * object, guint prop_id,
   rtph265pay = GST_RTP_H265_PAY (object);
 
   switch (prop_id) {
-    case PROP_SPROP_PARAMETER_SETS:
-      g_value_set_string (value, rtph265pay->sprop_parameter_sets);
-      break;
     case PROP_CONFIG_INTERVAL:
       g_value_set_int (value, rtph265pay->vps_sps_pps_interval);
       break;

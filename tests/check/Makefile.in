@@ -197,7 +197,8 @@ libparser_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @USE_PLUGIN_FLV_TRUE@	elements/flvmux$(EXEEXT)
 @USE_GDK_PIXBUF_TRUE@am__EXEEXT_13 = elements/gdkpixbufsink$(EXEEXT) \
 @USE_GDK_PIXBUF_TRUE@	elements/gdkpixbufoverlay$(EXEEXT)
-@USE_PLUGIN_ISOMP4_TRUE@am__EXEEXT_14 = elements/qtmux$(EXEEXT)
+@USE_PLUGIN_ISOMP4_TRUE@am__EXEEXT_14 = elements/qtmux$(EXEEXT) \
+@USE_PLUGIN_ISOMP4_TRUE@	elements/qtdemux$(EXEEXT)
 @USE_PLUGIN_ICYDEMUX_TRUE@am__EXEEXT_15 = elements/icydemux$(EXEEXT)
 @USE_PLUGIN_ID3DEMUX_TRUE@am__EXEEXT_16 = elements/id3demux$(EXEEXT)
 @USE_PLUGIN_IMAGEFREEZE_TRUE@am__EXEEXT_17 =  \
@@ -575,6 +576,10 @@ elements_multifile_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_multifile_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
+elements_qtdemux_SOURCES = elements/qtdemux.c
+elements_qtdemux_OBJECTS = elements/qtdemux.$(OBJEXT)
+elements_qtdemux_LDADD = $(LDADD)
+elements_qtdemux_DEPENDENCIES = $(am__DEPENDENCIES_1)
 elements_qtmux_SOURCES = elements/qtmux.c
 elements_qtmux_OBJECTS = elements/elements_qtmux-qtmux.$(OBJEXT)
 elements_qtmux_DEPENDENCIES = $(am__DEPENDENCIES_1) \
@@ -916,9 +921,9 @@ SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/matroskademux.c elements/matroskamux.c \
 	elements/matroskaparse.c elements/mpegaudioparse.c \
 	elements/mulawdec.c elements/mulawenc.c elements/multifile.c \
-	elements/qtmux.c elements/rganalysis.c elements/rglimiter.c \
-	elements/rgvolume.c elements/rtp-payloading.c \
-	elements/rtpaux.c elements/rtpbin.c \
+	elements/qtdemux.c elements/qtmux.c elements/rganalysis.c \
+	elements/rglimiter.c elements/rgvolume.c \
+	elements/rtp-payloading.c elements/rtpaux.c elements/rtpbin.c \
 	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpcollision.c \
 	elements/rtph263.c elements/rtpjitterbuffer.c \
 	elements/rtpmux.c elements/rtprtx.c elements/rtpsession.c \
@@ -955,9 +960,9 @@ DIST_SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/matroskademux.c elements/matroskamux.c \
 	elements/matroskaparse.c elements/mpegaudioparse.c \
 	elements/mulawdec.c elements/mulawenc.c elements/multifile.c \
-	elements/qtmux.c elements/rganalysis.c elements/rglimiter.c \
-	elements/rgvolume.c elements/rtp-payloading.c \
-	elements/rtpaux.c elements/rtpbin.c \
+	elements/qtdemux.c elements/qtmux.c elements/rganalysis.c \
+	elements/rglimiter.c elements/rgvolume.c \
+	elements/rtp-payloading.c elements/rtpaux.c elements/rtpbin.c \
 	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpcollision.c \
 	elements/rtph263.c elements/rtpjitterbuffer.c \
 	elements/rtpmux.c elements/rtprtx.c elements/rtpsession.c \
@@ -1616,7 +1621,10 @@ CLEANFILES = core.* test-registry.*
 @USE_PLUGIN_FLV_TRUE@        elements/flvmux
 
 @USE_PLUGIN_ISOMP4_FALSE@check_isomp4 = 
-@USE_PLUGIN_ISOMP4_TRUE@check_isomp4 = elements/qtmux
+@USE_PLUGIN_ISOMP4_TRUE@check_isomp4 = \
+@USE_PLUGIN_ISOMP4_TRUE@	elements/qtmux \
+@USE_PLUGIN_ISOMP4_TRUE@	elements/qtdemux
+
 @USE_PLUGIN_LAW_FALSE@check_law = 
 @USE_PLUGIN_LAW_TRUE@check_law = \
 @USE_PLUGIN_LAW_TRUE@	elements/mulawdec \
@@ -1883,7 +1891,10 @@ nodist_orc_videomixer_SOURCES = orc/videomixer.c
 orc_videobox_CFLAGS = $(ORC_CFLAGS)
 orc_videobox_LDADD = $(ORC_LIBS) -lorc-test-0.4
 nodist_orc_videobox_SOURCES = orc/videobox.c
-EXTRA_DIST = gst-plugins-good.supp
+EXTRA_DIST = \
+	gst-plugins-good.supp	\
+	elements/qtdemux.h
+
 all: all-am
 
 .SUFFIXES:
@@ -2225,6 +2236,12 @@ elements/elements_multifile-multifile.$(OBJEXT):  \
 elements/multifile$(EXEEXT): $(elements_multifile_OBJECTS) $(elements_multifile_DEPENDENCIES) $(EXTRA_elements_multifile_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/multifile$(EXEEXT)
 	$(AM_V_CCLD)$(elements_multifile_LINK) $(elements_multifile_OBJECTS) $(elements_multifile_LDADD) $(LIBS)
+elements/qtdemux.$(OBJEXT): elements/$(am__dirstamp) \
+	elements/$(DEPDIR)/$(am__dirstamp)
+
+elements/qtdemux$(EXEEXT): $(elements_qtdemux_OBJECTS) $(elements_qtdemux_DEPENDENCIES) $(EXTRA_elements_qtdemux_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/qtdemux$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(elements_qtdemux_OBJECTS) $(elements_qtdemux_LDADD) $(LIBS)
 elements/elements_qtmux-qtmux.$(OBJEXT): elements/$(am__dirstamp) \
 	elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2573,6 +2590,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/matroskamux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/matroskaparse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/mpegaudioparse.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/qtdemux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/rtp-payloading.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/rtpbin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/shapewipe.Po@am__quote@
@@ -3807,6 +3825,13 @@ elements/gdkpixbufoverlay.log: elements/gdkpixbufoverlay$(EXEEXT)
 elements/qtmux.log: elements/qtmux$(EXEEXT)
 	@p='elements/qtmux$(EXEEXT)'; \
 	b='elements/qtmux'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+elements/qtdemux.log: elements/qtdemux$(EXEEXT)
+	@p='elements/qtdemux$(EXEEXT)'; \
+	b='elements/qtdemux'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

@@ -7,7 +7,7 @@
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-shapewipe.html" title="shapewipe">
-<link rel="next" href="gst-plugins-good-plugins-smokedec.html" title="smokedec">
+<link rel="next" href="gst-plugins-good-plugins-smptealpha.html" title="smptealpha">
 <meta name="generator" content="GTK-Doc V1.25 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
@@ -24,7 +24,7 @@
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
 <td><a accesskey="p" href="gst-plugins-good-plugins-shapewipe.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
-<td><a accesskey="n" href="gst-plugins-good-plugins-smokedec.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
+<td><a accesskey="n" href="gst-plugins-good-plugins-smptealpha.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="gst-plugins-good-plugins-shout2send"></a><div class="titlepage"></div>
@@ -156,10 +156,28 @@ GstShout2send implements
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-shout2send.description"></a><h2>Description</h2>
+<p>shout2send pushes a media stream to an Icecast server</p>
+<div class="refsect2">
+<a name="id-1.2.230.9.3"></a><h3>Example launch line</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> uridecodebin uri<span class="gtkdoc opt">=</span>file<span class="gtkdoc opt">:</span><span class="gtkdoc slc">///path/to/audiofile ! audioconvert ! vorbisenc ! oggmux ! shout2send mount=/stream.ogg port=8000 username=source password=somepassword ip=server_IP_address_or_hostname</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ This pipeline demuxes, decodes, re-encodes and re-muxes an audio
+media file into oggvorbis and sends the resulting stream to an Icecast
+server. Properties mount, port, username and password are all server-config
+dependent.
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.154.9.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.230.9.4.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -185,7 +203,7 @@ GstShout2send implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.154.9.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.230.9.4.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">

@@ -227,6 +227,7 @@ gst_rtsp_src_ntp_time_source_get_type (void)
 #define DEFAULT_NTP_TIME_SOURCE  NTP_TIME_SOURCE_NTP
 #define DEFAULT_USER_AGENT       "GStreamer/" PACKAGE_VERSION
 #define DEFAULT_MAX_RTCP_RTP_TIME_DIFF 1000
+#define DEFAULT_RFC7273_SYNC         FALSE
 
 enum
 {
@@ -265,7 +266,8 @@ enum
   PROP_DO_RETRANSMISSION,
   PROP_NTP_TIME_SOURCE,
   PROP_USER_AGENT,
-  PROP_MAX_RTCP_RTP_TIME_DIFF
+  PROP_MAX_RTCP_RTP_TIME_DIFF,
+  PROP_RFC7273_SYNC
 };
 
 #define GST_TYPE_RTSP_NAT_METHOD (gst_rtsp_nat_method_get_type())
@@ -732,6 +734,12 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
           DEFAULT_MAX_RTCP_RTP_TIME_DIFF,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+  g_object_class_install_property (gobject_class, PROP_RFC7273_SYNC,
+      g_param_spec_boolean ("rfc7273-sync", "Sync on RFC7273 clock",
+          "Synchronize received streams to the RFC7273 clock "
+          "(requires clock and offset to be provided)", DEFAULT_RFC7273_SYNC,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
   /**
    * GstRTSPSrc::handle-request:
    * @rtspsrc: a #GstRTSPSrc
@@ -828,8 +836,7 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
   gstelement_class->provide_clock = gst_rtspsrc_provide_clock;
   gstelement_class->change_state = gst_rtspsrc_change_state;
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&rtptemplate));
+  gst_element_class_add_static_pad_template (gstelement_class, &rtptemplate);
 
   gst_element_class_set_static_metadata (gstelement_class,
       "RTSP packet receiver", "Source/Network",
@@ -880,6 +887,7 @@ gst_rtspsrc_init (GstRTSPSrc * src)
   src->ntp_time_source = DEFAULT_NTP_TIME_SOURCE;
   src->user_agent = g_strdup (DEFAULT_USER_AGENT);
   src->max_rtcp_rtp_time_diff = DEFAULT_MAX_RTCP_RTP_TIME_DIFF;
+  src->rfc7273_sync = DEFAULT_RFC7273_SYNC;
 
   /* get a list of all extensions */
   src->extensions = gst_rtsp_ext_list_get ();
@@ -1159,6 +1167,9 @@ gst_rtspsrc_set_property (GObject * object, guint prop_id, const GValue * value,
     case PROP_MAX_RTCP_RTP_TIME_DIFF:
       rtspsrc->max_rtcp_rtp_time_diff = g_value_get_int (value);
       break;
+    case PROP_RFC7273_SYNC:
+      rtspsrc->rfc7273_sync = g_value_get_boolean (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -1304,6 +1315,9 @@ gst_rtspsrc_get_property (GObject * object, guint prop_id, GValue * value,
       break;
     case PROP_MAX_RTCP_RTP_TIME_DIFF:
       g_value_set_int (value, rtspsrc->max_rtcp_rtp_time_diff);
+      break;
+    case PROP_RFC7273_SYNC:
+      g_value_set_boolean (value, rtspsrc->rfc7273_sync);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -2156,9 +2170,8 @@ gst_rtspsrc_perform_seek (GstRTSPSrc * src, GstEvent * event)
   if ((stop = seeksegment.stop) == -1)
     stop = seeksegment.duration;
 
-  playing = (src->state == GST_RTSP_STATE_PLAYING);
-
   /* if we were playing, pause first */
+  playing = (src->state == GST_RTSP_STATE_PLAYING);
   if (playing) {
     /* obtain current position in case seek fails */
     gst_rtspsrc_get_position (src);
@@ -2170,10 +2183,6 @@ gst_rtspsrc_perform_seek (GstRTSPSrc * src, GstEvent * event)
 
   /* PLAY will add the range header now. */
   src->need_range = TRUE;
-
-  /* and continue playing */
-  if (playing)
-    gst_rtspsrc_play (src, &seeksegment, FALSE);
 
   /* prepare for streaming again */
   if (flush) {
@@ -2202,6 +2211,15 @@ gst_rtspsrc_perform_seek (GstRTSPSrc * src, GstEvent * event)
     GstRTSPStream *stream = (GstRTSPStream *) walk->data;
     stream->discont = TRUE;
   }
+
+  /* and continue playing if needed */
+  GST_OBJECT_LOCK (src);
+  playing = (GST_STATE_PENDING (src) == GST_STATE_VOID_PENDING
+      && GST_STATE (src) == GST_STATE_PLAYING)
+      || (GST_STATE_PENDING (src) == GST_STATE_PLAYING);
+  GST_OBJECT_UNLOCK (src);
+  if (playing)
+    gst_rtspsrc_play (src, &seeksegment, FALSE);
 
   GST_RTSP_STREAM_UNLOCK (src);
 
@@ -2829,6 +2847,10 @@ request_rtcp_encoder (GstElement * rtpbin, guint session,
       gst_value_deserialize (&rtcp_auth, str);
       gst_structure_get (s, "srtp-key", GST_TYPE_BUFFER, &buf, NULL);
 
+      g_object_set_property (G_OBJECT (stream->srtpenc), "rtp-cipher",
+          &rtcp_cipher);
+      g_object_set_property (G_OBJECT (stream->srtpenc), "rtp-auth",
+          &rtcp_auth);
       g_object_set_property (G_OBJECT (stream->srtpenc), "rtcp-cipher",
           &rtcp_cipher);
       g_object_set_property (G_OBJECT (stream->srtpenc), "rtcp-auth",
@@ -3014,6 +3036,10 @@ gst_rtspsrc_stream_configure_manager (GstRTSPSrc * src, GstRTSPStream * stream,
 
       if (g_object_class_find_property (klass, "ntp-sync")) {
         g_object_set (src->manager, "ntp-sync", src->ntp_sync, NULL);
+      }
+
+      if (g_object_class_find_property (klass, "rfc7273-sync")) {
+        g_object_set (src->manager, "rfc7273-sync", src->rfc7273_sync, NULL);
       }
 
       if (src->use_pipeline_clock) {
@@ -4852,26 +4878,30 @@ gst_rtspsrc_reconnect (GstRTSPSrc * src, gboolean async)
   if (!restart)
     goto done;
 
-  /* we can try only TCP now */
-  src->cur_protocols = GST_RTSP_LOWER_TRANS_TCP;
+  /* unless redirect, try tcp */
+  if (!src->need_redirect)
+    src->cur_protocols = GST_RTSP_LOWER_TRANS_TCP;
 
   /* close and cleanup our state */
   if ((res = gst_rtspsrc_close (src, async, FALSE)) < 0)
     goto done;
 
-  /* see if we have TCP left to try. Also don't try TCP when we were configured
-   * with an SDP. */
-  if (!(src->protocols & GST_RTSP_LOWER_TRANS_TCP) || src->from_sdp)
+  /* unless redirect, see if we have TCP left to try. Also don't 
+   * try TCP when we were configured with an SDP. */
+  if (!src->need_redirect && (!(src->protocols & GST_RTSP_LOWER_TRANS_TCP)
+          || src->from_sdp))
     goto no_protocols;
 
-  /* We post a warning message now to inform the user
-   * that nothing happened. It's most likely a firewall thing. */
-  GST_ELEMENT_WARNING (src, RESOURCE, READ, (NULL),
-      ("Could not receive any UDP packets for %.4f seconds, maybe your "
-          "firewall is blocking it. Retrying using a TCP connection.",
-          gst_guint64_to_gdouble (src->udp_timeout / 1000000.0)));
+  if (!src->need_redirect) {
+    /* We post a warning message now to inform the user
+     * that nothing happened. It's most likely a firewall thing. */
+    GST_ELEMENT_WARNING (src, RESOURCE, READ, (NULL),
+        ("Could not receive any UDP packets for %.4f seconds, maybe your "
+            "firewall is blocking it. Retrying using a tcp connection.",
+            gst_guint64_to_gdouble (src->udp_timeout) / 1000000.0));
+  }
 
-  /* open new connection using tcp */
+  /* unless redirect, open new connection using tcp */
   if (gst_rtspsrc_open (src, async) < 0)
     goto open_failed;
 
@@ -4890,7 +4920,7 @@ no_protocols:
     GST_ELEMENT_ERROR (src, RESOURCE, READ, (NULL),
         ("Could not receive any UDP packets for %.4f seconds, maybe your "
             "firewall is blocking it. No other protocols to try.",
-            gst_guint64_to_gdouble (src->udp_timeout / 1000000.0)));
+            gst_guint64_to_gdouble (src->udp_timeout) / 1000000.0));
     return GST_RTSP_ERROR;
   }
 open_failed:
@@ -5953,8 +5983,10 @@ default_srtcp_params (void)
 
   buf = gst_buffer_new_wrapped (key_data, KEY_SIZE);
 
-  caps = gst_caps_new_simple ("application/x-srtp",
+  caps = gst_caps_new_simple ("application/x-srtcp",
       "srtp-key", GST_TYPE_BUFFER, buf,
+      "srtp-cipher", G_TYPE_STRING, "aes-128-icm",
+      "srtp-auth", G_TYPE_STRING, "hmac-sha1-80",
       "srtcp-cipher", G_TYPE_STRING, "aes-128-icm",
       "srtcp-auth", G_TYPE_STRING, "hmac-sha1-80", NULL);
 

@@ -187,10 +187,46 @@ GstV4l2Sink implements
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-v4l2sink.description"></a><h2>Description</h2>
+<p>v4l2sink can be used to display video to v4l2 devices (screen overlays
+provided by the graphics hardware, tv-out, etc)</p>
+<div class="refsect2">
+<a name="id-1.2.248.8.3"></a><h3>Example launch lines</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> videotestsrc <span class="gtkdoc opt">!</span> v4l2sink device<span class="gtkdoc opt">=/</span>dev<span class="gtkdoc opt">/</span>video1</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ This pipeline displays a test pattern on /dev/video1
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v videotestsrc <span class="gtkdoc opt">!</span> navigationtest <span class="gtkdoc opt">!</span> v4l2sink</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ A pipeline to test navigation events.
+While moving the mouse pointer over the test signal you will see a black box
+following the mouse pointer. If you press the mouse button somewhere on the
+video and release it somewhere else a green box will appear where you pressed
+the button and a red one where you released it. (The navigationtest element
+is part of gst-plugins-good.) You can observe here that even if the images
+are scaled through hardware the pointer coordinates are converted back to the
+original video frame geometry so that the box can be drawn to the correct
+position. This also handles borders correctly, limiting coordinates to the
+image area
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.172.8.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.248.8.4.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -216,7 +252,7 @@ GstV4l2Sink implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.172.8.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.248.8.4.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">

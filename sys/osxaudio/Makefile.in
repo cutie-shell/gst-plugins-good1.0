@@ -90,7 +90,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@HAVE_IOS_FALSE@am__append_1 = -Wl,-framework,AudioUnit -Wl,-framework,CoreServices
+@HAVE_IOS_FALSE@am__append_1 = gstosxaudiodeviceprovider.c
+@HAVE_IOS_FALSE@am__append_2 = -Wl,-framework,AudioUnit -Wl,-framework,CoreServices
 subdir = sys/osxaudio
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/common/m4/as-ac-expand.m4 \
@@ -165,6 +166,11 @@ LTLIBRARIES = $(plugin_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libgstosxaudio_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am__libgstosxaudio_la_SOURCES_DIST = gstosxaudioringbuffer.c \
+	gstosxaudioelement.c gstosxaudiosink.c gstosxaudiosrc.c \
+	gstosxcoreaudiocommon.c gstosxcoreaudio.c gstosxaudio.c \
+	gstosxaudiodeviceprovider.c
+@HAVE_IOS_FALSE@am__objects_1 = libgstosxaudio_la-gstosxaudiodeviceprovider.lo
 am_libgstosxaudio_la_OBJECTS =  \
 	libgstosxaudio_la-gstosxaudioringbuffer.lo \
 	libgstosxaudio_la-gstosxaudioelement.lo \
@@ -172,7 +178,7 @@ am_libgstosxaudio_la_OBJECTS =  \
 	libgstosxaudio_la-gstosxaudiosrc.lo \
 	libgstosxaudio_la-gstosxcoreaudiocommon.lo \
 	libgstosxaudio_la-gstosxcoreaudio.lo \
-	libgstosxaudio_la-gstosxaudio.lo
+	libgstosxaudio_la-gstosxaudio.lo $(am__objects_1)
 libgstosxaudio_la_OBJECTS = $(am_libgstosxaudio_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -217,7 +223,7 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libgstosxaudio_la_SOURCES)
-DIST_SOURCES = $(libgstosxaudio_la_SOURCES)
+DIST_SOURCES = $(am__libgstosxaudio_la_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -573,14 +579,10 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 plugin_LTLIBRARIES = libgstosxaudio.la
-libgstosxaudio_la_SOURCES = gstosxaudioringbuffer.c   \
-                            gstosxaudioelement.c \
-                            gstosxaudiosink.c    \
-                            gstosxaudiosrc.c     \
-                            gstosxcoreaudiocommon.c     \
-                            gstosxcoreaudio.c     \
-                            gstosxaudio.c
-
+libgstosxaudio_la_SOURCES = gstosxaudioringbuffer.c \
+	gstosxaudioelement.c gstosxaudiosink.c gstosxaudiosrc.c \
+	gstosxcoreaudiocommon.c gstosxcoreaudio.c gstosxaudio.c \
+	$(am__append_1)
 libgstosxaudio_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) \
     -Wno-deprecated-declarations
 
@@ -592,7 +594,7 @@ libgstosxaudio_la_LIBADD = \
 
 libgstosxaudio_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS) \
 	-Wl,-framework,CoreAudio -Wl,-framework,AudioToolbox \
-	$(am__append_1)
+	$(am__append_2)
 libgstosxaudio_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS) --tag=CC
 noinst_HEADERS = gstosxaudiosink.h	  \
                  gstosxaudioelement.h \
@@ -682,6 +684,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstosxaudio_la-gstosxaudio.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstosxaudio_la-gstosxaudiodeviceprovider.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstosxaudio_la-gstosxaudioelement.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstosxaudio_la-gstosxaudioringbuffer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstosxaudio_la-gstosxaudiosink.Plo@am__quote@
@@ -761,6 +764,13 @@ libgstosxaudio_la-gstosxaudio.lo: gstosxaudio.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstosxaudio.c' object='libgstosxaudio_la-gstosxaudio.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstosxaudio_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstosxaudio_la_CFLAGS) $(CFLAGS) -c -o libgstosxaudio_la-gstosxaudio.lo `test -f 'gstosxaudio.c' || echo '$(srcdir)/'`gstosxaudio.c
+
+libgstosxaudio_la-gstosxaudiodeviceprovider.lo: gstosxaudiodeviceprovider.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstosxaudio_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstosxaudio_la_CFLAGS) $(CFLAGS) -MT libgstosxaudio_la-gstosxaudiodeviceprovider.lo -MD -MP -MF $(DEPDIR)/libgstosxaudio_la-gstosxaudiodeviceprovider.Tpo -c -o libgstosxaudio_la-gstosxaudiodeviceprovider.lo `test -f 'gstosxaudiodeviceprovider.c' || echo '$(srcdir)/'`gstosxaudiodeviceprovider.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstosxaudio_la-gstosxaudiodeviceprovider.Tpo $(DEPDIR)/libgstosxaudio_la-gstosxaudiodeviceprovider.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstosxaudiodeviceprovider.c' object='libgstosxaudio_la-gstosxaudiodeviceprovider.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstosxaudio_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstosxaudio_la_CFLAGS) $(CFLAGS) -c -o libgstosxaudio_la-gstosxaudiodeviceprovider.lo `test -f 'gstosxaudiodeviceprovider.c' || echo '$(srcdir)/'`gstosxaudiodeviceprovider.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

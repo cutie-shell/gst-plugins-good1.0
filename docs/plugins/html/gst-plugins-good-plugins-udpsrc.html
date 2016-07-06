@@ -125,6 +125,11 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--loop" title="The “loop” property">loop</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--retrieve-sender-address" title="The “retrieve-sender-address” property">retrieve-sender-address</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -206,7 +211,7 @@ the element to READY by default. This behaviour can be overriden
 with the <a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--close-socket" title="The “close-socket” property"><span class="type">“close-socket”</span></a> property, in which case the
 application is responsible for closing the file descriptor.</p>
 <div class="refsect2">
-<a name="id-1.2.170.8.17"></a><h3>Examples</h3>
+<a name="id-1.2.246.8.17"></a><h3>Examples</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -247,7 +252,7 @@ above mentioned pipeline should dump data packets to the console.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.170.8.18.1"></a><h3>Element Information</h3>
+<a name="id-1.2.246.8.18.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -273,7 +278,7 @@ above mentioned pipeline should dump data packets to the console.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.170.8.18.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.246.8.18.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -430,6 +435,14 @@ above mentioned pipeline should dump data packets to the console.
 <a name="GstUDPSrc--loop"></a><h3>The <code class="literal">“loop”</code> property</h3>
 <pre class="programlisting">  “loop”                     <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
 <p>Used for setting the multicast loop parameter. TRUE = enable, FALSE = disable.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: TRUE</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstUDPSrc--retrieve-sender-address"></a><h3>The <code class="literal">“retrieve-sender-address”</code> property</h3>
+<pre class="programlisting">  “retrieve-sender-address”  <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<p>Whether to retrieve the sender address and add it to buffers as meta. Disabling this might result in minor performance improvements in certain scenarios.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: TRUE</p>
 </div>

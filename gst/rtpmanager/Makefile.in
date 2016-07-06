@@ -163,7 +163,8 @@ am__installdirs = "$(DESTDIR)$(plugindir)"
 LTLIBRARIES = $(plugin_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libgstrtpmanager_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_libgstrtpmanager_la_OBJECTS = libgstrtpmanager_la-gstrtpmanager.lo \
 	libgstrtpmanager_la-gstrtpbin.lo \
 	libgstrtpmanager_la-gstrtpdtmfmux.lo \
@@ -615,7 +616,7 @@ libgstrtpmanager_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) \
 
 libgstrtpmanager_la_LIBADD = $(GST_PLUGINS_BASE_LIBS) \
 	$(GST_NET_LIBS) -lgstrtp-@GST_API_VERSION@ \
-	$(GST_BASE_LIBS) $(GST_LIBS_LIBS)
+	$(GST_BASE_LIBS) $(GST_LIBS)
 
 libgstrtpmanager_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 libgstrtpmanager_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)

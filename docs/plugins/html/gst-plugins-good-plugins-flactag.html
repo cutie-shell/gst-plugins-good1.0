@@ -63,10 +63,33 @@ GstFlacTag implements
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-flactag.description"></a><h2>Description</h2>
+<p>The flactag element can change the tag contained within a raw
+FLAC stream. Specifically, it modifies the comments header packet
+of the FLAC stream.</p>
+<p>Applications can set the tags to write using the <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstTagSetter.html#GstTagSetter-struct"><span class="type">GstTagSetter</span></a> interface.
+Tags contained withing the FLAC bitstream will be picked up
+automatically (and merged according to the merge mode set via the tag
+setter interface).</p>
+<div class="refsect2">
+<a name="id-1.2.60.7.4"></a><h3>Example pipelines</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v filesrc location<span class="gtkdoc opt">=</span>foo<span class="gtkdoc opt">.</span>flac <span class="gtkdoc opt">!</span> flactag <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>bar<span class="gtkdoc opt">.</span>flac</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ This element is not useful with gst-launch, because it does not support
+setting the tags on a <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstTagSetter.html#GstTagSetter-struct"><span class="type">GstTagSetter</span></a> interface. Conceptually, the element
+will usually be used in this order though.
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.56.7.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.60.7.5.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -92,7 +115,7 @@ GstFlacTag implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.56.7.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.60.7.5.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -154,6 +177,10 @@ GstFlacTag implements
 <a name="GstFlacTag-struct"></a><h3>struct GstFlacTag</h3>
 <pre class="programlisting">struct GstFlacTag;</pre>
 </div>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-flactag.see-also"></a><h2>See Also</h2>
+<p><span class="type">flacenc</span>, <span class="type">flacdec</span>, <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstTagSetter.html#GstTagSetter-struct"><span class="type">GstTagSetter</span></a></p>
 </div>
 </div>
 <div class="footer">

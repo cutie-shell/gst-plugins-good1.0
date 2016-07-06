@@ -15,7 +15,8 @@
 <table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="5"><tr valign="middle">
 <td width="100%" align="left" class="shortcuts">
 <a href="#" class="shortcut">Top</a><span id="nav_description">  <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-rtpbvdepay.description" class="shortcut">Description</a></span>
+                  <a href="#gst-plugins-good-plugins-rtpbvdepay.description" class="shortcut">Description</a></span><span id="nav_hierarchy">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-rtpbvdepay.object-hierarchy" class="shortcut">Object Hierarchy</a></span>
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
@@ -31,6 +32,29 @@
 </td>
 <td class="gallery_image" valign="top" align="right"></td>
 </tr></table></div>
+<a name="GstRTPBVDepay"></a><div class="refsect1">
+<a name="gst-plugins-good-plugins-rtpbvdepay.other"></a><h2>Types and Values</h2>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="name">
+<col class="description">
+</colgroup>
+<tbody><tr>
+<td class="datatype_keyword">struct</td>
+<td class="function_name"><a class="link" href="gst-plugins-good-plugins-rtpbvdepay.html#GstRTPBVDepay-struct" title="struct GstRTPBVDepay">GstRTPBVDepay</a></td>
+</tr></tbody>
+</table></div>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-rtpbvdepay.object-hierarchy"></a><h2>Object Hierarchy</h2>
+<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstObject.html#GstObject-struct">GstObject</a>
+            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElement.html#GstElement-struct">GstElement</a>
+                <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-gstrtpbasedepayload.html#GstRTPBaseDepayload-struct">GstRTPBaseDepayload</a>
+                    <span class="lineart">╰──</span> GstRTPBVDepay
+</pre>
+</div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpbvdepay.description"></a><h2>Description</h2>
 <p>Extract BroadcomVoice audio from RTP packets according to RFC 4298.
@@ -38,7 +62,7 @@ For detailed information see: http://www.rfc-editor.org/rfc/rfc4298.txt</p>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.119.3.3.1"></a><h3>Element Information</h3>
+<a name="id-1.2.131.6.3.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -64,7 +88,7 @@ For detailed information see: http://www.rfc-editor.org/rfc/rfc4298.txt</p>
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.119.3.3.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.131.6.3.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -126,6 +150,10 @@ For detailed information see: http://www.rfc-editor.org/rfc/rfc4298.txt</p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpbvdepay.other_details"></a><h2>Types and Values</h2>
+<div class="refsect2">
+<a name="GstRTPBVDepay-struct"></a><h3>struct GstRTPBVDepay</h3>
+<pre class="programlisting">struct GstRTPBVDepay;</pre>
+</div>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpbvdepay.see-also"></a><h2>See Also</h2>

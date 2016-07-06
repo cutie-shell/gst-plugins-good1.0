@@ -74,10 +74,10 @@ gst_rtp_vp9_depay_class_init (GstRtpVP9DepayClass * gst_rtp_vp9_depay_class)
       (GstRTPBaseDepayloadClass *) (gst_rtp_vp9_depay_class);
 
 
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&gst_rtp_vp9_depay_sink_template));
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&gst_rtp_vp9_depay_src_template));
+  gst_element_class_add_static_pad_template (element_class,
+      &gst_rtp_vp9_depay_sink_template);
+  gst_element_class_add_static_pad_template (element_class,
+      &gst_rtp_vp9_depay_src_template);
 
   gst_element_class_set_static_metadata (element_class, "RTP VP9 depayloader",
       "Codec/Depayloader/Network/RTP",
@@ -166,7 +166,12 @@ gst_rtp_vp9_depay_process (GstRTPBaseDepayload * depay, GstRTPBuffer * rtp)
   }
 
   /* flexible-mode not implemented */
-  g_assert (!f_bit);
+  if (f_bit) {
+    GST_ELEMENT_WARNING (depay, STREAM, NOT_IMPLEMENTED,
+        ("Stream type not supported"),
+        ("Depayloader does not implement flexible mode"));
+    return NULL;
+  }
 
   /* Check L optional header layer indices */
   if (l_bit) {

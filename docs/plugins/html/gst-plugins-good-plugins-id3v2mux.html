@@ -7,7 +7,7 @@
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-id3demux.html" title="id3demux">
-<link rel="next" href="gst-plugins-good-plugins-imagefreeze.html" title="imagefreeze">
+<link rel="next" href="gst-plugins-good-plugins-iirequalizer.html" title="iirequalizer">
 <meta name="generator" content="GTK-Doc V1.25 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
@@ -22,7 +22,7 @@
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
 <td><a accesskey="p" href="gst-plugins-good-plugins-id3demux.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
-<td><a accesskey="n" href="gst-plugins-good-plugins-imagefreeze.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
+<td><a accesskey="n" href="gst-plugins-good-plugins-iirequalizer.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="gst-plugins-good-plugins-id3v2mux"></a><div class="titlepage"></div>
@@ -64,10 +64,44 @@ GstId3v2Mux implements
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-id3v2mux.description"></a><h2>Description</h2>
+<p>This element adds ID3v2 tags to the beginning of a stream using the taglib
+library. More precisely, the tags written are ID3 version 2.4.0 tags (which
+means in practice that some hardware players or outdated programs might not
+be able to read them properly).</p>
+<p>Applications can set the tags to write using the <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstTagSetter.html#GstTagSetter-struct"><span class="type">GstTagSetter</span></a> interface.
+Tags sent by upstream elements will be picked up automatically (and merged
+according to the merge mode set via the tag setter interface).</p>
+<div class="refsect2">
+<a name="id-1.2.73.7.4"></a><h3>Example pipelines</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v filesrc location<span class="gtkdoc opt">=</span>foo<span class="gtkdoc opt">.</span>ogg <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> lame <span class="gtkdoc opt">!</span> id3v2mux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>foo<span class="gtkdoc opt">.</span>mp3</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ A pipeline that transcodes a file from Ogg/Vorbis to mp3 format with an
+ID3v2 that contains the same as the the Ogg/Vorbis file. Make sure the
+Ogg/Vorbis file actually has comments to preserve.
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>m filesrc location<span class="gtkdoc opt">=</span>foo<span class="gtkdoc opt">.</span>mp3 <span class="gtkdoc opt">!</span> id3demux <span class="gtkdoc opt">!</span> fakesink silent<span class="gtkdoc opt">=</span>TRUE <span class="number">2</span><span class="gtkdoc opt">&gt; /</span>dev<span class="gtkdoc opt">/</span>null <span class="gtkdoc opt">|</span> grep taglist</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ Verify that tags have been written.
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.67.7.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.73.7.5.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -93,7 +127,7 @@ GstId3v2Mux implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.67.7.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.73.7.5.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -155,6 +189,10 @@ GstId3v2Mux implements
 <a name="GstId3v2Mux-struct"></a><h3>struct GstId3v2Mux</h3>
 <pre class="programlisting">struct GstId3v2Mux;</pre>
 </div>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-id3v2mux.see-also"></a><h2>See Also</h2>
+<p><a class="link" href="gst-plugins-good-plugins-id3demux.html#GstID3Demux"><span class="type">GstID3Demux</span></a>, <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstTagSetter.html#GstTagSetter-struct"><span class="type">GstTagSetter</span></a></p>
 </div>
 </div>
 <div class="footer">

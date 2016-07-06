@@ -69,14 +69,17 @@ struct _GstDVDemux {
   gint           frequency;
   gint           channels;
 
+  gboolean       discont;
   gint64         frame_offset;
   gint64         audio_offset;
   gint64         video_offset;
 
   GstDVDemuxSeekHandler seek_handler;
   GstSegment     byte_segment;
+  gboolean       upstream_time_segment;
   GstSegment     time_segment;
   gboolean       need_segment;
+  guint32        segment_seqnum;
   gboolean       new_media;
   int            frames_since_new_media;
   

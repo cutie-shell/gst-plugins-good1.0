@@ -6,7 +6,7 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
-<link rel="prev" href="gst-plugins-good-plugins-rtpssrcdemux.html" title="rtpssrcdemux">
+<link rel="prev" href="gst-plugins-good-plugins-rtpxqtdepay.html" title="rtpxqtdepay">
 <link rel="next" href="gst-plugins-good-plugins-sbcparse.html" title="sbcparse">
 <meta name="generator" content="GTK-Doc V1.25 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
@@ -23,7 +23,7 @@
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
-<td><a accesskey="p" href="gst-plugins-good-plugins-rtpssrcdemux.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="p" href="gst-plugins-good-plugins-rtpxqtdepay.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
 <td><a accesskey="n" href="gst-plugins-good-plugins-sbcparse.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
@@ -231,6 +231,11 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--max-rtcp-rtp-time-diff" title="The “max-rtcp-rtp-time-diff” property">max-rtcp-rtp-time-diff</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--rfc7273-sync" title="The “rfc7273-sync” property">rfc7273-sync</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -322,7 +327,7 @@ This feature is implemented using the gstrtpbin element.</p>
 <p>rtspsrc acts like a live source and will therefore only generate data in the
 PLAYING state.</p>
 <div class="refsect2">
-<a name="id-1.2.149.9.7"></a><h3>Example launch line</h3>
+<a name="id-1.2.225.9.7"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -339,7 +344,7 @@ fakesink.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.149.9.8.1"></a><h3>Element Information</h3>
+<a name="id-1.2.225.9.8.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -365,7 +370,7 @@ fakesink.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.149.9.8.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.225.9.8.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -688,7 +693,7 @@ keep alive and then this property needs to be set to FALSE.</p>
 <pre class="programlisting">  “user-agent”               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
 <p>The User-Agent string to send to the server.</p>
 <p>Flags: Read / Write</p>
-<p>Default value: "GStreamer/1.8.2"</p>
+<p>Default value: "GStreamer/1.9.1"</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -698,6 +703,14 @@ keep alive and then this property needs to be set to FALSE.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &gt;= G_MAXULONG</p>
 <p>Default value: 1000</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc--rfc7273-sync"></a><h3>The <code class="literal">“rfc7273-sync”</code> property</h3>
+<pre class="programlisting">  “rfc7273-sync”             <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<p>Synchronize received streams to the RFC7273 clock (requires clock and offset to be provided).</p>
+<p>Flags: Read / Write</p>
+<p>Default value: FALSE</p>
 </div>
 </div>
 <div class="refsect1">

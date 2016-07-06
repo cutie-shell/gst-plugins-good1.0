@@ -44,12 +44,12 @@
 </colgroup>
 <tbody>
 <tr>
-<td class="property_type"><span class="type">GstDeinterlaceFields</span></td>
+<td class="property_type"><a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlaceFields" title="enum GstDeinterlaceFields"><span class="type">GstDeinterlaceFields</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlace--fields" title="The “fields” property">fields</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><span class="type">GstDeinterlaceMethods</span></td>
+<td class="property_type"><a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlaceMethods" title="enum GstDeinterlaceMethods"><span class="type">GstDeinterlaceMethods</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlace--method" title="The “method” property">method</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -59,7 +59,7 @@
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><span class="type">GstDeinterlaceFieldLayout</span></td>
+<td class="property_type"><a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlaceFieldLayout" title="enum GstDeinterlaceFieldLayout"><span class="type">GstDeinterlaceFieldLayout</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlace--tff" title="The “tff” property">tff</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -74,7 +74,7 @@
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><span class="type">GstDeinterlaceLocking</span></td>
+<td class="property_type"><a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlaceLocking" title="enum GstDeinterlaceLocking"><span class="type">GstDeinterlaceLocking</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlace--locking" title="The “locking” property">locking</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -88,10 +88,28 @@
 <col width="150px" class="name">
 <col class="description">
 </colgroup>
-<tbody><tr>
+<tbody>
+<tr>
 <td class="datatype_keyword">struct</td>
 <td class="function_name"><a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlace-struct" title="struct GstDeinterlace">GstDeinterlace</a></td>
-</tr></tbody>
+</tr>
+<tr>
+<td class="datatype_keyword">enum</td>
+<td class="function_name"><a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlaceFields" title="enum GstDeinterlaceFields">GstDeinterlaceFields</a></td>
+</tr>
+<tr>
+<td class="datatype_keyword">enum</td>
+<td class="function_name"><a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlaceLocking" title="enum GstDeinterlaceLocking">GstDeinterlaceLocking</a></td>
+</tr>
+<tr>
+<td class="datatype_keyword">enum</td>
+<td class="function_name"><a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlaceMethods" title="enum GstDeinterlaceMethods">GstDeinterlaceMethods</a></td>
+</tr>
+<tr>
+<td class="datatype_keyword">enum</td>
+<td class="function_name"><a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlaceFieldLayout" title="enum GstDeinterlaceFieldLayout">GstDeinterlaceFieldLayout</a></td>
+</tr>
+</tbody>
 </table></div>
 </div>
 <div class="refsect1">
@@ -114,7 +132,7 @@ GstDeinterlace implements
 <p>deinterlace deinterlaces interlaced video frames to progressive video frames.
 For this different algorithms can be selected which will be described later.</p>
 <div class="refsect2">
-<a name="id-1.2.40.8.3"></a><h3>Example launch line</h3>
+<a name="id-1.2.43.8.3"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -130,7 +148,7 @@ For this different algorithms can be selected which will be described later.</p>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.40.8.4.1"></a><h3>Element Information</h3>
+<a name="id-1.2.43.8.4.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -156,7 +174,7 @@ For this different algorithms can be selected which will be described later.</p>
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.40.8.4.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.43.8.4.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -181,7 +199,7 @@ For this different algorithms can be selected which will be described later.</p>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> video/x-raw(ANY), format=(string){ I420, YV12, YUY2, UYVY, AYUV, RGBx, BGRx, xRGB, xBGR, RGBA, BGRA, ARGB, ABGR, RGB, BGR, Y41B, Y42B, YVYU, Y444, v210, v216, NV12, NV21, NV16, NV61, NV24, GRAY8, GRAY16_BE, GRAY16_LE, v308, RGB16, BGR16, RGB15, BGR15, UYVP, A420, RGB8P, YUV9, YVU9, IYU1, ARGB64, AYUV64, r210, I420_10LE, I420_10BE, I422_10LE, I422_10BE, Y444_10LE, Y444_10BE, GBR, GBR_10LE, GBR_10BE, NV12_64Z32, A420_10LE, A420_10BE, A422_10LE, A422_10BE, A444_10LE, A444_10BE }, width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
+<td> video/x-raw(ANY), format=(string){ I420, YV12, YUY2, UYVY, AYUV, RGBx, BGRx, xRGB, xBGR, RGBA, BGRA, ARGB, ABGR, RGB, BGR, Y41B, Y42B, YVYU, Y444, v210, v216, NV12, NV21, NV16, NV61, NV24, GRAY8, GRAY16_BE, GRAY16_LE, v308, IYU2, RGB16, BGR16, RGB15, BGR15, UYVP, A420, RGB8P, YUV9, YVU9, IYU1, ARGB64, AYUV64, r210, I420_10LE, I420_10BE, I422_10LE, I422_10BE, Y444_10LE, Y444_10BE, GBR, GBR_10LE, GBR_10BE, NV12_64Z32, A420_10LE, A420_10BE, A422_10LE, A422_10BE, A444_10LE, A444_10BE, P010_10LE, P010_10BE }, width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
 </tr>
 </tbody>
 </table></div>
@@ -209,7 +227,7 @@ For this different algorithms can be selected which will be described later.</p>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> video/x-raw(ANY), format=(string){ I420, YV12, YUY2, UYVY, AYUV, RGBx, BGRx, xRGB, xBGR, RGBA, BGRA, ARGB, ABGR, RGB, BGR, Y41B, Y42B, YVYU, Y444, v210, v216, NV12, NV21, NV16, NV61, NV24, GRAY8, GRAY16_BE, GRAY16_LE, v308, RGB16, BGR16, RGB15, BGR15, UYVP, A420, RGB8P, YUV9, YVU9, IYU1, ARGB64, AYUV64, r210, I420_10LE, I420_10BE, I422_10LE, I422_10BE, Y444_10LE, Y444_10BE, GBR, GBR_10LE, GBR_10BE, NV12_64Z32, A420_10LE, A420_10BE, A422_10LE, A422_10BE, A444_10LE, A444_10BE }, width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
+<td> video/x-raw(ANY), format=(string){ I420, YV12, YUY2, UYVY, AYUV, RGBx, BGRx, xRGB, xBGR, RGBA, BGRA, ARGB, ABGR, RGB, BGR, Y41B, Y42B, YVYU, Y444, v210, v216, NV12, NV21, NV16, NV61, NV24, GRAY8, GRAY16_BE, GRAY16_LE, v308, IYU2, RGB16, BGR16, RGB15, BGR15, UYVP, A420, RGB8P, YUV9, YVU9, IYU1, ARGB64, AYUV64, r210, I420_10LE, I420_10BE, I422_10LE, I422_10BE, Y444_10LE, Y444_10BE, GBR, GBR_10LE, GBR_10BE, NV12_64Z32, A420_10LE, A420_10BE, A422_10LE, A422_10BE, A444_10LE, A444_10BE, P010_10LE, P010_10BE }, width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
 </tr>
 </tbody>
 </table></div>
@@ -226,12 +244,181 @@ For this different algorithms can be selected which will be described later.</p>
 <a name="GstDeinterlace-struct"></a><h3>struct GstDeinterlace</h3>
 <pre class="programlisting">struct GstDeinterlace;</pre>
 </div>
+<hr>
+<div class="refsect2">
+<a name="GstDeinterlaceFields"></a><h3>enum GstDeinterlaceFields</h3>
+<div class="refsect3">
+<a name="GstDeinterlaceFields.members"></a><h4>Members</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="300px" class="enum_members_name">
+<col class="enum_members_description">
+<col width="200px" class="enum_members_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-ALL:CAPS"></a>GST_DEINTERLACE_ALL</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-TF:CAPS"></a>GST_DEINTERLACE_TF</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-BF:CAPS"></a>GST_DEINTERLACE_BF</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-FIELDS-AUTO:CAPS"></a>GST_DEINTERLACE_FIELDS_AUTO</p></td>
+<td> </td>
+<td> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstDeinterlaceLocking"></a><h3>enum GstDeinterlaceLocking</h3>
+<div class="refsect3">
+<a name="GstDeinterlaceLocking.members"></a><h4>Members</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="300px" class="enum_members_name">
+<col class="enum_members_description">
+<col width="200px" class="enum_members_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-LOCKING-NONE:CAPS"></a>GST_DEINTERLACE_LOCKING_NONE</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-LOCKING-AUTO:CAPS"></a>GST_DEINTERLACE_LOCKING_AUTO</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-LOCKING-ACTIVE:CAPS"></a>GST_DEINTERLACE_LOCKING_ACTIVE</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-LOCKING-PASSIVE:CAPS"></a>GST_DEINTERLACE_LOCKING_PASSIVE</p></td>
+<td> </td>
+<td> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstDeinterlaceMethods"></a><h3>enum GstDeinterlaceMethods</h3>
+<div class="refsect3">
+<a name="GstDeinterlaceMethods.members"></a><h4>Members</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="300px" class="enum_members_name">
+<col class="enum_members_description">
+<col width="200px" class="enum_members_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-TOMSMOCOMP:CAPS"></a>GST_DEINTERLACE_TOMSMOCOMP</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-GREEDY-H:CAPS"></a>GST_DEINTERLACE_GREEDY_H</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-GREEDY-L:CAPS"></a>GST_DEINTERLACE_GREEDY_L</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-VFIR:CAPS"></a>GST_DEINTERLACE_VFIR</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-LINEAR:CAPS"></a>GST_DEINTERLACE_LINEAR</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-LINEAR-BLEND:CAPS"></a>GST_DEINTERLACE_LINEAR_BLEND</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-SCALER-BOB:CAPS"></a>GST_DEINTERLACE_SCALER_BOB</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-WEAVE:CAPS"></a>GST_DEINTERLACE_WEAVE</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-WEAVE-TFF:CAPS"></a>GST_DEINTERLACE_WEAVE_TFF</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-WEAVE-BFF:CAPS"></a>GST_DEINTERLACE_WEAVE_BFF</p></td>
+<td> </td>
+<td> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstDeinterlaceFieldLayout"></a><h3>enum GstDeinterlaceFieldLayout</h3>
+<div class="refsect3">
+<a name="GstDeinterlaceFieldLayout.members"></a><h4>Members</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="300px" class="enum_members_name">
+<col class="enum_members_description">
+<col width="200px" class="enum_members_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-LAYOUT-AUTO:CAPS"></a>GST_DEINTERLACE_LAYOUT_AUTO</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-LAYOUT-TFF:CAPS"></a>GST_DEINTERLACE_LAYOUT_TFF</p></td>
+<td> </td>
+<td> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="GST-DEINTERLACE-LAYOUT-BFF:CAPS"></a>GST_DEINTERLACE_LAYOUT_BFF</p></td>
+<td> </td>
+<td> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-deinterlace.property-details"></a><h2>Property Details</h2>
 <div class="refsect2">
 <a name="GstDeinterlace--fields"></a><h3>The <code class="literal">“fields”</code> property</h3>
-<pre class="programlisting">  “fields”                   <span class="type">GstDeinterlaceFields</span></pre>
+<pre class="programlisting">  “fields”                   <a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlaceFields" title="enum GstDeinterlaceFields"><span class="type">GstDeinterlaceFields</span></a></pre>
 <p>This selects which fields should be output. If "all" is selected
 the output framerate will be double.</p>
 <p>Flags: Read / Write</p>
@@ -240,7 +427,7 @@ the output framerate will be double.</p>
 <hr>
 <div class="refsect2">
 <a name="GstDeinterlace--method"></a><h3>The <code class="literal">“method”</code> property</h3>
-<pre class="programlisting">  “method”                   <span class="type">GstDeinterlaceMethods</span></pre>
+<pre class="programlisting">  “method”                   <a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlaceMethods" title="enum GstDeinterlaceMethods"><span class="type">GstDeinterlaceMethods</span></a></pre>
 <p>Selects the different deinterlacing algorithms that can be used.
 These provide different quality and CPU usage.</p>
 <p>Some methods provide parameters which can be set by getting
@@ -305,7 +492,7 @@ on content that has the "interlaced" flag on the caps.</p>
 <hr>
 <div class="refsect2">
 <a name="GstDeinterlace--tff"></a><h3>The <code class="literal">“tff”</code> property</h3>
-<pre class="programlisting">  “tff”                      <span class="type">GstDeinterlaceFieldLayout</span></pre>
+<pre class="programlisting">  “tff”                      <a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlaceFieldLayout" title="enum GstDeinterlaceFieldLayout"><span class="type">GstDeinterlaceFieldLayout</span></a></pre>
 <p>Deinterlace top field first.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: Auto detection</p>
@@ -331,7 +518,7 @@ NTSC 2:3 pulldown variants are the only really common patterns.</p>
 <hr>
 <div class="refsect2">
 <a name="GstDeinterlace--locking"></a><h3>The <code class="literal">“locking”</code> property</h3>
-<pre class="programlisting">  “locking”                  <span class="type">GstDeinterlaceLocking</span></pre>
+<pre class="programlisting">  “locking”                  <a class="link" href="gst-plugins-good-plugins-deinterlace.html#GstDeinterlaceLocking" title="enum GstDeinterlaceLocking"><span class="type">GstDeinterlaceLocking</span></a></pre>
 <p>This selects which approach to pattern locking is used which affects
 processing latency and accuracy of timestamp adjustment for telecine
 streams.</p>

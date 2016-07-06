@@ -89,10 +89,29 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-dvdec.description"></a><h2>Description</h2>
+<p>dvdec decodes DV video into raw video. The element expects a full DV frame
+as input, which is 120000 bytes for NTSC and 144000 for PAL video.</p>
+<p>This element can perform simple frame dropping with the <a class="link" href="gst-plugins-good-plugins-dvdec.html#GstDVDec--drop-factor" title="The “drop-factor” property"><span class="type">“drop-factor”</span></a>
+property. Setting this property to a value N &gt; 1 will only decode every 
+Nth frame.</p>
+<div class="refsect2">
+<a name="id-1.2.49.7.4"></a><h3>Example launch line</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span>test<span class="gtkdoc opt">.</span>dv <span class="gtkdoc opt">!</span> dvdemux name<span class="gtkdoc opt">=</span>demux <span class="gtkdoc opt">!</span> dvdec <span class="gtkdoc opt">!</span> xvimagesink</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ This pipeline decodes and renders the raw DV stream to a videosink.
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.46.7.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.49.7.5.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -118,7 +137,7 @@
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.46.7.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.49.7.5.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">

@@ -124,10 +124,49 @@ GstPulseSink implements
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-pulsesink.description"></a><h2>Description</h2>
+<p>This element outputs audio to a</p>
+<a class="ulink" href="" target="_top">PulseAudio sound server</a>.
+<div class="refsect2">
+<a name="id-1.2.112.8.4"></a><h3>Example pipelines</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v filesrc location<span class="gtkdoc opt">=</span>sine<span class="gtkdoc opt">.</span>ogg <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> vorbisdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioresample <span class="gtkdoc opt">!</span> pulsesink</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ Play an Ogg/Vorbis file.
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v audiotestsrc <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> volume volume<span class="gtkdoc opt">=</span><span class="number">0.4</span> <span class="gtkdoc opt">!</span> pulsesink</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ Play a 440Hz sine wave.
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v audiotestsrc <span class="gtkdoc opt">!</span> pulsesink stream<span class="gtkdoc opt">-</span>properties<span class="gtkdoc opt">=</span><span class="string">&quot;props,media.title=test&quot;</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ Play a sine wave and set a stream property. The property can be checked
+with "pactl list".
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.102.8.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.112.8.5.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -153,7 +192,7 @@ GstPulseSink implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.102.8.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.112.8.5.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -266,7 +305,29 @@ GstPulseSink implements
 <div class="refsect2">
 <a name="GstPulseSink--stream-properties"></a><h3>The <code class="literal">“stream-properties”</code> property</h3>
 <pre class="programlisting">  “stream-properties”        <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstStructure.html#GstStructure-struct"><span class="type">GstStructure</span></a> *</pre>
-<p>list of pulseaudio stream properties.</p>
+<p>List of pulseaudio stream properties. A list of defined properties can be
+found in the <a class="ulink" href="http://0pointer.de/lennart/projects/pulseaudio/doxygen/proplist_8h.html" target="_top">pulseaudio api docs</a>.</p>
+<p>Below is an example for registering as a music application to pulseaudio.</p>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2
+3
+4
+5</pre></td>
+        <td class="listing_code"><pre class="programlisting">GstStructure <span class="gtkdoc opt">*</span>props<span class="gtkdoc opt">;</span>
+
+props <span class="gtkdoc opt">=</span> <span class="function"><a href="/usr/share/gtk-doc/html/gstreamer-1.0GstStructure.html#gst-structure-from-string">gst_structure_from_string</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;props,media.role=music&quot;</span><span class="gtkdoc opt">,</span> NULL<span class="gtkdoc opt">);</span>
+<span class="function"><a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#g-object-set">g_object_set</a></span> <span class="gtkdoc opt">(</span>pulse<span class="gtkdoc opt">,</span> <span class="string">&quot;stream-properties&quot;</span><span class="gtkdoc opt">,</span> props<span class="gtkdoc opt">,</span> NULL<span class="gtkdoc opt">);</span>
+gst_structure_free</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p></p>
 <p>Flags: Read / Write</p>
 </div>
 <hr>
@@ -285,6 +346,10 @@ GstPulseSink implements
 <p>Flags: Read</p>
 <p>Default value: NULL</p>
 </div>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-pulsesink.see-also"></a><h2>See Also</h2>
+<p>pulsesrc</p>
 </div>
 </div>
 <div class="footer">

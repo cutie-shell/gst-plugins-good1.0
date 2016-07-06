@@ -7,7 +7,7 @@
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-pulsesink.html" title="pulsesink">
-<link rel="next" href="gst-plugins-good-plugins-qtdemux.html" title="qtdemux">
+<link rel="next" href="gst-plugins-good-plugins-pushfilesrc.html" title="pushfilesrc">
 <meta name="generator" content="GTK-Doc V1.25 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
@@ -23,7 +23,7 @@
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
 <td><a accesskey="p" href="gst-plugins-good-plugins-pulsesink.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
-<td><a accesskey="n" href="gst-plugins-good-plugins-qtdemux.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
+<td><a accesskey="n" href="gst-plugins-good-plugins-pushfilesrc.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="gst-plugins-good-plugins-pulsesrc"></a><div class="titlepage"></div>
@@ -131,10 +131,26 @@ GstPulseSrc implements
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-pulsesrc.description"></a><h2>Description</h2>
+<p>This element captures audio from a</p>
+<a class="ulink" href="" target="_top">PulseAudio sound server</a>.
+<div class="refsect2">
+<a name="id-1.2.113.8.4"></a><h3>Example pipelines</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v pulsesrc <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> vorbisenc <span class="gtkdoc opt">!</span> oggmux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>alsasrc<span class="gtkdoc opt">.</span>ogg</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ Record from a sound card using pulseaudio and encode to Ogg/Vorbis.
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.103.8.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.113.8.5.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -160,7 +176,7 @@ GstPulseSrc implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.103.8.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.113.8.5.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -236,14 +252,36 @@ GstPulseSrc implements
 <div class="refsect2">
 <a name="GstPulseSrc--stream-properties"></a><h3>The <code class="literal">“stream-properties”</code> property</h3>
 <pre class="programlisting">  “stream-properties”        <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstStructure.html#GstStructure-struct"><span class="type">GstStructure</span></a> *</pre>
-<p>list of pulseaudio stream properties.</p>
+<p>List of pulseaudio stream properties. A list of defined properties can be
+found in the <a class="ulink" href="" target="_top">pulseaudio api docs</a>.</p>
+<p>Below is an example for registering as a music application to pulseaudio.</p>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2
+3
+4
+5</pre></td>
+        <td class="listing_code"><pre class="programlisting">GstStructure <span class="gtkdoc opt">*</span>props<span class="gtkdoc opt">;</span>
+
+props <span class="gtkdoc opt">=</span> <span class="function"><a href="/usr/share/gtk-doc/html/gstreamer-1.0GstStructure.html#gst-structure-from-string">gst_structure_from_string</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;props,media.role=music&quot;</span><span class="gtkdoc opt">,</span> NULL<span class="gtkdoc opt">);</span>
+<span class="function"><a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#g-object-set">g_object_set</a></span> <span class="gtkdoc opt">(</span>pulse<span class="gtkdoc opt">,</span> <span class="string">&quot;stream-properties&quot;</span><span class="gtkdoc opt">,</span> props<span class="gtkdoc opt">,</span> NULL<span class="gtkdoc opt">);</span>
+<span class="function"><a href="/usr/share/gtk-doc/html/gstreamer-1.0GstStructure.html#gst-structure-free">gst_structure_free</a></span> <span class="gtkdoc opt">(</span>props<span class="gtkdoc opt">);</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p></p>
 <p>Flags: Read / Write</p>
 </div>
 <hr>
 <div class="refsect2">
 <a name="GstPulseSrc--mute"></a><h3>The <code class="literal">“mute”</code> property</h3>
 <pre class="programlisting">  “mute”                     <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
-<p>Mute state of this stream.</p>
+<p>Whether the stream is muted or not.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: FALSE</p>
 </div>
@@ -251,7 +289,7 @@ GstPulseSrc implements
 <div class="refsect2">
 <a name="GstPulseSrc--source-output-index"></a><h3>The <code class="literal">“source-output-index”</code> property</h3>
 <pre class="programlisting">  “source-output-index”      <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
-<p>The index of the PulseAudio source output corresponding to this record stream.</p>
+<p>The index of the PulseAudio source output corresponding to this element.</p>
 <p>Flags: Read</p>
 <p>Default value: 4294967295</p>
 </div>
@@ -259,7 +297,7 @@ GstPulseSrc implements
 <div class="refsect2">
 <a name="GstPulseSrc--volume"></a><h3>The <code class="literal">“volume”</code> property</h3>
 <pre class="programlisting">  “volume”                   <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></pre>
-<p>Linear volume of this stream, 1.0=100%.</p>
+<p>The volume of the record stream.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: [0,10]</p>
 <p>Default value: 1</p>
@@ -268,7 +306,7 @@ GstPulseSrc implements
 <div class="refsect2">
 <a name="GstPulseSrc--client-name"></a><h3>The <code class="literal">“client-name”</code> property</h3>
 <pre class="programlisting">  “client-name”              <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
-<p>The PulseAudio client_name_to_use.</p>
+<p>The PulseAudio client name to use.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: "lt-gst-plugins-good-plugins-scan"</p>
 </div>
@@ -280,6 +318,10 @@ GstPulseSrc implements
 <p>Flags: Read</p>
 <p>Default value: NULL</p>
 </div>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-pulsesrc.see-also"></a><h2>See Also</h2>
+<p>pulsesink</p>
 </div>
 </div>
 <div class="footer">

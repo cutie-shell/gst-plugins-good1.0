@@ -424,10 +424,10 @@ gst_rtp_h263_pay_class_init (GstRtpH263PayClass * klass)
           "Disable packetization modes B and C", DEFAULT_MODE_A,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&gst_rtp_h263_pay_src_template));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&gst_rtp_h263_pay_sink_template));
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &gst_rtp_h263_pay_src_template);
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &gst_rtp_h263_pay_sink_template);
 
   gst_element_class_set_static_metadata (gstelement_class,
       "RTP H263 packet payloader", "Codec/Payloader/Network/RTP",
@@ -952,18 +952,15 @@ static GstRtpH263PayMB *
 gst_rtp_h263_pay_B_mbfinder (GstRtpH263PayContext * context,
     GstRtpH263PayGob * gob, GstRtpH263PayMB * macroblock, guint mba)
 {
-
   guint mb_type_index;
   guint cbpy_type_index;
   guint tcoef_type_index;
   GstRtpH263PayMB *mac;
   GstRtpH263PayBoundry boundry;
 
-
   gst_rtp_h263_pay_boundry_init (&boundry, macroblock->end,
       macroblock->end, 8 - macroblock->ebit, macroblock->ebit);
   mac = gst_rtp_h263_pay_mb_new (&boundry, mba);
-
 
   if (mac->sbit == 8) {
     mac->start++;
@@ -973,6 +970,9 @@ gst_rtp_h263_pay_B_mbfinder (GstRtpH263PayContext * context,
 
   GST_LOG ("current_pos:%p, end:%p, rest_bits:%d, window:%x",
       mac->start, mac->end, macroblock->ebit, context->window);
+
+  /* macroblock isn't needed anymore */
+  gst_rtp_h263_pay_mb_destroy (macroblock);
 
   GST_LOG ("Current pos after COD: %p", mac->end);
 
@@ -1225,7 +1225,6 @@ gst_rtp_h263_pay_B_mbfinder (GstRtpH263PayContext * context,
   return mac;
 
 beach:
-  gst_rtp_h263_pay_mb_destroy (mac);
   return NULL;
 }
 
@@ -1589,7 +1588,6 @@ gst_rtp_h263_pay_mode_B_fragment (GstRtpH263Pay * rtph263pay,
   }
 
     /*---------- END OF MODE B FRAGMENTATION ----------*/
-
   gst_rtp_h263_pay_mb_destroy (mac);
   return TRUE;
 

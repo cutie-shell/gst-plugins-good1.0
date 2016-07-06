@@ -90,10 +90,10 @@ gst_rtp_vorbis_depay_class_init (GstRtpVorbisDepayClass * klass)
   gstrtpbasedepayload_class->process_rtp_packet = gst_rtp_vorbis_depay_process;
   gstrtpbasedepayload_class->set_caps = gst_rtp_vorbis_depay_setcaps;
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&gst_rtp_vorbis_depay_sink_template));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&gst_rtp_vorbis_depay_src_template));
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &gst_rtp_vorbis_depay_sink_template);
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &gst_rtp_vorbis_depay_src_template);
 
   gst_element_class_set_static_metadata (gstelement_class,
       "RTP Vorbis depayloader", "Codec/Depayloader/Network/RTP",
@@ -612,20 +612,12 @@ switch_failed:
   {
     GST_ELEMENT_WARNING (rtpvorbisdepay, STREAM, DECODE,
         (NULL), ("Could not switch codebooks"));
-    if (payload_buffer) {
-      gst_buffer_unmap (payload_buffer, &map);
-      gst_buffer_unref (payload_buffer);
-    }
     return NULL;
   }
 packet_short:
   {
     GST_ELEMENT_WARNING (rtpvorbisdepay, STREAM, DECODE,
         (NULL), ("Packet was too short (%d < 4)", payload_len));
-    if (payload_buffer) {
-      gst_buffer_unmap (payload_buffer, &map);
-      gst_buffer_unref (payload_buffer);
-    }
     return NULL;
   }
 ignore_reserved:

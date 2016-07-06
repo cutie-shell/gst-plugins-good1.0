@@ -6,7 +6,7 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
-<link rel="prev" href="gst-plugins-good-plugins-rtpdtmfsrc.html" title="rtpdtmfsrc">
+<link rel="prev" href="gst-plugins-good-plugins-rtpj2kdepay.html" title="rtpj2kdepay">
 <link rel="next" href="gst-plugins-good-plugins-rtpjitterbuffer.html" title="rtpjitterbuffer">
 <meta name="generator" content="GTK-Doc V1.25 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
@@ -20,7 +20,7 @@
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
-<td><a accesskey="p" href="gst-plugins-good-plugins-rtpdtmfsrc.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="p" href="gst-plugins-good-plugins-rtpj2kdepay.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
 <td><a accesskey="n" href="gst-plugins-good-plugins-rtpjitterbuffer.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
@@ -57,15 +57,18 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpj2kpay.description"></a><h2>Description</h2>
-<p>Payload encode JPEG 2000 pictures into RTP packets according to RFC 5371.
-For detailed information see: http://www.rfc-editor.org/rfc/rfc5371.txt</p>
-<p>The payloader takes a JPEG 2000 picture, scans the header for packetization
-units and constructs the RTP packet header followed by the actual JPEG 2000
-codestream.</p>
+<p>Payload encode JPEG 2000 images into RTP packets according to RFC 5371
+and RFC 5372.
+For detailed information see: https://datatracker.ietf.org/doc/rfc5371/
+and https://datatracker.ietf.org/doc/rfc5372/</p>
+<p>The payloader takes a JPEG 2000 image, scans it for "packetization
+units" and constructs the RTP packet header followed by the JPEG 2000
+codestream. A "packetization unit" is defined as either a JPEG 2000 main header,
+a JPEG 2000 tile-part header, or a JPEG 2000 packet.</p>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.133.6.4.1"></a><h3>Element Information</h3>
+<a name="id-1.2.166.6.4.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -91,7 +94,7 @@ codestream.</p>
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.133.6.4.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.166.6.4.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -112,7 +115,7 @@ codestream.</p>
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>image/x-jpc</td>
+<td>image/x-jpc, sampling=(string){ RGB, BGR, RGBA, BGRA, YCbCrA, YCbCr-4:4:4, YCbCr-4:2:2, YCbCr-4:2:0, YCbCr-4:1:1, GRAYSCALE }</td>
 </tr>
 </tbody>
 </table></div>
@@ -136,7 +139,7 @@ codestream.</p>
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>application/x-rtp, media=(string)video, payload=(int)[ 96, 127 ], clock-rate=(int)90000, encoding-name=(string)JPEG2000</td>
+<td>application/x-rtp, media=(string)video, payload=(int)[ 96, 127 ], clock-rate=(int)90000, sampling=(string){ RGB, BGR, RGBA, BGRA, YCbCrA, YCbCr-4:4:4, YCbCr-4:2:2, YCbCr-4:2:0, YCbCr-4:1:1, GRAYSCALE }, encoding-name=(string)JPEG2000</td>
 </tr>
 </tbody>
 </table></div>

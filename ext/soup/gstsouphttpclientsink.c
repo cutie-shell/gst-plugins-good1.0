@@ -192,8 +192,8 @@ gst_soup_http_client_sink_class_init (GstSoupHttpClientSinkClass * klass)
           SOUP_TYPE_LOGGER_LOG_LEVEL, DEFAULT_SOUP_LOG_LEVEL,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&gst_soup_http_client_sink_sink_template));
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &gst_soup_http_client_sink_sink_template);
 
   gst_element_class_set_static_metadata (gstelement_class, "HTTP client sink",
       "Generic", "Sends streams to HTTP server via PUT",
@@ -585,6 +585,7 @@ gst_soup_http_client_sink_start (GstBaseSink * sink)
           soup_session_async_new_with_options (SOUP_SESSION_ASYNC_CONTEXT,
           souphttpsink->context, SOUP_SESSION_USER_AGENT,
           souphttpsink->user_agent, SOUP_SESSION_TIMEOUT, souphttpsink->timeout,
+          SOUP_SESSION_ADD_FEATURE_BY_TYPE, SOUP_TYPE_PROXY_RESOLVER_DEFAULT,
           NULL);
     } else {
       souphttpsink->session =

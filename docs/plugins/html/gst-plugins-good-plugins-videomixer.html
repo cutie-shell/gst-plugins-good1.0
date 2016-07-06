@@ -6,7 +6,7 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
-<link rel="prev" href="gst-plugins-good-plugins-videoflip.html" title="videoflip">
+<link rel="prev" href="gst-plugins-good-plugins-videomedian.html" title="videomedian">
 <link rel="next" href="gst-plugins-good-plugins-vp8dec.html" title="vp8dec">
 <meta name="generator" content="GTK-Doc V1.25 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
@@ -15,11 +15,14 @@
 <table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="5"><tr valign="middle">
 <td width="100%" align="left" class="shortcuts">
 <a href="#" class="shortcut">Top</a><span id="nav_description">  <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-videomixer.description" class="shortcut">Description</a></span>
+                  <a href="#gst-plugins-good-plugins-videomixer.description" class="shortcut">Description</a></span><span id="nav_hierarchy">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-videomixer.object-hierarchy" class="shortcut">Object Hierarchy</a></span><span id="nav_interfaces">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-videomixer.implemented-interfaces" class="shortcut">Implemented Interfaces</a></span><span id="nav_properties">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-videomixer.properties" class="shortcut">Properties</a></span>
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
-<td><a accesskey="p" href="gst-plugins-good-plugins-videoflip.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="p" href="gst-plugins-good-plugins-videomedian.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
 <td><a accesskey="n" href="gst-plugins-good-plugins-vp8dec.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
@@ -32,8 +35,57 @@
 <td class="gallery_image" valign="top" align="right"></td>
 </tr></table></div>
 <div class="refsect1">
+<a name="gst-plugins-good-plugins-videomixer.properties"></a><h2>Properties</h2>
+<div class="informaltable"><table class="informaltable" border="0">
+<colgroup>
+<col width="150px" class="properties_type">
+<col width="300px" class="properties_name">
+<col width="200px" class="properties_flags">
+</colgroup>
+<tbody><tr>
+<td class="property_type"><a class="link" href="gst-plugins-good-plugins-videomixer.html#GstVideoMixer2Background" title="enum GstVideoMixer2Background"><span class="type">GstVideoMixer2Background</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-videomixer.html#GstVideoMixer2--background" title="The “background” property">background</a></td>
+<td class="property_flags">Read / Write</td>
+</tr></tbody>
+</table></div>
+</div>
+<a name="GstVideoMixer2"></a><div class="refsect1">
+<a name="gst-plugins-good-plugins-videomixer.other"></a><h2>Types and Values</h2>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="name">
+<col class="description">
+</colgroup>
+<tbody>
+<tr>
+<td class="datatype_keyword">struct</td>
+<td class="function_name"><a class="link" href="gst-plugins-good-plugins-videomixer.html#GstVideoMixer2-struct" title="struct GstVideoMixer2">GstVideoMixer2</a></td>
+</tr>
+<tr>
+<td class="datatype_keyword">enum</td>
+<td class="function_name"><a class="link" href="gst-plugins-good-plugins-videomixer.html#GstVideoMixer2Background" title="enum GstVideoMixer2Background">GstVideoMixer2Background</a></td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-videomixer.object-hierarchy"></a><h2>Object Hierarchy</h2>
+<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstObject.html#GstObject-struct">GstObject</a>
+            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElement.html#GstElement-struct">GstElement</a>
+                <span class="lineart">╰──</span> GstVideoMixer2
+</pre>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-videomixer.implemented-interfaces"></a><h2>Implemented Interfaces</h2>
+<p>
+GstVideoMixer2 implements
+ <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstChildProxy.html#GstChildProxy-struct">GstChildProxy</a>.</p>
+</div>
+<div class="refsect1">
 <a name="gst-plugins-good-plugins-videomixer.description"></a><h2>Description</h2>
-<p>Videomixer2 can accept AYUV, ARGB and BGRA video streams. For each of the requested
+<p>Videomixer can accept AYUV, ARGB and BGRA video streams. For each of the requested
 sink pads it will compare the incoming geometry and framerate to define the
 output parameters. Indeed output video frames will have the geometry of the
 biggest incoming video stream and the framerate of the fastest incoming one.</p>
@@ -41,7 +93,7 @@ biggest incoming video stream and the framerate of the fastest incoming one.</p>
 <p>Individual parameters for each input stream can be configured on the
 <span class="type">GstVideoMixer2Pad</span>.</p>
 <div class="refsect2">
-<a name="id-1.2.179.3.5"></a><h3>Sample pipelines</h3>
+<a name="id-1.2.256.8.5"></a><h3>Sample pipelines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -69,7 +121,7 @@ biggest incoming video stream and the framerate of the fastest incoming one.</p>
  A pipeline to demonstrate videomixer used together with videobox.
 This should show a 320x240 pixels video test source with some transparency
 showing the background checker pattern. Another video test source with just
-the snow pattern of 100x100 pixels is overlayed on top of the first one on
+the snow pattern of 100x100 pixels is overlaid on top of the first one on
 the left vertically centered with a small transparency showing the first
 video test source behind and the checker pattern under it. Note that the
 framerate of the output video is 10 frames per second.
@@ -140,7 +192,7 @@ framerate of the output video is 10 frames per second.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.179.3.6.1"></a><h3>Element Information</h3>
+<a name="id-1.2.256.8.6.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -166,7 +218,7 @@ framerate of the output video is 10 frames per second.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.179.3.6.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.256.8.6.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -224,6 +276,66 @@ framerate of the output video is 10 frames per second.
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-videomixer.other_details"></a><h2>Types and Values</h2>
+<div class="refsect2">
+<a name="GstVideoMixer2-struct"></a><h3>struct GstVideoMixer2</h3>
+<pre class="programlisting">struct GstVideoMixer2;</pre>
+<p>The opaque <a class="link" href="gst-plugins-good-plugins-videomixer.html#GstVideoMixer2"><span class="type">GstVideoMixer2</span></a> structure.</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstVideoMixer2Background"></a><h3>enum GstVideoMixer2Background</h3>
+<p>The different backgrounds videomixer can blend over.</p>
+<div class="refsect3">
+<a name="GstVideoMixer2Background.members"></a><h4>Members</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="300px" class="enum_members_name">
+<col class="enum_members_description">
+<col width="200px" class="enum_members_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="enum_member_name"><p><a name="VIDEO-MIXER2-BACKGROUND-CHECKER:CAPS"></a>VIDEO_MIXER2_BACKGROUND_CHECKER</p></td>
+<td class="enum_member_description">
+<p>checker pattern background</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="VIDEO-MIXER2-BACKGROUND-BLACK:CAPS"></a>VIDEO_MIXER2_BACKGROUND_BLACK</p></td>
+<td class="enum_member_description">
+<p>solid color black background</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="VIDEO-MIXER2-BACKGROUND-WHITE:CAPS"></a>VIDEO_MIXER2_BACKGROUND_WHITE</p></td>
+<td class="enum_member_description">
+<p>solid color white background</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="VIDEO-MIXER2-BACKGROUND-TRANSPARENT:CAPS"></a>VIDEO_MIXER2_BACKGROUND_TRANSPARENT</p></td>
+<td class="enum_member_description">
+<p>background is left transparent and layers are composited using "A OVER B" composition rules. This is only applicable to AYUV and ARGB (and variants) as it preserves the alpha channel and allows for further mixing.</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-videomixer.property-details"></a><h2>Property Details</h2>
+<div class="refsect2">
+<a name="GstVideoMixer2--background"></a><h3>The <code class="literal">“background”</code> property</h3>
+<pre class="programlisting">  “background”               <a class="link" href="gst-plugins-good-plugins-videomixer.html#GstVideoMixer2Background" title="enum GstVideoMixer2Background"><span class="type">GstVideoMixer2Background</span></a></pre>
+<p>Background type.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: Checker pattern</p>
+</div>
 </div>
 </div>
 <div class="footer">

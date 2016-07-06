@@ -114,10 +114,8 @@ gst_aac_parse_class_init (GstAacParseClass * klass)
   GST_DEBUG_CATEGORY_INIT (aacparse_debug, "aacparse", 0,
       "AAC audio stream parser");
 
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&sink_template));
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&src_template));
+  gst_element_class_add_static_pad_template (element_class, &sink_template);
+  gst_element_class_add_static_pad_template (element_class, &src_template);
 
   gst_element_class_set_static_metadata (element_class,
       "AAC audio stream parser", "Codec/Parser/Audio",
@@ -328,17 +326,26 @@ gst_aac_parse_sink_setcaps (GstBaseParse * parse, GstCaps * caps)
       gst_aac_parse_set_src_caps (aacparse, caps);
       if (aacparse->header_type == aacparse->output_header_type)
         gst_base_parse_set_passthrough (parse, TRUE);
-    } else
+    } else {
       return FALSE;
+    }
 
     /* caps info overrides */
     gst_structure_get_int (structure, "rate", &aacparse->sample_rate);
     gst_structure_get_int (structure, "channels", &aacparse->channels);
   } else {
-    aacparse->sample_rate = 0;
-    aacparse->channels = 0;
-    aacparse->header_type = DSPAAC_HEADER_NOT_PARSED;
-    gst_base_parse_set_passthrough (parse, FALSE);
+    const gchar *stream_format =
+        gst_structure_get_string (structure, "stream-format");
+
+    if (g_strcmp0 (stream_format, "raw") == 0) {
+      GST_ERROR_OBJECT (parse, "Need codec_data for raw AAC");
+      return FALSE;
+    } else {
+      aacparse->sample_rate = 0;
+      aacparse->channels = 0;
+      aacparse->header_type = DSPAAC_HEADER_NOT_PARSED;
+      gst_base_parse_set_passthrough (parse, FALSE);
+    }
   }
 
   return TRUE;

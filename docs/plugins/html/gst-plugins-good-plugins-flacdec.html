@@ -57,10 +57,37 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-flacdec.description"></a><h2>Description</h2>
+<p>flacdec decodes FLAC streams.</p>
+<a class="ulink" href="http://flac.sourceforge.net/" target="_top">FLAC</a><p>is a Free Lossless Audio Codec.</p>
+<div class="refsect2">
+<a name="id-1.2.57.6.5"></a><h3>Example launch line</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span>media<span class="gtkdoc opt">/</span>small<span class="gtkdoc opt">/</span>dark<span class="number">.441</span><span class="gtkdoc opt">-</span><span class="number">16</span><span class="gtkdoc opt">-</span>s<span class="gtkdoc opt">.</span>flac <span class="gtkdoc opt">!</span> flacparse <span class="gtkdoc opt">!</span> flacdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioresample <span class="gtkdoc opt">!</span> autoaudiosink</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> souphttpsrc location<span class="gtkdoc opt">=</span>http<span class="gtkdoc opt">:</span><span class="gtkdoc slc">//gstreamer.freedesktop.org/media/small/dark.441-16-s.flac ! flacparse ! flacdec ! audioconvert ! audioresample ! queue min-threshold-buffers=10 ! autoaudiosink</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.53.6.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.57.6.6.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -86,7 +113,7 @@
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.53.6.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.57.6.6.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -148,6 +175,10 @@
 <a name="GstFlacDec-struct"></a><h3>struct GstFlacDec</h3>
 <pre class="programlisting">struct GstFlacDec;</pre>
 </div>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-flacdec.see-also"></a><h2>See Also</h2>
+<p><a class="link" href="gst-plugins-good-plugins-flacenc.html#GstFlacEnc"><span class="type">GstFlacEnc</span></a></p>
 </div>
 </div>
 <div class="footer">

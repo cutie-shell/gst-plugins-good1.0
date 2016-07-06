@@ -7,7 +7,7 @@
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-vp8dec.html" title="vp8dec">
-<link rel="next" href="gst-plugins-good-plugins-warptv.html" title="warptv">
+<link rel="next" href="gst-plugins-good-plugins-vp9dec.html" title="vp9dec">
 <meta name="generator" content="GTK-Doc V1.25 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
@@ -23,7 +23,7 @@
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
 <td><a accesskey="p" href="gst-plugins-good-plugins-vp8dec.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
-<td><a accesskey="n" href="gst-plugins-good-plugins-warptv.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
+<td><a accesskey="n" href="gst-plugins-good-plugins-vp9dec.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="gst-plugins-good-plugins-vp8enc"></a><div class="titlepage"></div>
@@ -302,10 +302,37 @@ GstVP8Enc implements
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-vp8enc.description"></a><h2>Description</h2>
+<p>This element encodes raw video into a VP8 stream.</p>
+<a class="ulink" href="http://www.webmproject.org" target="_top">VP8</a> is a royalty-free
+<p>video codec maintained by <a class="ulink" href="http://www.google.com/" target="_top">Google
+</a>. It's the successor of On2 VP3, which was the base of the
+Theora video codec.</p>
+<p>To control the quality of the encoding, the <span class="type">“target-bitrate”</span>,
+<span class="type">“min-quantizer”</span>, <span class="type">“max-quantizer”</span> or <span class="type">“cq-level”</span>
+properties can be used. Which one is used depends on the mode selected by
+the <span class="type">“end-usage”</span> property.
+See <a class="ulink" href="http://www.webmproject.org/docs/encoder-parameters/" target="_top">Encoder Parameters</a>
+for explanation, examples for useful encoding parameters and more details
+on the encoding parameters.</p>
+<div class="refsect2">
+<a name="id-1.2.258.8.6"></a><h3>Example pipeline</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v videotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">1000</span> <span class="gtkdoc opt">!</span> vp8enc <span class="gtkdoc opt">!</span> webmmux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>videotestsrc<span class="gtkdoc opt">.</span>webm</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ This example pipeline will encode a test video source to VP8 muxed in an
+WebM container.
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.181.8.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.258.8.7.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -331,7 +358,7 @@ GstVP8Enc implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.181.8.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.258.8.7.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -771,6 +798,10 @@ GstVP8Enc implements
 <p>Fraction of one second that is the shortest interframe time - normally left as zero which will default to the framerate.</p>
 <p>Flags: Read / Write</p>
 </div>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-vp8enc.see-also"></a><h2>See Also</h2>
+<p>vp8dec, webmmux, oggmux</p>
 </div>
 </div>
 <div class="footer">

@@ -1216,7 +1216,8 @@ skip_details:
   } else if (!strcmp (mimetype, "video/x-msmpeg")) {
   msmpeg43:
     /* can only make it here if preceding case verified it was version 3 */
-    context->codec_id = g_strdup (GST_MATROSKA_CODEC_ID_VIDEO_MSMPEG4V3);
+    gst_matroska_mux_set_codec_id (context,
+        GST_MATROSKA_CODEC_ID_VIDEO_MSMPEG4V3);
   } else if (!strcmp (mimetype, "video/x-pn-realvideo")) {
     gint rmversion;
     const GValue *mdpr_data;
@@ -1854,7 +1855,8 @@ gst_matroska_mux_audio_pad_setcaps (GstPad * pad, GstCaps * caps)
         }
 
         if (buf) {
-          context->codec_id = g_strdup (GST_MATROSKA_CODEC_ID_AUDIO_AAC);
+          gst_matroska_mux_set_codec_id (context,
+              GST_MATROSKA_CODEC_ID_AUDIO_AAC);
           context->codec_priv_size = gst_buffer_get_size (buf);
           context->codec_priv = g_malloc (context->codec_priv_size);
           gst_buffer_extract (buf, 0, context->codec_priv,
@@ -2290,7 +2292,7 @@ gst_matroska_mux_request_new_pad (GstElement * element,
   GstMatroskaTrackContext *context = NULL;
   gint pad_id;
   gboolean locked = TRUE;
-  gchar *id = NULL;
+  const gchar *id = NULL;
 
   if (templ == gst_element_class_get_pad_template (klass, "audio_%u")) {
     /* don't mix named and unnamed pads, if the pad already exists we fail when
@@ -2335,7 +2337,7 @@ gst_matroska_mux_request_new_pad (GstElement * element,
     context->type = GST_MATROSKA_TRACK_TYPE_SUBTITLE;
     context->name = g_strdup ("Subtitle");
     /* setcaps may only provide proper one a lot later */
-    id = g_strdup ("S_SUB_UNKNOWN");
+    id = "S_SUB_UNKNOWN";
     locked = FALSE;
   } else {
     GST_WARNING_OBJECT (mux, "This is not our template!");
@@ -2354,7 +2356,8 @@ gst_matroska_mux_request_new_pad (GstElement * element,
   collect_pad->mux = mux;
   collect_pad->track = context;
   gst_matroska_pad_reset (collect_pad, FALSE);
-  collect_pad->track->codec_id = id;
+  if (id)
+    gst_matroska_mux_set_codec_id (collect_pad->track, id);
   collect_pad->track->dts_only = FALSE;
 
   collect_pad->capsfunc = capsfunc;
@@ -2872,22 +2875,21 @@ gst_matroska_mux_start (GstMatroskaMux * mux)
   for (collected = mux->collect->data; collected;
       collected = g_slist_next (collected)) {
     GstMatroskaPad *collect_pad;
-    GstPad *thepad;
 
     collect_pad = (GstMatroskaPad *) collected->data;
-    thepad = collect_pad->collect.pad;
 
-    if (gst_pad_is_linked (thepad) && gst_pad_is_active (thepad) &&
-        collect_pad->track->codec_id != 0) {
-      collect_pad->track->num = tracknum++;
-      child = gst_ebml_write_master_start (ebml, GST_MATROSKA_ID_TRACKENTRY);
-      gst_matroska_mux_track_header (mux, collect_pad->track);
-      gst_ebml_write_master_finish (ebml, child);
-      /* some remaining pad/track setup */
-      collect_pad->default_duration_scaled =
-          gst_util_uint64_scale (collect_pad->track->default_duration,
-          1, mux->time_scale);
-    }
+    /* This will cause an error at a later time */
+    if (collect_pad->track->codec_id == NULL)
+      continue;
+
+    collect_pad->track->num = tracknum++;
+    child = gst_ebml_write_master_start (ebml, GST_MATROSKA_ID_TRACKENTRY);
+    gst_matroska_mux_track_header (mux, collect_pad->track);
+    gst_ebml_write_master_finish (ebml, child);
+    /* some remaining pad/track setup */
+    collect_pad->default_duration_scaled =
+        gst_util_uint64_scale (collect_pad->track->default_duration,
+        1, mux->time_scale);
   }
   gst_ebml_write_master_finish (ebml, master);
 
@@ -3541,12 +3543,11 @@ gst_matroska_mux_write_data (GstMatroskaMux * mux, GstMatroskaPad * collect_pad,
   }
 
   /* for dirac we have to queue up everything up to a picture unit */
-  if (!g_strcmp0 (collect_pad->track->codec_id,
-          GST_MATROSKA_CODEC_ID_VIDEO_DIRAC)) {
+  if (!strcmp (collect_pad->track->codec_id, GST_MATROSKA_CODEC_ID_VIDEO_DIRAC)) {
     buf = gst_matroska_mux_handle_dirac_packet (mux, collect_pad, buf);
     if (!buf)
       return GST_FLOW_OK;
-  } else if (!g_strcmp0 (collect_pad->track->codec_id,
+  } else if (!strcmp (collect_pad->track->codec_id,
           GST_MATROSKA_CODEC_ID_VIDEO_PRORES)) {
     /* Remove the 'Frame container atom' header' */
     buf = gst_buffer_make_writable (buf);
@@ -3814,6 +3815,12 @@ gst_matroska_mux_handle_buffer (GstCollectPads * pads, GstCollectData * data,
     }
     gst_pad_push_event (mux->srcpad, gst_event_new_eos ());
     ret = GST_FLOW_EOS;
+    goto exit;
+  }
+
+  if (best->track->codec_id == NULL) {
+    GST_ERROR_OBJECT (best->collect.pad, "No codec-id for pad");
+    ret = GST_FLOW_NOT_NEGOTIATED;
     goto exit;
   }
 

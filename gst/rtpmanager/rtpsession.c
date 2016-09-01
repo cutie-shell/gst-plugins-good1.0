@@ -2393,7 +2393,11 @@ rtp_session_process_sdes (RTPSession * sess, GstRTCPPacket * packet,
 
       value = g_strndup ((const gchar *) data, len);
 
-      gst_structure_set (sdes, name, G_TYPE_STRING, value, NULL);
+      if (g_utf8_validate (value, -1, NULL)) {
+        gst_structure_set (sdes, name, G_TYPE_STRING, value, NULL);
+      } else {
+        GST_WARNING ("ignore SDES field %s with non-utf8 data %s", name, value);
+      }
 
       g_free (name);
       g_free (value);
@@ -2570,6 +2574,11 @@ rtp_session_request_local_key_unit (RTPSession * sess, RTPSource * src,
   if (sess->last_keyframe_request != GST_CLOCK_TIME_NONE && round_trip) {
     GstClockTime round_trip_in_ns = gst_util_uint64_scale (round_trip,
         GST_SECOND, 65536);
+
+     /* Sanity check to avoid always ignoring PLI/FIR if we receive RTCP
+      * packets with erroneous values resulting in crazy high RTT. */
+     if (round_trip_in_ns > 5 * GST_SECOND)
+       round_trip_in_ns = GST_SECOND / 2;
 
     if (current_time - sess->last_keyframe_request < 2 * round_trip_in_ns) {
       GST_DEBUG ("Ignoring %s request because one was send without one "
@@ -4077,7 +4086,7 @@ done:
     empty_buffer = gst_buffer_get_size (buffer) == 0;
 
     if (empty_buffer)
-      g_warning ("rtpsession: Trying to send an empty RTCP packet");
+      GST_ERROR ("rtpsession: Trying to send an empty RTCP packet");
 
     if (sess->callbacks.send_rtcp &&
         !empty_buffer && (do_not_suppress || !data.may_suppress)) {

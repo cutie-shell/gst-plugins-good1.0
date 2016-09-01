@@ -1220,7 +1220,7 @@ static gboolean
 gst_dvdemux_handle_src_event (GstPad * pad, GstObject * parent,
     GstEvent * event)
 {
-  gboolean res = TRUE;
+  gboolean res = FALSE;
   GstDVDemux *dvdemux;
 
   dvdemux = GST_DVDEMUX (parent);
@@ -1230,25 +1230,12 @@ gst_dvdemux_handle_src_event (GstPad * pad, GstObject * parent,
       /* seek handler is installed based on scheduling mode */
       if (dvdemux->seek_handler)
         res = dvdemux->seek_handler (dvdemux, pad, event);
-      else
-        res = FALSE;
-      break;
-    case GST_EVENT_QOS:
-      /* we can't really (yet) do QoS */
-      res = FALSE;
-      break;
-    case GST_EVENT_NAVIGATION:
-    case GST_EVENT_CAPS:
-      /* no navigation or caps either... */
-      res = FALSE;
+      gst_event_unref (event);
       break;
     default:
       res = gst_pad_push_event (dvdemux->sinkpad, event);
-      event = NULL;
       break;
   }
-  if (event)
-    gst_event_unref (event);
 
   return res;
 }
@@ -1905,8 +1892,7 @@ pause:
     } else if (ret == GST_FLOW_NOT_LINKED || ret < GST_FLOW_EOS) {
       GstEvent *event = gst_event_new_eos ();
       /* for fatal errors or not-linked we post an error message */
-      GST_ELEMENT_ERROR (dvdemux, STREAM, FAILED,
-          (NULL), ("streaming stopped, reason %s", gst_flow_get_name (ret)));
+      GST_ELEMENT_FLOW_ERROR (dvdemux, ret);
       if (dvdemux->segment_seqnum)
         gst_event_set_seqnum (event, dvdemux->segment_seqnum);
       gst_dvdemux_push_event (dvdemux, event);

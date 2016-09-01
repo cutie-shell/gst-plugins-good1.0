@@ -968,11 +968,16 @@ gst_soup_http_src_session_close (GstSoupHTTPSrc * src)
   GST_DEBUG_OBJECT (src, "Closing session");
 
   g_mutex_lock (&src->mutex);
+  if (src->msg) {
+    soup_session_cancel_message (src->session, src->msg, SOUP_STATUS_CANCELLED);
+    g_object_unref (src->msg);
+    src->msg = NULL;
+  }
+
   if (src->session) {
-    soup_session_abort (src->session);  /* This unrefs the message. */
+    soup_session_abort (src->session);
     g_object_unref (src->session);
     src->session = NULL;
-    src->msg = NULL;
   }
   g_mutex_unlock (&src->mutex);
 }
@@ -1218,10 +1223,13 @@ gst_soup_http_src_got_headers (GstSoupHTTPSrc * src, SoupMessage * msg)
   if (src->ret == GST_FLOW_CUSTOM_ERROR &&
       src->read_position && msg->status_code != SOUP_STATUS_PARTIAL_CONTENT) {
     src->seekable = FALSE;
-    GST_ELEMENT_ERROR (src, RESOURCE, SEEK,
+    GST_ELEMENT_ERROR_WITH_DETAILS (src, RESOURCE, SEEK,
         (_("Server does not support seeking.")),
         ("Server does not accept Range HTTP header, URL: %s, Redirect to: %s",
-            src->location, GST_STR_NULL (src->redirection_uri)));
+            src->location, GST_STR_NULL (src->redirection_uri)),
+        ("http-status-code", G_TYPE_UINT, msg->status_code,
+            "http-redirection-uri", G_TYPE_STRING,
+            GST_STR_NULL (src->redirection_uri), NULL));
     src->ret = GST_FLOW_ERROR;
   }
 
@@ -1250,9 +1258,13 @@ gst_soup_http_src_alloc_buffer (GstSoupHTTPSrc * src)
 }
 
 #define SOUP_HTTP_SRC_ERROR(src,soup_msg,cat,code,error_message)     \
-  GST_ELEMENT_ERROR ((src), cat, code, ("%s", error_message),        \
-      ("%s (%d), URL: %s, Redirect to: %s", (soup_msg)->reason_phrase,                \
-          (soup_msg)->status_code, (src)->location, GST_STR_NULL ((src)->redirection_uri)));
+  do { \
+    GST_ELEMENT_ERROR_WITH_DETAILS ((src), cat, code, ("%s", error_message), \
+        ("%s (%d), URL: %s, Redirect to: %s", (soup_msg)->reason_phrase, \
+            (soup_msg)->status_code, (src)->location, GST_STR_NULL ((src)->redirection_uri)), \
+            ("http-status-code", G_TYPE_UINT, msg->status_code, \
+             "http-redirect-uri", G_TYPE_STRING, GST_STR_NULL ((src)->redirection_uri), NULL)); \
+  } while(0)
 
 static void
 gst_soup_http_src_parse_status (SoupMessage * msg, GstSoupHTTPSrc * src)
@@ -1319,25 +1331,33 @@ gst_soup_http_src_parse_status (SoupMessage * msg, GstSoupHTTPSrc * src)
      * error dialog according to libsoup documentation.
      */
     if (msg->status_code == SOUP_STATUS_NOT_FOUND) {
-      GST_ELEMENT_ERROR (src, RESOURCE, NOT_FOUND,
+      GST_ELEMENT_ERROR_WITH_DETAILS (src, RESOURCE, NOT_FOUND,
           ("%s", msg->reason_phrase),
           ("%s (%d), URL: %s, Redirect to: %s", msg->reason_phrase,
               msg->status_code, src->location,
-              GST_STR_NULL (src->redirection_uri)));
+              GST_STR_NULL (src->redirection_uri)),
+          ("http-status-code", G_TYPE_UINT, msg->status_code,
+              "http-redirect-uri", G_TYPE_STRING,
+              GST_STR_NULL (src->redirection_uri), NULL));
     } else if (msg->status_code == SOUP_STATUS_UNAUTHORIZED
         || msg->status_code == SOUP_STATUS_PAYMENT_REQUIRED
         || msg->status_code == SOUP_STATUS_FORBIDDEN
         || msg->status_code == SOUP_STATUS_PROXY_AUTHENTICATION_REQUIRED) {
-      GST_ELEMENT_ERROR (src, RESOURCE, NOT_AUTHORIZED, ("%s",
+      GST_ELEMENT_ERROR_WITH_DETAILS (src, RESOURCE, NOT_AUTHORIZED, ("%s",
               msg->reason_phrase), ("%s (%d), URL: %s, Redirect to: %s",
               msg->reason_phrase, msg->status_code, src->location,
-              GST_STR_NULL (src->redirection_uri)));
+              GST_STR_NULL (src->redirection_uri)), ("http-status-code",
+              G_TYPE_UINT, msg->status_code, "http-redirect-uri", G_TYPE_STRING,
+              GST_STR_NULL (src->redirection_uri), NULL));
     } else {
-      GST_ELEMENT_ERROR (src, RESOURCE, OPEN_READ,
+      GST_ELEMENT_ERROR_WITH_DETAILS (src, RESOURCE, OPEN_READ,
           ("%s", msg->reason_phrase),
           ("%s (%d), URL: %s, Redirect to: %s", msg->reason_phrase,
               msg->status_code, src->location,
-              GST_STR_NULL (src->redirection_uri)));
+              GST_STR_NULL (src->redirection_uri)),
+          ("http-status-code", G_TYPE_UINT, msg->status_code,
+              "http-redirect-uri", G_TYPE_STRING,
+              GST_STR_NULL (src->redirection_uri), NULL));
     }
     src->ret = GST_FLOW_ERROR;
   }
@@ -1626,7 +1646,6 @@ gst_soup_http_src_read_buffer (GstSoupHTTPSrc * src, GstBuffer ** outbuf)
     g_mutex_unlock (&src->mutex);
     return GST_FLOW_FLUSHING;
   }
-  g_mutex_unlock (&src->mutex);
 
   gst_buffer_unmap (*outbuf, &mapinfo);
   if (read_bytes > 0) {
@@ -1639,16 +1658,41 @@ gst_soup_http_src_read_buffer (GstSoupHTTPSrc * src, GstBuffer ** outbuf)
     src->retry_count = 0;
 
     gst_soup_http_src_check_update_blocksize (src, read_bytes);
+
+    /* If we're at the end of a range request, read again to let libsoup
+     * finalize the request. This allows to reuse the connection again later,
+     * otherwise we would have to cancel the message and close the connection
+     */
+    if (bsrc->segment.stop != -1
+        && bsrc->segment.position + read_bytes >= bsrc->segment.stop) {
+      guint8 tmp[128];
+
+      g_object_unref (src->msg);
+      src->msg = NULL;
+      src->have_body = TRUE;
+
+      /* This should return immediately as we're at the end of the range */
+      read_bytes =
+          g_input_stream_read (src->input_stream, tmp, sizeof (tmp),
+          src->cancellable, NULL);
+      if (read_bytes > 0)
+        GST_ERROR_OBJECT (src,
+            "Read %" G_GSIZE_FORMAT " bytes after end of range", read_bytes);
+    }
   } else {
     gst_buffer_unref (*outbuf);
     if (read_bytes < 0) {
       /* Maybe the server disconnected, retry */
       ret = GST_FLOW_CUSTOM_ERROR;
     } else {
+      g_object_unref (src->msg);
+      src->msg = NULL;
       ret = GST_FLOW_EOS;
       src->have_body = TRUE;
     }
   }
+  g_mutex_unlock (&src->mutex);
+
   return ret;
 }
 

@@ -48,8 +48,9 @@ typedef enum _SplitMuxState {
 typedef struct _MqStreamBuf
 {
   gboolean keyframe;
-  GstClockTime run_ts;
-  gsize buf_size;
+  GstClockTimeDiff run_ts;
+  guint64 buf_size;
+  GstClockTime duration;
 } MqStreamBuf;
 
 typedef struct _MqStreamCtx
@@ -70,10 +71,10 @@ typedef struct _MqStreamCtx
   GstSegment in_segment;
   GstSegment out_segment;
 
-  GstClockTime in_running_time;
-  GstClockTime out_running_time;
+  GstClockTimeDiff in_running_time;
+  GstClockTimeDiff out_running_time;
 
-  gsize in_bytes;
+  guint64 in_bytes;
 
   GQueue queued_bufs;
 
@@ -95,6 +96,7 @@ struct _GstSplitMuxSink {
   GstClockTime threshold_time;
   guint64 threshold_bytes;
   guint max_files;
+  gboolean send_keyframe_requests;
 
   guint mq_max_buffers;
 
@@ -114,17 +116,19 @@ struct _GstSplitMuxSink {
 
   MqStreamCtx *reference_ctx;
   guint queued_gops;
-  GstClockTime max_in_running_time;
-  GstClockTime max_out_running_time;
+  GstClockTimeDiff max_in_running_time;
+  GstClockTimeDiff max_out_running_time;
 
-  GstClockTime muxed_out_time;
-  gsize muxed_out_bytes;
+  GstClockTimeDiff muxed_out_time;
+  guint64 muxed_out_bytes;
   gboolean have_muxed_something;
 
-  GstClockTime mux_start_time;
-  gsize mux_start_bytes;
+  GstClockTimeDiff mux_start_time;
+  guint64 mux_start_bytes;
+  GstClockTime last_frame_duration;
 
   gboolean opening_first_fragment;
+  gboolean switching_fragment;
 };
 
 struct _GstSplitMuxSinkClass {

@@ -1719,11 +1719,6 @@ gst_qtdemux_handle_src_event (GstPad * pad, GstObject * parent,
       }
       gst_event_unref (event);
       break;
-    case GST_EVENT_QOS:
-    case GST_EVENT_NAVIGATION:
-      res = FALSE;
-      gst_event_unref (event);
-      break;
     default:
     upstream:
       res = gst_pad_event_default (pad, parent, event);
@@ -5771,8 +5766,7 @@ pause:
         gst_qtdemux_push_event (qtdemux, event);
       }
     } else if (ret == GST_FLOW_NOT_LINKED || ret < GST_FLOW_EOS) {
-      GST_ELEMENT_ERROR (qtdemux, STREAM, FAILED,
-          (NULL), ("streaming stopped, reason %s", reason));
+      GST_ELEMENT_FLOW_ERROR (qtdemux, ret);
       gst_qtdemux_push_event (qtdemux, gst_event_new_eos ());
     }
     goto done;
@@ -6095,6 +6089,7 @@ gst_qtdemux_chain (GstPad * sinkpad, GstObject * parent, GstBuffer * inbuf)
         /* Reset state if it's a real discont */
         demux->neededbytes = 16;
         demux->state = QTDEMUX_STATE_INITIAL;
+        demux->offset = GST_BUFFER_OFFSET (inbuf);
       }
     }
     /* Reverse fragmented playback, need to flush all we have before
@@ -12693,11 +12688,11 @@ gst_qtdemux_handle_esds (GstQTDemux * qtdemux, QtDemuxStream * stream,
             profile_str = "main";
             profile = 0;
             break;
-          case 67:
+          case 0x67:
             profile_str = "lc";
             profile = 1;
             break;
-          case 68:
+          case 0x68:
             profile_str = "ssr";
             profile = 2;
             break;

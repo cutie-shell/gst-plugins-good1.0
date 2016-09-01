@@ -145,6 +145,11 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin--rfc7273-sync" title="The “rfc7273-sync” property">rfc7273-sync</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin--max-streams" title="The “max-streams” property">max-streams</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -842,6 +847,14 @@ profile can be changed afterwards on a per-session basis.</p>
 <p>Synchronize received streams to the RFC7273 clock (requires clock and offset to be provided).</p>
 <p>Flags: Read / Write</p>
 <p>Default value: FALSE</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpBin--max-streams"></a><h3>The <code class="literal">“max-streams”</code> property</h3>
+<pre class="programlisting">  “max-streams”              <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<p>The maximum number of streams to create for one session.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 4294967295</p>
 </div>
 </div>
 <div class="refsect1">

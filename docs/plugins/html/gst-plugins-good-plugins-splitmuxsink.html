@@ -82,6 +82,11 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--max-files" title="The “max-files” property">max-files</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--send-keyframe-requests" title="The “send-keyframe-requests” property">send-keyframe-requests</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -333,6 +338,14 @@ and 1MB maximum size.
 <p>Maximum number of files to keep on disk. Once the maximum is reached,old files start to be deleted to make room for new ones.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink--send-keyframe-requests"></a><h3>The <code class="literal">“send-keyframe-requests”</code> property</h3>
+<pre class="programlisting">  “send-keyframe-requests”   <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<p>Request a keyframe every max-size-time ns to try splitting at that point. Needs max-size-bytes to be 0 in order to be effective.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: FALSE</p>
 </div>
 </div>
 <div class="refsect1">

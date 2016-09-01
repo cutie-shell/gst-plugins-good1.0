@@ -5119,9 +5119,7 @@ pause:
     } else if (ret == GST_FLOW_NOT_LINKED || ret < GST_FLOW_EOS) {
       /* for fatal errors we post an error message, post the error before the
        * EOS so the app knows about the error first. */
-      GST_ELEMENT_ERROR (src, STREAM, FAILED,
-          ("Internal data flow error."),
-          ("streaming task paused, reason %s (%d)", reason, ret));
+      GST_ELEMENT_FLOW_ERROR (src, ret);
       gst_rtspsrc_push_event (src, gst_event_new_eos ());
     }
     gst_rtspsrc_loop_send_cmd (src, CMD_WAIT, CMD_LOOP);
@@ -6792,8 +6790,24 @@ restart:
   /* could not be set but since the request returned OK, we assume it
    * was SDP, else check it. */
   if (respcont) {
-    if (g_ascii_strcasecmp (respcont, "application/sdp") != 0)
+    const gchar *props = strchr (respcont, ';');
+
+    if (props) {
+      gchar *mimetype = g_strndup (respcont, props - respcont);
+
+      mimetype = g_strstrip (mimetype);
+      if (g_ascii_strcasecmp (mimetype, "application/sdp") != 0) {
+        g_free (mimetype);
+        goto wrong_content_type;
+      }
+
+      /* TODO: Check for charset property and do conversions of all messages if
+       * needed. Some servers actually send that property */
+
+      g_free (mimetype);
+    } else if (g_ascii_strcasecmp (respcont, "application/sdp") != 0) {
       goto wrong_content_type;
+    }
   }
 
   /* get message body and parse as SDP */

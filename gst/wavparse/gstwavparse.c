@@ -54,6 +54,7 @@
 #include "gstwavparse.h"
 #include "gst/riff/riff-media.h"
 #include <gst/base/gsttypefindhelper.h>
+#include <gst/pbutils/descriptions.h>
 #include <gst/gst-i18n-plugin.h>
 
 GST_DEBUG_CATEGORY_STATIC (wavparse_debug);
@@ -1223,9 +1224,25 @@ gst_wavparse_stream_headers (GstWavParse * wav)
 
     wav->got_fmt = TRUE;
 
-    if (codec_name) {
+    if (wav->tags == NULL)
       wav->tags = gst_tag_list_new_empty ();
 
+    {
+      GstCaps *templ_caps = gst_pad_get_pad_template_caps (wav->sinkpad);
+      gst_pb_utils_add_codec_description_to_tag_list (wav->tags,
+          GST_TAG_CONTAINER_FORMAT, templ_caps);
+      gst_caps_unref (templ_caps);
+    }
+
+    /* If bps is nonzero, then we do have a valid bitrate that can be
+     * announced in a tag list. */
+    if (wav->bps) {
+      guint bitrate = wav->bps * 8;
+      gst_tag_list_add (wav->tags, GST_TAG_MERGE_REPLACE,
+          GST_TAG_BITRATE, bitrate, NULL);
+    }
+
+    if (codec_name) {
       gst_tag_list_add (wav->tags, GST_TAG_MERGE_REPLACE,
           GST_TAG_AUDIO_CODEC, codec_name, NULL);
 
@@ -2229,9 +2246,7 @@ pause:
     } else if (ret == GST_FLOW_NOT_LINKED || ret < GST_FLOW_EOS) {
       /* for fatal errors we post an error message, post the error
        * first so the app knows about the error first. */
-      GST_ELEMENT_ERROR (wav, STREAM, FAILED,
-          (_("Internal data flow error.")),
-          ("streaming task paused, reason %s (%d)", reason, ret));
+      GST_ELEMENT_FLOW_ERROR (wav, ret);
       gst_pad_push_event (wav->srcpad, gst_event_new_eos ());
     }
     return;

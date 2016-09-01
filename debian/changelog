@@ -1,3 +1,12 @@
+gst-plugins-good1.0 (1.9.2-1) experimental; urgency=medium
+
+  * New upstream unstable release:
+    + debian/build-deps.in,
+      debian/rules:
+      - Build-depend on GStreamer >= 1.9.2.
+
+ -- Sebastian Dröge <slomo@debian.org>  Thu, 01 Sep 2016 12:07:12 +0300
+
 gst-plugins-good1.0 (1.9.1-1) experimental; urgency=medium
 
   * New upstream unstable release:

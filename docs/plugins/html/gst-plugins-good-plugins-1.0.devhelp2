@@ -982,6 +982,8 @@
     <keyword type="property" name="The “max-misorder-time” property" link="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--max-misorder-time"/>
     <keyword type="property" name="The “max-rtcp-rtp-time-diff” property" link="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--max-rtcp-rtp-time-diff"/>
     <keyword type="property" name="The “rfc7273-sync” property" link="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rfc7273-sync"/>
+    <keyword type="property" name="The “rtx-deadline” property" link="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-deadline"/>
+    <keyword type="property" name="The “rtx-stats-timeout” property" link="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-stats-timeout"/>
     <keyword type="signal" name="The “clear-pt-map” signal" link="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer-clear-pt-map"/>
     <keyword type="signal" name="The “handle-sync” signal" link="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer-handle-sync"/>
     <keyword type="signal" name="The “on-npt-stop” signal" link="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer-on-npt-stop"/>

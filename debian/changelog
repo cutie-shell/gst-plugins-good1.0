@@ -1,3 +1,10 @@
+gst-plugins-good1.0 (1.9.90-2) UNRELEASED; urgency=medium
+
+  [ Helmut Grohne ]
+  * Mark gstreamer1.0-doc Multi-Arch: foreign (Closes: #842526).
+
+ -- Sebastian Dröge <slomo@debian.org>  Mon, 31 Oct 2016 09:30:25 +0200
+
 gst-plugins-good1.0 (1.9.90-1) experimental; urgency=medium
 
   * New upstream unstable release:

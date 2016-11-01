@@ -13,6 +13,7 @@ Homepage: http://gstreamer.freedesktop.org/modules/gst-plugins-good.html
 
 Package: @GST_PKGNAME@-plugins-good-doc
 Architecture: all
+Multi-Arch: foreign
 Section: doc
 Depends: gstreamer@GST_ABI@-doc,
          gstreamer@GST_ABI@-plugins-base-doc,

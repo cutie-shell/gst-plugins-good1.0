@@ -1,8 +1,36 @@
-gst-plugins-good1.0 (1.8.3-1) unstable; urgency=medium
+gst-plugins-good1.0 (1.9.90-2) UNRELEASED; urgency=medium
 
-  * New upstream bugfix release.
+  [ Helmut Grohne ]
+  * Mark gstreamer1.0-doc Multi-Arch: foreign (Closes: #842526).
 
- -- Sebastian Dröge <slomo@debian.org>  Fri, 19 Aug 2016 11:59:24 +0300
+ -- Sebastian Dröge <slomo@debian.org>  Mon, 31 Oct 2016 09:30:25 +0200
+
+gst-plugins-good1.0 (1.9.90-1) experimental; urgency=medium
+
+  * New upstream unstable release:
+    + debian/build-deps.in,
+      debian/rules:
+      - Build-depend on GStreamer >= 1.9.90.
+
+ -- Sebastian Dröge <slomo@debian.org>  Fri, 30 Sep 2016 12:21:28 +0300
+
+gst-plugins-good1.0 (1.9.2-1) experimental; urgency=medium
+
+  * New upstream unstable release:
+    + debian/build-deps.in,
+      debian/rules:
+      - Build-depend on GStreamer >= 1.9.2.
+
+ -- Sebastian Dröge <slomo@debian.org>  Thu, 01 Sep 2016 12:07:12 +0300
+
+gst-plugins-good1.0 (1.9.1-1) experimental; urgency=medium
+
+  * New upstream unstable release:
+    + debian/build-deps.in,
+      debian/rules:
+      - Build-depend on GStreamer >= 1.9.1.
+
+ -- Sebastian Dröge <slomo@debian.org>  Wed, 06 Jul 2016 12:42:10 +0300
 
 gst-plugins-good1.0 (1.8.2-1) unstable; urgency=medium
 

@@ -96,13 +96,7 @@ enum
 static GstStaticPadTemplate sink_factory = GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS ("audio/x-raw, "
-        "format = (string) " GST_AUDIO_FORMATS_ALL ", "
-        "layout = (string) interleaved, "
-        "rate = (int) [1, MAX], "
-        "channels = (int) [1, 9];"
-        "audio/x-ac3, framed = (boolean) true;"
-        "audio/x-dts, framed = (boolean) true")
+    GST_STATIC_CAPS (GST_OSX_AUDIO_SINK_CAPS)
     );
 
 static void gst_osx_audio_sink_set_property (GObject * object, guint prop_id,
@@ -195,8 +189,7 @@ gst_osx_audio_sink_class_init (GstOsxAudioSinkClass * klass)
   gstaudiobasesink_class->payload =
       GST_DEBUG_FUNCPTR (gst_osx_audio_sink_sink_payload);
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&sink_factory));
+  gst_element_class_add_static_pad_template (gstelement_class, &sink_factory);
 
   gst_element_class_set_static_metadata (gstelement_class, "Audio Sink (OSX)",
       "Sink/Audio",

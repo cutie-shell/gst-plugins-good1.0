@@ -3,7 +3,7 @@
   <description>Real-time protocol plugins</description>
   <filename>../../gst/rtp/.libs/libgstrtp.so</filename>
   <basename>libgstrtp.so</basename>
-  <version>1.8.3</version>
+  <version>1.9.90</version>
   <license>LGPL</license>
   <source>gst-plugins-good</source>
   <package>GStreamer Good Plug-ins source release</package>
@@ -748,7 +748,7 @@
       <name>rtph265depay</name>
       <longname>RTP H265 depayloader</longname>
       <class>Codec/Depayloader/Network/RTP</class>
-      <description>Extracts H265 video from RTP packets (draft-ietf-payload-rtp-h265-03.txt)</description>
+      <description>Extracts H265 video from RTP packets (RFC 7798)</description>
       <author>Jurgen Slowack &lt;jurgenslowack@gmail.com&gt;</author>
       <pads>
         <caps>
@@ -769,14 +769,14 @@
       <name>rtph265pay</name>
       <longname>RTP H265 payloader</longname>
       <class>Codec/Payloader/Network/RTP</class>
-      <description>Payload-encode H265 video into RTP packets (based on draft-ietf-payload-rtp-h265-03.txt)</description>
+      <description>Payload-encode H265 video into RTP packets (RFC 7798)</description>
       <author>Jurgen Slowack &lt;jurgenslowack@gmail.com&gt;</author>
       <pads>
         <caps>
           <name>sink</name>
           <direction>sink</direction>
           <presence>always</presence>
-          <details>video/x-h265, stream-format=(string)byte-stream, alignment=(string){ nal, au }</details>
+          <details>video/x-h265, stream-format=(string)hvc1, alignment=(string)au; video/x-h265, stream-format=(string)byte-stream, alignment=(string){ nal, au }</details>
         </caps>
         <caps>
           <name>src</name>
@@ -839,13 +839,13 @@
           <name>sink</name>
           <direction>sink</direction>
           <presence>always</presence>
-          <details>application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)JPEG2000</details>
+          <details>application/x-rtp, media=(string)video, clock-rate=(int)90000, sampling=(string){ RGB, BGR, RGBA, BGRA, YCbCrA, YCbCr-4:4:4, YCbCr-4:2:2, YCbCr-4:2:0, YCbCr-4:1:1, GRAYSCALE }, encoding-name=(string)JPEG2000; application/x-rtp, media=(string)video, clock-rate=(int)90000, colorspace=(string){ sRGB, sYUV, GRAY }, encoding-name=(string)JPEG2000</details>
         </caps>
         <caps>
           <name>src</name>
           <direction>source</direction>
           <presence>always</presence>
-          <details>image/x-jpc</details>
+          <details>image/x-jpc, colorspace=(string){ sRGB, sYUV, GRAY }</details>
         </caps>
       </pads>
     </element>
@@ -860,13 +860,13 @@
           <name>sink</name>
           <direction>sink</direction>
           <presence>always</presence>
-          <details>image/x-jpc</details>
+          <details>image/x-jpc, sampling=(string){ RGB, BGR, RGBA, BGRA, YCbCrA, YCbCr-4:4:4, YCbCr-4:2:2, YCbCr-4:2:0, YCbCr-4:1:1, GRAYSCALE }</details>
         </caps>
         <caps>
           <name>src</name>
           <direction>source</direction>
           <presence>always</presence>
-          <details>application/x-rtp, media=(string)video, payload=(int)[ 96, 127 ], clock-rate=(int)90000, encoding-name=(string)JPEG2000</details>
+          <details>application/x-rtp, media=(string)video, payload=(int)[ 96, 127 ], clock-rate=(int)90000, sampling=(string){ RGB, BGR, RGBA, BGRA, YCbCrA, YCbCr-4:4:4, YCbCr-4:2:2, YCbCr-4:2:0, YCbCr-4:1:1, GRAYSCALE }, encoding-name=(string)JPEG2000</details>
         </caps>
       </pads>
     </element>
@@ -1034,7 +1034,7 @@
           <name>src</name>
           <direction>source</direction>
           <presence>always</presence>
-          <details>audio/mpeg, mpegversion=(int)4, framed=(boolean)true, stream-format=(string)raw</details>
+          <details>audio/mpeg, mpegversion=(int)4, framed=(boolean){ false, true }, stream-format=(string)raw</details>
         </caps>
       </pads>
     </element>

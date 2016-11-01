@@ -87,10 +87,30 @@ GstV4l2Radio implements
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-v4l2radio.description"></a><h2>Description</h2>
+<p>v4l2radio can be used to control radio device
+and to tune it to different radiostations.</p>
+<div class="refsect2">
+<a name="id-1.2.247.8.3"></a><h3>Example launch lines</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> v4l2radio device<span class="gtkdoc opt">=/</span>dev<span class="gtkdoc opt">/</span>radio0 frequency<span class="gtkdoc opt">=</span><span class="number">101200000</span>
+gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> alsasrc device<span class="gtkdoc opt">=</span>hw<span class="gtkdoc opt">:</span><span class="number">1</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioresample <span class="gtkdoc opt">!</span> alsasink</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+First pipeline tunes the radio device /dev/radio0 to station 101.2 MHz,
+second pipeline connects digital audio out (hw:1) to default sound card.
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.171.8.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.247.8.4.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -116,7 +136,7 @@ GstV4l2Radio implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.171.8.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.247.8.4.2"></a><h3>Element Pads</h3>
 </div>
 </div>
 </div>
@@ -129,6 +149,7 @@ GstV4l2Radio implements
 <div class="refsect2">
 <a name="GstV4l2Radio-struct"></a><h3>struct GstV4l2Radio</h3>
 <pre class="programlisting">struct GstV4l2Radio;</pre>
+<p>Opaque video4linux2 radio tuner element</p>
 </div>
 </div>
 <div class="refsect1">

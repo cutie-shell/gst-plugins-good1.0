@@ -55,6 +55,7 @@
 
 #include <string.h>
 #include <glib/gstdio.h>
+#include <gst/video/video.h>
 #include "gstsplitmuxsink.h"
 
 GST_DEBUG_CATEGORY_STATIC (splitmux_debug);
@@ -71,6 +72,7 @@ enum
   PROP_LOCATION,
   PROP_MAX_SIZE_TIME,
   PROP_MAX_SIZE_BYTES,
+  PROP_SEND_KEYFRAME_REQUESTS,
   PROP_MAX_FILES,
   PROP_MUXER_OVERHEAD,
   PROP_MUXER,
@@ -81,6 +83,7 @@ enum
 #define DEFAULT_MAX_SIZE_BYTES      0
 #define DEFAULT_MAX_FILES           0
 #define DEFAULT_MUXER_OVERHEAD      0.02
+#define DEFAULT_SEND_KEYFRAME_REQUESTS FALSE
 #define DEFAULT_MUXER "mp4mux"
 #define DEFAULT_SINK "filesink"
 
@@ -173,12 +176,12 @@ gst_splitmux_sink_class_init (GstSplitMuxSinkClass * klass)
       "Convenience bin that muxes incoming streams into multiple time/size limited files",
       "Jan Schmidt <jan@centricular.com>");
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&video_sink_template));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&audio_sink_template));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&subtitle_sink_template));
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &video_sink_template);
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &audio_sink_template);
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &subtitle_sink_template);
 
   gstelement_class->change_state =
       GST_DEBUG_FUNCPTR (gst_splitmux_sink_change_state);
@@ -207,11 +210,18 @@ gst_splitmux_sink_class_init (GstSplitMuxSinkClass * klass)
       g_param_spec_uint64 ("max-size-bytes", "Max. size bytes",
           "Max. amount of data per file (in bytes, 0=disable)", 0, G_MAXUINT64,
           DEFAULT_MAX_SIZE_BYTES, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (gobject_class, PROP_SEND_KEYFRAME_REQUESTS,
+      g_param_spec_boolean ("send-keyframe-requests",
+          "Request keyframes at max-size-time",
+          "Request a keyframe every max-size-time ns to try splitting at that point. "
+          "Needs max-size-bytes to be 0 in order to be effective.",
+          DEFAULT_SEND_KEYFRAME_REQUESTS,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (gobject_class, PROP_MAX_FILES,
       g_param_spec_uint ("max-files", "Max files",
           "Maximum number of files to keep on disk. Once the maximum is reached,"
-          "old files start to be deleted to make room for new ones.",
-          0, G_MAXUINT, DEFAULT_MAX_FILES,
+          "old files start to be deleted to make room for new ones.", 0,
+          G_MAXUINT, DEFAULT_MAX_FILES,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 
@@ -246,6 +256,7 @@ gst_splitmux_sink_init (GstSplitMuxSink * splitmux)
   splitmux->threshold_time = DEFAULT_MAX_SIZE_TIME;
   splitmux->threshold_bytes = DEFAULT_MAX_SIZE_BYTES;
   splitmux->max_files = DEFAULT_MAX_FILES;
+  splitmux->send_keyframe_requests = DEFAULT_SEND_KEYFRAME_REQUESTS;
 
   GST_OBJECT_FLAG_SET (splitmux, GST_ELEMENT_FLAG_SINK);
 }
@@ -320,6 +331,11 @@ gst_splitmux_sink_set_property (GObject * object, guint prop_id,
       splitmux->threshold_time = g_value_get_uint64 (value);
       GST_OBJECT_UNLOCK (splitmux);
       break;
+    case PROP_SEND_KEYFRAME_REQUESTS:
+      GST_OBJECT_LOCK (splitmux);
+      splitmux->send_keyframe_requests = g_value_get_boolean (value);
+      GST_OBJECT_UNLOCK (splitmux);
+      break;
     case PROP_MAX_FILES:
       GST_OBJECT_LOCK (splitmux);
       splitmux->max_files = g_value_get_uint (value);
@@ -370,6 +386,11 @@ gst_splitmux_sink_get_property (GObject * object, guint prop_id,
     case PROP_MAX_SIZE_TIME:
       GST_OBJECT_LOCK (splitmux);
       g_value_set_uint64 (value, splitmux->threshold_time);
+      GST_OBJECT_UNLOCK (splitmux);
+      break;
+    case PROP_SEND_KEYFRAME_REQUESTS:
+      GST_OBJECT_LOCK (splitmux);
+      g_value_set_boolean (value, splitmux->send_keyframe_requests);
       GST_OBJECT_UNLOCK (splitmux);
       break;
     case PROP_MAX_FILES:
@@ -601,6 +622,22 @@ complete_or_wait_on_out (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
   } while (1);
 }
 
+static gboolean
+request_next_keyframe (GstSplitMuxSink * splitmux)
+{
+  GstEvent *ev;
+
+  if (splitmux->send_keyframe_requests == FALSE || splitmux->threshold_time == 0
+      || splitmux->threshold_bytes != 0)
+    return TRUE;
+
+  ev = gst_video_event_new_upstream_force_key_unit (splitmux->fragment_id *
+      splitmux->threshold_time, TRUE, 0);
+  GST_DEBUG_OBJECT (splitmux, "Requesting next keyframe at %" GST_TIME_FORMAT,
+      GST_TIME_ARGS (splitmux->fragment_id * splitmux->threshold_time));
+  return gst_pad_push_event (splitmux->reference_ctx->sinkpad, ev);
+}
+
 static GstPadProbeReturn
 handle_mq_output (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
 {
@@ -711,10 +748,13 @@ handle_mq_output (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
 
   GST_LOG_OBJECT (splitmux,
       "Pad %" GST_PTR_FORMAT " buffer with run TS %" GST_STIME_FORMAT
-      " size %" G_GSIZE_FORMAT,
+      " size %" G_GUINT64_FORMAT,
       pad, GST_STIME_ARGS (ctx->out_running_time), buf_info->buf_size);
 
   if (splitmux->opening_first_fragment) {
+    if (request_next_keyframe (splitmux) == FALSE)
+      GST_WARNING_OBJECT (splitmux,
+          "Could not request a keyframe. Files may not split at the exact location they should");
     send_fragment_opened_closed_msg (splitmux, TRUE);
     splitmux->opening_first_fragment = FALSE;
   }
@@ -726,6 +766,7 @@ handle_mq_output (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
     splitmux->muxed_out_time = buf_info->run_ts;
 
   splitmux->muxed_out_bytes += buf_info->buf_size;
+  splitmux->last_frame_duration = buf_info->duration;
 
 #ifndef GST_DISABLE_GST_DEBUG
   {
@@ -807,6 +848,8 @@ start_next_fragment (GstSplitMuxSink * splitmux)
 
   /* Store the overflow parameters as the basis for the next fragment */
   splitmux->mux_start_time = splitmux->muxed_out_time;
+  if (splitmux->last_frame_duration != GST_CLOCK_STIME_NONE)
+    splitmux->mux_start_time += splitmux->last_frame_duration;
   splitmux->mux_start_bytes = splitmux->muxed_out_bytes;
 
   GST_DEBUG_OBJECT (splitmux,
@@ -814,6 +857,9 @@ start_next_fragment (GstSplitMuxSink * splitmux)
       GST_STIME_ARGS (splitmux->max_out_running_time));
 
   send_fragment_opened_closed_msg (splitmux, TRUE);
+  if (request_next_keyframe (splitmux) == FALSE)
+    GST_WARNING_OBJECT (splitmux,
+        "Could not request a keyframe. Files may not split at the exact location they should");
 
   GST_SPLITMUX_BROADCAST (splitmux);
 }
@@ -874,7 +920,7 @@ static void
 handle_gathered_gop (GstSplitMuxSink * splitmux)
 {
   GList *cur;
-  gsize queued_bytes = 0;
+  guint64 queued_bytes = 0;
   GstClockTimeDiff queued_time = 0;
 
   /* Assess if the multiqueue contents overflowed the current file */
@@ -886,6 +932,9 @@ handle_gathered_gop (GstSplitMuxSink * splitmux)
     queued_bytes += tmpctx->in_bytes;
   }
 
+  GST_LOG_OBJECT (splitmux, " queued_bytes %" G_GUINT64_FORMAT
+      " splitmuxsink->mux_start_bytes %" G_GUINT64_FORMAT, queued_bytes,
+      splitmux->mux_start_bytes);
   g_assert (queued_bytes >= splitmux->mux_start_bytes);
   g_assert (queued_time >= splitmux->mux_start_time);
 
@@ -896,18 +945,17 @@ handle_gathered_gop (GstSplitMuxSink * splitmux)
   queued_bytes += (queued_bytes * splitmux->mux_overhead);
 
   GST_LOG_OBJECT (splitmux, "mq at TS %" GST_STIME_FORMAT
-      " bytes %" G_GSIZE_FORMAT, GST_STIME_ARGS (queued_time), queued_bytes);
+      " bytes %" G_GUINT64_FORMAT, GST_STIME_ARGS (queued_time), queued_bytes);
 
   /* Check for overrun - have we output at least one byte and overrun
    * either threshold? */
   if ((splitmux->have_muxed_something &&
           ((splitmux->threshold_bytes > 0 &&
-                  queued_bytes >= splitmux->threshold_bytes) ||
+                  queued_bytes > splitmux->threshold_bytes) ||
               (splitmux->threshold_time > 0 &&
-                  queued_time >= splitmux->threshold_time)))) {
+                  queued_time > splitmux->threshold_time)))) {
 
     splitmux->state = SPLITMUX_STATE_ENDING_FILE;
-
     GST_INFO_OBJECT (splitmux,
         "mq overflowed since last, draining out. max out TS is %"
         GST_STIME_FORMAT, GST_STIME_ARGS (splitmux->max_out_running_time));
@@ -916,8 +964,8 @@ handle_gathered_gop (GstSplitMuxSink * splitmux)
   } else {
     /* No overflow */
     GST_LOG_OBJECT (splitmux,
-        "This GOP didn't overflow the fragment. Bytes sent %" G_GSIZE_FORMAT
-        " queued %" G_GSIZE_FORMAT " time %" GST_STIME_FORMAT " Continuing.",
+        "This GOP didn't overflow the fragment. Bytes sent %" G_GUINT64_FORMAT
+        " queued %" G_GUINT64_FORMAT " time %" GST_STIME_FORMAT " Continuing.",
         splitmux->muxed_out_bytes - splitmux->mux_start_bytes,
         queued_bytes, GST_STIME_ARGS (queued_time));
 
@@ -1160,6 +1208,7 @@ handle_mq_input (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
 
   buf_info->run_ts = ctx->in_running_time;
   buf_info->buf_size = gst_buffer_get_size (buf);
+  buf_info->duration = GST_BUFFER_DURATION (buf);
 
   /* Update total input byte counter for overflow detect */
   ctx->in_bytes += buf_info->buf_size;
@@ -1176,7 +1225,7 @@ handle_mq_input (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
   }
 
   GST_DEBUG_OBJECT (pad, "Buf TS %" GST_STIME_FORMAT
-      " total in_bytes %" G_GSIZE_FORMAT,
+      " total in_bytes %" G_GUINT64_FORMAT,
       GST_STIME_ARGS (buf_info->run_ts), ctx->in_bytes);
 
   loop_again = TRUE;
@@ -1659,7 +1708,7 @@ gst_splitmux_sink_change_state (GstElement * element, GstStateChange transition)
       splitmux->state = SPLITMUX_STATE_COLLECTING_GOP_START;
       splitmux->max_in_running_time = GST_CLOCK_STIME_NONE;
       splitmux->muxed_out_time = splitmux->mux_start_time =
-          GST_CLOCK_STIME_NONE;
+          splitmux->last_frame_duration = GST_CLOCK_STIME_NONE;
       splitmux->muxed_out_bytes = splitmux->mux_start_bytes = 0;
       splitmux->opening_first_fragment = TRUE;
       GST_SPLITMUX_UNLOCK (splitmux);

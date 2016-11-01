@@ -74,10 +74,10 @@ gst_rtp_vp9_depay_class_init (GstRtpVP9DepayClass * gst_rtp_vp9_depay_class)
       (GstRTPBaseDepayloadClass *) (gst_rtp_vp9_depay_class);
 
 
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&gst_rtp_vp9_depay_sink_template));
-  gst_element_class_add_pad_template (element_class,
-      gst_static_pad_template_get (&gst_rtp_vp9_depay_src_template));
+  gst_element_class_add_static_pad_template (element_class,
+      &gst_rtp_vp9_depay_sink_template);
+  gst_element_class_add_static_pad_template (element_class,
+      &gst_rtp_vp9_depay_src_template);
 
   gst_element_class_set_static_metadata (element_class, "RTP VP9 depayloader",
       "Codec/Depayloader/Network/RTP",
@@ -165,15 +165,30 @@ gst_rtp_vp9_depay_process (GstRTPBaseDepayload * depay, GstRTPBuffer * rtp)
     }
   }
 
-  /* flexible-mode not implemented */
-  g_assert (!f_bit);
-
   /* Check L optional header layer indices */
   if (l_bit) {
     hdrsize++;
     /* Check TL0PICIDX temporal layer zero index (non-flexible mode) */
     if (!f_bit)
       hdrsize++;
+  }
+
+  if (p_bit && f_bit) {
+    /* At least one P_DIFF|N, up to three times */
+    for (gint i = 0; i < 3; i++) {
+      guint p_diff, n_bit;
+
+      if (G_UNLIKELY (size < hdrsize + 1))
+        goto too_small;
+
+      p_diff = data[hdrsize] >> 1;
+      n_bit = data[hdrsize] & 0x1;
+      GST_TRACE_OBJECT (self, "P_DIFF[%d]=%d", i, p_diff);
+      hdrsize++;
+
+      if (!n_bit)
+        break;
+    }
   }
 
   /* Check V optional Scalability Structure */
@@ -246,7 +261,6 @@ gst_rtp_vp9_depay_process (GstRTPBaseDepayload * depay, GstRTPBuffer * rtp)
   if (gst_rtp_buffer_get_marker (rtp)) {
     GstBuffer *out;
     gboolean key_frame_first_layer = !p_bit && spatial_layer == 0;
-
 
     if (gst_adapter_available (self->adapter) < 10)
       goto too_small;

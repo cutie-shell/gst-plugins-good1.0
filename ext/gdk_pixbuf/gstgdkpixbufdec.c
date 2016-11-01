@@ -180,10 +180,10 @@ gst_gdk_pixbuf_dec_class_init (GstGdkPixbufDecClass * klass)
   gstelement_class->change_state =
       GST_DEBUG_FUNCPTR (gst_gdk_pixbuf_dec_change_state);
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&gst_gdk_pixbuf_dec_src_template));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&gst_gdk_pixbuf_dec_sink_template));
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &gst_gdk_pixbuf_dec_src_template);
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &gst_gdk_pixbuf_dec_sink_template);
   gst_element_class_set_static_metadata (gstelement_class,
       "GdkPixbuf image decoder", "Codec/Decoder/Image",
       "Decodes images in a video stream using GdkPixbuf",
@@ -417,8 +417,7 @@ gst_gdk_pixbuf_dec_sink_event (GstPad * pad, GstObject * parent,
          * things failed */
         if (res != GST_FLOW_OK && res != GST_FLOW_FLUSHING
             && res != GST_FLOW_EOS && res != GST_FLOW_NOT_LINKED) {
-          GST_ELEMENT_ERROR (pixbuf, STREAM, FAILED, (NULL), ("Flow: %s",
-                  gst_flow_get_name (res)));
+          GST_ELEMENT_FLOW_ERROR (pixbuf, res);
           forward = FALSE;
           ret = FALSE;
         }

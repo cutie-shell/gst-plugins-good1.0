@@ -47,6 +47,7 @@ enum
   SIGNAL_ON_TIMEOUT,
   SIGNAL_ON_SENDER_TIMEOUT,
   SIGNAL_ON_SENDING_RTCP,
+  SIGNAL_ON_APP_RTCP,
   SIGNAL_ON_FEEDBACK_RTCP,
   SIGNAL_SEND_RTCP,
   SIGNAL_SEND_RTCP_FULL,
@@ -295,6 +296,23 @@ rtp_session_class_init (RTPSessionClass * klass)
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (RTPSessionClass, on_sending_rtcp),
       accumulate_trues, NULL, g_cclosure_marshal_generic, G_TYPE_BOOLEAN, 2,
       GST_TYPE_BUFFER | G_SIGNAL_TYPE_STATIC_SCOPE, G_TYPE_BOOLEAN);
+
+  /**
+   * RTPSession::on-app-rtcp:
+   * @session: the object which received the signal
+   * @subtype: The subtype of the packet
+   * @ssrc: The SSRC/CSRC of the packet
+   * @name: The name of the packet
+   * @data: a #GstBuffer with the application-dependant data or %NULL if
+   * there was no data
+   *
+   * Notify that a RTCP APP packet has been received
+   */
+  rtp_session_signals[SIGNAL_ON_APP_RTCP] =
+      g_signal_new ("on-app-rtcp", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (RTPSessionClass, on_app_rtcp),
+      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 4,
+      G_TYPE_UINT, G_TYPE_UINT, G_TYPE_STRING, GST_TYPE_BUFFER);
 
   /**
    * RTPSession::on-feedback-rtcp:
@@ -2375,7 +2393,11 @@ rtp_session_process_sdes (RTPSession * sess, GstRTCPPacket * packet,
 
       value = g_strndup ((const gchar *) data, len);
 
-      gst_structure_set (sdes, name, G_TYPE_STRING, value, NULL);
+      if (g_utf8_validate (value, -1, NULL)) {
+        gst_structure_set (sdes, name, G_TYPE_STRING, value, NULL);
+      } else {
+        GST_WARNING ("ignore SDES field %s with non-utf8 data %s", name, value);
+      }
 
       g_free (name);
       g_free (value);
@@ -2512,6 +2534,33 @@ rtp_session_process_app (RTPSession * sess, GstRTCPPacket * packet,
     RTPPacketInfo * pinfo)
 {
   GST_DEBUG ("received APP");
+
+  if (g_signal_has_handler_pending (sess,
+          rtp_session_signals[SIGNAL_ON_APP_RTCP], 0, TRUE)) {
+    GstBuffer *data_buffer = NULL;
+    guint16 data_length;
+    gchar name[5];
+
+    data_length = gst_rtcp_packet_app_get_data_length (packet) * 4;
+    if (data_length > 0) {
+      guint8 *data = gst_rtcp_packet_app_get_data (packet);
+      data_buffer = gst_buffer_copy_region (packet->rtcp->buffer,
+          GST_BUFFER_COPY_MEMORY, data - packet->rtcp->map.data, data_length);
+      GST_BUFFER_PTS (data_buffer) = pinfo->running_time;
+    }
+
+    memcpy (name, gst_rtcp_packet_app_get_name (packet), 4);
+    name[4] = '\0';
+
+    RTP_SESSION_UNLOCK (sess);
+    g_signal_emit (sess, rtp_session_signals[SIGNAL_ON_APP_RTCP], 0,
+        gst_rtcp_packet_app_get_subtype (packet),
+        gst_rtcp_packet_app_get_ssrc (packet), name, data_buffer);
+    RTP_SESSION_LOCK (sess);
+
+    if (data_buffer)
+      gst_buffer_unref (data_buffer);
+  }
 }
 
 static gboolean
@@ -2525,6 +2574,11 @@ rtp_session_request_local_key_unit (RTPSession * sess, RTPSource * src,
   if (sess->last_keyframe_request != GST_CLOCK_TIME_NONE && round_trip) {
     GstClockTime round_trip_in_ns = gst_util_uint64_scale (round_trip,
         GST_SECOND, 65536);
+
+    /* Sanity check to avoid always ignoring PLI/FIR if we receive RTCP
+     * packets with erroneous values resulting in crazy high RTT. */
+    if (round_trip_in_ns > 5 * GST_SECOND)
+      round_trip_in_ns = GST_SECOND / 2;
 
     if (current_time - sess->last_keyframe_request < 2 * round_trip_in_ns) {
       GST_DEBUG ("Ignoring %s request because one was send without one "
@@ -4032,7 +4086,7 @@ done:
     empty_buffer = gst_buffer_get_size (buffer) == 0;
 
     if (empty_buffer)
-      g_warning ("rtpsession: Trying to send an empty RTCP packet");
+      GST_ERROR ("rtpsession: Trying to send an empty RTCP packet");
 
     if (sess->callbacks.send_rtcp &&
         !empty_buffer && (do_not_suppress || !data.may_suppress)) {

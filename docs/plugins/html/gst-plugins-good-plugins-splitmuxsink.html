@@ -82,6 +82,11 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--max-files" title="The “max-files” property">max-files</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--send-keyframe-requests" title="The “send-keyframe-requests” property">send-keyframe-requests</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -146,7 +151,7 @@ stream contents, and the video stream must contain closed GOPs for the output
 file parts to be played individually correctly. In the absence of a video
 stream, the first available stream is used as reference for synchronization.</p>
 <div class="refsect2">
-<a name="id-1.2.165.9.6"></a><h3>Example pipelines</h3>
+<a name="id-1.2.240.9.6"></a><h3>Example pipelines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -165,7 +170,7 @@ and 1MB maximum size.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.165.9.7.1"></a><h3>Element Information</h3>
+<a name="id-1.2.240.9.7.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -191,7 +196,7 @@ and 1MB maximum size.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.165.9.7.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.240.9.7.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -333,6 +338,14 @@ and 1MB maximum size.
 <p>Maximum number of files to keep on disk. Once the maximum is reached,old files start to be deleted to make room for new ones.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink--send-keyframe-requests"></a><h3>The <code class="literal">“send-keyframe-requests”</code> property</h3>
+<pre class="programlisting">  “send-keyframe-requests”   <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<p>Request a keyframe every max-size-time ns to try splitting at that point. Needs max-size-bytes to be 0 in order to be effective.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: FALSE</p>
 </div>
 </div>
 <div class="refsect1">

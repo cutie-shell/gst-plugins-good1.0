@@ -619,6 +619,16 @@
 </ARG>
 
 <ARG>
+<NAME>GstUDPSrc::retrieve-sender-address</NAME>
+<TYPE>gboolean</TYPE>
+<RANGE></RANGE>
+<FLAGS>rw</FLAGS>
+<NICK>Retrieve Sender Address</NICK>
+<BLURB>Whether to retrieve the sender address and add it to buffers as meta. Disabling this might result in minor performance improvements in certain scenarios.</BLURB>
+<DEFAULT>TRUE</DEFAULT>
+</ARG>
+
+<ARG>
 <NAME>GstSMPTE::border</NAME>
 <TYPE>gint</TYPE>
 <RANGE>>= 0</RANGE>
@@ -1005,7 +1015,7 @@
 <FLAGS>rw</FLAGS>
 <NICK>User Agent</NICK>
 <BLURB>The User-Agent string to send to the server.</BLURB>
-<DEFAULT>"GStreamer/1.8.3"</DEFAULT>
+<DEFAULT>"GStreamer/1.9.90"</DEFAULT>
 </ARG>
 
 <ARG>
@@ -1016,6 +1026,16 @@
 <NICK>Max RTCP RTP Time Diff</NICK>
 <BLURB>Maximum amount of time in ms that the RTP time in RTCP SRs is allowed to be ahead (-1 disabled).</BLURB>
 <DEFAULT>1000</DEFAULT>
+</ARG>
+
+<ARG>
+<NAME>GstRTSPSrc::rfc7273-sync</NAME>
+<TYPE>gboolean</TYPE>
+<RANGE></RANGE>
+<FLAGS>rw</FLAGS>
+<NICK>Sync on RFC7273 clock</NICK>
+<BLURB>Synchronize received streams to the RFC7273 clock (requires clock and offset to be provided).</BLURB>
+<DEFAULT>FALSE</DEFAULT>
 </ARG>
 
 <ARG>
@@ -1979,6 +1999,16 @@
 </ARG>
 
 <ARG>
+<NAME>GstMatroskaMux::timecodescale</NAME>
+<TYPE>gint64</TYPE>
+<RANGE>[1,1000000000]</RANGE>
+<FLAGS>rw</FLAGS>
+<NICK>Timecode Scale</NICK>
+<BLURB>TimecodeScale used to calculate the Raw Timecode of a Block.</BLURB>
+<DEFAULT>1000000</DEFAULT>
+</ARG>
+
+<ARG>
 <NAME>GstTest::allowed-timestamp-deviation</NAME>
 <TYPE>gint64</TYPE>
 <RANGE>>= G_MAXULONG</RANGE>
@@ -2204,7 +2234,7 @@
 <RANGE></RANGE>
 <FLAGS>rwx</FLAGS>
 <NICK>method</NICK>
-<BLURB>method.</BLURB>
+<BLURB>method (deprecated, use video-direction instead).</BLURB>
 <DEFAULT>Identity (no rotation)</DEFAULT>
 </ARG>
 
@@ -20519,6 +20549,26 @@
 </ARG>
 
 <ARG>
+<NAME>GstRtpBin::rfc7273-sync</NAME>
+<TYPE>gboolean</TYPE>
+<RANGE></RANGE>
+<FLAGS>rw</FLAGS>
+<NICK>Sync on RFC7273 clock</NICK>
+<BLURB>Synchronize received streams to the RFC7273 clock (requires clock and offset to be provided).</BLURB>
+<DEFAULT>FALSE</DEFAULT>
+</ARG>
+
+<ARG>
+<NAME>GstRtpBin::max-streams</NAME>
+<TYPE>guint</TYPE>
+<RANGE></RANGE>
+<FLAGS>rw</FLAGS>
+<NICK>Max Streams</NICK>
+<BLURB>The maximum number of streams to create for one session.</BLURB>
+<DEFAULT>4294967295</DEFAULT>
+</ARG>
+
+<ARG>
 <NAME>GstRtpJitterBuffer::do-lost</NAME>
 <TYPE>gboolean</TYPE>
 <RANGE></RANGE>
@@ -20604,7 +20654,7 @@
 <RANGE>>= G_MAXULONG</RANGE>
 <FLAGS>rw</FLAGS>
 <NICK>RTX Delay Reorder</NICK>
-<BLURB>Sending retransmission event when this much reordering (-1 automatic).</BLURB>
+<BLURB>Sending retransmission event when this much reordering (0 disable, -1 automatic).</BLURB>
 <DEFAULT>3</DEFAULT>
 </ARG>
 
@@ -20705,6 +20755,36 @@
 <FLAGS>rw</FLAGS>
 <NICK>Max RTCP RTP Time Diff</NICK>
 <BLURB>Maximum amount of time in ms that the RTP time in RTCP SRs is allowed to be ahead (-1 disabled).</BLURB>
+<DEFAULT>1000</DEFAULT>
+</ARG>
+
+<ARG>
+<NAME>GstRtpJitterBuffer::rfc7273-sync</NAME>
+<TYPE>gboolean</TYPE>
+<RANGE></RANGE>
+<FLAGS>rw</FLAGS>
+<NICK>Sync on RFC7273 clock</NICK>
+<BLURB>Synchronize received streams to the RFC7273 clock (requires clock and offset to be provided).</BLURB>
+<DEFAULT>FALSE</DEFAULT>
+</ARG>
+
+<ARG>
+<NAME>GstRtpJitterBuffer::rtx-deadline</NAME>
+<TYPE>gint</TYPE>
+<RANGE>>= G_MAXULONG</RANGE>
+<FLAGS>rw</FLAGS>
+<NICK>RTX Deadline (ms)</NICK>
+<BLURB>The deadline for a valid RTX request in milliseconds. (-1 automatic).</BLURB>
+<DEFAULT>-1</DEFAULT>
+</ARG>
+
+<ARG>
+<NAME>GstRtpJitterBuffer::rtx-stats-timeout</NAME>
+<TYPE>guint</TYPE>
+<RANGE></RANGE>
+<FLAGS>rw</FLAGS>
+<NICK>RTX Statistics Timeout</NICK>
+<BLURB>The time to wait for a retransmitted packet after it has been considered lost in order to collect statistics (ms).</BLURB>
 <DEFAULT>1000</DEFAULT>
 </ARG>
 
@@ -23836,6 +23916,16 @@
 <NICK>Max files</NICK>
 <BLURB>Maximum number of files to keep on disk. Once the maximum is reached,old files start to be deleted to make room for new ones.</BLURB>
 <DEFAULT>0</DEFAULT>
+</ARG>
+
+<ARG>
+<NAME>GstSplitMuxSink::send-keyframe-requests</NAME>
+<TYPE>gboolean</TYPE>
+<RANGE></RANGE>
+<FLAGS>rw</FLAGS>
+<NICK>Request keyframes at max-size-time</NICK>
+<BLURB>Request a keyframe every max-size-time ns to try splitting at that point. Needs max-size-bytes to be 0 in order to be effective.</BLURB>
+<DEFAULT>FALSE</DEFAULT>
 </ARG>
 
 <ARG>

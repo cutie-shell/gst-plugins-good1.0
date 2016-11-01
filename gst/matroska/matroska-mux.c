@@ -69,13 +69,15 @@ enum
   PROP_WRITING_APP,
   PROP_DOCTYPE_VERSION,
   PROP_MIN_INDEX_INTERVAL,
-  PROP_STREAMABLE
+  PROP_STREAMABLE,
+  PROP_TIMECODESCALE
 };
 
 #define  DEFAULT_DOCTYPE_VERSION         2
 #define  DEFAULT_WRITING_APP             "GStreamer Matroska muxer"
 #define  DEFAULT_MIN_INDEX_INTERVAL      0
 #define  DEFAULT_STREAMABLE              FALSE
+#define  DEFAULT_TIMECODESCALE           GST_MSECOND
 
 /* WAVEFORMATEX is gst_riff_strf_auds + an extra guint16 extension size */
 #define WAVEFORMATEX_SIZE  (2 + sizeof (gst_riff_strf_auds))
@@ -296,14 +298,13 @@ gst_matroska_mux_class_init (GstMatroskaMuxClass * klass)
   gobject_class = (GObjectClass *) klass;
   gstelement_class = (GstElementClass *) klass;
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&videosink_templ));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&audiosink_templ));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&subtitlesink_templ));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&src_templ));
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &videosink_templ);
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &audiosink_templ);
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &subtitlesink_templ);
+  gst_element_class_add_static_pad_template (gstelement_class, &src_templ);
   gst_element_class_set_static_metadata (gstelement_class, "Matroska muxer",
       "Codec/Muxer",
       "Muxes video/audio/subtitle streams into a matroska stream",
@@ -336,6 +337,11 @@ gst_matroska_mux_class_init (GstMatroskaMuxClass * klass)
           "be streamable", "If set to true, the output should be as if it is "
           "to be streamed and hence no indexes written or duration written.",
           DEFAULT_STREAMABLE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (gobject_class, PROP_TIMECODESCALE,
+      g_param_spec_int64 ("timecodescale", "Timecode Scale",
+          "TimecodeScale used to calculate the Raw Timecode of a Block", 1,
+          GST_SECOND, DEFAULT_TIMECODESCALE,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gstelement_class->change_state =
       GST_DEBUG_FUNCPTR (gst_matroska_mux_change_state);
@@ -351,7 +357,6 @@ gst_matroska_mux_class_init (GstMatroskaMuxClass * klass)
  * Start of pad option handler code
  */
 #define DEFAULT_PAD_FRAME_DURATION TRUE
-#define DEFAULT_PAD_FRAME_DURATION_VP8 FALSE
 
 enum
 {
@@ -463,6 +468,7 @@ gst_matroska_mux_init (GstMatroskaMux * mux, gpointer g_class)
   mux->writing_app = g_strdup (DEFAULT_WRITING_APP);
   mux->min_index_interval = DEFAULT_MIN_INDEX_INTERVAL;
   mux->ebml_write->streamable = DEFAULT_STREAMABLE;
+  mux->time_scale = DEFAULT_TIMECODESCALE;
 
   /* initialize internal variables */
   mux->index = NULL;
@@ -656,7 +662,6 @@ gst_matroska_mux_reset (GstElement * element)
   mux->index = NULL;
 
   /* reset timers */
-  mux->time_scale = GST_MSECOND;
   mux->max_cluster_duration = G_MAXINT16 * mux->time_scale;
   mux->duration = 0;
 
@@ -972,13 +977,6 @@ gst_matroska_mux_video_pad_setcaps (GstPad * pad, GstCaps * caps)
   videocontext->pixel_width = width;
   videocontext->pixel_height = height;
 
-  /* set vp8 defaults or let user override it */
-  if (GST_MATROSKAMUX_PAD_CAST (pad)->frame_duration_user == FALSE
-      && (!strcmp (mimetype, "video/x-vp8")
-          || !strcmp (mimetype, "video/x-vp9")))
-    GST_MATROSKAMUX_PAD_CAST (pad)->frame_duration =
-        DEFAULT_PAD_FRAME_DURATION_VP8;
-
   if (GST_MATROSKAMUX_PAD_CAST (pad)->frame_duration
       && gst_structure_get_fraction (structure, "framerate", &fps_n, &fps_d)
       && fps_n > 0) {
@@ -1210,7 +1208,8 @@ skip_details:
   } else if (!strcmp (mimetype, "video/x-msmpeg")) {
   msmpeg43:
     /* can only make it here if preceding case verified it was version 3 */
-    context->codec_id = g_strdup (GST_MATROSKA_CODEC_ID_VIDEO_MSMPEG4V3);
+    gst_matroska_mux_set_codec_id (context,
+        GST_MATROSKA_CODEC_ID_VIDEO_MSMPEG4V3);
   } else if (!strcmp (mimetype, "video/x-pn-realvideo")) {
     gint rmversion;
     const GValue *mdpr_data;
@@ -1848,7 +1847,8 @@ gst_matroska_mux_audio_pad_setcaps (GstPad * pad, GstCaps * caps)
         }
 
         if (buf) {
-          context->codec_id = g_strdup (GST_MATROSKA_CODEC_ID_AUDIO_AAC);
+          gst_matroska_mux_set_codec_id (context,
+              GST_MATROSKA_CODEC_ID_AUDIO_AAC);
           context->codec_priv_size = gst_buffer_get_size (buf);
           context->codec_priv = g_malloc (context->codec_priv_size);
           gst_buffer_extract (buf, 0, context->codec_priv,
@@ -2284,7 +2284,7 @@ gst_matroska_mux_request_new_pad (GstElement * element,
   GstMatroskaTrackContext *context = NULL;
   gint pad_id;
   gboolean locked = TRUE;
-  gchar *id = NULL;
+  const gchar *id = NULL;
 
   if (templ == gst_element_class_get_pad_template (klass, "audio_%u")) {
     /* don't mix named and unnamed pads, if the pad already exists we fail when
@@ -2329,7 +2329,7 @@ gst_matroska_mux_request_new_pad (GstElement * element,
     context->type = GST_MATROSKA_TRACK_TYPE_SUBTITLE;
     context->name = g_strdup ("Subtitle");
     /* setcaps may only provide proper one a lot later */
-    id = g_strdup ("S_SUB_UNKNOWN");
+    id = "S_SUB_UNKNOWN";
     locked = FALSE;
   } else {
     GST_WARNING_OBJECT (mux, "This is not our template!");
@@ -2348,7 +2348,8 @@ gst_matroska_mux_request_new_pad (GstElement * element,
   collect_pad->mux = mux;
   collect_pad->track = context;
   gst_matroska_pad_reset (collect_pad, FALSE);
-  collect_pad->track->codec_id = id;
+  if (id)
+    gst_matroska_mux_set_codec_id (collect_pad->track, id);
   collect_pad->track->dts_only = FALSE;
 
   collect_pad->capsfunc = capsfunc;
@@ -2866,22 +2867,21 @@ gst_matroska_mux_start (GstMatroskaMux * mux)
   for (collected = mux->collect->data; collected;
       collected = g_slist_next (collected)) {
     GstMatroskaPad *collect_pad;
-    GstPad *thepad;
 
     collect_pad = (GstMatroskaPad *) collected->data;
-    thepad = collect_pad->collect.pad;
 
-    if (gst_pad_is_linked (thepad) && gst_pad_is_active (thepad) &&
-        collect_pad->track->codec_id != NULL) {
-      collect_pad->track->num = tracknum++;
-      child = gst_ebml_write_master_start (ebml, GST_MATROSKA_ID_TRACKENTRY);
-      gst_matroska_mux_track_header (mux, collect_pad->track);
-      gst_ebml_write_master_finish (ebml, child);
-      /* some remaining pad/track setup */
-      collect_pad->default_duration_scaled =
-          gst_util_uint64_scale (collect_pad->track->default_duration,
-          1, mux->time_scale);
-    }
+    /* This will cause an error at a later time */
+    if (collect_pad->track->codec_id == NULL)
+      continue;
+
+    collect_pad->track->num = tracknum++;
+    child = gst_ebml_write_master_start (ebml, GST_MATROSKA_ID_TRACKENTRY);
+    gst_matroska_mux_track_header (mux, collect_pad->track);
+    gst_ebml_write_master_finish (ebml, child);
+    /* some remaining pad/track setup */
+    collect_pad->default_duration_scaled =
+        gst_util_uint64_scale (collect_pad->track->default_duration,
+        1, mux->time_scale);
   }
   gst_ebml_write_master_finish (ebml, master);
 
@@ -3927,6 +3927,9 @@ gst_matroska_mux_set_property (GObject * object,
     case PROP_STREAMABLE:
       mux->ebml_write->streamable = g_value_get_boolean (value);
       break;
+    case PROP_TIMECODESCALE:
+      mux->time_scale = g_value_get_int64 (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -3954,6 +3957,9 @@ gst_matroska_mux_get_property (GObject * object,
       break;
     case PROP_STREAMABLE:
       g_value_set_boolean (value, mux->ebml_write->streamable);
+      break;
+    case PROP_TIMECODESCALE:
+      g_value_set_int64 (value, mux->time_scale);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

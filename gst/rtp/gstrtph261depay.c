@@ -105,9 +105,9 @@ gst_rtp_h261_depay_process (GstRTPBaseDepayload * depayload, GstRTPBuffer * rtp)
 
   marker = gst_rtp_buffer_get_marker (rtp);
 
-  if (payload_len < 4) {
-    GST_WARNING_OBJECT (depay,
-        "Dropping packet with payload length invalid length");
+  if (payload_len < header_len + 1) {
+    /* Must have at least one byte payload */
+    GST_WARNING_OBJECT (depay, "Dropping packet with invalid payload length");
     return NULL;
   }
 
@@ -259,10 +259,10 @@ gst_rtp_h261_depay_class_init (GstRtpH261DepayClass * klass)
   gstelement_class = GST_ELEMENT_CLASS (klass);
   gstrtpbasedepayload_class = GST_RTP_BASE_DEPAYLOAD_CLASS (klass);
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&gst_rtp_h261_depay_src_template));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&gst_rtp_h261_depay_sink_template));
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &gst_rtp_h261_depay_src_template);
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &gst_rtp_h261_depay_sink_template);
 
   gst_element_class_set_static_metadata (gstelement_class,
       "RTP H261 depayloader", "Codec/Depayloader/Network/RTP",

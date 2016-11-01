@@ -170,8 +170,7 @@ gst_avi_demux_class_init (GstAviDemuxClass * klass)
   gst_element_class_add_pad_template (gstelement_class, videosrctempl);
   gst_element_class_add_pad_template (gstelement_class, subsrctempl);
   gst_element_class_add_pad_template (gstelement_class, subpicsrctempl);
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&sink_templ));
+  gst_element_class_add_static_pad_template (gstelement_class, &sink_templ);
 
   gst_element_class_set_static_metadata (gstelement_class, "Avi demuxer",
       "Codec/Demuxer",
@@ -925,11 +924,6 @@ gst_avi_demux_handle_src_event (GstPad * pad, GstObject * parent,
       } else {
         res = gst_avi_demux_handle_seek_push (avi, pad, event);
       }
-      gst_event_unref (event);
-      break;
-    case GST_EVENT_QOS:
-    case GST_EVENT_NAVIGATION:
-      res = FALSE;
       gst_event_unref (event);
       break;
     default:
@@ -5701,9 +5695,7 @@ pause:{
       /* for fatal errors we post an error message, wrong-state is
        * not fatal because it happens due to flushes and only means
        * that we should stop now. */
-      GST_ELEMENT_ERROR (avi, STREAM, FAILED,
-          (_("Internal data stream error.")),
-          ("streaming stopped, reason %s", gst_flow_get_name (res)));
+      GST_ELEMENT_FLOW_ERROR (avi, res);
       push_eos = TRUE;
     }
     if (push_eos) {

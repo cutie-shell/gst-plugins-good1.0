@@ -18,6 +18,7 @@
  * Boston, MA 02110-1301, USA.
  */
 #include <gst/check/gstcheck.h>
+#include <gst/check/gstharness.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -59,6 +60,7 @@ rtp_pipeline_chain_list (GstPad * pad, GstObject * parent, GstBufferList * list)
    * Count the size of the payload in the buffer list.
    */
   len = gst_buffer_list_length (list);
+  GST_LOG ("list length %u", len);
 
   /* Loop through all groups */
   for (i = 0; i < len; i++) {
@@ -68,12 +70,14 @@ rtp_pipeline_chain_list (GstPad * pad, GstObject * parent, GstBufferList * list)
 
     paybuf = gst_buffer_list_get (list, i);
     /* only count real data which is expected in last memory block */
+    GST_LOG ("n_memory %d", gst_buffer_n_memory (paybuf));
     fail_unless (gst_buffer_n_memory (paybuf) > 1);
     mem = gst_buffer_get_memory_range (paybuf, gst_buffer_n_memory (paybuf) - 1,
         1);
     size = gst_memory_get_sizes (mem, NULL, NULL);
     gst_memory_unref (mem);
     chain_list_bytes_received += size;
+    GST_LOG ("size %d, total %u", size, chain_list_bytes_received);
   }
   gst_buffer_list_unref (list);
 
@@ -295,7 +299,6 @@ rtp_pipeline_run (rtp_pipeline * p)
   bus = gst_pipeline_get_bus (GST_PIPELINE (p->pipeline));
 
   gst_bus_add_watch (bus, rtp_bus_callback, (gpointer) mainloop);
-  gst_object_unref (bus);
 
   /* Set pipeline to PLAYING. */
   gst_element_set_state (p->pipeline, GST_STATE_PLAYING);
@@ -349,6 +352,9 @@ rtp_pipeline_run (rtp_pipeline * p)
 
   /* Release mainloop. */
   g_main_loop_unref (mainloop);
+
+  gst_bus_remove_watch (bus);
+  gst_object_unref (bus);
 
   fail_if (p->custom_event);
 }
@@ -751,6 +757,161 @@ GST_START_TEST (rtp_h264_list_gt_mtu_avc)
 
 GST_END_TEST;
 
+static const guint8 rtp_h265_frame_data[] = {
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+static int rtp_h265_frame_data_size = 20;
+
+static int rtp_h265_frame_count = 1;
+
+GST_START_TEST (rtp_h265)
+{
+  rtp_pipeline_test (rtp_h265_frame_data, rtp_h265_frame_data_size,
+      rtp_h265_frame_count,
+      "video/x-h265,stream-format=(string)byte-stream,alignment=(string)nal",
+      "rtph265pay", "rtph265depay", 0, 0, FALSE);
+
+  /* config-interval property used to be of uint type, was changed to int,
+   * make sure old GValue stuff still works */
+  {
+    GValue val = G_VALUE_INIT;
+    GstElement *rtph265pay;
+    GParamSpec *pspec;
+
+
+    rtph265pay = gst_element_factory_make ("rtph265pay", NULL);
+    pspec = g_object_class_find_property (G_OBJECT_GET_CLASS (rtph265pay),
+        "config-interval");
+    fail_unless (pspec->value_type == G_TYPE_INT);
+    g_value_init (&val, G_TYPE_UINT);
+    g_value_set_uint (&val, 10);
+    g_object_set_property (G_OBJECT (rtph265pay), "config-interval", &val);
+    g_value_set_uint (&val, 0);
+    g_object_get_property (G_OBJECT (rtph265pay), "config-interval", &val);
+    fail_unless_equals_int (10, g_value_get_uint (&val));
+    g_object_set (G_OBJECT (rtph265pay), "config-interval", -1, NULL);
+    g_object_get_property (G_OBJECT (rtph265pay), "config-interval", &val);
+    fail_unless (g_value_get_uint (&val) == G_MAXUINT);
+    g_value_unset (&val);
+    gst_object_unref (rtph265pay);
+  }
+}
+
+GST_END_TEST;
+static const guint8 rtp_h265_list_lt_mtu_frame_data[] = {
+  /* not packetized, next NALU starts with 0x00000001 */
+  0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x10,
+  0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x10
+};
+
+static int rtp_h265_list_lt_mtu_frame_data_size = 16;
+
+static int rtp_h265_list_lt_mtu_frame_count = 2;
+
+/* 3 bytes start code prefixed with one zero byte, NALU header is in payload */
+static int rtp_h265_list_lt_mtu_bytes_sent = 2 * (16 - 3 - 1);
+
+static int rtp_h265_list_lt_mtu_mtu_size = 1024;
+
+GST_START_TEST (rtp_h265_list_lt_mtu)
+{
+  rtp_pipeline_test (rtp_h265_list_lt_mtu_frame_data,
+      rtp_h265_list_lt_mtu_frame_data_size, rtp_h265_list_lt_mtu_frame_count,
+      "video/x-h265,stream-format=(string)byte-stream,alignment=(string)nal",
+      "rtph265pay", "rtph265depay", rtp_h265_list_lt_mtu_bytes_sent,
+      rtp_h265_list_lt_mtu_mtu_size, TRUE);
+}
+
+GST_END_TEST;
+static const guint8 rtp_h265_list_lt_mtu_frame_data_hvc1[] = {
+  /* packetized data */
+  0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x04, 0x00, 0x00, 0x00, 0x00,
+};
+
+/* length size is 3 bytes */
+static int rtp_h265_list_lt_mtu_bytes_sent_hvc1 = 2 * (16 - 2 * 3);
+
+
+GST_START_TEST (rtp_h265_list_lt_mtu_hvc1)
+{
+  rtp_pipeline_test (rtp_h265_list_lt_mtu_frame_data_hvc1,
+      rtp_h265_list_lt_mtu_frame_data_size, rtp_h265_list_lt_mtu_frame_count,
+      "video/x-h265,stream-format=(string)hvc1,alignment=(string)au,"
+      "codec_data=(buffer)0101c000000080000000000099f000fcfdf8f800000203a000010"
+      "01840010c01ffff01c000000300800000030000030099ac0900a10001003042010101c00"
+      "0000300800000030000030099a00a080f1fe36bbb5377725d602dc040404100000300010"
+      "00003000a0800a2000100074401c172b02240",
+      "rtph265pay", "rtph265depay", rtp_h265_list_lt_mtu_bytes_sent_hvc1,
+      rtp_h265_list_lt_mtu_mtu_size, TRUE);
+}
+
+GST_END_TEST;
+static const guint8 rtp_h265_list_gt_mtu_frame_data[] = {
+  /* not packetized, next NAL starts with 0x000001 */
+  0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x10
+};
+
+static const int rtp_h265_list_gt_mtu_frame_data_size = 62;
+
+static const int rtp_h265_list_gt_mtu_frame_count = 1;
+
+/* start code is 3 bytes, NALU header is 2 bytes */
+static int rtp_h265_list_gt_mtu_bytes_sent = 1 * (62 - 3 - 2);
+
+static int rtp_h265_list_gt_mtu_mtu_size = 28;
+
+GST_START_TEST (rtp_h265_list_gt_mtu)
+{
+  rtp_pipeline_test (rtp_h265_list_gt_mtu_frame_data,
+      rtp_h265_list_gt_mtu_frame_data_size, rtp_h265_list_gt_mtu_frame_count,
+      "video/x-h265,stream-format=(string)byte-stream,alignment=(string)nal",
+      "rtph265pay", "rtph265depay", rtp_h265_list_gt_mtu_bytes_sent,
+      rtp_h265_list_gt_mtu_mtu_size, TRUE);
+}
+
+GST_END_TEST;
+static const guint8 rtp_h265_list_gt_mtu_frame_data_hvc1[] = {
+  /* packetized data */
+  0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+/* length size is 3 bytes, NALU header is 2 bytes */
+static int rtp_h265_list_gt_mtu_bytes_sent_hvc1 = 1 * (62 - 2 * 3 - 2 * 2);
+
+GST_START_TEST (rtp_h265_list_gt_mtu_hvc1)
+{
+  rtp_pipeline_test (rtp_h265_list_gt_mtu_frame_data_hvc1,
+      rtp_h265_list_gt_mtu_frame_data_size, rtp_h265_list_gt_mtu_frame_count,
+      "video/x-h265,stream-format=(string)hvc1,alignment=(string)au,"
+      "codec_data=(buffer)0101c000000080000000000099f000fcfdf8f800000203a000010"
+      "01840010c01ffff01c000000300800000030000030099ac0900a10001003042010101c00"
+      "0000300800000030000030099a00a080f1fe36bbb5377725d602dc040404100000300010"
+      "00003000a0800a2000100074401c172b02240",
+      "rtph265pay", "rtph265depay", rtp_h265_list_gt_mtu_bytes_sent_hvc1,
+      rtp_h265_list_gt_mtu_mtu_size, TRUE);
+}
+
+GST_END_TEST;
+
 /* KLV data from Day_Flight.mpg */
 static const guint8 rtp_KLV_frame_data[] = {
   0x06, 0x0e, 0x2b, 0x34, 0x02, 0x0b, 0x01, 0x01,
@@ -1049,6 +1210,73 @@ GST_START_TEST (rtp_jpeg_list_width_and_height_greater_than_2040)
 
 GST_END_TEST;
 
+static void
+rtp_jpeg_do_packet_loss (gdouble prob, gint num_expected)
+{
+  GstHarness *h;
+  gboolean eos = FALSE;
+  gchar *s;
+  guint i, buffer_count;
+
+  s = g_strdup_printf ("videotestsrc pattern=ball num-buffers=100 ! "
+      "jpegenc quality=50 ! rtpjpegpay ! identity drop-probability=%g ! "
+      "rtpjpegdepay", prob);
+  GST_INFO ("running pipeline %s", s);
+  h = gst_harness_new_parse (s);
+  g_free (s);
+
+  gst_harness_play (h);
+
+  do {
+    GstEvent *event;
+
+    event = gst_harness_pull_event (h);
+    eos = (GST_EVENT_TYPE (event) == GST_EVENT_EOS);
+    gst_event_unref (event);
+  } while (!eos);
+
+  buffer_count = gst_harness_buffers_received (h);
+  GST_INFO ("Got %u buffers", buffer_count);
+
+  if (num_expected >= 0) {
+    fail_unless_equals_int (num_expected, buffer_count);
+  }
+
+  for (i = 0; i < buffer_count; ++i) {
+    GstBuffer *buf;
+    GstMapInfo map;
+    guint16 soi, eoi;
+
+    buf = gst_harness_pull (h);
+    fail_unless (buf != NULL);
+
+    fail_unless (gst_buffer_map (buf, &map, GST_MAP_READ));
+    GST_MEMDUMP ("jpeg frame", map.data, map.size);
+    fail_unless (map.size > 4);
+    soi = GST_READ_UINT16_BE (map.data);
+    fail_unless (soi == 0xffd8, "expected JPEG frame start FFD8 not %02X", soi);
+    eoi = GST_READ_UINT16_BE (map.data + map.size - 2);
+    fail_unless (eoi == 0xffd9, "expected JPEG frame end FFD9 not %02X", eoi);
+    gst_buffer_unmap (buf, &map);
+    gst_buffer_unref (buf);
+  }
+
+  gst_harness_teardown (h);
+}
+
+GST_START_TEST (rtp_jpeg_packet_loss)
+{
+  gdouble probabilities[] = { 0.0, 0.001, 0.01, 0.1, 0.2, 0.5, 1.0 };
+  gint num_expected[] = { 100, -1, -1, -1, -1, -1, 0 };
+
+  GST_INFO ("Start iteration %d", __i__);
+  fail_unless (__i__ < G_N_ELEMENTS (probabilities));
+  rtp_jpeg_do_packet_loss (probabilities[__i__], num_expected[__i__]);
+  GST_INFO ("Done with iteration %d", __i__);
+}
+
+GST_END_TEST;
+
 static const guint8 rtp_g729_frame_data[] =
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -1109,6 +1337,7 @@ GST_END_TEST;
 static Suite *
 rtp_payloading_suite (void)
 {
+  GstRegistry *registry = gst_registry_get ();
   Suite *s = suite_create ("rtp_data_test");
 
   TCase *tc_chain = tcase_create ("linear");
@@ -1131,6 +1360,11 @@ rtp_payloading_suite (void)
   tcase_add_test (tc_chain, rtp_h264_list_lt_mtu_avc);
   tcase_add_test (tc_chain, rtp_h264_list_gt_mtu);
   tcase_add_test (tc_chain, rtp_h264_list_gt_mtu_avc);
+  tcase_add_test (tc_chain, rtp_h265);
+  tcase_add_test (tc_chain, rtp_h265_list_lt_mtu);
+  tcase_add_test (tc_chain, rtp_h265_list_lt_mtu_hvc1);
+  tcase_add_test (tc_chain, rtp_h265_list_gt_mtu);
+  tcase_add_test (tc_chain, rtp_h265_list_gt_mtu_hvc1);
   tcase_add_test (tc_chain, rtp_klv);
   tcase_add_test (tc_chain, rtp_klv_fragmented);
   tcase_add_test (tc_chain, rtp_L16);
@@ -1149,6 +1383,9 @@ rtp_payloading_suite (void)
   tcase_add_test (tc_chain, rtp_jpeg_list_width_greater_than_2040);
   tcase_add_test (tc_chain, rtp_jpeg_list_height_greater_than_2040);
   tcase_add_test (tc_chain, rtp_jpeg_list_width_and_height_greater_than_2040);
+  if (gst_registry_check_feature_version (registry, "jpegenc", 1, 0, 0)
+      && gst_registry_check_feature_version (registry, "videotestsrc", 1, 0, 0))
+    tcase_add_loop_test (tc_chain, rtp_jpeg_packet_loss, 0, 7);
   tcase_add_test (tc_chain, rtp_g729);
   tcase_add_test (tc_chain, rtp_gst_custom_event);
   return s;

@@ -49,7 +49,7 @@ G_DEFINE_TYPE (GstV4l2DeviceProvider, gst_v4l2_device_provider,
 static void gst_v4l2_device_provider_finalize (GObject * object);
 static GList *gst_v4l2_device_provider_probe (GstDeviceProvider * provider);
 
-#if HAVE_GUDEV
+#ifdef HAVE_GUDEV
 static gboolean gst_v4l2_device_provider_start (GstDeviceProvider * provider);
 static void gst_v4l2_device_provider_stop (GstDeviceProvider * provider);
 #endif
@@ -63,7 +63,7 @@ gst_v4l2_device_provider_class_init (GstV4l2DeviceProviderClass * klass)
 
   dm_class->probe = gst_v4l2_device_provider_probe;
 
-#if HAVE_GUDEV
+#ifdef HAVE_GUDEV
   dm_class->start = gst_v4l2_device_provider_start;
   dm_class->stop = gst_v4l2_device_provider_stop;
 #endif
@@ -79,7 +79,7 @@ gst_v4l2_device_provider_class_init (GstV4l2DeviceProviderClass * klass)
 static void
 gst_v4l2_device_provider_init (GstV4l2DeviceProvider * provider)
 {
-#if HAVE_GUDEV
+#ifdef HAVE_GUDEV
   g_cond_init (&provider->started_cond);
 #endif
 }
@@ -87,7 +87,7 @@ gst_v4l2_device_provider_init (GstV4l2DeviceProvider * provider)
 static void
 gst_v4l2_device_provider_finalize (GObject * object)
 {
-#if HAVE_GUDEV
+#ifdef HAVE_GUDEV
   GstV4l2DeviceProvider *provider = GST_V4L2_DEVICE_PROVIDER (object);
 
   g_cond_clear (&provider->started_cond);
@@ -136,21 +136,29 @@ gst_v4l2_device_provider_probe_device (GstV4l2DeviceProvider * provider,
   gst_structure_set (props, "v4l2.device.device_caps", G_TYPE_UINT,
       v4l2obj->vcap.device_caps, NULL);
 
-  if (v4l2obj->vcap.capabilities & V4L2_CAP_VIDEO_CAPTURE)
+  if (v4l2obj->device_caps &
+      (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE))
     type = GST_V4L2_DEVICE_TYPE_SOURCE;
 
-  if (v4l2obj->vcap.capabilities & V4L2_CAP_VIDEO_OUTPUT) {
-    /* Morph it in case our initial guess was wrong */
-    v4l2obj->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-
-    if (type == GST_V4L2_DEVICE_TYPE_INVALID)
-      type = GST_V4L2_DEVICE_TYPE_SINK;
-    else
-      /* We ignore M2M devices that are both capture and output for now
-       * The provider is not for them
-       */
+  if (v4l2obj->device_caps &
+      (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE)) {
+    /* We ignore M2M devices that are both capture and output for now
+     * The provider is not for them */
+    if (type != GST_V4L2_DEVICE_TYPE_INVALID)
       goto close;
+
+    type = GST_V4L2_DEVICE_TYPE_SINK;
+
+    /* We have opened as a capture as we didn't know, now that know,
+     * let's fixed it */
+    if (v4l2obj->device_caps & V4L2_CAP_VIDEO_OUTPUT_MPLANE)
+      v4l2obj->type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+    else
+      v4l2obj->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
   }
+
+  if (type == GST_V4L2_DEVICE_TYPE_INVALID)
+    goto close;
 
   caps = gst_v4l2_object_get_caps (v4l2obj, NULL);
 
@@ -211,7 +219,7 @@ gst_v4l2_device_provider_probe (GstDeviceProvider * provider)
   return devices;
 }
 
-#if HAVE_GUDEV
+#ifdef HAVE_GUDEV
 
 static GstDevice *
 gst_v4l2_device_provider_device_from_udev (GstV4l2DeviceProvider * provider,

@@ -1143,7 +1143,7 @@ update_receiver_stats (RTPSource * src, RTPPacketInfo * pinfo,
       g_queue_clear (src->packets);
 
       /* duplicate or reordered packet, will be filtered by jitterbuffer. */
-      GST_WARNING ("duplicate or reordered packet (seqnr %u, expected %u)",
+      GST_INFO ("duplicate or reordered packet (seqnr %u, expected %u)",
           seqnr, expected);
     }
   }
@@ -1496,7 +1496,8 @@ rtp_source_get_new_sr (RTPSource * src, guint64 ntpnstime,
       t_rtp -= gst_util_uint64_scale_int (diff, src->clock_rate, GST_SECOND);
     }
   } else {
-    GST_WARNING ("no clock-rate, cannot interpolate rtp time");
+    GST_WARNING ("no clock-rate, cannot interpolate rtp time for SSRC %u",
+        src->ssrc);
   }
 
   /* convert the NTP time in nanoseconds to 32.32 fixed point */

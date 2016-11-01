@@ -318,8 +318,7 @@ gst_multi_file_sink_class_init (GstMultiFileSinkClass * klass)
   GST_DEBUG_CATEGORY_INIT (gst_multi_file_sink_debug, "multifilesink", 0,
       "multifilesink element");
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&sinktemplate));
+  gst_element_class_add_static_pad_template (gstelement_class, &sinktemplate);
   gst_element_class_set_static_metadata (gstelement_class, "Multi-File Sink",
       "Sink/File",
       "Write buffers to a sequentially named set of files",
@@ -581,8 +580,6 @@ gst_multi_file_sink_write_stream_headers (GstMultiFileSink * sink)
   if (sink->streamheaders == NULL)
     return TRUE;
 
-  GST_DEBUG_OBJECT (sink, "Writing stream headers");
-
   /* we want to write these at the beginning */
   g_assert (sink->cur_file_size == 0);
 
@@ -610,29 +607,29 @@ gst_multi_file_sink_write_buffer (GstMultiFileSink * multifilesink,
     GstBuffer * buffer)
 {
   GstMapInfo map;
+  gchar *filename;
   gboolean ret;
+  GError *error = NULL;
   gboolean first_file = TRUE;
 
   gst_buffer_map (buffer, &map, GST_MAP_READ);
 
   switch (multifilesink->next_file) {
     case GST_MULTI_FILE_SINK_NEXT_BUFFER:
-      if (multifilesink->files != NULL)
-        first_file = FALSE;
-      if (!gst_multi_file_sink_open_next_file (multifilesink))
-        goto stdio_write_error;
-      if (first_file == FALSE)
-        gst_multi_file_sink_write_stream_headers (multifilesink);
-      GST_DEBUG_OBJECT (multifilesink,
-          "Writing buffer data (%" G_GSIZE_FORMAT " bytes) to new file",
-          map.size);
-      ret = fwrite (map.data, map.size, 1, multifilesink->file);
-      if (ret != 1) {
-        gst_multi_file_sink_close_file (multifilesink, NULL);
-        goto stdio_write_error;
-      }
+      gst_multi_file_sink_ensure_max_files (multifilesink);
 
-      gst_multi_file_sink_close_file (multifilesink, buffer);
+      filename = g_strdup_printf (multifilesink->filename,
+          multifilesink->index);
+      ret = g_file_set_contents (filename, (char *) map.data, map.size, &error);
+      if (!ret)
+        goto write_error;
+
+      multifilesink->files = g_slist_append (multifilesink->files, filename);
+      multifilesink->n_files += 1;
+
+      gst_multi_file_sink_post_message (multifilesink, buffer, filename);
+      multifilesink->index++;
+
       break;
     case GST_MULTI_FILE_SINK_NEXT_DISCONT:
       if (GST_BUFFER_IS_DISCONT (buffer)) {
@@ -779,6 +776,26 @@ gst_multi_file_sink_write_buffer (GstMultiFileSink * multifilesink,
   return GST_FLOW_OK;
 
   /* ERRORS */
+write_error:
+  {
+    switch (error->code) {
+      case G_FILE_ERROR_NOSPC:{
+        GST_ELEMENT_ERROR (multifilesink, RESOURCE, NO_SPACE_LEFT, (NULL),
+            (NULL));
+        break;
+      }
+      default:{
+        GST_ELEMENT_ERROR (multifilesink, RESOURCE, WRITE,
+            ("Error while writing to file \"%s\".", filename),
+            ("%s", g_strerror (errno)));
+      }
+    }
+    g_error_free (error);
+    g_free (filename);
+
+    gst_buffer_unmap (buffer, &map);
+    return GST_FLOW_ERROR;
+  }
 stdio_write_error:
   switch (errno) {
     case ENOSPC:

@@ -51,16 +51,12 @@ struct _GstRtpH265Pay
 {
   GstRTPBasePayload payload;
 
-  guint profile;
   GPtrArray *sps, *pps, *vps;
 
   GstH265StreamFormat stream_format;
   GstH265Alignment alignment;
   guint nal_length_size;
   GArray *queue;
-
-  gchar *sprop_parameter_sets;
-  gboolean update_caps;
 
   GstAdapter *adapter;
 

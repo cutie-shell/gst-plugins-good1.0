@@ -21,7 +21,7 @@
 /**
  * SECTION:element-videomixer
  *
- * Videomixer2 can accept AYUV, ARGB and BGRA video streams. For each of the requested
+ * Videomixer can accept AYUV, ARGB and BGRA video streams. For each of the requested
  * sink pads it will compare the incoming geometry and framerate to define the
  * output parameters. Indeed output video frames will have the geometry of the
  * biggest incoming video stream and the framerate of the fastest incoming one.
@@ -45,7 +45,7 @@
  * ]| A pipeline to demonstrate videomixer used together with videobox.
  * This should show a 320x240 pixels video test source with some transparency
  * showing the background checker pattern. Another video test source with just
- * the snow pattern of 100x100 pixels is overlayed on top of the first one on
+ * the snow pattern of 100x100 pixels is overlaid on top of the first one on
  * the left vertically centered with a small transparency showing the first
  * video test source behind and the checker pattern under it. Note that the
  * framerate of the output video is 10 frames per second.
@@ -2222,10 +2222,8 @@ gst_videomixer2_class_init (GstVideoMixer2Class * klass)
   gstelement_class->change_state =
       GST_DEBUG_FUNCPTR (gst_videomixer2_change_state);
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&src_factory));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&sink_factory));
+  gst_element_class_add_static_pad_template (gstelement_class, &src_factory);
+  gst_element_class_add_static_pad_template (gstelement_class, &sink_factory);
 
   gst_element_class_set_static_metadata (gstelement_class, "Video mixer 2",
       "Filter/Editor/Video/Compositor",

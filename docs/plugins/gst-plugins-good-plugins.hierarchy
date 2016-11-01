@@ -1,4 +1,6 @@
 GObject
+  GIOStream
+    GTlsConnection
   GInitiallyUnowned
     GstObject
       GstAllocator
@@ -319,10 +321,18 @@ GObject
       GstRegistry
       GstTask
       GstTaskPool
+  GResolver
   GSocket
+  GSocketAddress
+    GInetSocketAddress
+      GProxyAddress
+  GSocketClient
   GSocketControlMessage
     GstIPPktinfoMessage
     GstIPV6PktinfoMessage
+  GSocketListener
+    GSocketService
+  GTlsCertificate
   GTlsDatabase
   GTlsInteraction
   GdkPixbuf
@@ -336,6 +346,8 @@ GInterface
   GIcon
   GInitable
   GLoadableIcon
+  GProxyResolver
+  GSocketConnectable
   GTypePlugin
   GstChildProxy
   GstColorBalance
@@ -346,4 +358,5 @@ GInterface
   GstTocSetter
   GstTuner
   GstURIHandler
+  GstVideoDirection
   GstVideoOrientation

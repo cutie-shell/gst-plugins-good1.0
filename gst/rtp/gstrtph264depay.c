@@ -107,10 +107,10 @@ gst_rtp_h264_depay_class_init (GstRtpH264DepayClass * klass)
 
   gobject_class->finalize = gst_rtp_h264_depay_finalize;
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&gst_rtp_h264_depay_src_template));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&gst_rtp_h264_depay_sink_template));
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &gst_rtp_h264_depay_src_template);
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &gst_rtp_h264_depay_sink_template);
 
   gst_element_class_set_static_metadata (gstelement_class,
       "RTP H264 depayloader", "Codec/Depayloader/Network/RTP",
@@ -1055,12 +1055,8 @@ gst_rtp_h264_depay_process (GstRTPBaseDepayload * depayload, GstRTPBuffer * rtp)
         }
 
         outsize = gst_adapter_available (rtph264depay->adapter);
-        if (outsize > 0) {
+        if (outsize > 0)
           outbuf = gst_adapter_take_buffer (rtph264depay->adapter, outsize);
-          outbuf =
-              gst_rtp_h264_depay_handle_nal (rtph264depay, outbuf, timestamp,
-              marker);
-        }
         break;
       }
       case 26:

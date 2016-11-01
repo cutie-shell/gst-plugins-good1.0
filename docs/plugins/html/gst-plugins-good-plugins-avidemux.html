@@ -60,7 +60,7 @@
 <p>This element supports both push and pull-based scheduling, depending on the
 capabilities of the upstream elements.</p>
 <div class="refsect2">
-<a name="id-1.2.32.6.4"></a><h3>Example launch line</h3>
+<a name="id-1.2.33.6.4"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -79,7 +79,7 @@ right decoder elements/plugins installed.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.32.6.5.1"></a><h3>Element Information</h3>
+<a name="id-1.2.33.6.5.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -105,7 +105,7 @@ right decoder elements/plugins installed.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.32.6.5.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.33.6.5.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -150,27 +150,27 @@ right decoder elements/plugins installed.
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>audio/ms-gsm, rate=(int)[ 1, 96000 ], channels=(int)[ 1, 2 ]</td>
+<td>audio/ms-gsm</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/mpeg, mpegversion=(int)1, layer=(int)3, rate=(int)[ 8000, 48000 ], channels=(int)[ 1, 2 ]</td>
+<td> audio/mpeg, mpegversion=(int)1, layer=(int)3</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/mpeg, mpegversion=(int)1, layer=(int)2, rate=(int)[ 16000, 48000 ], channels=(int)[ 1, 2 ]</td>
+<td> audio/mpeg, mpegversion=(int)1, layer=(int)2</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-raw, format=(string){ S8, U8, S16LE, U16LE, S24LE, U24LE, S32LE, U32LE }, layout=(string)interleaved, rate=(int)[ 1000, 192000 ], channels=(int)[ 1, 8 ]</td>
+<td> audio/x-raw, format=(string){ S8, U8, S16LE, U16LE, S24LE, U24LE, S32LE, U32LE }, layout=(string)interleaved</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-vorbis, rate=(int)[ 1000, 192000 ], channels=(int)[ 1, 2 ]</td>
+<td> audio/x-vorbis</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-ac3, rate=(int)[ 1000, 96000 ], channels=(int)[ 1, 6 ]</td>
+<td> audio/x-ac3</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
@@ -178,75 +178,75 @@ right decoder elements/plugins installed.
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/mpeg, mpegversion=(int)4, rate=(int)[ 1000, 96000 ], channels=(int)[ 1, 8 ]</td>
+<td> audio/mpeg, mpegversion=(int)4</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-alaw, rate=(int)[ 1000, 48000 ], channels=(int)[ 1, 2 ]</td>
+<td> audio/x-alaw</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-mulaw, rate=(int)[ 1000, 48000 ], channels=(int)[ 1, 2 ]</td>
+<td> audio/x-mulaw</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-wms, bitrate=(int)[ 0, 2147483647 ], rate=(int)[ 1000, 96000 ], channels=(int)[ 1, 2 ], block_align=(int)[ 1, 2147483647 ]</td>
+<td> audio/x-wms, bitrate=(int)[ 0, 2147483647 ], block_align=(int)[ 1, 2147483647 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-adpcm, layout=(string)microsoft, rate=(int)[ 1000, 96000 ], channels=(int)[ 1, 2 ], block_align=(int)[ 1, 2147483647 ]</td>
+<td> audio/x-adpcm, layout=(string)microsoft, block_align=(int)[ 1, 2147483647 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-adpcm, layout=(string)dvi, rate=(int)[ 1000, 96000 ], channels=(int)[ 1, 2 ], block_align=(int)[ 1, 2147483647 ]</td>
+<td> audio/x-adpcm, layout=(string)dvi, block_align=(int)[ 1, 2147483647 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-truespeech, rate=(int)8000, channels=(int)[ 1, 2 ]</td>
+<td> audio/x-truespeech</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-wma, wmaversion=(int)1, bitrate=(int)[ 0, 2147483647 ], rate=(int)[ 1000, 96000 ], channels=(int)[ 1, 8 ], block_align=(int)[ 1, 2147483647 ]</td>
+<td> audio/x-wma, wmaversion=(int)1, bitrate=(int)[ 0, 2147483647 ], block_align=(int)[ 1, 2147483647 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-wma, wmaversion=(int)2, bitrate=(int)[ 0, 2147483647 ], rate=(int)[ 1000, 96000 ], channels=(int)[ 1, 8 ], block_align=(int)[ 1, 2147483647 ]</td>
+<td> audio/x-wma, wmaversion=(int)2, bitrate=(int)[ 0, 2147483647 ], block_align=(int)[ 1, 2147483647 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-wma, wmaversion=(int)3, bitrate=(int)[ 0, 2147483647 ], rate=(int)[ 1000, 96000 ], channels=(int)[ 1, 8 ], block_align=(int)[ 1, 2147483647 ]</td>
+<td> audio/x-wma, wmaversion=(int)3, bitrate=(int)[ 0, 2147483647 ], block_align=(int)[ 1, 2147483647 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-vnd.sony.atrac3, rate=(int)[ 1000, 96000 ], channels=(int)[ 1, 2 ]</td>
+<td> audio/x-vnd.sony.atrac3</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-raw, format=(string){ F32LE, F64LE }, layout=(string)interleaved, rate=(int)[ 1000, 192000 ], channels=(int)[ 1, 8 ]</td>
+<td> audio/x-raw, format=(string){ F32LE, F64LE }, layout=(string)interleaved</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-voxware, voxwaretype=(int)117, rate=(int)[ 1000, 96000 ], channels=(int)[ 1, 2 ]</td>
+<td> audio/x-voxware, voxwaretype=(int)117</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-adpcm, layout=(string)dk4, rate=(int)[ 8000, 96000 ], channels=(int)[ 1, 2 ]</td>
+<td> audio/x-adpcm, layout=(string)dk4</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-adpcm, layout=(string)dk3, rate=(int)[ 8000, 96000 ], channels=(int)[ 1, 2 ]</td>
+<td> audio/x-adpcm, layout=(string)dk3</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-adpcm, layout=(string)dvi, rate=(int)[ 8000, 96000 ], channels=(int)[ 1, 2 ]</td>
+<td> audio/x-adpcm, layout=(string)dvi</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/AMR, rate=(int)8000, channels=(int)1</td>
+<td> audio/AMR</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/AMR-WB, rate=(int)16000, channels=(int)1</td>
+<td> audio/AMR-WB</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>

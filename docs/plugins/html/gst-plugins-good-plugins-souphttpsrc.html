@@ -6,7 +6,7 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
-<link rel="prev" href="gst-plugins-good-plugins-smpte.html" title="smpte">
+<link rel="prev" href="gst-plugins-good-plugins-souphttpclientsink.html" title="souphttpclientsink">
 <link rel="next" href="gst-plugins-good-plugins-spectrum.html" title="spectrum">
 <meta name="generator" content="GTK-Doc V1.25 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
@@ -22,7 +22,7 @@
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
-<td><a accesskey="p" href="gst-plugins-good-plugins-smpte.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="p" href="gst-plugins-good-plugins-souphttpclientsink.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
 <td><a accesskey="n" href="gst-plugins-good-plugins-spectrum.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
@@ -205,10 +205,88 @@ GstSoupHTTPSrc implements
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-souphttpsrc.description"></a><h2>Description</h2>
+<p>This plugin reads data from a remote location specified by a URI.
+Supported protocols are 'http', 'https'.</p>
+<p>An HTTP proxy must be specified by its URL.
+If the "http_proxy" environment variable is set, its value is used.
+If built with libsoup's GNOME integration features, the GNOME proxy
+configuration will be used, or failing that, proxy autodetection.
+The <a class="link" href="gst-plugins-good-plugins-souphttpsrc.html#GstSoupHTTPSrc--proxy" title="The “proxy” property"><span class="type">“proxy”</span></a> property can be used to override the default.</p>
+<p>In case the <a class="link" href="gst-plugins-good-plugins-souphttpsrc.html#GstSoupHTTPSrc--iradio-mode" title="The “iradio-mode” property"><span class="type">“iradio-mode”</span></a> property is set and the location is
+an HTTP resource, souphttpsrc will send special Icecast HTTP headers to the
+server to request additional Icecast meta-information.
+If the server is not an Icecast server, it will behave as if the
+<a class="link" href="gst-plugins-good-plugins-souphttpsrc.html#GstSoupHTTPSrc--iradio-mode" title="The “iradio-mode” property"><span class="type">“iradio-mode”</span></a> property were not set. If it is, souphttpsrc will
+output data with a media type of application/x-icy, in which case you will
+need to use the <span class="type">ICYDemux</span> element as follow-up element to extract the Icecast
+metadata and to determine the underlying media type.</p>
+<div class="refsect2">
+<a name="id-1.2.234.8.5"></a><h3>Example launch line</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v souphttpsrc location<span class="gtkdoc opt">=</span>https<span class="gtkdoc opt">:</span><span class="gtkdoc slc">//some.server.org/index.html</span>
+    <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=/</span>home<span class="gtkdoc opt">/</span>joe<span class="gtkdoc opt">/</span>server<span class="gtkdoc opt">.</span>html</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ The above pipeline reads a web page from a server using the HTTPS protocol
+and writes it to a local file.
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2
+3
+4</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v souphttpsrc user<span class="gtkdoc opt">-</span>agent<span class="gtkdoc opt">=</span><span class="string">&quot;FooPlayer 0.99 beta&quot;</span>
+    automatic<span class="gtkdoc opt">-</span>redirect<span class="gtkdoc opt">=</span><span class="keyword">false</span> proxy<span class="gtkdoc opt">=</span>http<span class="gtkdoc opt">:</span><span class="gtkdoc slc">//proxy.intranet.local:8080</span>
+    location<span class="gtkdoc opt">=</span>http<span class="gtkdoc opt">:</span><span class="gtkdoc slc">//music.foobar.com/demo.mp3 ! mad ! audioconvert</span>
+    <span class="gtkdoc opt">!</span> audioresample <span class="gtkdoc opt">!</span> alsasink</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ The above pipeline will read and decode and play an mp3 file from a
+web server using the HTTP protocol. If the server sends redirects,
+the request fails instead of following the redirect. The specified
+HTTP proxy server is used. The User-Agent HTTP request header
+is set to a custom string instead of "GStreamer souphttpsrc."
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2
+3
+4</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v souphttpsrc location<span class="gtkdoc opt">=</span>http<span class="gtkdoc opt">:</span><span class="gtkdoc slc">//10.11.12.13/mjpeg</span>
+    <span class="keyword">do</span><span class="gtkdoc opt">-</span>timestamp<span class="gtkdoc opt">=</span><span class="keyword">true</span> <span class="gtkdoc opt">!</span> multipartdemux
+    <span class="gtkdoc opt">!</span> image<span class="gtkdoc opt">/</span>jpeg<span class="gtkdoc opt">,</span>width<span class="gtkdoc opt">=</span><span class="number">640</span><span class="gtkdoc opt">,</span>height<span class="gtkdoc opt">=</span><span class="number">480</span> <span class="gtkdoc opt">!</span> matroskamux
+    <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>mjpeg<span class="gtkdoc opt">.</span>mkv</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ The above pipeline reads a motion JPEG stream from an IP camera
+using the HTTP protocol, encoded as mime/multipart image/jpeg
+parts, and writes a Matroska motion JPEG file. The width and
+height properties are set in the caps to provide the Matroska
+multiplexer with the information to set this in the header.
+Timestamps are set on the buffers as they arrive from the camera.
+These are used by the mime/multipart demultiplexer to emit timestamps
+on the JPEG-encoded video frame buffers. This allows the Matroska
+multiplexer to timestamp the frames in the resulting file.
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.159.8.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.234.8.6.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -234,7 +312,7 @@ GstSoupHTTPSrc implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.159.8.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.234.8.6.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">

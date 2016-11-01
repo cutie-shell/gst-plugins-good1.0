@@ -994,7 +994,6 @@ gst_splitmux_part_reader_src_query (GstSplitMuxPartReader * part,
     return FALSE;
 
   ret = gst_pad_peer_query (target, query);
-  gst_object_unref (GST_OBJECT_CAST (target));
 
   if (ret == FALSE)
     goto out;
@@ -1183,6 +1182,18 @@ gst_splitmux_part_reader_activate (GstSplitMuxPartReader * reader,
     return FALSE;
   }
   return TRUE;
+}
+
+gboolean
+gst_splitmux_part_reader_is_active (GstSplitMuxPartReader * part)
+{
+  gboolean ret;
+
+  SPLITMUX_PART_LOCK (part);
+  ret = part->active;
+  SPLITMUX_PART_UNLOCK (part);
+
+  return ret;
 }
 
 void

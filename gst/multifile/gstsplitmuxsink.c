@@ -264,12 +264,21 @@ gst_splitmux_sink_init (GstSplitMuxSink * splitmux)
 static void
 gst_splitmux_reset (GstSplitMuxSink * splitmux)
 {
-  if (splitmux->mq)
+  if (splitmux->mq) {
+    gst_element_set_locked_state (splitmux->mq, TRUE);
+    gst_element_set_state (splitmux->mq, GST_STATE_NULL);
     gst_bin_remove (GST_BIN (splitmux), splitmux->mq);
-  if (splitmux->muxer)
+  }
+  if (splitmux->muxer) {
+    gst_element_set_locked_state (splitmux->muxer, TRUE);
+    gst_element_set_state (splitmux->muxer, GST_STATE_NULL);
     gst_bin_remove (GST_BIN (splitmux), splitmux->muxer);
-  if (splitmux->active_sink)
+  }
+  if (splitmux->active_sink) {
+    gst_element_set_locked_state (splitmux->active_sink, TRUE);
+    gst_element_set_state (splitmux->active_sink, GST_STATE_NULL);
     gst_bin_remove (GST_BIN (splitmux), splitmux->active_sink);
+  }
 
   splitmux->sink = splitmux->active_sink = splitmux->muxer = splitmux->mq =
       NULL;
@@ -350,14 +359,16 @@ gst_splitmux_sink_set_property (GObject * object, guint prop_id,
       GST_OBJECT_LOCK (splitmux);
       if (splitmux->provided_sink)
         gst_object_unref (splitmux->provided_sink);
-      splitmux->provided_sink = g_value_dup_object (value);
+      splitmux->provided_sink = g_value_get_object (value);
+      gst_object_ref_sink (splitmux->provided_sink);
       GST_OBJECT_UNLOCK (splitmux);
       break;
     case PROP_MUXER:
       GST_OBJECT_LOCK (splitmux);
       if (splitmux->provided_muxer)
         gst_object_unref (splitmux->provided_muxer);
-      splitmux->provided_muxer = g_value_dup_object (value);
+      splitmux->provided_muxer = g_value_get_object (value);
+      gst_object_ref_sink (splitmux->provided_muxer);
       GST_OBJECT_UNLOCK (splitmux);
       break;
     default:
@@ -1360,6 +1371,9 @@ gst_splitmux_sink_request_new_pad (GstElement * element,
 
   if (templ->name_template) {
     if (g_str_equal (templ->name_template, "video")) {
+      if (splitmux->have_video)
+        goto already_have_video;
+
       /* FIXME: Look for a pad template with matching caps, rather than by name */
       mux_template =
           gst_element_class_get_pad_template (GST_ELEMENT_GET_CLASS
@@ -1424,7 +1438,7 @@ gst_splitmux_sink_request_new_pad (GstElement * element,
     ctx->is_reference = TRUE;
   }
 
-  res = gst_ghost_pad_new (gname, mq_sink);
+  res = gst_ghost_pad_new_from_template (gname, mq_sink, templ);
   g_object_set_qdata ((GObject *) (res), PAD_CONTEXT, ctx);
 
   mq_stream_ctx_ref (ctx);
@@ -1443,12 +1457,20 @@ gst_splitmux_sink_request_new_pad (GstElement * element,
   gst_object_unref (mq_sink);
   gst_object_unref (mq_src);
 
+  if (is_video)
+    splitmux->have_video = TRUE;
+
   gst_pad_set_active (res, TRUE);
   gst_element_add_pad (element, res);
+
   GST_SPLITMUX_UNLOCK (splitmux);
 
   return res;
 fail:
+  GST_SPLITMUX_UNLOCK (splitmux);
+  return NULL;
+already_have_video:
+  GST_DEBUG_OBJECT (splitmux, "video sink pad already requested");
   GST_SPLITMUX_UNLOCK (splitmux);
   return NULL;
 }
@@ -1483,6 +1505,8 @@ gst_splitmux_sink_release_pad (GstElement * element, GstPad * pad)
 
   /* Can release the context now */
   mq_stream_ctx_unref (ctx);
+  if (ctx == splitmux->reference_ctx)
+    splitmux->reference_ctx = NULL;
 
   /* Release and free the mq input */
   gst_element_release_request_pad (splitmux->mq, mqsink);
@@ -1493,6 +1517,11 @@ gst_splitmux_sink_release_pad (GstElement * element, GstPad * pad)
   gst_object_unref (mqsink);
   gst_object_unref (mqsrc);
   gst_object_unref (muxpad);
+
+  if (GST_PAD_PAD_TEMPLATE (pad) &&
+      g_str_equal (GST_PAD_TEMPLATE_NAME_TEMPLATE (GST_PAD_PAD_TEMPLATE (pad)),
+          "video"))
+    splitmux->have_video = FALSE;
 
   gst_element_remove_pad (element, pad);
 
@@ -1551,6 +1580,8 @@ create_elements (GstSplitMuxSink * splitmux)
               create_element (splitmux, "mp4mux", "muxer")) == NULL)
         goto fail;
     } else {
+      /* Ensure it's not in locked state (we might be reusing an old element) */
+      gst_element_set_locked_state (provided_muxer, FALSE);
       if (!gst_bin_add (GST_BIN (splitmux), provided_muxer)) {
         g_warning ("Could not add muxer element - splitmuxsink will not work");
         gst_object_unref (provided_muxer);
@@ -1627,6 +1658,8 @@ create_sink (GstSplitMuxSink * splitmux)
         goto fail;
       splitmux->active_sink = splitmux->sink;
     } else {
+      /* Ensure it's not in locked state (we might be reusing an old element) */
+      gst_element_set_locked_state (provided_sink, FALSE);
       if (!gst_bin_add (GST_BIN (splitmux), provided_sink)) {
         g_warning ("Could not add sink elements - splitmuxsink will not work");
         gst_object_unref (provided_sink);

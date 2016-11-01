@@ -750,12 +750,14 @@ gst_splitmux_src_stop (GstSplitMuxSrc * splitmux)
   splitmux->pads = NULL;
   SPLITMUX_SRC_PADS_UNLOCK (splitmux);
 
+  SPLITMUX_SRC_UNLOCK (splitmux);
   for (cur = g_list_first (pads_list); cur != NULL; cur = g_list_next (cur)) {
     SplitMuxSrcPad *tmp = (SplitMuxSrcPad *) (cur->data);
     gst_pad_stop_task (GST_PAD (tmp));
     gst_element_remove_pad (GST_ELEMENT (splitmux), GST_PAD (tmp));
   }
   g_list_free (pads_list);
+  SPLITMUX_SRC_LOCK (splitmux);
 
   g_free (splitmux->parts);
   splitmux->parts = NULL;
@@ -943,6 +945,28 @@ gst_splitmux_end_of_part (GstSplitMuxSrc * splitmux, SplitMuxSrcPad * splitpad)
   if (gst_splitmux_part_is_eos (splitmux->parts[splitpad->cur_part]))
     gst_splitmux_part_reader_deactivate (splitmux->parts[cur_part]);
 
+  if (splitmux->play_segment.rate >= 0.0) {
+    if (splitmux->play_segment.stop != -1) {
+      GstClockTime part_end =
+          gst_splitmux_part_reader_get_end_offset (splitmux->parts[cur_part]);
+      if (part_end >= splitmux->play_segment.stop) {
+        GST_DEBUG_OBJECT (splitmux,
+            "Stop position was within that part. Finishing");
+        next_part = -1;
+      }
+    }
+  } else {
+    if (splitmux->play_segment.start != -1) {
+      GstClockTime part_start =
+          gst_splitmux_part_reader_get_start_offset (splitmux->parts[cur_part]);
+      if (part_start >= splitmux->play_segment.start) {
+        GST_DEBUG_OBJECT (splitmux,
+            "Start position was within that part. Finishing");
+        next_part = -1;
+      }
+    }
+  }
+
   if (next_part != -1) {
     GST_DEBUG_OBJECT (splitmux, "At EOS on pad %" GST_PTR_FORMAT
         " moving to part %d", splitpad, next_part);
@@ -955,21 +979,23 @@ gst_splitmux_end_of_part (GstSplitMuxSrc * splitmux, SplitMuxSrcPad * splitpad)
         (GstPad *) (splitpad));
 
     if (splitmux->cur_part != next_part) {
-      GstSegment tmp;
-      /* If moving backward into a new part, set stop
-       * to -1 to ensure we play the entire file - workaround
-       * a bug in qtdemux that misses bits at the end */
-      gst_segment_copy_into (&splitmux->play_segment, &tmp);
-      if (tmp.rate < 0)
-        tmp.stop = -1;
+      if (!gst_splitmux_part_reader_is_active (splitpad->reader)) {
+        GstSegment tmp;
+        /* If moving backward into a new part, set stop
+         * to -1 to ensure we play the entire file - workaround
+         * a bug in qtdemux that misses bits at the end */
+        gst_segment_copy_into (&splitmux->play_segment, &tmp);
+        if (tmp.rate < 0)
+          tmp.stop = -1;
 
-      /* This is the first pad to move to the new part, activate it */
+        /* This is the first pad to move to the new part, activate it */
+        GST_DEBUG_OBJECT (splitpad,
+            "First pad to change part. Activating part %d with seg %"
+            GST_SEGMENT_FORMAT, next_part, &tmp);
+        if (!gst_splitmux_part_reader_activate (splitpad->reader, &tmp))
+          goto error;
+      }
       splitmux->cur_part = next_part;
-      GST_DEBUG_OBJECT (splitpad,
-          "First pad to change part. Activating part %d with seg %"
-          GST_SEGMENT_FORMAT, next_part, &tmp);
-      if (!gst_splitmux_part_reader_activate (splitpad->reader, &tmp))
-        goto error;
     }
     res = TRUE;
   }

@@ -120,10 +120,8 @@ gst_rnd_buffer_size_class_init (GstRndBufferSizeClass * klass)
   gobject_class->get_property = gst_rnd_buffer_size_get_property;
   gobject_class->finalize = gst_rnd_buffer_size_finalize;
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&sink_template));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&src_template));
+  gst_element_class_add_static_pad_template (gstelement_class, &sink_template);
+  gst_element_class_add_static_pad_template (gstelement_class, &src_template);
 
   gst_element_class_set_static_metadata (gstelement_class, "Random buffer size",
       "Testing", "pull random sized buffers",
@@ -517,9 +515,7 @@ push_failed:
       GST_DEBUG_OBJECT (self, "eos");
       gst_pad_push_event (self->srcpad, gst_event_new_eos ());
     } else if (ret < GST_FLOW_EOS || ret == GST_FLOW_NOT_LINKED) {
-      GST_ELEMENT_ERROR (self, STREAM, FAILED,
-          ("Internal data stream error."),
-          ("streaming stopped, reason: %s", gst_flow_get_name (ret)));
+      GST_ELEMENT_FLOW_ERROR (self, ret);
     }
     goto pause_task;
   }

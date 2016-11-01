@@ -110,10 +110,10 @@ gst_rtp_h263p_depay_class_init (GstRtpH263PDepayClass * klass)
 
   gstelement_class->change_state = gst_rtp_h263p_depay_change_state;
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&gst_rtp_h263p_depay_src_template));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&gst_rtp_h263p_depay_sink_template));
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &gst_rtp_h263p_depay_src_template);
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &gst_rtp_h263p_depay_sink_template);
 
   gst_element_class_set_static_metadata (gstelement_class,
       "RTP H263 depayloader", "Codec/Depayloader/Network/RTP",
@@ -287,12 +287,8 @@ gst_rtp_h263p_depay_process (GstRTPBaseDepayload * depayload,
     goto too_small;
 
   if (P) {
-    /* FIXME, have to make the packet writable hear. Better to reset these
-     * bytes when we copy the packet below */
     rtph263pdepay->wait_start = FALSE;
     header_len -= 2;
-    payload[header_len] = 0;
-    payload[header_len + 1] = 0;
   }
 
   if (rtph263pdepay->wait_start)
@@ -304,7 +300,6 @@ gst_rtp_h263p_depay_process (GstRTPBaseDepayload * depayload,
   /* FIXME do not ignore the VRC header (See RFC 2429 section 4.2) */
   /* FIXME actually use the RTP picture header when it is lost in the network */
   /* for now strip off header */
-  payload += header_len;
   payload_len -= header_len;
 
   if (M) {
@@ -317,12 +312,17 @@ gst_rtp_h263p_depay_process (GstRTPBaseDepayload * depayload,
 
     outbuf =
         gst_rtp_buffer_get_payload_subbuffer (rtp, header_len, payload_len);
+    if (P)
+      gst_buffer_memset (outbuf, 0, 0, 2);
     gst_adapter_push (rtph263pdepay->adapter, outbuf);
     outbuf = NULL;
 
     avail = gst_adapter_available (rtph263pdepay->adapter);
     len = avail + payload_len;
     padlen = (len % 4) + 4;
+
+    if (avail == 0)
+      goto empty_frame;
 
     outbuf = gst_adapter_take_buffer (rtph263pdepay->adapter, avail);
     if (padlen) {
@@ -341,6 +341,8 @@ gst_rtp_h263p_depay_process (GstRTPBaseDepayload * depayload,
 
     outbuf =
         gst_rtp_buffer_get_payload_subbuffer (rtp, header_len, payload_len);
+    if (P)
+      gst_buffer_memset (outbuf, 0, 0, 2);
     gst_adapter_push (rtph263pdepay->adapter, outbuf);
   }
   return NULL;
@@ -354,6 +356,11 @@ too_small:
 waiting_start:
   {
     GST_DEBUG_OBJECT (rtph263pdepay, "waiting for picture start");
+    return NULL;
+  }
+empty_frame:
+  {
+    GST_WARNING_OBJECT (rtph263pdepay, "Depayloaded frame is empty, dropping");
     return NULL;
   }
 }

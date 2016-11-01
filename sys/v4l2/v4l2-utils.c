@@ -29,7 +29,7 @@
 /* Common device iterator */
 /**************************/
 
-#if HAVE_GUDEV
+#ifdef HAVE_GUDEV
 #include <gudev/gudev.h>
 
 struct _GstV4l2GUdevIterator
@@ -171,6 +171,7 @@ gst_v4l2_clear_error (GstV4l2Error * v4l2err)
   if (v4l2err) {
     g_clear_error (&v4l2err->error);
     g_free (v4l2err->dbg_message);
+    v4l2err->dbg_message = NULL;
   }
 }
 

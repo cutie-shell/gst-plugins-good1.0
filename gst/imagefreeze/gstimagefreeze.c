@@ -101,10 +101,10 @@ gst_image_freeze_class_init (GstImageFreezeClass * klass)
       "Generates a still frame stream from an image",
       "Sebastian Dröge <sebastian.droege@collabora.co.uk>");
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&sink_pad_template));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&src_pad_template));
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &sink_pad_template);
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &src_pad_template);
 }
 
 static void
@@ -846,9 +846,7 @@ pause_task:
     } else if (flow_ret == GST_FLOW_NOT_LINKED || flow_ret < GST_FLOW_EOS) {
       GstEvent *e = gst_event_new_eos ();
 
-      GST_ELEMENT_ERROR (self, STREAM, FAILED,
-          ("Internal data stream error."),
-          ("stream stopped, reason %s", reason));
+      GST_ELEMENT_FLOW_ERROR (self, flow_ret);
 
       if (self->seqnum)
         gst_event_set_seqnum (e, self->seqnum);

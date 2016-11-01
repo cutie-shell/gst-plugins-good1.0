@@ -82,10 +82,7 @@ enum
 static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS ("audio/x-raw, "
-        "format = (string) " GST_AUDIO_FORMATS_ALL ", "
-        "layout = (string) interleaved, "
-        "rate = (int) [1, MAX], " "channels = (int) [1, MAX]")
+    GST_STATIC_CAPS (GST_OSX_AUDIO_SRC_CAPS)
     );
 
 static void gst_osx_audio_src_set_property (GObject * object, guint prop_id,
@@ -155,8 +152,7 @@ gst_osx_audio_src_class_init (GstOsxAudioSrcClass * klass)
   gstaudiobasesrc_class->create_ringbuffer =
       GST_DEBUG_FUNCPTR (gst_osx_audio_src_create_ringbuffer);
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&src_factory));
+  gst_element_class_add_static_pad_template (gstelement_class, &src_factory);
 
   gst_element_class_set_static_metadata (gstelement_class, "Audio Source (OSX)",
       "Source/Audio",

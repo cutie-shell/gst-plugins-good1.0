@@ -174,10 +174,8 @@ gst_matroska_parse_class_init (GstMatroskaParseClass * klass)
       GST_DEBUG_FUNCPTR (gst_matroska_parse_get_index);
 #endif
 
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&src_templ));
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&sink_templ));
+  gst_element_class_add_static_pad_template (gstelement_class, &src_templ);
+  gst_element_class_add_static_pad_template (gstelement_class, &sink_templ);
 
   gst_element_class_set_static_metadata (gstelement_class,
       "Matroska parser", "Codec/Parser",
@@ -2922,8 +2920,7 @@ pause:
       }
     } else if (ret == GST_FLOW_NOT_LINKED || ret < GST_FLOW_EOS) {
       /* for fatal errors we post an error message */
-      GST_ELEMENT_ERROR (parse, STREAM, FAILED, (NULL),
-          ("stream stopped, reason %s", reason));
+      GST_ELEMENT_FLOW_ERROR (parse, ret);
       push_eos = TRUE;
     }
     if (push_eos) {

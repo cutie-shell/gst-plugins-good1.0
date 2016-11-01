@@ -114,6 +114,7 @@ am__aclocal_m4_deps = $(top_srcdir)/common/m4/as-ac-expand.m4 \
 	$(top_srcdir)/common/m4/as-libtool.m4 \
 	$(top_srcdir)/common/m4/as-version.m4 \
 	$(top_srcdir)/common/m4/ax_create_stdint_h.m4 \
+	$(top_srcdir)/common/m4/ax_pthread.m4 \
 	$(top_srcdir)/common/m4/gst-arch.m4 \
 	$(top_srcdir)/common/m4/gst-args.m4 \
 	$(top_srcdir)/common/m4/gst-check.m4 \
@@ -274,6 +275,7 @@ GST_OPTION_CXXFLAGS = @GST_OPTION_CXXFLAGS@
 GST_OPTION_OBJCFLAGS = @GST_OPTION_OBJCFLAGS@
 GST_PACKAGE_NAME = @GST_PACKAGE_NAME@
 GST_PACKAGE_ORIGIN = @GST_PACKAGE_ORIGIN@
+GST_PKG_CONFIG_PATH = @GST_PKG_CONFIG_PATH@
 GST_PLUGINS_ALL = @GST_PLUGINS_ALL@
 GST_PLUGINS_BASE_CFLAGS = @GST_PLUGINS_BASE_CFLAGS@
 GST_PLUGINS_BASE_DIR = @GST_PLUGINS_BASE_DIR@
@@ -380,6 +382,9 @@ PKG_CONFIG = @PKG_CONFIG@
 PLUGINDIR = @PLUGINDIR@
 POSUB = @POSUB@
 PROFILE_CFLAGS = @PROFILE_CFLAGS@
+PTHREAD_CC = @PTHREAD_CC@
+PTHREAD_CFLAGS = @PTHREAD_CFLAGS@
+PTHREAD_LIBS = @PTHREAD_LIBS@
 PULSE_CFLAGS = @PULSE_CFLAGS@
 PULSE_LIBS = @PULSE_LIBS@
 PYTHON = @PYTHON@
@@ -447,6 +452,7 @@ am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
+ax_pthread_config = @ax_pthread_config@
 bindir = @bindir@
 build = @build@
 build_alias = @build_alias@
@@ -710,6 +716,8 @@ EXTRA_HFILES = \
 	$(top_srcdir)/sys/osxvideo/osxvideosink.h \
 	$(top_srcdir)/sys/v4l2/gstv4l2src.h \
 	$(top_srcdir)/sys/v4l2/gstv4l2sink.h \
+	$(top_srcdir)/sys/v4l2/gstv4l2transform.h \
+	$(top_srcdir)/sys/v4l2/gstv4l2videodec.h \
 	$(top_srcdir)/sys/v4l2/gstv4l2radio.h \
 	$(top_srcdir)/sys/waveform/gstwaveformsink.h \
 	$(top_srcdir)/sys/ximage/gstximagesrc.h
@@ -1164,9 +1172,13 @@ update: scanobj-update
 @ENABLE_GTK_DOC_TRUE@		$(top_srcdir)/common/plugins.xsl $$a > xml/`basename $$a`; done
 @ENABLE_GTK_DOC_TRUE@	@for f in $(EXAMPLE_CFILES); do \
 @ENABLE_GTK_DOC_TRUE@		$(PYTHON) $(top_srcdir)/common/c-to-xml.py $$f > xml/element-`basename $$f .c`.xml; done
-@ENABLE_GTK_DOC_TRUE@	@gtkdoc-mkdb \
+@ENABLE_GTK_DOC_TRUE@	@_source_dir='' ;						\
+@ENABLE_GTK_DOC_TRUE@	for i in $(DOC_SOURCE_DIR) ; do					\
+@ENABLE_GTK_DOC_TRUE@	    _source_dir="$${_source_dir} --source-dir=$$i" ;	        \
+@ENABLE_GTK_DOC_TRUE@	done ;								\
+@ENABLE_GTK_DOC_TRUE@	gtkdoc-mkdb \
 @ENABLE_GTK_DOC_TRUE@		--module=$(DOC_MODULE) \
-@ENABLE_GTK_DOC_TRUE@		--source-dir=$(DOC_SOURCE_DIR) \
+@ENABLE_GTK_DOC_TRUE@		$${_source_dir} \
 @ENABLE_GTK_DOC_TRUE@		 --expand-content-files="$(expand_content_files)" \
 @ENABLE_GTK_DOC_TRUE@		--main-sgml-file=$(srcdir)/$(DOC_MAIN_SGML_FILE) \
 @ENABLE_GTK_DOC_TRUE@		--output-format=xml \

@@ -5,7 +5,7 @@ dnl please read gstreamer/docs/random/autotools before changing this file
 dnl initialize autoconf
 dnl releases only do -Wall, git and prerelease does -Werror too
 dnl use a three digit version number for releases, and four for git/pre
-AC_INIT([GStreamer Good Plug-ins],[1.8.3],[http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer],[gst-plugins-good])
+AC_INIT([GStreamer Good Plug-ins],[1.9.90],[http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer],[gst-plugins-good])
 
 AG_GST_INIT
 
@@ -43,11 +43,11 @@ AC_DEFINE_UNQUOTED(GST_API_VERSION, "$GST_API_VERSION",
   [GStreamer API Version])
 
 AG_GST_LIBTOOL_PREPARE
-AS_LIBTOOL(GST, 803, 0, 803)
+AS_LIBTOOL(GST, 990, 0, 990)
 
 dnl *** required versions of GStreamer stuff ***
-GST_REQ=1.8.0
-GSTPB_REQ=1.8.1
+GST_REQ=1.9.90
+GSTPB_REQ=1.9.90
 
 dnl *** autotools stuff ****
 
@@ -84,6 +84,8 @@ AG_GST_ARG_WITH_PLUGINS
 AG_GST_ARG_ENABLE_EXTERNAL
 
 AG_GST_ARG_ENABLE_EXPERIMENTAL
+
+AG_GST_PKG_CONFIG_PATH
 
 dnl *** checks for platform ***
 
@@ -142,6 +144,9 @@ AC_CHECK_FUNCS(clock_gettime, [], [
     AC_SUBST([LIBRT])
   ])
 ])
+
+dnl check for pthreads
+AX_PTHREAD
 
 dnl *** checks for header files ***
 
@@ -571,12 +576,19 @@ if test x$HAVE_GST_V4L2 = xyes; then
 fi
 
 dnl Allow enabling v4l2 device probing
+AS_CASE([$host],
+    [*-*linux*],
+      [AS_CASE([$host_cpu],
+        [arm*], [
+          enable_v4l2_probe="yes"],
+        [aarch64*], [
+          enable_v4l2_probe="yes"])])
 AC_ARG_ENABLE(
   v4l2-probe,
   AC_HELP_STRING(
     [--enable-v4l2-probe],
     [enable V4L2 plugin to probe devices @<:@default=no@:>@]))
-if test "x$enable_v4l2_probe" = xyes; then
+if test "x$enable_v4l2_probe" = "xyes"; then
   AC_DEFINE(GST_V4L2_ENABLE_PROBE, 1,
     [Define if Video4Linux probe shall be run at plugin load])
 fi

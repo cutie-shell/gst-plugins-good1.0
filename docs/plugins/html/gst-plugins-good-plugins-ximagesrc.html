@@ -123,10 +123,29 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-ximagesrc.description"></a><h2>Description</h2>
+<p>This element captures your X Display and creates raw RGB video.  It uses
+the XDamage extension if available to only capture areas of the screen that
+have changed since the last frame.  It uses the XFixes extension if
+available to also capture your mouse pointer.  By default it will fixate to
+25 frames per second.</p>
+<div class="refsect2">
+<a name="id-1.2.269.7.3"></a><h3>Example pipelines</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> ximagesrc <span class="gtkdoc opt">!</span> video<span class="gtkdoc opt">/</span>x<span class="gtkdoc opt">-</span>raw<span class="gtkdoc opt">,</span>framerate<span class="gtkdoc opt">=</span><span class="number">5</span><span class="gtkdoc opt">/</span><span class="number">1</span> <span class="gtkdoc opt">!</span> videoconvert <span class="gtkdoc opt">!</span> theoraenc <span class="gtkdoc opt">!</span> oggmux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>desktop<span class="gtkdoc opt">.</span>ogg</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ Encodes your X display to an Ogg theora video at 5 frames per second.
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.190.7.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.269.7.4.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -152,7 +171,7 @@
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.190.7.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.269.7.4.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -212,7 +231,8 @@
 <div class="refsect2">
 <a name="GstXImageSrc--endx"></a><h3>The <code class="literal">“endx”</code> property</h3>
 <pre class="programlisting">  “endx”                     <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
-<p>X coordinate of bottom right corner of area to be recorded (0 for bottom right of screen).</p>
+<p>X coordinate of bottom right corner of area to be recorded
+(0 for bottom right of screen)</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &lt;= G_MAXINT</p>
 <p>Default value: 0</p>
@@ -221,7 +241,8 @@
 <div class="refsect2">
 <a name="GstXImageSrc--endy"></a><h3>The <code class="literal">“endy”</code> property</h3>
 <pre class="programlisting">  “endy”                     <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
-<p>Y coordinate of bottom right corner of area to be recorded (0 for bottom right of screen).</p>
+<p>Y coordinate of bottom right corner of area to be recorded
+(0 for bottom right of screen)</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &lt;= G_MAXINT</p>
 <p>Default value: 0</p>
@@ -230,7 +251,8 @@
 <div class="refsect2">
 <a name="GstXImageSrc--startx"></a><h3>The <code class="literal">“startx”</code> property</h3>
 <pre class="programlisting">  “startx”                   <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
-<p>X coordinate of top left corner of area to be recorded (0 for top left of screen).</p>
+<p>X coordinate of top left corner of area to be recorded
+(0 for top left of screen)</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &lt;= G_MAXINT</p>
 <p>Default value: 0</p>
@@ -239,7 +261,8 @@
 <div class="refsect2">
 <a name="GstXImageSrc--starty"></a><h3>The <code class="literal">“starty”</code> property</h3>
 <pre class="programlisting">  “starty”                   <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
-<p>Y coordinate of top left corner of area to be recorded (0 for top left of screen).</p>
+<p>Y coordinate of top left corner of area to be recorded
+(0 for top left of screen)</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &lt;= G_MAXINT</p>
 <p>Default value: 0</p>
@@ -248,7 +271,7 @@
 <div class="refsect2">
 <a name="GstXImageSrc--use-damage"></a><h3>The <code class="literal">“use-damage”</code> property</h3>
 <pre class="programlisting">  “use-damage”               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
-<p>Use XDamage (if XDamage extension enabled).</p>
+<p>Use XDamage (if the XDamage extension is enabled)</p>
 <p>Flags: Read / Write</p>
 <p>Default value: TRUE</p>
 </div>
@@ -256,7 +279,8 @@
 <div class="refsect2">
 <a name="GstXImageSrc--remote"></a><h3>The <code class="literal">“remote”</code> property</h3>
 <pre class="programlisting">  “remote”                   <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
-<p>Whether the display is remote.</p>
+<p>Whether the X display is remote. The element will try to use alternate calls
+known to work better with remote displays.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: FALSE</p>
 </div>
@@ -264,7 +288,7 @@
 <div class="refsect2">
 <a name="GstXImageSrc--xid"></a><h3>The <code class="literal">“xid”</code> property</h3>
 <pre class="programlisting">  “xid”                      <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
-<p>Window XID to capture from.</p>
+<p>The XID of the window to capture. 0 for the root window (default).</p>
 <p>Flags: Read / Write</p>
 <p>Default value: 0</p>
 </div>
@@ -272,7 +296,7 @@
 <div class="refsect2">
 <a name="GstXImageSrc--xname"></a><h3>The <code class="literal">“xname”</code> property</h3>
 <pre class="programlisting">  “xname”                    <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
-<p>Window name to capture from.</p>
+<p>The name of the window to capture, if any.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: NULL</p>
 </div>

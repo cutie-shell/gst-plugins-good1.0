@@ -82,6 +82,8 @@ struct _GstFlvDemux
   GstEvent *new_seg_event;
 
   GstTagList *taglist;
+  GstTagList *audio_tags;
+  GstTagList *video_tags;
 
   GstFlvDemuxState state;
 
@@ -126,7 +128,6 @@ struct _GstFlvDemux
   gboolean need_header;
   gboolean has_audio;
   gboolean has_video;
-  gboolean push_tags;
   gboolean strict;
   gboolean flushing;
 

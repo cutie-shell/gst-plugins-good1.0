@@ -106,10 +106,38 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-jackaudiosrc.description"></a><h2>Description</h2>
+<p>A Src that inputs data from Jack ports.</p>
+<p>It will create N Jack ports named in_&lt;name&gt;_&lt;num&gt; where 
+&lt;name&gt; is the element name and &lt;num&gt; is starting from 1.
+Each port corresponds to a gstreamer channel.</p>
+<p>The samplerate as exposed on the caps is always the same as the samplerate of
+the jack server.</p>
+<p>When the <a class="link" href="gst-plugins-good-plugins-jackaudiosrc.html#GstJackAudioSrc--connect" title="The “connect” property"><span class="type">“connect”</span></a> property is set to auto, this element
+will try to connect each input port to a random physical jack output pin. </p>
+<p>When the <a class="link" href="gst-plugins-good-plugins-jackaudiosrc.html#GstJackAudioSrc--connect" title="The “connect” property"><span class="type">“connect”</span></a> property is set to none, the element will
+accept any number of output channels and will create (but not connect) an
+input port for each channel.</p>
+<p>The element will generate an error when the Jack server is shut down when it
+was PAUSED or PLAYING. This element does not support dynamic rate and buffer
+size changes at runtime.</p>
+<div class="refsect2">
+<a name="id-1.2.80.7.8"></a><h3>Example launch line</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> jackaudiosrc connect<span class="gtkdoc opt">=</span><span class="number">0</span> <span class="gtkdoc opt">!</span> jackaudiosink connect<span class="gtkdoc opt">=</span><span class="number">0</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ Get audio input into gstreamer from jack.
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.73.7.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.80.7.9.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -135,7 +163,7 @@
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.73.7.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.80.7.9.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -202,7 +230,7 @@
 <div class="refsect2">
 <a name="GstJackAudioSrc--client-name"></a><h3>The <code class="literal">“client-name”</code> property</h3>
 <pre class="programlisting">  “client-name”              <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
-<p>The client name of the Jack instance (NULL = default).</p>
+<p>The client name to use.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: NULL</p>
 </div>
@@ -217,10 +245,15 @@
 <div class="refsect2">
 <a name="GstJackAudioSrc--port-pattern"></a><h3>The <code class="literal">“port-pattern”</code> property</h3>
 <pre class="programlisting">  “port-pattern”             <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
-<p>A pattern to select which ports to connect to (NULL = first physical ports).</p>
+<p>autoconnect to ports matching pattern, when NULL connect to physical ports</p>
 <p>Flags: Read / Write</p>
 <p>Default value: NULL</p>
+<p class="since">Since: 1.6</p>
 </div>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-jackaudiosrc.see-also"></a><h2>See Also</h2>
+<p><a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-gstaudiobasesrc.html#GstAudioBaseSrc-struct"><span class="type">GstAudioBaseSrc</span></a>, <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-gstaudioringbuffer.html#GstAudioRingBuffer-struct"><span class="type">GstAudioRingBuffer</span></a></p>
 </div>
 </div>
 <div class="footer">

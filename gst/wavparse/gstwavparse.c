@@ -54,19 +54,11 @@
 #include "gstwavparse.h"
 #include "gst/riff/riff-media.h"
 #include <gst/base/gsttypefindhelper.h>
+#include <gst/pbutils/descriptions.h>
 #include <gst/gst-i18n-plugin.h>
 
 GST_DEBUG_CATEGORY_STATIC (wavparse_debug);
 #define GST_CAT_DEFAULT (wavparse_debug)
-
-#define GST_RIFF_TAG_Fake GST_MAKE_FOURCC ('F','a','k','e')
-
-#define GST_BWF_TAG_iXML GST_MAKE_FOURCC ('i','X','M','L')
-#define GST_BWF_TAG_qlty GST_MAKE_FOURCC ('q','l','t','y')
-#define GST_BWF_TAG_mext GST_MAKE_FOURCC ('m','e','x','t')
-#define GST_BWF_TAG_levl GST_MAKE_FOURCC ('l','e','v','l')
-#define GST_BWF_TAG_link GST_MAKE_FOURCC ('l','i','n','k')
-#define GST_BWF_TAG_axml GST_MAKE_FOURCC ('a','x','m','l')
 
 /* Data size chunk of RF64,
  * see http://tech.ebu.ch/docs/tech/tech3306-2009.pdf */
@@ -188,8 +180,8 @@ gst_wavparse_class_init (GstWavParseClass * klass)
   gstelement_class->send_event = gst_wavparse_send_event;
 
   /* register pads */
-  gst_element_class_add_pad_template (gstelement_class,
-      gst_static_pad_template_get (&sink_template_factory));
+  gst_element_class_add_static_pad_template (gstelement_class,
+      &sink_template_factory);
 
   src_template = gst_pad_template_new ("src", GST_PAD_SRC,
       GST_PAD_ALWAYS, gst_riff_create_audio_template_caps ());
@@ -1091,11 +1083,10 @@ gst_wavparse_stream_headers (GstWavParse * wav)
   gint64 upstream_size = 0;
   GstStructure *s;
 
-  /* search for "_fmt" chunk, which should be first */
+  /* search for "_fmt" chunk, which must be before "data" */
   while (!wav->got_fmt) {
     GstBuffer *extra;
 
-    /* The header starts with a 'fmt ' tag */
     if (wav->streaming) {
       if (!gst_wavparse_peek_chunk (wav, &tag, &size))
         return res;
@@ -1117,21 +1108,6 @@ gst_wavparse_stream_headers (GstWavParse * wav)
         return res;
     }
 
-    if (tag == GST_RIFF_TAG_JUNK || tag == GST_RIFF_TAG_JUNQ ||
-        tag == GST_RIFF_TAG_bext || tag == GST_RIFF_TAG_BEXT ||
-        tag == GST_RIFF_TAG_LIST || tag == GST_RIFF_TAG_ID32 ||
-        tag == GST_RIFF_TAG_id3 || tag == GST_RIFF_TAG_IDVX ||
-        tag == GST_BWF_TAG_iXML || tag == GST_BWF_TAG_qlty ||
-        tag == GST_BWF_TAG_mext || tag == GST_BWF_TAG_levl ||
-        tag == GST_BWF_TAG_link || tag == GST_BWF_TAG_axml ||
-        tag == GST_RIFF_TAG_Fake) {
-      GST_DEBUG_OBJECT (wav, "skipping %" GST_FOURCC_FORMAT " chunk",
-          GST_FOURCC_ARGS (tag));
-      gst_buffer_unref (buf);
-      buf = NULL;
-      continue;
-    }
-
     if (tag == GST_RS64_TAG_DS64) {
       if (!parse_ds64 (wav, buf))
         goto fail;
@@ -1139,8 +1115,13 @@ gst_wavparse_stream_headers (GstWavParse * wav)
         continue;
     }
 
-    if (tag != GST_RIFF_TAG_fmt)
-      goto invalid_wav;
+    if (tag != GST_RIFF_TAG_fmt) {
+      GST_DEBUG_OBJECT (wav, "skipping %" GST_FOURCC_FORMAT " chunk",
+          GST_FOURCC_ARGS (tag));
+      gst_buffer_unref (buf);
+      buf = NULL;
+      continue;
+    }
 
     if (!(gst_riff_parse_strf_auds (GST_ELEMENT_CAST (wav), buf, &header,
                 &extra)))
@@ -1243,9 +1224,25 @@ gst_wavparse_stream_headers (GstWavParse * wav)
 
     wav->got_fmt = TRUE;
 
-    if (codec_name) {
+    if (wav->tags == NULL)
       wav->tags = gst_tag_list_new_empty ();
 
+    {
+      GstCaps *templ_caps = gst_pad_get_pad_template_caps (wav->sinkpad);
+      gst_pb_utils_add_codec_description_to_tag_list (wav->tags,
+          GST_TAG_CONTAINER_FORMAT, templ_caps);
+      gst_caps_unref (templ_caps);
+    }
+
+    /* If bps is nonzero, then we do have a valid bitrate that can be
+     * announced in a tag list. */
+    if (wav->bps) {
+      guint bitrate = wav->bps * 8;
+      gst_tag_list_add (wav->tags, GST_TAG_MERGE_REPLACE,
+          GST_TAG_BITRATE, bitrate, NULL);
+    }
+
+    if (codec_name) {
       gst_tag_list_add (wav->tags, GST_TAG_MERGE_REPLACE,
           GST_TAG_AUDIO_CODEC, codec_name, NULL);
 
@@ -1717,13 +1714,6 @@ fail:
   {
     res = GST_FLOW_ERROR;
     goto exit;
-  }
-invalid_wav:
-  {
-    GST_ELEMENT_ERROR (wav, STREAM, TYPE_NOT_FOUND, (NULL),
-        ("Invalid WAV header (no fmt at start): %"
-            GST_FOURCC_FORMAT, GST_FOURCC_ARGS (tag)));
-    goto fail;
   }
 parse_header_error:
   {
@@ -2256,9 +2246,7 @@ pause:
     } else if (ret == GST_FLOW_NOT_LINKED || ret < GST_FLOW_EOS) {
       /* for fatal errors we post an error message, post the error
        * first so the app knows about the error first. */
-      GST_ELEMENT_ERROR (wav, STREAM, FAILED,
-          (_("Internal data flow error.")),
-          ("streaming task paused, reason %s (%d)", reason, ret));
+      GST_ELEMENT_FLOW_ERROR (wav, ret);
       gst_pad_push_event (wav->srcpad, gst_event_new_eos ());
     }
     return;

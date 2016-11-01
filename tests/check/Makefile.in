@@ -115,6 +115,7 @@ am__aclocal_m4_deps = $(top_srcdir)/common/m4/as-ac-expand.m4 \
 	$(top_srcdir)/common/m4/as-libtool.m4 \
 	$(top_srcdir)/common/m4/as-version.m4 \
 	$(top_srcdir)/common/m4/ax_create_stdint_h.m4 \
+	$(top_srcdir)/common/m4/ax_pthread.m4 \
 	$(top_srcdir)/common/m4/gst-arch.m4 \
 	$(top_srcdir)/common/m4/gst-args.m4 \
 	$(top_srcdir)/common/m4/gst-check.m4 \
@@ -197,7 +198,8 @@ libparser_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @USE_PLUGIN_FLV_TRUE@	elements/flvmux$(EXEEXT)
 @USE_GDK_PIXBUF_TRUE@am__EXEEXT_13 = elements/gdkpixbufsink$(EXEEXT) \
 @USE_GDK_PIXBUF_TRUE@	elements/gdkpixbufoverlay$(EXEEXT)
-@USE_PLUGIN_ISOMP4_TRUE@am__EXEEXT_14 = elements/qtmux$(EXEEXT)
+@USE_PLUGIN_ISOMP4_TRUE@am__EXEEXT_14 = elements/qtmux$(EXEEXT) \
+@USE_PLUGIN_ISOMP4_TRUE@	elements/qtdemux$(EXEEXT)
 @USE_PLUGIN_ICYDEMUX_TRUE@am__EXEEXT_15 = elements/icydemux$(EXEEXT)
 @USE_PLUGIN_ID3DEMUX_TRUE@am__EXEEXT_16 = elements/id3demux$(EXEEXT)
 @USE_PLUGIN_IMAGEFREEZE_TRUE@am__EXEEXT_17 =  \
@@ -222,7 +224,9 @@ libparser_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @USE_PLUGIN_REPLAYGAIN_TRUE@	elements/rglimiter$(EXEEXT) \
 @USE_PLUGIN_REPLAYGAIN_TRUE@	elements/rgvolume$(EXEEXT)
 @USE_PLUGIN_RTP_TRUE@am__EXEEXT_25 = elements/rtp-payloading$(EXEEXT) \
-@USE_PLUGIN_RTP_TRUE@	elements/rtph263$(EXEEXT)
+@USE_PLUGIN_RTP_TRUE@	elements/rtph261$(EXEEXT) \
+@USE_PLUGIN_RTP_TRUE@	elements/rtph263$(EXEEXT) \
+@USE_PLUGIN_RTP_TRUE@	elements/rtpvp9$(EXEEXT)
 @USE_PLUGIN_RTPMANAGER_TRUE@am__EXEEXT_26 = elements/rtpaux$(EXEEXT) \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpbin$(EXEEXT) \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpbin_buffer_list$(EXEEXT) \
@@ -249,7 +253,8 @@ libparser_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @USE_PLUGIN_VIDEOMIXER_TRUE@am__EXEEXT_36 =  \
 @USE_PLUGIN_VIDEOMIXER_TRUE@	elements/videomixer$(EXEEXT)
 @USE_VPX_TRUE@am__EXEEXT_37 = elements/vp8enc$(EXEEXT) \
-@USE_VPX_TRUE@	elements/vp8dec$(EXEEXT)
+@USE_VPX_TRUE@	elements/vp8dec$(EXEEXT) \
+@USE_VPX_TRUE@	elements/vp9enc$(EXEEXT)
 @USE_PLUGIN_WAVENC_TRUE@am__EXEEXT_38 = pipelines/wavenc$(EXEEXT)
 @USE_WAVPACK_TRUE@am__EXEEXT_39 = elements/wavpackdec$(EXEEXT) \
 @USE_WAVPACK_TRUE@	elements/wavpackenc$(EXEEXT) \
@@ -575,6 +580,10 @@ elements_multifile_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_multifile_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
+elements_qtdemux_SOURCES = elements/qtdemux.c
+elements_qtdemux_OBJECTS = elements/qtdemux.$(OBJEXT)
+elements_qtdemux_LDADD = $(LDADD)
+elements_qtdemux_DEPENDENCIES = $(am__DEPENDENCIES_1)
 elements_qtmux_SOURCES = elements/qtmux.c
 elements_qtmux_OBJECTS = elements/elements_qtmux-qtmux.$(OBJEXT)
 elements_qtmux_DEPENDENCIES = $(am__DEPENDENCIES_1) \
@@ -641,11 +650,21 @@ elements_rtpcollision_SOURCES = elements/rtpcollision.c
 elements_rtpcollision_OBJECTS =  \
 	elements/elements_rtpcollision-rtpcollision.$(OBJEXT)
 elements_rtpcollision_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
 elements_rtpcollision_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_rtpcollision_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
+elements_rtph261_SOURCES = elements/rtph261.c
+elements_rtph261_OBJECTS =  \
+	elements/elements_rtph261-rtph261.$(OBJEXT)
+elements_rtph261_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+elements_rtph261_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(elements_rtph261_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
+	-o $@
 elements_rtph263_SOURCES = elements/rtph263.c
 elements_rtph263_OBJECTS =  \
 	elements/elements_rtph263-rtph263.$(OBJEXT)
@@ -684,11 +703,16 @@ elements_rtpsession_SOURCES = elements/rtpsession.c
 elements_rtpsession_OBJECTS =  \
 	elements/elements_rtpsession-rtpsession.$(OBJEXT)
 elements_rtpsession_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
 elements_rtpsession_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_rtpsession_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
+elements_rtpvp9_SOURCES = elements/rtpvp9.c
+elements_rtpvp9_OBJECTS = elements/rtpvp9.$(OBJEXT)
+elements_rtpvp9_LDADD = $(LDADD)
+elements_rtpvp9_DEPENDENCIES = $(am__DEPENDENCIES_1)
 elements_shapewipe_SOURCES = elements/shapewipe.c
 elements_shapewipe_OBJECTS = elements/shapewipe.$(OBJEXT)
 elements_shapewipe_LDADD = $(LDADD)
@@ -775,6 +799,14 @@ elements_vp8enc_SOURCES = elements/vp8enc.c
 elements_vp8enc_OBJECTS = elements/vp8enc.$(OBJEXT)
 elements_vp8enc_LDADD = $(LDADD)
 elements_vp8enc_DEPENDENCIES = $(am__DEPENDENCIES_1)
+elements_vp9enc_SOURCES = elements/vp9enc.c
+elements_vp9enc_OBJECTS = elements/elements_vp9enc-vp9enc.$(OBJEXT)
+elements_vp9enc_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
+elements_vp9enc_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(elements_vp9enc_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
+	-o $@
 elements_wavpackdec_SOURCES = elements/wavpackdec.c
 elements_wavpackdec_OBJECTS = elements/wavpackdec.$(OBJEXT)
 elements_wavpackdec_LDADD = $(LDADD)
@@ -916,20 +948,21 @@ SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/matroskademux.c elements/matroskamux.c \
 	elements/matroskaparse.c elements/mpegaudioparse.c \
 	elements/mulawdec.c elements/mulawenc.c elements/multifile.c \
-	elements/qtmux.c elements/rganalysis.c elements/rglimiter.c \
-	elements/rgvolume.c elements/rtp-payloading.c \
-	elements/rtpaux.c elements/rtpbin.c \
+	elements/qtdemux.c elements/qtmux.c elements/rganalysis.c \
+	elements/rglimiter.c elements/rgvolume.c \
+	elements/rtp-payloading.c elements/rtpaux.c elements/rtpbin.c \
 	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpcollision.c \
-	elements/rtph263.c elements/rtpjitterbuffer.c \
-	elements/rtpmux.c elements/rtprtx.c elements/rtpsession.c \
-	elements/shapewipe.c elements/souphttpsrc.c \
-	elements/spectrum.c elements/splitmux.c elements/sunaudio.c \
-	elements/udpsink.c elements/udpsrc.c elements/videobox.c \
-	elements/videocrop.c elements/videofilter.c \
-	elements/videomixer.c elements/vp8dec.c elements/vp8enc.c \
-	elements/wavpackdec.c elements/wavpackenc.c \
-	elements/wavpackparse.c elements/wavparse.c elements/y4menc.c \
-	generic/states.c $(nodist_orc_deinterlace_SOURCES) \
+	elements/rtph261.c elements/rtph263.c \
+	elements/rtpjitterbuffer.c elements/rtpmux.c elements/rtprtx.c \
+	elements/rtpsession.c elements/rtpvp9.c elements/shapewipe.c \
+	elements/souphttpsrc.c elements/spectrum.c elements/splitmux.c \
+	elements/sunaudio.c elements/udpsink.c elements/udpsrc.c \
+	elements/videobox.c elements/videocrop.c \
+	elements/videofilter.c elements/videomixer.c elements/vp8dec.c \
+	elements/vp8enc.c elements/vp9enc.c elements/wavpackdec.c \
+	elements/wavpackenc.c elements/wavpackparse.c \
+	elements/wavparse.c elements/y4menc.c generic/states.c \
+	$(nodist_orc_deinterlace_SOURCES) \
 	$(nodist_orc_videobox_SOURCES) \
 	$(nodist_orc_videomixer_SOURCES) pipelines/effectv.c \
 	pipelines/flacdec.c pipelines/simple-launch-lines.c \
@@ -955,20 +988,21 @@ DIST_SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/matroskademux.c elements/matroskamux.c \
 	elements/matroskaparse.c elements/mpegaudioparse.c \
 	elements/mulawdec.c elements/mulawenc.c elements/multifile.c \
-	elements/qtmux.c elements/rganalysis.c elements/rglimiter.c \
-	elements/rgvolume.c elements/rtp-payloading.c \
-	elements/rtpaux.c elements/rtpbin.c \
+	elements/qtdemux.c elements/qtmux.c elements/rganalysis.c \
+	elements/rglimiter.c elements/rgvolume.c \
+	elements/rtp-payloading.c elements/rtpaux.c elements/rtpbin.c \
 	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpcollision.c \
-	elements/rtph263.c elements/rtpjitterbuffer.c \
-	elements/rtpmux.c elements/rtprtx.c elements/rtpsession.c \
-	elements/shapewipe.c elements/souphttpsrc.c \
-	elements/spectrum.c elements/splitmux.c elements/sunaudio.c \
-	elements/udpsink.c elements/udpsrc.c elements/videobox.c \
-	elements/videocrop.c elements/videofilter.c \
-	elements/videomixer.c elements/vp8dec.c elements/vp8enc.c \
-	elements/wavpackdec.c elements/wavpackenc.c \
-	elements/wavpackparse.c elements/wavparse.c elements/y4menc.c \
-	generic/states.c pipelines/effectv.c pipelines/flacdec.c \
+	elements/rtph261.c elements/rtph263.c \
+	elements/rtpjitterbuffer.c elements/rtpmux.c elements/rtprtx.c \
+	elements/rtpsession.c elements/rtpvp9.c elements/shapewipe.c \
+	elements/souphttpsrc.c elements/spectrum.c elements/splitmux.c \
+	elements/sunaudio.c elements/udpsink.c elements/udpsrc.c \
+	elements/videobox.c elements/videocrop.c \
+	elements/videofilter.c elements/videomixer.c elements/vp8dec.c \
+	elements/vp8enc.c elements/vp9enc.c elements/wavpackdec.c \
+	elements/wavpackenc.c elements/wavpackparse.c \
+	elements/wavparse.c elements/y4menc.c generic/states.c \
+	pipelines/effectv.c pipelines/flacdec.c \
 	pipelines/simple-launch-lines.c pipelines/tagschecking.c \
 	pipelines/wavenc.c pipelines/wavpack.c
 am__can_run_installinfo = \
@@ -1306,6 +1340,7 @@ GST_OPTION_CXXFLAGS = @GST_OPTION_CXXFLAGS@
 GST_OPTION_OBJCFLAGS = @GST_OPTION_OBJCFLAGS@
 GST_PACKAGE_NAME = @GST_PACKAGE_NAME@
 GST_PACKAGE_ORIGIN = @GST_PACKAGE_ORIGIN@
+GST_PKG_CONFIG_PATH = @GST_PKG_CONFIG_PATH@
 GST_PLUGINS_ALL = @GST_PLUGINS_ALL@
 GST_PLUGINS_BASE_CFLAGS = @GST_PLUGINS_BASE_CFLAGS@
 GST_PLUGINS_BASE_DIR = @GST_PLUGINS_BASE_DIR@
@@ -1412,6 +1447,9 @@ PKG_CONFIG = @PKG_CONFIG@
 PLUGINDIR = @PLUGINDIR@
 POSUB = @POSUB@
 PROFILE_CFLAGS = @PROFILE_CFLAGS@
+PTHREAD_CC = @PTHREAD_CC@
+PTHREAD_CFLAGS = @PTHREAD_CFLAGS@
+PTHREAD_LIBS = @PTHREAD_LIBS@
 PULSE_CFLAGS = @PULSE_CFLAGS@
 PULSE_LIBS = @PULSE_LIBS@
 PYTHON = @PYTHON@
@@ -1479,6 +1517,7 @@ am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
+ax_pthread_config = @ax_pthread_config@
 bindir = @bindir@
 build = @build@
 build_alias = @build_alias@
@@ -1616,7 +1655,10 @@ CLEANFILES = core.* test-registry.*
 @USE_PLUGIN_FLV_TRUE@        elements/flvmux
 
 @USE_PLUGIN_ISOMP4_FALSE@check_isomp4 = 
-@USE_PLUGIN_ISOMP4_TRUE@check_isomp4 = elements/qtmux
+@USE_PLUGIN_ISOMP4_TRUE@check_isomp4 = \
+@USE_PLUGIN_ISOMP4_TRUE@	elements/qtmux \
+@USE_PLUGIN_ISOMP4_TRUE@	elements/qtdemux
+
 @USE_PLUGIN_LAW_FALSE@check_law = 
 @USE_PLUGIN_LAW_TRUE@check_law = \
 @USE_PLUGIN_LAW_TRUE@	elements/mulawdec \
@@ -1659,7 +1701,9 @@ CLEANFILES = core.* test-registry.*
 @USE_PLUGIN_RTP_FALSE@check_rtp = 
 @USE_PLUGIN_RTP_TRUE@check_rtp = \
 @USE_PLUGIN_RTP_TRUE@	elements/rtp-payloading \
-@USE_PLUGIN_RTP_TRUE@	elements/rtph263
+@USE_PLUGIN_RTP_TRUE@	elements/rtph261 \
+@USE_PLUGIN_RTP_TRUE@	elements/rtph263 \
+@USE_PLUGIN_RTP_TRUE@	elements/rtpvp9
 
 @USE_PLUGIN_RTPMANAGER_FALSE@check_rtpmanager = 
 @USE_PLUGIN_RTPMANAGER_TRUE@check_rtpmanager = \
@@ -1702,7 +1746,7 @@ CLEANFILES = core.* test-registry.*
 @USE_PLUGIN_VIDEOMIXER_FALSE@check_videomixer = 
 @USE_PLUGIN_VIDEOMIXER_TRUE@check_videomixer = elements/videomixer
 @USE_VPX_FALSE@check_vpx = 
-@USE_VPX_TRUE@check_vpx = elements/vp8enc elements/vp8dec
+@USE_VPX_TRUE@check_vpx = elements/vp8enc elements/vp8dec elements/vp9enc
 @USE_PLUGIN_WAVENC_FALSE@check_wavenc = 
 @USE_PLUGIN_WAVENC_TRUE@check_wavenc = pipelines/wavenc
 @USE_WAVPACK_FALSE@check_wavpack = 
@@ -1724,7 +1768,7 @@ TESTS = $(check_PROGRAMS)
 AM_CFLAGS = $(GST_OBJ_CFLAGS) $(GST_CHECK_CFLAGS) $(CHECK_CFLAGS) \
 	$(GST_OPTION_CFLAGS) $(GST_CFLAGS) -DGST_TEST_FILES_PATH="\"$(TEST_FILES_DIRECTORY)\"" \
 	-DGST_CHECK_TEST_ENVIRONMENT_BEACON="\"GST_PLUGIN_LOADING_WHITELIST\"" \
-	-UG_DISABLE_ASSERT -UG_DISABLE_CAST_CHECKS
+	-UG_DISABLE_ASSERT -UG_DISABLE_CAST_CHECKS $(PTHREAD_CFLAGS)
 
 LDADD = $(GST_OBJ_LIBS) $(GST_CHECK_LIBS) $(CHECK_LIBS)
 
@@ -1827,6 +1871,8 @@ elements_rtpbin_buffer_list_LDADD = $(GST_PLUGINS_BASE_LIBS) \
              $(GST_BASE_LIBS) $(GST_LIBS) $(GST_CHECK_LIBS) $(LDADD)
 
 elements_rtpbin_buffer_list_SOURCES = elements/rtpbin_buffer_list.c
+elements_rtph261_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
+elements_rtph261_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
 elements_rtph263_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
 elements_rtph263_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
 elements_rtpmux_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
@@ -1852,9 +1898,9 @@ elements_rtpjitterbuffer_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VER
 elements_rtprtx_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rtprtx_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(LDADD)
 elements_rtpsession_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
-elements_rtpsession_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstnet-$(GST_API_VERSION) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)
+elements_rtpsession_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_NET_LIBS) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)
 elements_rtpcollision_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
-elements_rtpcollision_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstnet-$(GST_API_VERSION) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)
+elements_rtpcollision_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_NET_LIBS) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)
 elements_rtpaux_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rtpaux_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(LDADD)
 
@@ -1870,6 +1916,8 @@ elements_videomixer_LDADD = $(LDADD)  $(GST_BASE_LIBS)
 elements_videomixer_CFLAGS = $(GST_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 pipelines_flacdec_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 pipelines_flacdec_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)
+elements_vp9enc_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
+elements_vp9enc_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstvideo-$(GST_API_VERSION) $(LDADD)
 pipelines_wavenc_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 pipelines_wavenc_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)
 pipelines_wavpack_LDADD = $(LDADD) $(GST_BASE_LIBS)
@@ -1883,7 +1931,10 @@ nodist_orc_videomixer_SOURCES = orc/videomixer.c
 orc_videobox_CFLAGS = $(ORC_CFLAGS)
 orc_videobox_LDADD = $(ORC_LIBS) -lorc-test-0.4
 nodist_orc_videobox_SOURCES = orc/videobox.c
-EXTRA_DIST = gst-plugins-good.supp
+EXTRA_DIST = \
+	gst-plugins-good.supp	\
+	elements/qtdemux.h
+
 all: all-am
 
 .SUFFIXES:
@@ -2225,6 +2276,12 @@ elements/elements_multifile-multifile.$(OBJEXT):  \
 elements/multifile$(EXEEXT): $(elements_multifile_OBJECTS) $(elements_multifile_DEPENDENCIES) $(EXTRA_elements_multifile_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/multifile$(EXEEXT)
 	$(AM_V_CCLD)$(elements_multifile_LINK) $(elements_multifile_OBJECTS) $(elements_multifile_LDADD) $(LIBS)
+elements/qtdemux.$(OBJEXT): elements/$(am__dirstamp) \
+	elements/$(DEPDIR)/$(am__dirstamp)
+
+elements/qtdemux$(EXEEXT): $(elements_qtdemux_OBJECTS) $(elements_qtdemux_DEPENDENCIES) $(EXTRA_elements_qtdemux_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/qtdemux$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(elements_qtdemux_OBJECTS) $(elements_qtdemux_LDADD) $(LIBS)
 elements/elements_qtmux-qtmux.$(OBJEXT): elements/$(am__dirstamp) \
 	elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2279,6 +2336,12 @@ elements/elements_rtpcollision-rtpcollision.$(OBJEXT):  \
 elements/rtpcollision$(EXEEXT): $(elements_rtpcollision_OBJECTS) $(elements_rtpcollision_DEPENDENCIES) $(EXTRA_elements_rtpcollision_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/rtpcollision$(EXEEXT)
 	$(AM_V_CCLD)$(elements_rtpcollision_LINK) $(elements_rtpcollision_OBJECTS) $(elements_rtpcollision_LDADD) $(LIBS)
+elements/elements_rtph261-rtph261.$(OBJEXT): elements/$(am__dirstamp) \
+	elements/$(DEPDIR)/$(am__dirstamp)
+
+elements/rtph261$(EXEEXT): $(elements_rtph261_OBJECTS) $(elements_rtph261_DEPENDENCIES) $(EXTRA_elements_rtph261_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/rtph261$(EXEEXT)
+	$(AM_V_CCLD)$(elements_rtph261_LINK) $(elements_rtph261_OBJECTS) $(elements_rtph261_LDADD) $(LIBS)
 elements/elements_rtph263-rtph263.$(OBJEXT): elements/$(am__dirstamp) \
 	elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2309,6 +2372,12 @@ elements/elements_rtpsession-rtpsession.$(OBJEXT):  \
 elements/rtpsession$(EXEEXT): $(elements_rtpsession_OBJECTS) $(elements_rtpsession_DEPENDENCIES) $(EXTRA_elements_rtpsession_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/rtpsession$(EXEEXT)
 	$(AM_V_CCLD)$(elements_rtpsession_LINK) $(elements_rtpsession_OBJECTS) $(elements_rtpsession_LDADD) $(LIBS)
+elements/rtpvp9.$(OBJEXT): elements/$(am__dirstamp) \
+	elements/$(DEPDIR)/$(am__dirstamp)
+
+elements/rtpvp9$(EXEEXT): $(elements_rtpvp9_OBJECTS) $(elements_rtpvp9_DEPENDENCIES) $(EXTRA_elements_rtpvp9_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/rtpvp9$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(elements_rtpvp9_OBJECTS) $(elements_rtpvp9_LDADD) $(LIBS)
 elements/shapewipe.$(OBJEXT): elements/$(am__dirstamp) \
 	elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2387,6 +2456,12 @@ elements/vp8enc.$(OBJEXT): elements/$(am__dirstamp) \
 elements/vp8enc$(EXEEXT): $(elements_vp8enc_OBJECTS) $(elements_vp8enc_DEPENDENCIES) $(EXTRA_elements_vp8enc_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/vp8enc$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(elements_vp8enc_OBJECTS) $(elements_vp8enc_LDADD) $(LIBS)
+elements/elements_vp9enc-vp9enc.$(OBJEXT): elements/$(am__dirstamp) \
+	elements/$(DEPDIR)/$(am__dirstamp)
+
+elements/vp9enc$(EXEEXT): $(elements_vp9enc_OBJECTS) $(elements_vp9enc_DEPENDENCIES) $(EXTRA_elements_vp9enc_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/vp9enc$(EXEEXT)
+	$(AM_V_CCLD)$(elements_vp9enc_LINK) $(elements_vp9enc_OBJECTS) $(elements_vp9enc_LDADD) $(LIBS)
 elements/wavpackdec.$(OBJEXT): elements/$(am__dirstamp) \
 	elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2550,6 +2625,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpaux-rtpaux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpbin_buffer_list-rtpbin_buffer_list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpcollision-rtpcollision.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtph261-rtph261.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtph263-rtph263.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpjitterbuffer-rtpjitterbuffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpmux-rtpmux.Po@am__quote@
@@ -2562,6 +2638,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_videocrop-videocrop.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_videofilter-videofilter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_videomixer-videomixer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_vp9enc-vp9enc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/flacparse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/flvmux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/gdkpixbufoverlay.Po@am__quote@
@@ -2573,8 +2650,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/matroskamux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/matroskaparse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/mpegaudioparse.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/qtdemux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/rtp-payloading.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/rtpbin.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/rtpvp9.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/shapewipe.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/splitmux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/udpsink.Po@am__quote@
@@ -3104,6 +3183,20 @@ elements/elements_rtpcollision-rtpcollision.obj: elements/rtpcollision.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpcollision_CFLAGS) $(CFLAGS) -c -o elements/elements_rtpcollision-rtpcollision.obj `if test -f 'elements/rtpcollision.c'; then $(CYGPATH_W) 'elements/rtpcollision.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpcollision.c'; fi`
 
+elements/elements_rtph261-rtph261.o: elements/rtph261.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtph261_CFLAGS) $(CFLAGS) -MT elements/elements_rtph261-rtph261.o -MD -MP -MF elements/$(DEPDIR)/elements_rtph261-rtph261.Tpo -c -o elements/elements_rtph261-rtph261.o `test -f 'elements/rtph261.c' || echo '$(srcdir)/'`elements/rtph261.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtph261-rtph261.Tpo elements/$(DEPDIR)/elements_rtph261-rtph261.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtph261.c' object='elements/elements_rtph261-rtph261.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtph261_CFLAGS) $(CFLAGS) -c -o elements/elements_rtph261-rtph261.o `test -f 'elements/rtph261.c' || echo '$(srcdir)/'`elements/rtph261.c
+
+elements/elements_rtph261-rtph261.obj: elements/rtph261.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtph261_CFLAGS) $(CFLAGS) -MT elements/elements_rtph261-rtph261.obj -MD -MP -MF elements/$(DEPDIR)/elements_rtph261-rtph261.Tpo -c -o elements/elements_rtph261-rtph261.obj `if test -f 'elements/rtph261.c'; then $(CYGPATH_W) 'elements/rtph261.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtph261.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtph261-rtph261.Tpo elements/$(DEPDIR)/elements_rtph261-rtph261.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtph261.c' object='elements/elements_rtph261-rtph261.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtph261_CFLAGS) $(CFLAGS) -c -o elements/elements_rtph261-rtph261.obj `if test -f 'elements/rtph261.c'; then $(CYGPATH_W) 'elements/rtph261.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtph261.c'; fi`
+
 elements/elements_rtph263-rtph263.o: elements/rtph263.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtph263_CFLAGS) $(CFLAGS) -MT elements/elements_rtph263-rtph263.o -MD -MP -MF elements/$(DEPDIR)/elements_rtph263-rtph263.Tpo -c -o elements/elements_rtph263-rtph263.o `test -f 'elements/rtph263.c' || echo '$(srcdir)/'`elements/rtph263.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtph263-rtph263.Tpo elements/$(DEPDIR)/elements_rtph263-rtph263.Po
@@ -3271,6 +3364,20 @@ elements/elements_videomixer-videomixer.obj: elements/videomixer.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/videomixer.c' object='elements/elements_videomixer-videomixer.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_videomixer_CFLAGS) $(CFLAGS) -c -o elements/elements_videomixer-videomixer.obj `if test -f 'elements/videomixer.c'; then $(CYGPATH_W) 'elements/videomixer.c'; else $(CYGPATH_W) '$(srcdir)/elements/videomixer.c'; fi`
+
+elements/elements_vp9enc-vp9enc.o: elements/vp9enc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_vp9enc_CFLAGS) $(CFLAGS) -MT elements/elements_vp9enc-vp9enc.o -MD -MP -MF elements/$(DEPDIR)/elements_vp9enc-vp9enc.Tpo -c -o elements/elements_vp9enc-vp9enc.o `test -f 'elements/vp9enc.c' || echo '$(srcdir)/'`elements/vp9enc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_vp9enc-vp9enc.Tpo elements/$(DEPDIR)/elements_vp9enc-vp9enc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/vp9enc.c' object='elements/elements_vp9enc-vp9enc.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_vp9enc_CFLAGS) $(CFLAGS) -c -o elements/elements_vp9enc-vp9enc.o `test -f 'elements/vp9enc.c' || echo '$(srcdir)/'`elements/vp9enc.c
+
+elements/elements_vp9enc-vp9enc.obj: elements/vp9enc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_vp9enc_CFLAGS) $(CFLAGS) -MT elements/elements_vp9enc-vp9enc.obj -MD -MP -MF elements/$(DEPDIR)/elements_vp9enc-vp9enc.Tpo -c -o elements/elements_vp9enc-vp9enc.obj `if test -f 'elements/vp9enc.c'; then $(CYGPATH_W) 'elements/vp9enc.c'; else $(CYGPATH_W) '$(srcdir)/elements/vp9enc.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_vp9enc-vp9enc.Tpo elements/$(DEPDIR)/elements_vp9enc-vp9enc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/vp9enc.c' object='elements/elements_vp9enc-vp9enc.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_vp9enc_CFLAGS) $(CFLAGS) -c -o elements/elements_vp9enc-vp9enc.obj `if test -f 'elements/vp9enc.c'; then $(CYGPATH_W) 'elements/vp9enc.c'; else $(CYGPATH_W) '$(srcdir)/elements/vp9enc.c'; fi`
 
 orc/orc_deinterlace-deinterlace.o: orc/deinterlace.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(orc_deinterlace_CFLAGS) $(CFLAGS) -MT orc/orc_deinterlace-deinterlace.o -MD -MP -MF orc/$(DEPDIR)/orc_deinterlace-deinterlace.Tpo -c -o orc/orc_deinterlace-deinterlace.o `test -f 'orc/deinterlace.c' || echo '$(srcdir)/'`orc/deinterlace.c
@@ -3811,6 +3918,13 @@ elements/qtmux.log: elements/qtmux$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+elements/qtdemux.log: elements/qtdemux$(EXEEXT)
+	@p='elements/qtdemux$(EXEEXT)'; \
+	b='elements/qtdemux'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 elements/icydemux.log: elements/icydemux$(EXEEXT)
 	@p='elements/icydemux$(EXEEXT)'; \
 	b='elements/icydemux'; \
@@ -3944,9 +4058,23 @@ elements/rtp-payloading.log: elements/rtp-payloading$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+elements/rtph261.log: elements/rtph261$(EXEEXT)
+	@p='elements/rtph261$(EXEEXT)'; \
+	b='elements/rtph261'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 elements/rtph263.log: elements/rtph263$(EXEEXT)
 	@p='elements/rtph263$(EXEEXT)'; \
 	b='elements/rtph263'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+elements/rtpvp9.log: elements/rtpvp9$(EXEEXT)
+	@p='elements/rtpvp9$(EXEEXT)'; \
+	b='elements/rtpvp9'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -4108,6 +4236,13 @@ elements/vp8enc.log: elements/vp8enc$(EXEEXT)
 elements/vp8dec.log: elements/vp8dec$(EXEEXT)
 	@p='elements/vp8dec$(EXEEXT)'; \
 	b='elements/vp8dec'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+elements/vp9enc.log: elements/vp9enc$(EXEEXT)
+	@p='elements/vp9enc$(EXEEXT)'; \
+	b='elements/vp9enc'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

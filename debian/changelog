@@ -1,3 +1,13 @@
+gst-plugins-good1.0 (1.10.1-2) unstable; urgency=high
+
+  * debian/patches/0001-flxdec-add-some-write-bounds-checking.patch,
+    debian/patches/0002-flxdec-fix-some-warnings-comparing-unsigned-0.patch,
+    debian/patches/0003-flxdec-Don-t-unref-parent-in-the-chain-function.patch,
+    debian/patches/0004-flxdec-rewrite-logic-based-on-GstByteReader-Writer.patch:
+    + Fix out of bound memory writes/reads (CVE-2016-9634, CVE-2016-9635, CVE-2016-9636).
+
+ -- Sebastian Dröge <slomo@debian.org>  Thu, 24 Nov 2016 12:26:58 +0200
+
 gst-plugins-good1.0 (1.10.1-1) unstable; urgency=medium
 
   * New upstream bugfix release

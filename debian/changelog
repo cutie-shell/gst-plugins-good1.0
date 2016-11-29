@@ -1,3 +1,9 @@
+gst-plugins-good1.0 (1.10.2-1) unstable; urgency=medium
+
+  * New upstream bugfix release
+
+ -- Sebastian Dröge <slomo@debian.org>  Tue, 29 Nov 2016 15:41:46 +0200
+
 gst-plugins-good1.0 (1.10.1-2) unstable; urgency=high
 
   * debian/patches/0001-flxdec-add-some-write-bounds-checking.patch,

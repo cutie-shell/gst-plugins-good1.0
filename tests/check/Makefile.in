@@ -230,6 +230,7 @@ libparser_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @USE_PLUGIN_RTPMANAGER_TRUE@am__EXEEXT_26 = elements/rtpaux$(EXEEXT) \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpbin$(EXEEXT) \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpbin_buffer_list$(EXEEXT) \
+@USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpbundle$(EXEEXT) \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpcollision$(EXEEXT) \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpjitterbuffer$(EXEEXT) \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpmux$(EXEEXT) \
@@ -646,6 +647,15 @@ elements_rtpbin_buffer_list_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_rtpbin_buffer_list_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
+elements_rtpbundle_SOURCES = elements/rtpbundle.c
+elements_rtpbundle_OBJECTS =  \
+	elements/elements_rtpbundle-rtpbundle.$(OBJEXT)
+elements_rtpbundle_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
+elements_rtpbundle_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(elements_rtpbundle_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 elements_rtpcollision_SOURCES = elements/rtpcollision.c
 elements_rtpcollision_OBJECTS =  \
 	elements/elements_rtpcollision-rtpcollision.$(OBJEXT)
@@ -951,8 +961,8 @@ SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/qtdemux.c elements/qtmux.c elements/rganalysis.c \
 	elements/rglimiter.c elements/rgvolume.c \
 	elements/rtp-payloading.c elements/rtpaux.c elements/rtpbin.c \
-	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpcollision.c \
-	elements/rtph261.c elements/rtph263.c \
+	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpbundle.c \
+	elements/rtpcollision.c elements/rtph261.c elements/rtph263.c \
 	elements/rtpjitterbuffer.c elements/rtpmux.c elements/rtprtx.c \
 	elements/rtpsession.c elements/rtpvp9.c elements/shapewipe.c \
 	elements/souphttpsrc.c elements/spectrum.c elements/splitmux.c \
@@ -991,8 +1001,8 @@ DIST_SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/qtdemux.c elements/qtmux.c elements/rganalysis.c \
 	elements/rglimiter.c elements/rgvolume.c \
 	elements/rtp-payloading.c elements/rtpaux.c elements/rtpbin.c \
-	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpcollision.c \
-	elements/rtph261.c elements/rtph263.c \
+	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpbundle.c \
+	elements/rtpcollision.c elements/rtph261.c elements/rtph263.c \
 	elements/rtpjitterbuffer.c elements/rtpmux.c elements/rtprtx.c \
 	elements/rtpsession.c elements/rtpvp9.c elements/shapewipe.c \
 	elements/souphttpsrc.c elements/spectrum.c elements/splitmux.c \
@@ -1710,6 +1720,7 @@ CLEANFILES = core.* test-registry.*
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpaux \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpbin \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpbin_buffer_list \
+@USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpbundle \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpcollision \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpjitterbuffer \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpmux \
@@ -1903,6 +1914,8 @@ elements_rtpcollision_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rtpcollision_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_NET_LIBS) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)
 elements_rtpaux_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rtpaux_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(LDADD)
+elements_rtpbundle_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
+elements_rtpbundle_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(LDADD)
 
 # FIXME: configure should check for gdk-pixbuf not gtk
 # only need video.h header, not the lib
@@ -2330,6 +2343,12 @@ elements/elements_rtpbin_buffer_list-rtpbin_buffer_list.$(OBJEXT):  \
 elements/rtpbin_buffer_list$(EXEEXT): $(elements_rtpbin_buffer_list_OBJECTS) $(elements_rtpbin_buffer_list_DEPENDENCIES) $(EXTRA_elements_rtpbin_buffer_list_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/rtpbin_buffer_list$(EXEEXT)
 	$(AM_V_CCLD)$(elements_rtpbin_buffer_list_LINK) $(elements_rtpbin_buffer_list_OBJECTS) $(elements_rtpbin_buffer_list_LDADD) $(LIBS)
+elements/elements_rtpbundle-rtpbundle.$(OBJEXT):  \
+	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
+
+elements/rtpbundle$(EXEEXT): $(elements_rtpbundle_OBJECTS) $(elements_rtpbundle_DEPENDENCIES) $(EXTRA_elements_rtpbundle_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/rtpbundle$(EXEEXT)
+	$(AM_V_CCLD)$(elements_rtpbundle_LINK) $(elements_rtpbundle_OBJECTS) $(elements_rtpbundle_LDADD) $(LIBS)
 elements/elements_rtpcollision-rtpcollision.$(OBJEXT):  \
 	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2624,6 +2643,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rgvolume-rgvolume.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpaux-rtpaux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpbin_buffer_list-rtpbin_buffer_list.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpbundle-rtpbundle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpcollision-rtpcollision.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtph261-rtph261.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtph263-rtph263.Po@am__quote@
@@ -3168,6 +3188,20 @@ elements/elements_rtpbin_buffer_list-rtpbin_buffer_list.obj: elements/rtpbin_buf
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtpbin_buffer_list.c' object='elements/elements_rtpbin_buffer_list-rtpbin_buffer_list.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpbin_buffer_list_CFLAGS) $(CFLAGS) -c -o elements/elements_rtpbin_buffer_list-rtpbin_buffer_list.obj `if test -f 'elements/rtpbin_buffer_list.c'; then $(CYGPATH_W) 'elements/rtpbin_buffer_list.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpbin_buffer_list.c'; fi`
+
+elements/elements_rtpbundle-rtpbundle.o: elements/rtpbundle.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpbundle_CFLAGS) $(CFLAGS) -MT elements/elements_rtpbundle-rtpbundle.o -MD -MP -MF elements/$(DEPDIR)/elements_rtpbundle-rtpbundle.Tpo -c -o elements/elements_rtpbundle-rtpbundle.o `test -f 'elements/rtpbundle.c' || echo '$(srcdir)/'`elements/rtpbundle.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtpbundle-rtpbundle.Tpo elements/$(DEPDIR)/elements_rtpbundle-rtpbundle.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtpbundle.c' object='elements/elements_rtpbundle-rtpbundle.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpbundle_CFLAGS) $(CFLAGS) -c -o elements/elements_rtpbundle-rtpbundle.o `test -f 'elements/rtpbundle.c' || echo '$(srcdir)/'`elements/rtpbundle.c
+
+elements/elements_rtpbundle-rtpbundle.obj: elements/rtpbundle.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpbundle_CFLAGS) $(CFLAGS) -MT elements/elements_rtpbundle-rtpbundle.obj -MD -MP -MF elements/$(DEPDIR)/elements_rtpbundle-rtpbundle.Tpo -c -o elements/elements_rtpbundle-rtpbundle.obj `if test -f 'elements/rtpbundle.c'; then $(CYGPATH_W) 'elements/rtpbundle.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpbundle.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtpbundle-rtpbundle.Tpo elements/$(DEPDIR)/elements_rtpbundle-rtpbundle.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtpbundle.c' object='elements/elements_rtpbundle-rtpbundle.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpbundle_CFLAGS) $(CFLAGS) -c -o elements/elements_rtpbundle-rtpbundle.obj `if test -f 'elements/rtpbundle.c'; then $(CYGPATH_W) 'elements/rtpbundle.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpbundle.c'; fi`
 
 elements/elements_rtpcollision-rtpcollision.o: elements/rtpcollision.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpcollision_CFLAGS) $(CFLAGS) -MT elements/elements_rtpcollision-rtpcollision.o -MD -MP -MF elements/$(DEPDIR)/elements_rtpcollision-rtpcollision.Tpo -c -o elements/elements_rtpcollision-rtpcollision.o `test -f 'elements/rtpcollision.c' || echo '$(srcdir)/'`elements/rtpcollision.c
@@ -4096,6 +4130,13 @@ elements/rtpbin.log: elements/rtpbin$(EXEEXT)
 elements/rtpbin_buffer_list.log: elements/rtpbin_buffer_list$(EXEEXT)
 	@p='elements/rtpbin_buffer_list$(EXEEXT)'; \
 	b='elements/rtpbin_buffer_list'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+elements/rtpbundle.log: elements/rtpbundle$(EXEEXT)
+	@p='elements/rtpbundle$(EXEEXT)'; \
+	b='elements/rtpbundle'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

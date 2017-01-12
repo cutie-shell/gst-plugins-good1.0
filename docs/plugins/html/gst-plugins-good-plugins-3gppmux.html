@@ -110,6 +110,16 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-3gppmux.html#Gst3GPPMux--reserved-moov-update-period" title="The “reserved-moov-update-period” property">reserved-moov-update-period</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-3gppmux.html#Gst3GPPMux--interleave-bytes" title="The “interleave-bytes” property">interleave-bytes</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-3gppmux.html#Gst3GPPMux--interleave-time" title="The “interleave-time” property">interleave-time</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -400,10 +410,9 @@ and muxes it into an 3gp file.
 <div class="refsect2">
 <a name="Gst3GPPMux--movie-timescale"></a><h3>The <code class="literal">“movie-timescale”</code> property</h3>
 <pre class="programlisting">  “movie-timescale”          <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
-<p>Timescale to use in the movie (units per second).</p>
+<p>Timescale to use in the movie (units per second, 0 == default).</p>
 <p>Flags: Read / Write / Construct</p>
-<p>Allowed values: &gt;= 1</p>
-<p>Default value: 1800</p>
+<p>Default value: 0</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -461,6 +470,22 @@ and muxes it into an 3gp file.
 <p>When used with reserved-max-duration, periodically updates the index tables with information muxed so far.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: 18446744073709551615</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="Gst3GPPMux--interleave-bytes"></a><h3>The <code class="literal">“interleave-bytes”</code> property</h3>
+<pre class="programlisting">  “interleave-bytes”         <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
+<p>Interleave between streams in bytes.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="Gst3GPPMux--interleave-time"></a><h3>The <code class="literal">“interleave-time”</code> property</h3>
+<pre class="programlisting">  “interleave-time”          <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
+<p>Interleave between streams in nanoseconds.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 250000000</p>
 </div>
 </div>
 </div>

@@ -761,6 +761,13 @@ typedef struct _AtomTFHD
   guint32 default_sample_flags;
 } AtomTFHD;
 
+typedef struct _AtomTFDT
+{
+  AtomFull header;
+
+  guint64 base_media_decode_time;
+} AtomTFDT;
+
 typedef struct _TRUNSampleEntry
 {
   guint32 sample_duration;
@@ -797,6 +804,8 @@ typedef struct _AtomTRAF
   Atom header;
 
   AtomTFHD tfhd;
+
+  AtomTFDT tfdt;
 
   /* list of AtomTRUN */
   GList *truns;
@@ -948,6 +957,7 @@ void       atom_moof_free              (AtomMOOF *moof);
 guint64    atom_moof_copy_data         (AtomMOOF *moof, guint8 **buffer, guint64 *size, guint64* offset);
 AtomTRAF * atom_traf_new               (AtomsContext * context, guint32 track_ID);
 void       atom_traf_free              (AtomTRAF * traf);
+void       atom_traf_set_base_decode_time (AtomTRAF * traf, guint64 base_decode_time);
 void       atom_traf_add_samples       (AtomTRAF * traf, guint32 delta,
                                         guint32 size, gboolean sync, gint64 pts_offset,
                                         gboolean sdtp_sync);
@@ -1043,7 +1053,9 @@ AtomInfo *   build_jp2h_extension        (gint width, gint height, const gchar *
                                           const GValue * cdef_array);
 
 AtomInfo *   build_jp2x_extension        (const GstBuffer * prefix);
-AtomInfo *   build_fiel_extension        (gint fields);
+AtomInfo *   build_fiel_extension        (GstVideoInterlaceMode mode, GstVideoFieldOrder order);
+AtomInfo *   build_colr_extension        (const GstVideoColorimetry *colorimetry, gboolean is_mp4);
+AtomInfo *   build_clap_extension        (gint width_n, gint width_d, gint height_n, gint height_d, gint h_off_n, gint h_off_d, gint v_off_n, gint v_off_d);
 AtomInfo *   build_ac3_extension         (guint8 fscod, guint8 bsid,
                                           guint8 bsmod, guint8 acmod,
                                           guint8 lfe_on, guint8 bitrate_code);

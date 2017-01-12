@@ -291,6 +291,7 @@ gst_monoscope_src_negotiate (GstMonoscope * monoscope)
   /* and activate */
   gst_buffer_pool_set_active (pool, TRUE);
 
+  gst_query_unref (query);
   gst_caps_unref (target);
 
   return TRUE;
@@ -312,8 +313,13 @@ ensure_negotiated (GstMonoscope * monoscope)
 
   /* we don't know an output format yet, pick one */
   if (reconfigure || !gst_pad_has_current_caps (monoscope->srcpad)) {
-    if (!gst_monoscope_src_negotiate (monoscope))
-      return GST_FLOW_NOT_NEGOTIATED;
+    if (!gst_monoscope_src_negotiate (monoscope)) {
+      gst_pad_mark_reconfigure (monoscope->srcpad);
+      if (GST_PAD_IS_FLUSHING (monoscope->srcpad))
+        return GST_FLOW_FLUSHING;
+      else
+        return GST_FLOW_NOT_NEGOTIATED;
+    }
   }
   return GST_FLOW_OK;
 }

@@ -815,12 +815,12 @@ gst_splitmux_part_reader_seek_to_time_locked (GstSplitMuxPartReader * reader,
 /* Map the passed segment to 'internal' time from 0 to length of this piece and seek. Lock cannot be held */
 static gboolean
 gst_splitmux_part_reader_seek_to_segment (GstSplitMuxPartReader * reader,
-    GstSegment * target_seg)
+    GstSegment * target_seg, GstSeekFlags extra_flags)
 {
   GstSeekFlags flags;
   GstClockTime start = 0, stop = GST_CLOCK_TIME_NONE;
 
-  flags = target_seg->flags | GST_SEEK_FLAG_FLUSH;
+  flags = target_seg->flags | GST_SEEK_FLAG_FLUSH | extra_flags;
 
   SPLITMUX_PART_LOCK (reader);
   if (target_seg->start >= reader->start_offset)
@@ -1042,6 +1042,9 @@ gst_splitmux_part_reader_change_state (GstElement * element,
        * changing the states of things, and type finding can continue */
       SPLITMUX_PART_LOCK (reader);
       g_object_set (reader->src, "location", reader->path, NULL);
+      reader->prep_state = PART_STATE_PREPARING_COLLECT_STREAMS;
+      gst_splitmux_part_reader_set_flushing_locked (reader, FALSE);
+      reader->running = TRUE;
       SPLITMUX_PART_UNLOCK (reader);
       SPLITMUX_PART_TYPE_LOCK (reader);
       break;
@@ -1082,9 +1085,6 @@ gst_splitmux_part_reader_change_state (GstElement * element,
       SPLITMUX_PART_TYPE_UNLOCK (reader);
 
       SPLITMUX_PART_LOCK (reader);
-      reader->prep_state = PART_STATE_PREPARING_COLLECT_STREAMS;
-      gst_splitmux_part_reader_set_flushing_locked (reader, FALSE);
-      reader->running = TRUE;
 
       while (reader->prep_state == PART_STATE_PREPARING_COLLECT_STREAMS) {
         GST_LOG_OBJECT (reader, "Waiting to collect all output streams");
@@ -1167,11 +1167,11 @@ gst_splitmux_part_reader_set_location (GstSplitMuxPartReader * reader,
 
 gboolean
 gst_splitmux_part_reader_activate (GstSplitMuxPartReader * reader,
-    GstSegment * seg)
+    GstSegment * seg, GstSeekFlags extra_flags)
 {
   GST_DEBUG_OBJECT (reader, "Activating part reader");
 
-  if (!gst_splitmux_part_reader_seek_to_segment (reader, seg)) {
+  if (!gst_splitmux_part_reader_seek_to_segment (reader, seg, extra_flags)) {
     GST_ERROR_OBJECT (reader, "Failed to seek part to %" GST_SEGMENT_FORMAT,
         seg);
     return FALSE;

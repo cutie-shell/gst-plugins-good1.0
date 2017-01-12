@@ -306,11 +306,12 @@ gst_aac_parse_sink_setcaps (GstBaseParse * parse, GstCaps * caps)
   if (value) {
     GstBuffer *buf = gst_value_get_buffer (value);
 
-    if (buf) {
+    if (buf && gst_buffer_get_size (buf) >= 2) {
       GstMapInfo map;
       guint sr_idx;
 
-      gst_buffer_map (buf, &map, GST_MAP_READ);
+      if (!gst_buffer_map (buf, &map, GST_MAP_READ))
+        return FALSE;
 
       sr_idx = ((map.data[0] & 0x07) << 1) | ((map.data[1] & 0x80) >> 7);
       aacparse->object_type = (map.data[0] & 0xf8) >> 3;
@@ -1452,11 +1453,13 @@ gst_aac_parse_pre_push_frame (GstBaseParse * parse, GstBaseParseFrame * frame)
       && aacparse->output_header_type == DSPAAC_HEADER_NONE) {
     guint header_size;
     GstMapInfo map;
-    gst_buffer_map (frame->buffer, &map, GST_MAP_READ);
+    frame->out_buffer = gst_buffer_make_writable (frame->buffer);
+    frame->buffer = NULL;
+    gst_buffer_map (frame->out_buffer, &map, GST_MAP_READ);
     header_size = (map.data[1] & 1) ? 7 : 9;    /* optional CRC */
-    gst_buffer_unmap (frame->buffer, &map);
-    gst_buffer_resize (frame->buffer, header_size,
-        gst_buffer_get_size (frame->buffer) - header_size);
+    gst_buffer_unmap (frame->out_buffer, &map);
+    gst_buffer_resize (frame->out_buffer, header_size,
+        gst_buffer_get_size (frame->out_buffer) - header_size);
   }
 
   return GST_FLOW_OK;

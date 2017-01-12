@@ -190,6 +190,8 @@ static GstStaticPadTemplate audiosink_templ =
         "layout = (string)dvi, "
         "block_align = (int)[64, 8192], "
         "channels = (int) { 1, 2 }, " "rate = (int) [ 8000, 96000 ]; "
+        "audio/G722, "
+        "channels = (int)1," "rate = (int)16000; "
         "audio/x-adpcm, "
         "layout = (string)g726, " "channels = (int)1," "rate = (int)8000; ")
     );
@@ -943,6 +945,7 @@ gst_matroska_mux_video_pad_setcaps (GstPad * pad, GstCaps * caps)
   GstBuffer *codec_buf = NULL;
   gint width, height, pixel_width, pixel_height;
   gint fps_d, fps_n;
+  guint multiview_flags;
 
   mux = GST_MATROSKA_MUX (GST_PAD_PARENT (pad));
 
@@ -1008,8 +1011,9 @@ gst_matroska_mux_video_pad_setcaps (GstPad * pad, GstCaps * caps)
   if ((s = gst_structure_get_string (structure, "multiview-mode")))
     videocontext->multiview_mode =
         gst_video_multiview_mode_from_caps_string (s);
-  gst_structure_get_flagset (structure, "multiview-flags",
-      &videocontext->multiview_flags, NULL);
+  gst_structure_get_flagset (structure, "multiview-flags", &multiview_flags,
+      NULL);
+  videocontext->multiview_flags = multiview_flags;
 
 
 skip_details:
@@ -2022,7 +2026,8 @@ gst_matroska_mux_audio_pad_setcaps (GstPad * pad, GstCaps * caps)
   } else if (!strcmp (mimetype, "audio/x-wma")
       || !strcmp (mimetype, "audio/x-alaw")
       || !strcmp (mimetype, "audio/x-mulaw")
-      || !strcmp (mimetype, "audio/x-adpcm")) {
+      || !strcmp (mimetype, "audio/x-adpcm")
+      || !strcmp (mimetype, "audio/G722")) {
     guint8 *codec_priv;
     guint codec_priv_size;
     guint16 format = 0;
@@ -2100,6 +2105,8 @@ gst_matroska_mux_audio_pad_setcaps (GstPad * pad, GstCaps * caps)
         goto refuse_caps;
       }
 
+    } else if (!strcmp (mimetype, "audio/G722")) {
+      format = GST_RIFF_WAVE_FORMAT_ADPCM_G722;
     }
     g_assert (format != 0);
 
@@ -3518,6 +3525,7 @@ gst_matroska_mux_write_data (GstMatroskaMux * mux, GstMatroskaPad * collect_pad,
   guint64 block_duration, duration_diff = 0;
   gboolean is_video_keyframe = FALSE;
   gboolean is_video_invisible = FALSE;
+  gboolean is_audio_only = FALSE;
   GstMatroskamuxPad *pad;
   gint flags = 0;
   GstClockTime buffer_timestamp;
@@ -3528,10 +3536,12 @@ gst_matroska_mux_write_data (GstMatroskaMux * mux, GstMatroskaPad * collect_pad,
 
   /* vorbis/theora headers are retrieved from caps and put in CodecPrivate */
   if (collect_pad->track->xiph_headers_to_skip > 0) {
-    GST_LOG_OBJECT (collect_pad->collect.pad, "dropping streamheader buffer");
-    gst_buffer_unref (buf);
     --collect_pad->track->xiph_headers_to_skip;
-    return GST_FLOW_OK;
+    if (GST_BUFFER_FLAG_IS_SET (buf, GST_BUFFER_FLAG_HEADER)) {
+      GST_LOG_OBJECT (collect_pad->collect.pad, "dropping streamheader buffer");
+      gst_buffer_unref (buf);
+      return GST_FLOW_OK;
+    }
   }
 
   /* for dirac we have to queue up everything up to a picture unit */
@@ -3590,12 +3600,15 @@ gst_matroska_mux_write_data (GstMatroskaMux * mux, GstMatroskaPad * collect_pad,
     }
   }
 
+  is_audio_only = (collect_pad->track->type == GST_MATROSKA_TRACK_TYPE_AUDIO) &&
+      (mux->num_streams == 1);
+
   if (mux->cluster) {
     /* start a new cluster at every keyframe, at every GstForceKeyUnit event,
      * or when we may be reaching the limit of the relative timestamp */
     if (mux->cluster_time +
         mux->max_cluster_duration < buffer_timestamp
-        || is_video_keyframe || mux->force_key_unit_event) {
+        || is_video_keyframe || mux->force_key_unit_event || is_audio_only) {
       if (!mux->ebml_write->streamable)
         gst_ebml_write_master_finish (ebml, mux->cluster);
 
@@ -3639,10 +3652,7 @@ gst_matroska_mux_write_data (GstMatroskaMux * mux, GstMatroskaPad * collect_pad,
    * the block in the cluster which contains the timestamp, should also work
    * for files with multiple audio tracks.
    */
-  if (!mux->ebml_write->streamable &&
-      (is_video_keyframe ||
-          ((collect_pad->track->type == GST_MATROSKA_TRACK_TYPE_AUDIO) &&
-              (mux->num_streams == 1)))) {
+  if (!mux->ebml_write->streamable && (is_video_keyframe || is_audio_only)) {
     gint last_idx = -1;
 
     if (mux->min_index_interval != 0) {

@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.10.2\n"
+"Project-Id-Version: gst-plugins-good 1.10.3\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2016-11-29 15:32+0200\n"
+"POT-Creation-Date: 2017-01-30 15:32+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -41,32 +41,28 @@ msgstr ""
 msgid "No URL set."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1048
-msgid "Corrupted HTTP response."
-msgstr ""
-
-#: ext/soup/gstsouphttpsrc.c:1261
+#: ext/soup/gstsouphttpsrc.c:1249
 msgid "Server does not support seeking."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1315
+#: ext/soup/gstsouphttpsrc.c:1303
 msgid "Could not resolve server name."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1321
+#: ext/soup/gstsouphttpsrc.c:1309
 msgid "Could not establish connection to server."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1326
+#: ext/soup/gstsouphttpsrc.c:1314
 msgid "Secure connection setup failed."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1334
+#: ext/soup/gstsouphttpsrc.c:1322
 msgid ""
 "A network error occurred, or the server closed the connection unexpectedly."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1341
+#: ext/soup/gstsouphttpsrc.c:1329
 msgid "Server sent bad data."
 msgstr ""
 
@@ -74,50 +70,50 @@ msgstr ""
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:666 gst/isomp4/qtdemux.c:670
+#: gst/isomp4/qtdemux.c:669 gst/isomp4/qtdemux.c:673
 msgid "This file contains no playable streams."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:716 gst/isomp4/qtdemux.c:6211 gst/isomp4/qtdemux.c:6278
-#: gst/isomp4/qtdemux.c:6567
+#: gst/isomp4/qtdemux.c:719 gst/isomp4/qtdemux.c:6246 gst/isomp4/qtdemux.c:6313
+#: gst/isomp4/qtdemux.c:6612
 msgid "This file is invalid and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2740
+#: gst/isomp4/qtdemux.c:2750
 msgid "Cannot play stream because it is encrypted with PlayReady DRM."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3857 gst/isomp4/qtdemux.c:7300
-#: gst/isomp4/qtdemux.c:7307 gst/isomp4/qtdemux.c:8141
-#: gst/isomp4/qtdemux.c:8570 gst/isomp4/qtdemux.c:8577
-#: gst/isomp4/qtdemux.c:10942
+#: gst/isomp4/qtdemux.c:3887 gst/isomp4/qtdemux.c:7344
+#: gst/isomp4/qtdemux.c:7351 gst/isomp4/qtdemux.c:8185
+#: gst/isomp4/qtdemux.c:8616 gst/isomp4/qtdemux.c:8623
+#: gst/isomp4/qtdemux.c:11009
 msgid "This file is corrupt and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:4099
+#: gst/isomp4/qtdemux.c:4129
 msgid "Invalid atom size."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:4177
+#: gst/isomp4/qtdemux.c:4207
 msgid "This file is incomplete and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:9551
+#: gst/isomp4/qtdemux.c:9611
 msgid "The video in this file might not play correctly."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:10983
+#: gst/isomp4/qtdemux.c:11050
 #, c-format
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6435
+#: gst/rtsp/gstrtspsrc.c:6437
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6440
+#: gst/rtsp/gstrtspsrc.c:6442
 msgid ""
 "No supported stream was found. You might need to allow more transport "
 "protocols or may otherwise be missing the right GStreamer RTSP extension "

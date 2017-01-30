@@ -2308,9 +2308,6 @@ gst_avi_demux_parse_stream (GstAviDemux * avi, GstBuffer * buf)
           if (n && d)
             gst_caps_set_simple (caps, "pixel-aspect-ratio", GST_TYPE_FRACTION,
                 n, d, NULL);
-          /* very local, not needed elsewhere */
-          g_free (vprp);
-          vprp = NULL;
         }
         caps = gst_avi_demux_check_caps (avi, stream, caps);
         tag_name = GST_TAG_VIDEO_CODEC;
@@ -2457,6 +2454,8 @@ gst_avi_demux_parse_stream (GstAviDemux * avi, GstBuffer * buf)
     gst_tag_list_add (stream->taglist, GST_TAG_MERGE_APPEND, tag_name,
         codec_name, NULL);
   }
+
+  g_free (vprp);
   g_free (codec_name);
   gst_buffer_unref (buf);
 
@@ -3898,6 +3897,10 @@ gst_avi_demux_parse_ncdt (GstAviDemux * avi, GstBuffer * buf,
 
           tsize -= 4;
           ptr += 4;
+          left -= 4;
+
+          if (sub_size > tsize)
+            break;
 
           GST_DEBUG_OBJECT (avi, "sub-tag %u, size %u", sub_tag, sub_size);
           /* http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/Nikon.html#NCTG
@@ -3916,10 +3919,12 @@ gst_avi_demux_parse_ncdt (GstAviDemux * avi, GstBuffer * buf,
               break;
             case 0x13:         /* CreationDate */
               type = GST_TAG_DATE_TIME;
-              if (ptr[4] == ':')
-                ptr[4] = '-';
-              if (ptr[7] == ':')
-                ptr[7] = '-';
+              if (left > 7) {
+                if (ptr[4] == ':')
+                  ptr[4] = '-';
+                if (ptr[7] == ':')
+                  ptr[7] = '-';
+              }
               break;
             default:
               type = NULL;
@@ -3933,6 +3938,7 @@ gst_avi_demux_parse_ncdt (GstAviDemux * avi, GstBuffer * buf,
 
           ptr += sub_size;
           tsize -= sub_size;
+          left -= sub_size;
         }
         break;
       default:

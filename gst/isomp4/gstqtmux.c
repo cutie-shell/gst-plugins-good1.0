@@ -543,8 +543,6 @@ gst_qt_mux_reset (GstQTMux * qtmux, gboolean alloc)
   qtmux->moov_pos = 0;
   qtmux->mdat_pos = 0;
   qtmux->longest_chunk = GST_CLOCK_TIME_NONE;
-  qtmux->video_pads = 0;
-  qtmux->audio_pads = 0;
   qtmux->fragment_sequence = 0;
 
   if (qtmux->ftyp) {
@@ -2026,7 +2024,7 @@ gst_qt_mux_prepare_moov_recovery (GstQTMux * qtmux)
   AtomFTYP *ftyp = NULL;
   GstBuffer *prefix = NULL;
 
-  GST_DEBUG_OBJECT (qtmux, "Openning moov recovery file: %s",
+  GST_DEBUG_OBJECT (qtmux, "Opening moov recovery file: %s",
       qtmux->moov_recov_file_path);
 
   qtmux->moov_recov_file = g_fopen (qtmux->moov_recov_file_path, "wb+");
@@ -2064,8 +2062,6 @@ fail:
   /* cleanup */
   fclose (qtmux->moov_recov_file);
   qtmux->moov_recov_file = NULL;
-  GST_WARNING_OBJECT (qtmux, "An error was detected while writing to "
-      "recover file, moov recovery won't work");
 }
 
 static GstFlowReturn
@@ -4447,6 +4443,13 @@ gst_qt_mux_release_pad (GstElement * element, GstPad * pad)
   }
 
   gst_collect_pads_remove_pad (mux->collect, pad);
+
+  if (mux->sinkpads == NULL) {
+    /* No more outstanding request pads, reset our counters */
+    mux->video_pads = 0;
+    mux->audio_pads = 0;
+    mux->subtitle_pads = 0;
+  }
 }
 
 static GstPad *

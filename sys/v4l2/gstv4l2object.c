@@ -1577,10 +1577,13 @@ gst_v4l2_object_get_all_caps (void)
 {
   static GstCaps *caps = NULL;
 
-  if (caps == NULL)
-    caps = gst_v4l2_object_get_caps_helper (GST_V4L2_ALL);
+  if (g_once_init_enter (&caps)) {
+    GstCaps *all_caps = gst_v4l2_object_get_caps_helper (GST_V4L2_ALL);
+    GST_MINI_OBJECT_FLAG_SET (all_caps, GST_MINI_OBJECT_FLAG_MAY_BE_LEAKED);
+    g_once_init_leave (&caps, all_caps);
+  }
 
-  return gst_caps_ref (caps);
+  return caps;
 }
 
 GstCaps *
@@ -1588,10 +1591,13 @@ gst_v4l2_object_get_raw_caps (void)
 {
   static GstCaps *caps = NULL;
 
-  if (caps == NULL)
-    caps = gst_v4l2_object_get_caps_helper (GST_V4L2_RAW);
+  if (g_once_init_enter (&caps)) {
+    GstCaps *raw_caps = gst_v4l2_object_get_caps_helper (GST_V4L2_RAW);
+    GST_MINI_OBJECT_FLAG_SET (raw_caps, GST_MINI_OBJECT_FLAG_MAY_BE_LEAKED);
+    g_once_init_leave (&caps, raw_caps);
+  }
 
-  return gst_caps_ref (caps);
+  return caps;
 }
 
 GstCaps *
@@ -1599,10 +1605,13 @@ gst_v4l2_object_get_codec_caps (void)
 {
   static GstCaps *caps = NULL;
 
-  if (caps == NULL)
-    caps = gst_v4l2_object_get_caps_helper (GST_V4L2_CODEC);
+  if (g_once_init_enter (&caps)) {
+    GstCaps *codec_caps = gst_v4l2_object_get_caps_helper (GST_V4L2_CODEC);
+    GST_MINI_OBJECT_FLAG_SET (codec_caps, GST_MINI_OBJECT_FLAG_MAY_BE_LEAKED);
+    g_once_init_leave (&caps, codec_caps);
+  }
 
-  return gst_caps_ref (caps);
+  return caps;
 }
 
 /* collect data for the given caps
@@ -2171,8 +2180,12 @@ gst_v4l2_object_add_interlace_mode (GstV4l2Object * v4l2object,
     gst_value_list_append_and_take_value (&interlace_formats, &interlace_enum);
   }
 
-  gst_v4l2src_value_simplify (&interlace_formats);
-  gst_structure_take_value (s, "interlace-mode", &interlace_formats);
+  if (gst_v4l2src_value_simplify (&interlace_formats)
+      || gst_value_list_get_size (&interlace_formats) > 0)
+    gst_structure_take_value (s, "interlace-mode", &interlace_formats);
+  else
+    GST_WARNING_OBJECT (v4l2object, "Failed to determine interlace mode");
+
   return;
 }
 
@@ -2950,6 +2963,13 @@ gst_v4l2_object_extrapolate_info (GstV4l2Object * v4l2object,
         "stride %d, offset %" G_GSIZE_FORMAT, i, stride, info->stride[i],
         info->offset[i]);
   }
+
+  /* Update the image size according the amount of data we are going to
+   * read/write. This workaround bugs in driver where the sizeimage provided
+   * by TRY/S_FMT represent the buffer length (maximum size) rather then the expected
+   * bytesused (buffer size). */
+  if (offs < info->size)
+    info->size = offs;
 }
 
 static void
@@ -3723,14 +3743,14 @@ invalid_dimensions:
 unsupported_field:
   {
     GST_ELEMENT_ERROR (v4l2object->element, RESOURCE, SETTINGS,
-        (_("Video devices uses an unsupported interlacing method.")),
+        (_("Video device uses an unsupported interlacing method.")),
         ("V4L2 field type %d not supported", fmt.fmt.pix.field));
     return FALSE;
   }
 unsupported_format:
   {
     GST_ELEMENT_ERROR (v4l2object->element, RESOURCE, SETTINGS,
-        (_("Video devices uses an unsupported pixel format.")),
+        (_("Video device uses an unsupported pixel format.")),
         ("V4L2 format %" GST_FOURCC_FORMAT " not supported",
             GST_FOURCC_ARGS (fmt.fmt.pix.pixelformat)));
     return FALSE;

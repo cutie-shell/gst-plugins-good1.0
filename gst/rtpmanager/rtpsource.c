@@ -271,6 +271,8 @@ rtp_source_reset (RTPSource * src)
 
   src->stats.sent_pli_count = 0;
   src->stats.sent_fir_count = 0;
+  src->stats.sent_nack_count = 0;
+  src->stats.recv_nack_count = 0;
 }
 
 static void
@@ -298,6 +300,8 @@ rtp_source_init (RTPSource * src)
   src->nacks = g_array_new (FALSE, FALSE, sizeof (guint32));
 
   src->reported_in_sr_of = g_hash_table_new (g_direct_hash, g_direct_equal);
+
+  src->last_keyframe_request = GST_CLOCK_TIME_NONE;
 
   rtp_source_reset (src);
 }
@@ -400,7 +404,9 @@ rtp_source_create_stats (RTPSource * src)
       "sent-pli-count", G_TYPE_UINT, src->stats.sent_pli_count,
       "recv-pli-count", G_TYPE_UINT, src->stats.recv_pli_count,
       "sent-fir-count", G_TYPE_UINT, src->stats.sent_fir_count,
-      "recv-fir-count", G_TYPE_UINT, src->stats.recv_fir_count, NULL);
+      "recv-fir-count", G_TYPE_UINT, src->stats.recv_fir_count,
+      "sent-nack-count", G_TYPE_UINT, src->stats.sent_nack_count,
+      "recv-nack-count", G_TYPE_UINT, src->stats.recv_nack_count, NULL);
 
   /* get the last SR. */
   have_sr = rtp_source_get_last_sr (src, &time, &ntptime, &rtptime,

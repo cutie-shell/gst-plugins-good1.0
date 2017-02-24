@@ -334,7 +334,7 @@ struct _QtDemuxStream
   guint32 to_sample;
 
   gboolean sent_eos;
-  GstTagList *pending_tags;
+  GstTagList *stream_tags;
   gboolean send_global_tags;
 
   GstEvent *pending_event;
@@ -642,6 +642,8 @@ gst_qtdemux_init (GstQTDemux * qtdemux)
   qtdemux->protection_system_ids = NULL;
   g_queue_init (&qtdemux->protection_event_queue);
   gst_segment_init (&qtdemux->segment, GST_FORMAT_TIME);
+  qtdemux->tag_list = gst_tag_list_new_empty ();
+  gst_tag_list_set_scope (qtdemux->tag_list, GST_TAG_SCOPE_GLOBAL);
   qtdemux->flowcombiner = gst_flow_combiner_new ();
 
   GST_OBJECT_FLAG_SET (qtdemux, GST_ELEMENT_FLAG_INDEXABLE);
@@ -656,6 +658,7 @@ gst_qtdemux_dispose (GObject * object)
     g_object_unref (G_OBJECT (qtdemux->adapter));
     qtdemux->adapter = NULL;
   }
+  gst_tag_list_unref (qtdemux->tag_list);
   gst_flow_combiner_free (qtdemux->flowcombiner);
   g_queue_foreach (&qtdemux->protection_event_queue, (GFunc) gst_event_unref,
       NULL);
@@ -959,15 +962,14 @@ gst_qtdemux_push_tags (GstQTDemux * qtdemux, QtDemuxStream * stream)
     GST_DEBUG_OBJECT (qtdemux, "Checking pad %s:%s for tags",
         GST_DEBUG_PAD_NAME (stream->pad));
 
-    if (G_UNLIKELY (stream->pending_tags)) {
+    if (!gst_tag_list_is_empty (stream->stream_tags)) {
       GST_DEBUG_OBJECT (qtdemux, "Sending tags %" GST_PTR_FORMAT,
-          stream->pending_tags);
+          stream->stream_tags);
       gst_pad_push_event (stream->pad,
-          gst_event_new_tag (stream->pending_tags));
-      stream->pending_tags = NULL;
+          gst_event_new_tag (gst_tag_list_ref (stream->stream_tags)));
     }
 
-    if (G_UNLIKELY (stream->send_global_tags && qtdemux->tag_list)) {
+    if (G_UNLIKELY (stream->send_global_tags)) {
       GST_DEBUG_OBJECT (qtdemux, "Sending global tags %" GST_PTR_FORMAT,
           qtdemux->tag_list);
       gst_pad_push_event (stream->pad,
@@ -1294,7 +1296,7 @@ gst_qtdemux_adjust_seek (GstQTDemux * qtdemux, gint64 desired_time,
    * and move back to the previous keyframe. */
   for (n = 0; n < qtdemux->n_streams; n++) {
     QtDemuxStream *str;
-    guint32 index;
+    guint32 index, kindex;
     guint32 seg_idx;
     GstClockTime media_start;
     GstClockTime media_time;
@@ -1348,33 +1350,37 @@ gst_qtdemux_adjust_seek (GstQTDemux * qtdemux, gint64 desired_time,
 
     if (!empty_segment) {
       /* find previous keyframe */
-      index = gst_qtdemux_find_keyframe (qtdemux, str, index, next);
+      kindex = gst_qtdemux_find_keyframe (qtdemux, str, index, next);
 
       /* we will settle for one before if none found after */
-      if (next && index == -1)
-        index = gst_qtdemux_find_keyframe (qtdemux, str, index, FALSE);
+      if (next && kindex == -1)
+        kindex = gst_qtdemux_find_keyframe (qtdemux, str, index, FALSE);
 
-      /* Snap to the start ts of the keyframe we found */
+      /* if the keyframe is at a different position, we need to update the
+       * requested seek time */
+      if (index != kindex) {
+        index = kindex;
 
-      /* get timestamp of keyframe */
-      media_time = QTSAMPLE_PTS_NO_CSLG (str, &str->samples[index]);
-      GST_DEBUG_OBJECT (qtdemux,
-          "keyframe at %u with time %" GST_TIME_FORMAT " at offset %"
-          G_GUINT64_FORMAT, index, GST_TIME_ARGS (media_time),
-          str->samples[index].offset);
+        /* get timestamp of keyframe */
+        media_time = QTSAMPLE_PTS_NO_CSLG (str, &str->samples[kindex]);
+        GST_DEBUG_OBJECT (qtdemux,
+            "keyframe at %u with time %" GST_TIME_FORMAT " at offset %"
+            G_GUINT64_FORMAT, kindex, GST_TIME_ARGS (media_time),
+            str->samples[kindex].offset);
 
-      /* keyframes in the segment get a chance to change the
-       * desired_offset. keyframes out of the segment are
-       * ignored. */
-      if (media_time >= seg->media_start) {
-        GstClockTime seg_time;
+        /* keyframes in the segment get a chance to change the
+         * desired_offset. keyframes out of the segment are
+         * ignored. */
+        if (media_time >= seg->media_start) {
+          GstClockTime seg_time;
 
-        /* this keyframe is inside the segment, convert back to
-         * segment time */
-        seg_time = (media_time - seg->media_start) + seg->time;
-        if ((!next && (seg_time < min_offset)) ||
-            (next && (seg_time > min_offset)))
-          min_offset = seg_time;
+          /* this keyframe is inside the segment, convert back to
+           * segment time */
+          seg_time = (media_time - seg->media_start) + seg->time;
+          if ((!next && (seg_time < min_offset)) ||
+              (next && (seg_time > min_offset)))
+            min_offset = seg_time;
+        }
       }
     }
 
@@ -1889,6 +1895,8 @@ _create_stream (void)
   stream->duration_moof = 0;
   stream->duration_last_moof = 0;
   stream->alignment = 1;
+  stream->stream_tags = gst_tag_list_new_empty ();
+  gst_tag_list_set_scope (stream->stream_tags, GST_TAG_SCOPE_STREAM);
   g_queue_init (&stream->protection_scheme_event_queue);
   return stream;
 }
@@ -2012,7 +2020,8 @@ gst_qtdemux_reset (GstQTDemux * qtdemux, gboolean hard)
     qtdemux->moov_node = NULL;
     if (qtdemux->tag_list)
       gst_mini_object_unref (GST_MINI_OBJECT_CAST (qtdemux->tag_list));
-    qtdemux->tag_list = NULL;
+    qtdemux->tag_list = gst_tag_list_new_empty ();
+    gst_tag_list_set_scope (qtdemux->tag_list, GST_TAG_SCOPE_GLOBAL);
 #if 0
     if (qtdemux->element_index)
       gst_object_unref (qtdemux->element_index);
@@ -2446,9 +2455,9 @@ gst_qtdemux_stream_clear (GstQTDemux * qtdemux, QtDemuxStream * stream)
     stream->rgb8_palette = NULL;
   }
 
-  if (stream->pending_tags)
-    gst_tag_list_unref (stream->pending_tags);
-  stream->pending_tags = NULL;
+  gst_tag_list_unref (stream->stream_tags);
+  stream->stream_tags = gst_tag_list_new_empty ();
+  gst_tag_list_set_scope (stream->stream_tags, GST_TAG_SCOPE_STREAM);
   g_free (stream->redirect_uri);
   stream->redirect_uri = NULL;
   stream->sent_eos = FALSE;
@@ -2482,6 +2491,7 @@ gst_qtdemux_stream_free (GstQTDemux * qtdemux, QtDemuxStream * stream)
   if (stream->caps)
     gst_caps_unref (stream->caps);
   stream->caps = NULL;
+  gst_tag_list_unref (stream->stream_tags);
   if (stream->pad) {
     gst_element_remove_pad (GST_ELEMENT_CAST (qtdemux), stream->pad);
     gst_flow_combiner_remove_pad (qtdemux->flowcombiner, stream->pad);
@@ -2774,6 +2784,9 @@ qtdemux_parse_uuid (GstQTDemux * qtdemux, const guint8 * buffer, gint length)
         length - offset - 16, NULL);
     taglist = gst_tag_list_from_xmp_buffer (buf);
     gst_buffer_unref (buf);
+
+    /* make sure we have a usable taglist */
+    qtdemux->tag_list = gst_tag_list_make_writable (qtdemux->tag_list);
 
     qtdemux_handle_xmp_taglist (qtdemux, qtdemux->tag_list, taglist);
 
@@ -6043,6 +6056,9 @@ gst_qtdemux_check_seekability (GstQTDemux * demux)
   if (demux->upstream_size)
     return;
 
+  if (demux->upstream_format_is_time)
+    return;
+
   query = gst_query_new_seeking (GST_FORMAT_BYTES);
   if (!gst_pad_peer_query (demux->sinkpad, query)) {
     GST_DEBUG_OBJECT (demux, "seeking query failed");
@@ -7760,12 +7776,13 @@ gst_qtdemux_configure_stream (GstQTDemux * qtdemux, QtDemuxStream * stream)
     if (stream->new_stream) {
       gchar *stream_id;
       GstEvent *event;
-      GstStreamFlags stream_flags;
+      GstStreamFlags stream_flags = GST_STREAM_FLAG_NONE;
 
       event =
           gst_pad_get_sticky_event (qtdemux->sinkpad, GST_EVENT_STREAM_START,
           0);
       if (event) {
+        gst_event_parse_stream_flags (event, &stream_flags);
         if (gst_event_parse_group_id (event, &qtdemux->group_id))
           qtdemux->have_group_id = TRUE;
         else
@@ -7783,11 +7800,13 @@ gst_qtdemux_configure_stream (GstQTDemux * qtdemux, QtDemuxStream * stream)
       event = gst_event_new_stream_start (stream_id);
       if (qtdemux->have_group_id)
         gst_event_set_group_id (event, qtdemux->group_id);
-      stream_flags = GST_STREAM_FLAG_NONE;
       if (stream->disabled)
         stream_flags |= GST_STREAM_FLAG_UNSELECT;
-      if (stream->sparse)
+      if (stream->sparse) {
         stream_flags |= GST_STREAM_FLAG_SPARSE;
+      } else {
+        stream_flags &= ~GST_STREAM_FLAG_SPARSE;
+      }
       gst_event_set_stream_flags (event, stream_flags);
       gst_pad_push_event (stream->pad, event);
       g_free (stream_id);
@@ -7887,9 +7906,9 @@ gst_qtdemux_add_stream (GstQTDemux * qtdemux,
     gst_element_add_pad (GST_ELEMENT_CAST (qtdemux), stream->pad);
     gst_flow_combiner_add_pad (qtdemux->flowcombiner, stream->pad);
 
-    if (stream->pending_tags)
-      gst_tag_list_unref (stream->pending_tags);
-    stream->pending_tags = list;
+    if (stream->stream_tags)
+      gst_tag_list_unref (stream->stream_tags);
+    stream->stream_tags = list;
     list = NULL;
     /* global tags go on each pad anyway */
     stream->send_global_tags = TRUE;
@@ -8536,6 +8555,8 @@ done2:
           /* save values */
           stream->stts_time = stts_time;
           stream->stts_sample_index = j + 1;
+          if (stream->stts_sample_index >= stream->stts_samples)
+            stream->stts_index++;
           goto done3;
         }
       }
@@ -8755,7 +8776,7 @@ qtdemux_parse_segments (GstQTDemux * qtdemux, QtDemuxStream * stream,
 
     n_segments = QT_UINT32 (buffer + 12);
 
-    if (size < 16 + n_segments * entry_size) {
+    if (n_segments > 100000 || size < 16 + n_segments * entry_size) {
       GST_WARNING_OBJECT (qtdemux, "Invalid edit list");
       goto done;
     }
@@ -9403,15 +9424,14 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
       goto skip_track;
     }
 
+    stream->stream_tags = gst_tag_list_make_writable (stream->stream_tags);
+
     /* flush samples data from this track from previous moov */
     gst_qtdemux_stream_flush_segments_data (qtdemux, stream);
     gst_qtdemux_stream_flush_samples_data (qtdemux, stream);
   }
   /* need defaults for fragments */
   qtdemux_parse_trex (qtdemux, stream, &dummy, &dummy, &dummy);
-
-  if (stream->pending_tags == NULL)
-    stream->pending_tags = gst_tag_list_new_empty ();
 
   if ((tkhd_flags & 1) == 0)
     stream->disabled = TRUE;
@@ -9635,7 +9655,7 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
     stream->display_height = h >> 16;
 
     qtdemux_inspect_transformation_matrix (qtdemux, stream, matrix,
-        &stream->pending_tags);
+        &stream->stream_tags);
 
     offset = 16;
     if (len < 86)
@@ -9751,7 +9771,7 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
     }
 
     if (codec) {
-      gst_tag_list_add (stream->pending_tags, GST_TAG_MERGE_REPLACE,
+      gst_tag_list_add (stream->stream_tags, GST_TAG_MERGE_REPLACE,
           GST_TAG_VIDEO_CODEC, codec, NULL);
       g_free (codec);
       codec = NULL;
@@ -9904,7 +9924,7 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
     }
 
     if (esds) {
-      gst_qtdemux_handle_esds (qtdemux, stream, esds, stream->pending_tags);
+      gst_qtdemux_handle_esds (qtdemux, stream, esds, stream->stream_tags);
     } else {
       switch (fourcc) {
         case FOURCC_H264:
@@ -9996,11 +10016,11 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
                 }
 
                 if (max_bitrate > 0 && max_bitrate < G_MAXUINT32) {
-                  gst_tag_list_add (stream->pending_tags, GST_TAG_MERGE_REPLACE,
+                  gst_tag_list_add (stream->stream_tags, GST_TAG_MERGE_REPLACE,
                       GST_TAG_MAXIMUM_BITRATE, max_bitrate, NULL);
                 }
                 if (avg_bitrate > 0 && avg_bitrate < G_MAXUINT32) {
-                  gst_tag_list_add (stream->pending_tags, GST_TAG_MERGE_REPLACE,
+                  gst_tag_list_add (stream->stream_tags, GST_TAG_MERGE_REPLACE,
                       GST_TAG_BITRATE, avg_bitrate, NULL);
                 }
 
@@ -10878,7 +10898,7 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
       GstStructure *s;
       gint bitrate = 0;
 
-      gst_tag_list_add (stream->pending_tags, GST_TAG_MERGE_REPLACE,
+      gst_tag_list_add (stream->stream_tags, GST_TAG_MERGE_REPLACE,
           GST_TAG_AUDIO_CODEC, codec, NULL);
       g_free (codec);
       codec = NULL;
@@ -10887,7 +10907,7 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
       s = gst_caps_get_structure (stream->caps, 0);
       gst_structure_get_int (s, "bitrate", &bitrate);
       if (bitrate > 0)
-        gst_tag_list_add (stream->pending_tags, GST_TAG_MERGE_REPLACE,
+        gst_tag_list_add (stream->stream_tags, GST_TAG_MERGE_REPLACE,
             GST_TAG_BITRATE, bitrate, NULL);
     }
 
@@ -10962,7 +10982,7 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
         g_node_destroy (wavenode);
       }
     } else if (esds) {
-      gst_qtdemux_handle_esds (qtdemux, stream, esds, stream->pending_tags);
+      gst_qtdemux_handle_esds (qtdemux, stream, esds, stream->stream_tags);
     } else {
       switch (fourcc) {
 #if 0
@@ -11151,7 +11171,7 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
              * the 3GPP container spec (26.244) for more details. */
             if ((len - 0x34) > 8 &&
                 (bitrate = qtdemux_parse_amr_bitrate (buf, amrwb))) {
-              gst_tag_list_add (stream->pending_tags, GST_TAG_MERGE_REPLACE,
+              gst_tag_list_add (stream->stream_tags, GST_TAG_MERGE_REPLACE,
                   GST_TAG_MAXIMUM_BITRATE, bitrate, NULL);
             }
 
@@ -11222,7 +11242,7 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
     stream->caps =
         qtdemux_sub_caps (qtdemux, stream, fourcc, stsd_data, &codec);
     if (codec) {
-      gst_tag_list_add (stream->pending_tags, GST_TAG_MERGE_REPLACE,
+      gst_tag_list_add (stream->stream_tags, GST_TAG_MERGE_REPLACE,
           GST_TAG_SUBTITLE_CODEC, codec, NULL);
       g_free (codec);
       codec = NULL;
@@ -11245,7 +11265,7 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
           break;
         }
 
-        gst_qtdemux_handle_esds (qtdemux, stream, esds, stream->pending_tags);
+        gst_qtdemux_handle_esds (qtdemux, stream, esds, stream->stream_tags);
         break;
       }
       default:
@@ -11267,7 +11287,7 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
       goto unknown_stream;
 
     if (codec) {
-      gst_tag_list_add (stream->pending_tags, GST_TAG_MERGE_REPLACE,
+      gst_tag_list_add (stream->stream_tags, GST_TAG_MERGE_REPLACE,
           GST_TAG_SUBTITLE_CODEC, codec, NULL);
       g_free (codec);
       codec = NULL;
@@ -11324,13 +11344,13 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
 
     /* convert ISO 639-2 code to ISO 639-1 */
     lang_code = gst_tag_get_language_code (stream->lang_id);
-    gst_tag_list_add (stream->pending_tags, GST_TAG_MERGE_REPLACE,
+    gst_tag_list_add (stream->stream_tags, GST_TAG_MERGE_REPLACE,
         GST_TAG_LANGUAGE_CODE, (lang_code) ? lang_code : stream->lang_id, NULL);
   }
 
   /* Check for UDTA tags */
   if ((udta = qtdemux_tree_get_child_by_type (trak, FOURCC_udta))) {
-    qtdemux_parse_udta (qtdemux, stream->pending_tags, udta);
+    qtdemux_parse_udta (qtdemux, stream->stream_tags, udta);
   }
 
   /* now we are ready to add the stream */
@@ -11451,14 +11471,14 @@ gst_qtdemux_guess_bitrate (GstQTDemux * qtdemux)
             qtdemux->streams[i]->caps);
         /* retrieve bitrate, prefer avg then max */
         bitrate = 0;
-        if (qtdemux->streams[i]->pending_tags) {
-          gst_tag_list_get_uint (qtdemux->streams[i]->pending_tags,
+        if (qtdemux->streams[i]->stream_tags) {
+          gst_tag_list_get_uint (qtdemux->streams[i]->stream_tags,
               GST_TAG_MAXIMUM_BITRATE, &bitrate);
           GST_DEBUG_OBJECT (qtdemux, "max-bitrate: %u", bitrate);
-          gst_tag_list_get_uint (qtdemux->streams[i]->pending_tags,
+          gst_tag_list_get_uint (qtdemux->streams[i]->stream_tags,
               GST_TAG_NOMINAL_BITRATE, &bitrate);
           GST_DEBUG_OBJECT (qtdemux, "nominal-bitrate: %u", bitrate);
-          gst_tag_list_get_uint (qtdemux->streams[i]->pending_tags,
+          gst_tag_list_get_uint (qtdemux->streams[i]->stream_tags,
               GST_TAG_BITRATE, &bitrate);
           GST_DEBUG_OBJECT (qtdemux, "bitrate: %u", bitrate);
         }
@@ -11498,10 +11518,12 @@ gst_qtdemux_guess_bitrate (GstQTDemux * qtdemux)
   GST_DEBUG_OBJECT (qtdemux, "System bitrate = %" G_GINT64_FORMAT
       ", Stream bitrate = %u", sys_bitrate, bitrate);
 
-  if (!stream->pending_tags)
-    stream->pending_tags = gst_tag_list_new_empty ();
+  if (!stream->stream_tags)
+    stream->stream_tags = gst_tag_list_new_empty ();
+  else
+    stream->stream_tags = gst_tag_list_make_writable (stream->stream_tags);
 
-  gst_tag_list_add (stream->pending_tags, GST_TAG_MERGE_REPLACE,
+  gst_tag_list_add (stream->stream_tags, GST_TAG_MERGE_REPLACE,
       GST_TAG_BITRATE, bitrate, NULL);
 }
 
@@ -11589,8 +11611,8 @@ qtdemux_expose_streams (GstQTDemux * qtdemux)
     }
 
     /* now we have all info and can expose */
-    list = stream->pending_tags;
-    stream->pending_tags = NULL;
+    list = stream->stream_tags;
+    stream->stream_tags = NULL;
     if (oldpad)
       oldpads = g_slist_prepend (oldpads, oldpad);
     if (!gst_qtdemux_add_stream (qtdemux, stream, list))
@@ -12113,9 +12135,16 @@ qtdemux_tag_add_covr (GstQTDemux * qtdemux, GstTagList * taglist,
     type = QT_UINT32 ((guint8 *) data->data + 8);
     GST_DEBUG_OBJECT (qtdemux, "have covr tag, type=%d,len=%d", type, len);
     if ((type == 0x0000000d || type == 0x0000000e) && len > 16) {
+      GstTagImageType image_type;
+
+      if (gst_tag_list_get_tag_size (taglist, GST_TAG_IMAGE) == 0)
+        image_type = GST_TAG_IMAGE_TYPE_FRONT_COVER;
+      else
+        image_type = GST_TAG_IMAGE_TYPE_NONE;
+
       if ((sample =
               gst_tag_image_data_to_image_sample ((guint8 *) data->data + 16,
-                  len - 16, GST_TAG_IMAGE_TYPE_NONE))) {
+                  len - 16, image_type))) {
         GST_DEBUG_OBJECT (qtdemux, "adding tag size %d", len - 16);
         gst_tag_list_add (taglist, GST_TAG_MERGE_REPLACE, tag1, sample, NULL);
         gst_sample_unref (sample);
@@ -12429,7 +12458,7 @@ static const struct
   FOURCC__gen, GST_TAG_GENRE, NULL, qtdemux_tag_add_str}, {
   FOURCC_gnre, GST_TAG_GENRE, NULL, qtdemux_tag_add_gnre}, {
   FOURCC_tmpo, GST_TAG_BEATS_PER_MINUTE, NULL, qtdemux_tag_add_tmpo}, {
-  FOURCC_covr, GST_TAG_PREVIEW_IMAGE, NULL, qtdemux_tag_add_covr}, {
+  FOURCC_covr, GST_TAG_IMAGE, NULL, qtdemux_tag_add_covr}, {
   FOURCC_sonm, GST_TAG_TITLE_SORTNAME, NULL, qtdemux_tag_add_str}, {
   FOURCC_soal, GST_TAG_ALBUM_SORTNAME, NULL, qtdemux_tag_add_str}, {
   FOURCC_soar, GST_TAG_ARTIST_SORTNAME, NULL, qtdemux_tag_add_str}, {
@@ -12817,12 +12846,7 @@ qtdemux_parse_tree (GstQTDemux * qtdemux)
   gint version;
 
   /* make sure we have a usable taglist */
-  if (!qtdemux->tag_list) {
-    qtdemux->tag_list = gst_tag_list_new_empty ();
-    gst_tag_list_set_scope (qtdemux->tag_list, GST_TAG_SCOPE_GLOBAL);
-  } else {
-    qtdemux->tag_list = gst_tag_list_make_writable (qtdemux->tag_list);
-  }
+  qtdemux->tag_list = gst_tag_list_make_writable (qtdemux->tag_list);
 
   mvhd = qtdemux_tree_get_child_by_type (qtdemux->moov_node, FOURCC_mvhd);
   if (mvhd == NULL) {
@@ -12913,13 +12937,7 @@ qtdemux_parse_tree (GstQTDemux * qtdemux)
     trak = qtdemux_tree_get_sibling_by_type (trak, FOURCC_trak);
   }
 
-  if (!qtdemux->tag_list) {
-    GST_DEBUG_OBJECT (qtdemux, "new tag list");
-    qtdemux->tag_list = gst_tag_list_new_empty ();
-    gst_tag_list_set_scope (qtdemux->tag_list, GST_TAG_SCOPE_GLOBAL);
-  } else {
-    qtdemux->tag_list = gst_tag_list_make_writable (qtdemux->tag_list);
-  }
+  qtdemux->tag_list = gst_tag_list_make_writable (qtdemux->tag_list);
 
   /* find tags */
   udta = qtdemux_tree_get_child_by_type (qtdemux->moov_node, FOURCC_udta);

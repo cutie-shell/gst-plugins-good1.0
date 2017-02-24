@@ -52,6 +52,16 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtprtxqueue.html#GstRTPRtxQueue--max-size-time" title="The “max-size-time” property">max-size-time</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtprtxqueue.html#GstRTPRtxQueue--fulfilled-requests" title="The “fulfilled-requests” property">fulfilled-requests</a></td>
+<td class="property_flags">Read</td>
+</tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtprtxqueue.html#GstRTPRtxQueue--requests" title="The “requests” property">requests</a></td>
+<td class="property_flags">Read</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -187,6 +197,22 @@
 <pre class="programlisting">  “max-size-time”            <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
 <p>Amount of ms to queue (0 = unlimited).</p>
 <p>Flags: Read / Write</p>
+<p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTPRtxQueue--fulfilled-requests"></a><h3>The <code class="literal">“fulfilled-requests”</code> property</h3>
+<pre class="programlisting">  “fulfilled-requests”       <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<p>Number of fulfilled retransmission requests.</p>
+<p>Flags: Read</p>
+<p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTPRtxQueue--requests"></a><h3>The <code class="literal">“requests”</code> property</h3>
+<pre class="programlisting">  “requests”                 <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<p>Total number of retransmission requests.</p>
+<p>Flags: Read</p>
 <p>Default value: 0</p>
 </div>
 </div>

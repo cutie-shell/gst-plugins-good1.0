@@ -557,8 +557,6 @@ gst_qt_mux_reset (GstQTMux * qtmux, gboolean alloc)
   qtmux->moov_pos = 0;
   qtmux->mdat_pos = 0;
   qtmux->longest_chunk = GST_CLOCK_TIME_NONE;
-  qtmux->video_pads = 0;
-  qtmux->audio_pads = 0;
   qtmux->fragment_sequence = 0;
 
   if (qtmux->ftyp) {
@@ -2047,7 +2045,7 @@ gst_qt_mux_prepare_moov_recovery (GstQTMux * qtmux)
   AtomFTYP *ftyp = NULL;
   GstBuffer *prefix = NULL;
 
-  GST_DEBUG_OBJECT (qtmux, "Openning moov recovery file: %s",
+  GST_DEBUG_OBJECT (qtmux, "Opening moov recovery file: %s",
       qtmux->moov_recov_file_path);
 
   qtmux->moov_recov_file = g_fopen (qtmux->moov_recov_file_path, "wb+");
@@ -2085,8 +2083,6 @@ fail:
   /* cleanup */
   fclose (qtmux->moov_recov_file);
   qtmux->moov_recov_file = NULL;
-  GST_WARNING_OBJECT (qtmux, "An error was detected while writing to "
-      "recover file, moov recovery won't work");
 }
 
 static GstFlowReturn
@@ -2515,6 +2511,8 @@ gst_qt_mux_update_edit_lists (GstQTMux * qtmux)
     GstCollectData *cdata = (GstCollectData *) walk->data;
     GstQTPad *qtpad = (GstQTPad *) cdata;
 
+    atom_trak_edts_clear (qtpad->trak);
+
     if (GST_CLOCK_TIME_IS_VALID (qtpad->first_ts)) {
       guint32 lateness = 0;
       guint32 duration = qtpad->trak->tkhd.duration;
@@ -2554,13 +2552,16 @@ gst_qt_mux_update_edit_lists (GstQTMux * qtmux)
         media_start = gst_util_uint64_scale_round (ctts,
             atom_trak_get_timescale (qtpad->trak), GST_SECOND);
 
+        /* atom_trak_set_elst_entry() has a quirk - if the edit list
+         * is empty because there's no gap added above, this call
+         * will not replace index 1, it will create the entry at index 0.
+         * Luckily, that's exactly what we want here */
         atom_trak_set_elst_entry (qtpad->trak, 1, duration, media_start,
             (guint32) (1 * 65536.0));
       }
 
       /* need to add the empty time to the trak duration */
       duration += lateness;
-
       qtpad->trak->tkhd.duration = duration;
       if (qtpad->tc_trak) {
         qtpad->tc_trak->tkhd.duration = duration;
@@ -4190,42 +4191,41 @@ gst_qt_mux_video_sink_set_caps (GstQTPad * qtpad, GstCaps * caps)
             "output might not play in Apple QuickTime (try global-headers?)");
     }
   } else if (strcmp (mimetype, "video/x-h264") == 0) {
-    /* check if we accept these caps */
-    if (gst_structure_has_field (structure, "stream-format")) {
-      const gchar *format;
-      const gchar *alignment;
-
-      format = gst_structure_get_string (structure, "stream-format");
-      alignment = gst_structure_get_string (structure, "alignment");
-
-      if (strcmp (format, "avc") != 0 || alignment == NULL ||
-          strcmp (alignment, "au") != 0) {
-        GST_WARNING_OBJECT (qtmux, "Rejecting h264 caps, qtmux only accepts "
-            "avc format with AU aligned samples");
-        goto refuse_caps;
-      }
-    } else {
-      GST_WARNING_OBJECT (qtmux, "no stream-format field in h264 caps");
-      goto refuse_caps;
-    }
-
     if (!codec_data) {
       GST_WARNING_OBJECT (qtmux, "no codec_data in h264 caps");
       goto refuse_caps;
     }
 
     entry.fourcc = FOURCC_avc1;
-    if (qtpad->avg_bitrate == 0) {
-      gint avg_bitrate = 0;
-      gst_structure_get_int (structure, "bitrate", &avg_bitrate);
-      qtpad->avg_bitrate = avg_bitrate;
-    }
+
     ext_atom = build_btrt_extension (0, qtpad->avg_bitrate, qtpad->max_bitrate);
     if (ext_atom != NULL)
       ext_atom_list = g_list_prepend (ext_atom_list, ext_atom);
     ext_atom = build_codec_data_extension (FOURCC_avcC, codec_data);
     if (ext_atom != NULL)
       ext_atom_list = g_list_prepend (ext_atom_list, ext_atom);
+  } else if (strcmp (mimetype, "video/x-h265") == 0) {
+    const gchar *format;
+
+    if (!codec_data) {
+      GST_WARNING_OBJECT (qtmux, "no codec_data in h265 caps");
+      goto refuse_caps;
+    }
+
+    format = gst_structure_get_string (structure, "stream-format");
+    if (strcmp (format, "hvc1") == 0)
+      entry.fourcc = FOURCC_hvc1;
+    else if (strcmp (format, "hev1") == 0)
+      entry.fourcc = FOURCC_hev1;
+
+    ext_atom = build_btrt_extension (0, qtpad->avg_bitrate, qtpad->max_bitrate);
+    if (ext_atom != NULL)
+      ext_atom_list = g_list_prepend (ext_atom_list, ext_atom);
+
+    ext_atom = build_codec_data_extension (FOURCC_hvcC, codec_data);
+    if (ext_atom != NULL)
+      ext_atom_list = g_list_prepend (ext_atom_list, ext_atom);
+
   } else if (strcmp (mimetype, "video/x-svq") == 0) {
     gint version = 0;
     const GstBuffer *seqh = NULL;
@@ -4355,6 +4355,8 @@ gst_qt_mux_video_sink_set_caps (GstQTPad * qtpad, GstCaps * caps)
     else if (!g_strcmp0 (variant, "4444xq"))
       entry.fourcc = FOURCC_ap4x;
 
+    sync = FALSE;
+
     if (!qtmux->interleave_time_set)
       qtmux->interleave_time = 500 * GST_MSECOND;
     if (!qtmux->interleave_bytes_set)
@@ -4415,6 +4417,64 @@ gst_qt_mux_video_sink_set_caps (GstQTPad * qtpad, GstCaps * caps)
       ext_atom_list = g_list_append (ext_atom_list, ext_atom);
   }
 
+
+  if (qtmux_klass->format == GST_QT_MUX_FORMAT_QT &&
+      width > 640 && width <= 1052 && height >= 480 && height <= 576) {
+    /* The 'clap' extension is also defined for MP4 but inventing values in
+     * general seems a bit tricky for this one. We only write it for
+     * SD resolution in MOV, where it is a requirement.
+     * The same goes for the 'tapt' extension, just that it is not defined for
+     * MP4 and only for MOV
+     */
+    gint dar_num, dar_den;
+    gint clef_width, clef_height, prof_width;
+    gint clap_width_n, clap_width_d, clap_height;
+    gint cdiv;
+    double approx_dar;
+
+    /* First, guess display aspect ratio based on pixel aspect ratio,
+     * width and height. We assume that display aspect ratio is either
+     * 4:3 or 16:9
+     */
+    approx_dar = (gdouble) (width * par_num) / (height * par_den);
+    if (approx_dar > 11.0 / 9 && approx_dar < 14.0 / 9) {
+      dar_num = 4;
+      dar_den = 3;
+    } else if (approx_dar > 15.0 / 9 && approx_dar < 18.0 / 9) {
+      dar_num = 16;
+      dar_den = 9;
+    } else {
+      dar_num = width * par_num;
+      dar_den = height * par_den;
+      cdiv = gst_util_greatest_common_divisor (dar_num, dar_den);
+      dar_num /= cdiv;
+      dar_den /= cdiv;
+    }
+
+    /* Then, calculate clean-aperture values (clap and clef)
+     * using the guessed DAR.
+     */
+    clef_height = clap_height = (height == 486 ? 480 : height);
+    clef_width = gst_util_uint64_scale (clef_height,
+        dar_num * G_GUINT64_CONSTANT (65536), dar_den);
+    prof_width = gst_util_uint64_scale (width,
+        par_num * G_GUINT64_CONSTANT (65536), par_den);
+    clap_width_n = clap_height * dar_num * par_den;
+    clap_width_d = dar_den * par_num;
+    cdiv = gst_util_greatest_common_divisor (clap_width_n, clap_width_d);
+    clap_width_n /= cdiv;
+    clap_width_d /= cdiv;
+
+    ext_atom = build_tapt_extension (clef_width, clef_height << 16, prof_width,
+        height << 16, width << 16, height << 16);
+    qtpad->trak->tapt = ext_atom;
+
+    ext_atom = build_clap_extension (clap_width_n, clap_width_d,
+        clap_height, 1, 0, 1, 0, 1);
+    if (ext_atom)
+      ext_atom_list = g_list_append (ext_atom_list, ext_atom);
+  }
+
   /* ok, set the pad info accordingly */
   qtpad->fourcc = entry.fourcc;
   qtpad->sync = sync;
@@ -4457,22 +4517,6 @@ gst_qt_mux_video_sink_set_caps (GstQTPad * qtpad, GstCaps * caps)
       strcpy ((gchar *) mp4v->compressor + 1, compressor);
       mp4v->compressor[0] = strlen (compressor);
     }
-
-    /* The 'clap' extension is also defined for MP4 but inventing values in
-     * general seems a bit tricky for this one. We only write it for ProRes
-     * then, where it is a requirement.
-     *
-     * NTSC and PAL have special values, otherwise just take width and height
-     */
-    if (width == 720 && (height == 480 || height == 486))
-      ext_atom = build_clap_extension (704, 1, height, 1, 0, 1, 0, 1);
-    else if (width == 720 && height == 576)
-      ext_atom = build_clap_extension (768 * 54, 59, 576, 1, 0, 1, 0, 1);
-    else
-      ext_atom = build_clap_extension (width, 1, height, 1, 0, 1, 0, 1);
-
-    if (ext_atom)
-      mp4v->extension_atoms = g_list_append (mp4v->extension_atoms, ext_atom);
   }
 
   gst_object_unref (qtmux);
@@ -4694,6 +4738,13 @@ gst_qt_mux_release_pad (GstElement * element, GstPad * pad)
   }
 
   gst_collect_pads_remove_pad (mux->collect, pad);
+
+  if (mux->sinkpads == NULL) {
+    /* No more outstanding request pads, reset our counters */
+    mux->video_pads = 0;
+    mux->audio_pads = 0;
+    mux->subtitle_pads = 0;
+  }
 }
 
 static GstPad *

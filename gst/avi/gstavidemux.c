@@ -3912,6 +3912,10 @@ gst_avi_demux_parse_ncdt (GstAviDemux * avi, GstBuffer * buf,
 
           tsize -= 4;
           ptr += 4;
+          left -= 4;
+
+          if (sub_size > tsize)
+            break;
 
           GST_DEBUG_OBJECT (avi, "sub-tag %u, size %u", sub_tag, sub_size);
           /* http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/Nikon.html#NCTG
@@ -3930,10 +3934,12 @@ gst_avi_demux_parse_ncdt (GstAviDemux * avi, GstBuffer * buf,
               break;
             case 0x13:         /* CreationDate */
               type = GST_TAG_DATE_TIME;
-              if (ptr[4] == ':')
-                ptr[4] = '-';
-              if (ptr[7] == ':')
-                ptr[7] = '-';
+              if (left > 7) {
+                if (ptr[4] == ':')
+                  ptr[4] = '-';
+                if (ptr[7] == ':')
+                  ptr[7] = '-';
+              }
               break;
             default:
               type = NULL;
@@ -3947,6 +3953,7 @@ gst_avi_demux_parse_ncdt (GstAviDemux * avi, GstBuffer * buf,
 
           ptr += sub_size;
           tsize -= sub_size;
+          left -= sub_size;
         }
         break;
       default:

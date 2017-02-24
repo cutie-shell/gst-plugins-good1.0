@@ -82,6 +82,7 @@ typedef struct _MqStreamCtx
   gboolean in_eos;
   gboolean out_eos;
   gboolean need_unblock;
+  gboolean caps_change;
 
   GstSegment in_segment;
   GstSegment out_segment;
@@ -89,13 +90,15 @@ typedef struct _MqStreamCtx
   GstClockTimeDiff in_running_time;
   GstClockTimeDiff out_running_time;
 
+  GstBuffer *prev_in_keyframe; /* store keyframe for each GOP */
+
   GstElement *q;
   GQueue queued_bufs;
 
   GstPad *sinkpad;
   GstPad *srcpad;
 
-  GstBuffer *cur_buffer;
+  GstBuffer *cur_out_buffer;
   GstEvent *pending_gap;
 } MqStreamCtx;
 
@@ -113,6 +116,8 @@ struct _GstSplitMuxSink
   guint64 threshold_bytes;
   guint max_files;
   gboolean send_keyframe_requests;
+  gchar *threshold_timecode_str;
+  GstClockTime next_max_tc_time;
 
   GstElement *muxer;
   GstElement *sink;
@@ -146,9 +151,7 @@ struct _GstSplitMuxSink
 
   SplitMuxOutputState output_state;
   GstClockTimeDiff max_out_running_time;
-  GstClockTimeDiff next_max_out_running_time;
 
-  GstClockTimeDiff muxed_out_time;
   guint64 muxed_out_bytes;
 
   MqStreamCtx *reference_ctx;

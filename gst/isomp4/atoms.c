@@ -1544,6 +1544,17 @@ atom_write_size (guint8 ** buffer, guint64 * size, guint64 * offset,
   prop_copy_uint32 (*offset - atom_pos, buffer, size, &atom_pos);
 }
 
+static guint64
+atom_copy_empty (Atom * atom, guint8 ** buffer, guint64 * size,
+    guint64 * offset)
+{
+  guint64 original_offset = *offset;
+
+  prop_copy_uint32 (0, buffer, size, offset);
+
+  return *offset - original_offset;
+}
+
 guint64
 atom_copy_data (Atom * atom, guint8 ** buffer, guint64 * size, guint64 * offset)
 {
@@ -1595,9 +1606,6 @@ atom_info_list_copy_data (GList * ai, guint8 ** buffer, guint64 * size,
     }
     ai = g_list_next (ai);
   }
-
-  /* append 0 as a terminator "length" to work around some broken software */
-  prop_copy_uint32 (0, buffer, size, offset);
 
   return *offset - original_offset;
 }
@@ -2813,6 +2821,11 @@ atom_trak_copy_data (AtomTRAK * trak, guint8 ** buffer, guint64 * size,
   if (!atom_tkhd_copy_data (&trak->tkhd, buffer, size, offset)) {
     return 0;
   }
+  if (trak->tapt) {
+    if (!trak->tapt->copy_data_func (trak->tapt->atom, buffer, size, offset)) {
+      return 0;
+    }
+  }
   if (trak->edts) {
     if (!atom_edts_copy_data (trak->edts, buffer, size, offset)) {
       return 0;
@@ -3179,23 +3192,24 @@ timecode_atom_trak_set_duration (AtomTRAK * trak, guint64 duration,
   g_assert (trak->mdia.minf.gmhd != NULL);
   g_assert (atom_array_get_len (&trak->mdia.minf.stbl.stts.entries) == 1);
 
-  trak->tkhd.duration = duration;
-  trak->mdia.mdhd.time_info.duration = duration;
-  trak->mdia.mdhd.time_info.timescale = timescale;
-
-  entry = &atom_array_index (&trak->mdia.minf.stbl.stts.entries, 0);
-  entry->sample_delta = duration;
-
   for (iter = trak->mdia.minf.stbl.stsd.entries; iter;
       iter = g_list_next (iter)) {
     SampleTableEntry *entry = iter->data;
     if (entry->kind == TIMECODE) {
       SampleTableEntryTMCD *tmcd = (SampleTableEntryTMCD *) entry;
 
-      tmcd->frame_duration = tmcd->frame_duration * timescale / tmcd->timescale;
-      tmcd->timescale = timescale;
+      duration = duration * tmcd->timescale / timescale;
+      timescale = tmcd->timescale;
+      break;
     }
   }
+
+  trak->tkhd.duration = duration;
+  trak->mdia.mdhd.time_info.duration = duration;
+  trak->mdia.mdhd.time_info.timescale = timescale;
+
+  entry = &atom_array_index (&trak->mdia.minf.stbl.stts.entries, 0);
+  entry->sample_delta = duration;
 }
 
 static guint32
@@ -3702,6 +3716,15 @@ atom_edts_add_entry (AtomEDTS * edts, gint index, EditListEntry * entry)
   *e = *entry;
 }
 
+void
+atom_trak_edts_clear (AtomTRAK * trak)
+{
+  if (trak->edts) {
+    atom_edts_clear (trak->edts);
+    trak->edts = NULL;
+  }
+}
+
 /*
  * Update an entry in this trak edits list, creating it if needed.
  * index is the index of the entry to update, or create if it's past the end.
@@ -3766,7 +3789,10 @@ atom_trak_add_timecode_entry (AtomTRAK * trak, AtomsContext * context,
   tmcd->name.name = g_strdup ("Tape");
   tmcd->timescale = tc->config.fps_n;
   tmcd->frame_duration = tc->config.fps_d;
-  tmcd->n_frames = tc->config.fps_n / tc->config.fps_d;
+  if (tc->config.fps_d == 1001)
+    tmcd->n_frames = tc->config.fps_n / 1000;
+  else
+    tmcd->n_frames = tc->config.fps_n / tc->config.fps_d;
 
   stsd->entries = g_list_prepend (stsd->entries, tmcd);
   stsd->n_entries++;
@@ -4097,6 +4123,48 @@ build_clap_extension (gint width_n, gint width_d, gint height_n, gint height_d,
       atom_data_free);
 }
 
+AtomInfo *
+build_tapt_extension (gint clef_width, gint clef_height, gint prof_width,
+    gint prof_height, gint enof_width, gint enof_height)
+{
+  AtomData *atom_data = atom_data_new (FOURCC_tapt);
+  guint8 *data;
+
+  atom_data_alloc_mem (atom_data, 60);
+  data = atom_data->data;
+
+  GST_WRITE_UINT32_BE (data, 20);
+  GST_WRITE_UINT32_LE (data + 4, FOURCC_clef);
+  GST_WRITE_UINT32_BE (data + 8, 0);
+  GST_WRITE_UINT32_BE (data + 12, clef_width);
+  GST_WRITE_UINT32_BE (data + 16, clef_height);
+
+  GST_WRITE_UINT32_BE (data + 20, 20);
+  GST_WRITE_UINT32_LE (data + 24, FOURCC_prof);
+  GST_WRITE_UINT32_BE (data + 28, 0);
+  GST_WRITE_UINT32_BE (data + 32, prof_width);
+  GST_WRITE_UINT32_BE (data + 36, prof_height);
+
+  GST_WRITE_UINT32_BE (data + 40, 20);
+  GST_WRITE_UINT32_LE (data + 44, FOURCC_enof);
+  GST_WRITE_UINT32_BE (data + 48, 0);
+  GST_WRITE_UINT32_BE (data + 52, enof_width);
+  GST_WRITE_UINT32_BE (data + 56, enof_height);
+
+
+  return build_atom_info_wrapper ((Atom *) atom_data, atom_data_copy_data,
+      atom_data_free);
+}
+
+static AtomInfo *
+build_mov_video_sample_description_padding_extension (void)
+{
+  AtomData *atom_data = atom_data_new (FOURCC_clap);
+
+  return build_atom_info_wrapper ((Atom *) atom_data, atom_copy_empty,
+      atom_data_free);
+}
+
 SampleTableEntryMP4V *
 atom_trak_set_video_type (AtomTRAK * trak, AtomsContext * context,
     VisualSampleEntry * entry, guint32 scale, GList * ext_atoms_list)
@@ -4140,6 +4208,13 @@ atom_trak_set_video_type (AtomTRAK * trak, AtomsContext * context,
 
   ste->extension_atoms = g_list_append (ste->extension_atoms,
       build_pasp_extension (par_n, par_d));
+
+  if (context->flavor == ATOMS_TREE_FLAVOR_MOV) {
+    /* append 0 as a terminator "length" to work around some broken software */
+    ste->extension_atoms =
+        g_list_append (ste->extension_atoms,
+        build_mov_video_sample_description_padding_extension ());
+  }
 
   return ste;
 }

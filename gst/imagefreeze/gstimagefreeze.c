@@ -265,10 +265,6 @@ gst_image_freeze_sink_getcaps (GstImageFreeze * self, GstCaps * filter)
   GstPad *pad;
 
   pad = self->sinkpad;
-  ret = gst_pad_get_current_caps (pad);
-  if (ret != NULL) {
-    goto done;
-  }
 
   if (filter) {
     filter = gst_caps_copy (filter);
@@ -292,7 +288,6 @@ gst_image_freeze_sink_getcaps (GstImageFreeze * self, GstCaps * filter)
   ret = gst_caps_make_writable (ret);
   gst_image_freeze_remove_fps (self, ret);
 
-done:
   GST_LOG_OBJECT (pad, "Returning caps: %" GST_PTR_FORMAT, ret);
 
   return ret;

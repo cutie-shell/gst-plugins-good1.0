@@ -75,8 +75,8 @@ atoms_context_free (AtomsContext * context)
 #define SECS_PER_DAY (24 * 60 * 60)
 #define LEAP_YEARS_FROM_1904_TO_1970 17
 
-static guint64
-get_current_qt_time (void)
+guint64
+atoms_get_current_qt_time (void)
 {
   GTimeVal timeval;
 
@@ -89,7 +89,7 @@ get_current_qt_time (void)
 static void
 common_time_info_init (TimeInfo * ti)
 {
-  ti->creation_time = ti->modification_time = get_current_qt_time ();
+  ti->creation_time = ti->modification_time = atoms_get_current_qt_time ();
   ti->timescale = 0;
   ti->duration = 0;
 }
@@ -566,6 +566,14 @@ sample_entry_tmcd_new (void)
 }
 
 static void
+sample_entry_tmcd_free (SampleTableEntryTMCD * tmcd)
+{
+  atom_sample_entry_free (&tmcd->se);
+  g_free (tmcd->name.name);
+  g_free (tmcd);
+}
+
+static void
 sample_entry_mp4v_init (SampleTableEntryMP4V * mp4v, AtomsContext * context)
 {
   atom_sample_entry_init (&mp4v->se, FOURCC_mp4v);
@@ -673,6 +681,9 @@ atom_stsd_remove_entries (AtomSTSD * stsd)
         break;
       case SUBTITLE:
         sample_entry_tx3g_free ((SampleTableEntryTX3G *) se);
+        break;
+      case TIMECODE:
+        sample_entry_tmcd_free ((SampleTableEntryTMCD *) se);
         break;
       default:
         /* best possible cleanup */
@@ -1143,7 +1154,7 @@ atom_tkhd_init (AtomTKHD * tkhd, AtomsContext * context)
 
   atom_full_init (&tkhd->header, FOURCC_tkhd, 0, 0, 0, flags);
 
-  tkhd->creation_time = tkhd->modification_time = get_current_qt_time ();
+  tkhd->creation_time = tkhd->modification_time = atoms_get_current_qt_time ();
   tkhd->duration = 0;
   tkhd->track_ID = 0;
   tkhd->reserved = 0;
@@ -3720,7 +3731,7 @@ void
 atom_trak_edts_clear (AtomTRAK * trak)
 {
   if (trak->edts) {
-    atom_edts_clear (trak->edts);
+    atom_edts_free (trak->edts);
     trak->edts = NULL;
   }
 }
@@ -3777,6 +3788,7 @@ atom_trak_add_timecode_entry (AtomTRAK * trak, AtomsContext * context,
 
   trak->mdia.hdlr.component_type = FOURCC_mhlr;
   trak->mdia.hdlr.handler_type = FOURCC_tmcd;
+  g_free (trak->mdia.hdlr.name);
   trak->mdia.hdlr.name = g_strdup ("Time Code Media Handler");
   trak->mdia.mdhd.time_info.timescale = tc->config.fps_n / tc->config.fps_d;
 

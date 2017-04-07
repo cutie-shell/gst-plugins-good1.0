@@ -1736,6 +1736,14 @@ gst_qtdemux_handle_src_event (GstPad * pad, GstObject * parent,
 #ifndef GST_DISABLE_GST_DEBUG
       GstClockTime ts = gst_util_get_timestamp ();
 #endif
+      guint32 seqnum = gst_event_get_seqnum (event);
+
+      if (seqnum == qtdemux->segment_seqnum) {
+        GST_LOG_OBJECT (pad,
+            "Drop duplicated SEEK event seqnum %" G_GUINT32_FORMAT, seqnum);
+        gst_event_unref (event);
+        return TRUE;
+      }
 
       if (qtdemux->upstream_format_is_time && qtdemux->fragmented) {
         /* seek should be handled by upstream, we might need to re-download fragments */
@@ -2005,6 +2013,7 @@ gst_qtdemux_reset (GstQTDemux * qtdemux, gboolean hard)
     qtdemux->mdatbuffer = NULL;
     qtdemux->restoredata_buffer = NULL;
     qtdemux->mdatleft = 0;
+    qtdemux->mdatsize = 0;
     if (qtdemux->comp_brands)
       gst_buffer_unref (qtdemux->comp_brands);
     qtdemux->comp_brands = NULL;
@@ -3030,7 +3039,8 @@ static gboolean
 qtdemux_parse_trun (GstQTDemux * qtdemux, GstByteReader * trun,
     QtDemuxStream * stream, guint32 d_sample_duration, guint32 d_sample_size,
     guint32 d_sample_flags, gint64 moof_offset, gint64 moof_length,
-    gint64 * base_offset, gint64 * running_offset, gint64 decode_ts)
+    gint64 * base_offset, gint64 * running_offset, gint64 decode_ts,
+    gboolean has_tfdt)
 {
   GstClockTime gst_ts = GST_CLOCK_TIME_NONE;
   guint64 timestamp;
@@ -3191,7 +3201,7 @@ qtdemux_parse_trun (GstQTDemux * qtdemux, GstByteReader * trun,
       /* If this is a GST_FORMAT_BYTES stream and there's a significant
        * difference (1 sec.) between decode_ts and timestamp, prefer the
        * former */
-      if (decode_ts != 0 && !qtdemux->upstream_format_is_time
+      if (has_tfdt && !qtdemux->upstream_format_is_time
           && ABSDIFF (decode_ts, timestamp) >
           MAX (stream->duration_last_moof / 2,
               GSTTIME_TO_QTSTREAMTIME (stream, GST_SECOND))) {
@@ -3272,6 +3282,8 @@ qtdemux_parse_trun (GstQTDemux * qtdemux, GstByteReader * trun,
    * size, else we will still be able to use this when dealing with gap'ed
    * input */
   qtdemux->mdatleft = *running_offset - initial_offset;
+  qtdemux->mdatoffset = initial_offset;
+  qtdemux->mdatsize = qtdemux->mdatleft;
 
   stream->n_samples += samples_count;
   stream->n_samples_moof += samples_count;
@@ -3601,6 +3613,8 @@ qtdemux_parse_cenc_aux_info (GstQTDemux * qtdemux, QtDemuxStream * stream,
   QtDemuxCencSampleSetInfo *ss_info = NULL;
   guint8 size;
   gint i;
+  GPtrArray *old_crypto_info = NULL;
+  guint old_entries = 0;
 
   g_return_val_if_fail (qtdemux != NULL, FALSE);
   g_return_val_if_fail (stream != NULL, FALSE);
@@ -3611,13 +3625,37 @@ qtdemux_parse_cenc_aux_info (GstQTDemux * qtdemux, QtDemuxStream * stream,
   ss_info = (QtDemuxCencSampleSetInfo *) stream->protection_scheme_info;
 
   if (ss_info->crypto_info) {
-    GST_LOG_OBJECT (qtdemux, "unreffing existing crypto_info");
-    g_ptr_array_free (ss_info->crypto_info, TRUE);
+    old_crypto_info = ss_info->crypto_info;
+    /* Count number of non-null entries remaining at the tail end */
+    for (i = old_crypto_info->len - 1; i >= 0; i--) {
+      if (g_ptr_array_index (old_crypto_info, i) == NULL)
+        break;
+      old_entries++;
+    }
   }
 
   ss_info->crypto_info =
-      g_ptr_array_new_full (sample_count,
+      g_ptr_array_new_full (sample_count + old_entries,
       (GDestroyNotify) qtdemux_gst_structure_free);
+
+  /* We preserve old entries because we parse the next moof in advance
+   * of consuming all samples from the previous moof, and otherwise
+   * we'd discard the corresponding crypto info for the samples
+   * from the previous fragment. */
+  if (old_entries) {
+    GST_DEBUG_OBJECT (qtdemux, "Preserving %d old crypto info entries",
+        old_entries);
+    for (i = old_crypto_info->len - old_entries; i < old_crypto_info->len; i++) {
+      g_ptr_array_add (ss_info->crypto_info, g_ptr_array_index (old_crypto_info,
+              i));
+      g_ptr_array_index (old_crypto_info, i) = NULL;
+    }
+  }
+
+  if (old_crypto_info) {
+    /* Everything now belongs to the new array */
+    g_ptr_array_free (old_crypto_info, TRUE);
+  }
 
   for (i = 0; i < sample_count; ++i) {
     GstStructure *properties;
@@ -3883,7 +3921,7 @@ qtdemux_parse_moof (GstQTDemux * qtdemux, const guint8 * buffer, guint length,
     while (trun_node) {
       qtdemux_parse_trun (qtdemux, &trun_data, stream,
           ds_duration, ds_size, ds_flags, moof_offset, length, &base_offset,
-          &running_offset, decode_time);
+          &running_offset, decode_time, (tfdt_node != NULL));
       /* iterate all siblings */
       trun_node = qtdemux_tree_get_sibling_by_type_full (trun_node, FOURCC_trun,
           &trun_data);
@@ -5444,14 +5482,20 @@ gst_qtdemux_decorate_and_push_buffer (GstQTDemux * qtdemux,
       goto exit;
     }
 
-    index = stream->sample_index - (stream->n_samples - info->crypto_info->len);
+    /* The end of the crypto_info array matches our n_samples position,
+     * so count backward from there */
+    index = stream->sample_index - stream->n_samples + info->crypto_info->len;
     if (G_LIKELY (index >= 0 && index < info->crypto_info->len)) {
       /* steal structure from array */
       crypto_info = g_ptr_array_index (info->crypto_info, index);
       g_ptr_array_index (info->crypto_info, index) = NULL;
-      GST_LOG_OBJECT (qtdemux, "attaching cenc metadata [%u]", index);
+      GST_LOG_OBJECT (qtdemux, "attaching cenc metadata [%u/%u]", index,
+          info->crypto_info->len);
       if (!crypto_info || !gst_buffer_add_protection_meta (buf, crypto_info))
         GST_ERROR_OBJECT (qtdemux, "failed to attach cenc metadata to buffer");
+    } else {
+      GST_INFO_OBJECT (qtdemux, "No crypto info with index %d and sample %d",
+          index, stream->sample_index);
     }
   }
 
@@ -5516,6 +5560,18 @@ gst_qtdemux_do_fragmented_seek (GstQTDemux * qtdemux)
     stream->n_samples = 0;
     stream->stbl_index = -1;    /* no samples have yet been parsed */
     stream->sample_index = -1;
+
+    if (stream->protection_scheme_info) {
+      /* Clear out any old cenc crypto info entries as we'll move to a new moof */
+      if (stream->protection_scheme_type == FOURCC_cenc) {
+        QtDemuxCencSampleSetInfo *info =
+            (QtDemuxCencSampleSetInfo *) stream->protection_scheme_info;
+        if (info->crypto_info) {
+          g_ptr_array_free (info->crypto_info, TRUE);
+          info->crypto_info = NULL;
+        }
+      }
+    }
 
     if (stream->ra_entries == NULL)
       continue;
@@ -6220,8 +6276,10 @@ gst_qtdemux_chain (GstPad * sinkpad, GstObject * parent, GstBuffer * inbuf)
             demux->streams[i]->sample_index = res;
             /* Finally update all push-based values to the expected values */
             demux->neededbytes = demux->streams[i]->samples[res].size;
-            demux->todrop = 0;
             demux->offset = GST_BUFFER_OFFSET (inbuf);
+            demux->mdatleft =
+                demux->mdatsize - demux->offset + demux->mdatoffset;
+            demux->todrop = 0;
           }
         }
       }
@@ -6315,6 +6373,7 @@ gst_qtdemux_process_adapter (GstQTDemux * demux, gboolean force)
             demux->state = QTDEMUX_STATE_MOVIE;
             demux->neededbytes = next_entry;
             demux->mdatleft = size;
+            demux->mdatsize = demux->mdatleft;
           } else {
             /* no headers yet, try to get them */
             guint bs;
@@ -6617,6 +6676,7 @@ gst_qtdemux_process_adapter (GstQTDemux * demux, gboolean force)
           demux->neededbytes = next_entry_size (demux);
           demux->state = QTDEMUX_STATE_MOVIE;
           demux->mdatleft = gst_adapter_available (demux->adapter);
+          demux->mdatsize = demux->mdatleft;
         } else {
           GST_DEBUG_OBJECT (demux, "Carrying on normally");
           gst_adapter_flush (demux->adapter, demux->neededbytes);
@@ -6811,8 +6871,6 @@ gst_qtdemux_process_adapter (GstQTDemux * demux, gboolean force)
 
           /* combine flows */
           ret = gst_qtdemux_combine_flows (demux, stream, ret);
-          if (ret != GST_FLOW_OK && ret != GST_FLOW_NOT_LINKED)
-            goto non_ok_unlinked_flow;
         } else {
           /* skip this data, stream is EOS */
           gst_adapter_flush (demux->adapter, demux->neededbytes);
@@ -6837,6 +6895,9 @@ gst_qtdemux_process_adapter (GstQTDemux * demux, gboolean force)
             break;
           }
           goto eos;
+        }
+        if (ret != GST_FLOW_OK && ret != GST_FLOW_NOT_LINKED) {
+          goto non_ok_unlinked_flow;
         }
         break;
       }
@@ -7814,11 +7875,16 @@ gst_qtdemux_configure_stream (GstQTDemux * qtdemux, QtDemuxStream * stream)
 
     prev_caps = gst_pad_get_current_caps (stream->pad);
 
-    if (!prev_caps || !gst_caps_is_equal_fixed (prev_caps, stream->caps)) {
-      GST_DEBUG_OBJECT (qtdemux, "setting caps %" GST_PTR_FORMAT, stream->caps);
-      gst_pad_set_caps (stream->pad, stream->caps);
+    if (stream->caps) {
+      if (!prev_caps || !gst_caps_is_equal_fixed (prev_caps, stream->caps)) {
+        GST_DEBUG_OBJECT (qtdemux, "setting caps %" GST_PTR_FORMAT,
+            stream->caps);
+        gst_pad_set_caps (stream->pad, stream->caps);
+      } else {
+        GST_DEBUG_OBJECT (qtdemux, "ignore duplicated caps");
+      }
     } else {
-      GST_DEBUG_OBJECT (qtdemux, "ignore duplicated caps");
+      GST_WARNING_OBJECT (qtdemux, "stream without caps");
     }
 
     if (prev_caps)
@@ -8447,7 +8513,7 @@ qtdemux_parse_samples (GstQTDemux * qtdemux, QtDemuxStream * stream, guint32 n)
         GST_LOG_OBJECT (qtdemux, "Created entry %d with offset "
             "%" G_GUINT64_FORMAT, j, cur->offset);
 
-        if (stream->samples_per_frame * stream->bytes_per_frame) {
+        if (stream->samples_per_frame > 0 && stream->bytes_per_frame > 0) {
           cur->size =
               (stream->samples_per_chunk * stream->n_channels) /
               stream->samples_per_frame * stream->bytes_per_frame;
@@ -13698,6 +13764,10 @@ qtdemux_video_caps (GstQTDemux * qtdemux, QtDemuxStream * stream,
           gst_caps_new_simple ("video/x-prores", "variant", G_TYPE_STRING,
           "4444xq", NULL);
       break;
+    case FOURCC_cfhd:
+      _codec ("GoPro CineForm");
+      caps = gst_caps_from_string ("video/x-cineform");
+      break;
     case FOURCC_vc_1:
     case FOURCC_ovc1:
       _codec ("VC-1");
@@ -13816,6 +13886,13 @@ qtdemux_audio_caps (GstQTDemux * qtdemux, QtDemuxStream * stream,
           "format", G_TYPE_STRING, "S32BE",
           "layout", G_TYPE_STRING, "interleaved", NULL);
       stream->alignment = 4;
+      break;
+    case GST_MAKE_FOURCC ('s', '1', '6', 'l'):
+      _codec ("Raw 16-bit PCM audio");
+      caps = gst_caps_new_simple ("audio/x-raw",
+          "format", G_TYPE_STRING, "S16LE",
+          "layout", G_TYPE_STRING, "interleaved", NULL);
+      stream->alignment = 2;
       break;
     case FOURCC_ulaw:
       _codec ("Mu-law audio");

@@ -43,8 +43,8 @@
  * |[
  * gst-launch-1.0 -v souphttpsrc user-agent="FooPlayer 0.99 beta"
  *     automatic-redirect=false proxy=http://proxy.intranet.local:8080
- *     location=http://music.foobar.com/demo.mp3 ! mad ! audioconvert
- *     ! audioresample ! alsasink
+ *     location=http://music.foobar.com/demo.mp3 ! mpgaudioparse
+ *     ! mpg123audiodec ! audioconvert ! audioresample ! autoaudiosink
  * ]| The above pipeline will read and decode and play an mp3 file from a
  * web server using the HTTP protocol. If the server sends redirects,
  * the request fails instead of following the redirect. The specified
@@ -119,7 +119,7 @@ enum
   PROP_TLS_INTERACTION,
 };
 
-#define DEFAULT_USER_AGENT           "GStreamer souphttpsrc "
+#define DEFAULT_USER_AGENT           "GStreamer souphttpsrc " PACKAGE_VERSION " "
 #define DEFAULT_IRADIO_MODE          TRUE
 #define DEFAULT_SOUP_LOG_LEVEL       SOUP_LOGGER_LOG_HEADERS
 #define DEFAULT_COMPRESS             FALSE

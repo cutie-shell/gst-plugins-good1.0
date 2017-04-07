@@ -321,7 +321,7 @@
       <sub name="rtp" link="gst-plugins-good-plugins-plugin-rtp.html"/>
       <sub name="rtsp" link="gst-plugins-good-plugins-plugin-rtsp.html"/>
       <sub name="shapewipe" link="gst-plugins-good-plugins-plugin-shapewipe.html"/>
-      <sub name="shout2send" link="gst-plugins-good-plugins-plugin-shout2send.html"/>
+      <sub name="shout2" link="gst-plugins-good-plugins-plugin-shout2.html"/>
       <sub name="smpte" link="gst-plugins-good-plugins-plugin-smpte.html"/>
       <sub name="soup" link="gst-plugins-good-plugins-plugin-soup.html"/>
       <sub name="spectrum" link="gst-plugins-good-plugins-plugin-spectrum.html"/>

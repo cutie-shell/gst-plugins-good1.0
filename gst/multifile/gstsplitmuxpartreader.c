@@ -60,6 +60,7 @@ typedef struct _GstSplitMuxPartPad
   gboolean flushing;
   gboolean seen_buffer;
 
+  gboolean is_sparse;
   GstClockTime max_ts;
   GstSegment segment;
 
@@ -341,6 +342,12 @@ splitmux_part_pad_event (GstPad * pad, GstObject * parent, GstEvent * event)
     goto drop_event;
 
   switch (GST_EVENT_TYPE (event)) {
+    case GST_EVENT_STREAM_START:{
+      GstStreamFlags flags;
+      gst_event_parse_stream_flags (event, &flags);
+      part_pad->is_sparse = (flags & GST_STREAM_FLAG_SPARSE);
+      break;
+    }
     case GST_EVENT_SEGMENT:{
       GstSegment *seg = &part_pad->segment;
 
@@ -1237,7 +1244,7 @@ gst_splitmux_part_reader_get_end_offset (GstSplitMuxPartReader * reader)
   SPLITMUX_PART_LOCK (reader);
   for (cur = g_list_first (reader->pads); cur != NULL; cur = g_list_next (cur)) {
     GstSplitMuxPartPad *part_pad = SPLITMUX_PART_PAD_CAST (cur->data);
-    if (part_pad->max_ts < ret)
+    if (!part_pad->is_sparse && part_pad->max_ts < ret)
       ret = part_pad->max_ts;
   }
 

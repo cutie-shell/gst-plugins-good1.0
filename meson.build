@@ -1,5 +1,5 @@
 project('gst-plugins-good', 'c', 'cpp',
-  version : '1.11.1.1',
+  version : '1.11.90',
   meson_version : '>= 0.36.0',
   default_options : [ 'warning_level=1',
                       'buildtype=debugoptimized' ])
@@ -269,6 +269,7 @@ subdir('sys')
 subdir('ext')
 subdir('tests')
 subdir('po')
+subdir('pkgconfig')
 
 configure_file(input : 'config.h.meson',
   output : 'config.h',

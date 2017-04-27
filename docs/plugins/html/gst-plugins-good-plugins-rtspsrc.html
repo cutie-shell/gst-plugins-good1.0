@@ -56,7 +56,7 @@
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-gstrtsptransport.html#GstRTSPLowerTrans"><span class="type">GstRTSPLowerTrans</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-GstRTSPRange.html#GstRTSPLowerTrans"><span class="type">GstRTSPLowerTrans</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--protocols" title="The “protocols” property">protocols</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -433,7 +433,7 @@ fakesink.
 <hr>
 <div class="refsect2">
 <a name="GstRTSPSrc--protocols"></a><h3>The <code class="literal">“protocols”</code> property</h3>
-<pre class="programlisting">  “protocols”                <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-gstrtsptransport.html#GstRTSPLowerTrans"><span class="type">GstRTSPLowerTrans</span></a></pre>
+<pre class="programlisting">  “protocols”                <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-GstRTSPRange.html#GstRTSPLowerTrans"><span class="type">GstRTSPLowerTrans</span></a></pre>
 <p>Allowed lower transport protocols.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: GST_RTSP_LOWER_TRANS_UDP|GST_RTSP_LOWER_TRANS_UDP_MCAST|GST_RTSP_LOWER_TRANS_TCP</p>
@@ -693,7 +693,7 @@ keep alive and then this property needs to be set to FALSE.</p>
 <pre class="programlisting">  “user-agent”               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
 <p>The User-Agent string to send to the server.</p>
 <p>Flags: Read / Write</p>
-<p>Default value: "GStreamer/1.11.90"</p>
+<p>Default value: "GStreamer/1.11.91"</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -747,12 +747,12 @@ in some other way.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>request</p></td>
-<td class="parameter_description"><p>a <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-gstrtspmessage.html#GstRTSPMessage"><span class="type">GstRTSPMessage</span></a></p></td>
+<td class="parameter_description"><p>a <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-GstRTSPMessage.html#GstRTSPMessage"><span class="type">GstRTSPMessage</span></a></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 <tr>
 <td class="parameter_name"><p>response</p></td>
-<td class="parameter_description"><p>a <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-gstrtspmessage.html#GstRTSPMessage"><span class="type">GstRTSPMessage</span></a></p></td>
+<td class="parameter_description"><p>a <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-GstRTSPMessage.html#GstRTSPMessage"><span class="type">GstRTSPMessage</span></a></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 <tr>
@@ -770,7 +770,7 @@ in some other way.</p>
 <a name="GstRTSPSrc-on-sdp"></a><h3>The <code class="literal">“on-sdp”</code> signal</h3>
 <pre class="programlisting"><span class="returnvalue">void</span>
 user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a>    *rtspsrc,
-               <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-gstsdpmessage.html#GstSDPMessage"><span class="type">GstSDPMessage</span></a> *sdp,
+               <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-GstSDPMessage.html#GstSDPMessage"><span class="type">GstSDPMessage</span></a> *sdp,
                <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>       user_data)</pre>
 <p>Emited when the client has retrieved the SDP and before it configures the
 streams in the SDP. <em class="parameter"><code>sdp</code></em>
@@ -797,7 +797,7 @@ in some other way.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>sdp</p></td>
-<td class="parameter_description"><p>a <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-gstsdpmessage.html#GstSDPMessage"><span class="type">GstSDPMessage</span></a></p></td>
+<td class="parameter_description"><p>a <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-GstSDPMessage.html#GstSDPMessage"><span class="type">GstSDPMessage</span></a></p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 <tr>

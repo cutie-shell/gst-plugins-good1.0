@@ -857,6 +857,9 @@ distdir: $(DISTFILES)
 	      || exit 1; \
 	  fi; \
 	done
+	$(MAKE) $(AM_MAKEFLAGS) \
+	  top_distdir="$(top_distdir)" distdir="$(distdir)" \
+	  dist-hook
 	-test -n "$(am__skip_mode_fix)" \
 	|| find "$(distdir)" -type d ! -perm -755 \
 		-exec chmod u+rwx,go+rx {} \; -o \
@@ -1099,19 +1102,19 @@ uninstall-am:
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am all-local \
 	am--refresh check check-am clean clean-cscope clean-generic \
 	clean-libtool cscope cscopelist-am ctags ctags-am dist \
-	dist-all dist-bzip2 dist-gzip dist-lzip dist-shar dist-tarZ \
-	dist-xz dist-zip distcheck distclean distclean-generic \
-	distclean-hdr distclean-libtool distclean-tags distcleancheck \
-	distdir distuninstallcheck dvi dvi-am html html-am info \
-	info-am install install-am install-data install-data-am \
-	install-dvi install-dvi-am install-exec install-exec-am \
-	install-html install-html-am install-info install-info-am \
-	install-man install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am
+	dist-all dist-bzip2 dist-gzip dist-hook dist-lzip dist-shar \
+	dist-tarZ dist-xz dist-zip distcheck distclean \
+	distclean-generic distclean-hdr distclean-libtool \
+	distclean-tags distcleancheck distdir distuninstallcheck dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs installdirs-am \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags tags-am uninstall uninstall-am
 
 .PRECIOUS: Makefile
 
@@ -1151,9 +1154,24 @@ distcheck-hook:
 	  find $(distdir) -name \*-marshal.[ch] && \
 	  false )
 
+dist-hook:
+	@if test -f meson.build && ! $(GREP) -e "version.*'$(VERSION)'" meson.build >/dev/null ; then \
+	  echo "*******************************************************"; \
+	  echo "* meson.build needs to be updated for version $(VERSION)"; \
+	  echo "*******************************************************"; \
+	  false; \
+	fi
+
 # rule to download the latest .po files
 download-po: $(top_srcdir)/common/download-translations
 	$(top_srcdir)/common/download-translations $(PACKAGE)
+	for f in po/*.po; do \
+	  num_changed=`git diff $$f | grep -e '^[+-][^+-]' | wc -l`; \
+	  num_date=`git diff $$f | grep -e '^[+-][^+-]' | grep POT-Creation-Date | wc -l`; \
+	  if [ $num_date == $num_changed ]; then \
+	    git checkout $$f; \
+	  fi; \
+	done
 
 check-valgrind:
 	$(MAKE) -C tests/check check-valgrind

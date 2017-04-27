@@ -3276,7 +3276,7 @@ gst_qt_mux_add_buffer (GstQTMux * qtmux, GstQTPad * pad, GstBuffer * buf)
     GST_ERROR ("decreasing DTS value %" GST_TIME_FORMAT " < %" GST_TIME_FORMAT,
         GST_TIME_ARGS (GST_BUFFER_DTS (buf)),
         GST_TIME_ARGS (GST_BUFFER_DTS (last_buf)));
-    buf = gst_buffer_make_writable (buf);
+    pad->last_buf = buf = gst_buffer_make_writable (buf);
     GST_BUFFER_DTS (buf) = GST_BUFFER_DTS (last_buf);
   }
 
@@ -3339,7 +3339,7 @@ gst_qt_mux_add_buffer (GstQTMux * qtmux, GstQTPad * pad, GstBuffer * buf)
 
     /* timescale = samplerate */
     scaled_duration = 1;
-    pad->last_dts += duration * nsamples;
+    pad->last_dts += duration;
   } else {
     nsamples = 1;
     sample_size = gst_buffer_get_size (last_buf);
@@ -4049,23 +4049,6 @@ refuse_renegotiation:
   }
 }
 
-/* return number of centiframes per second */
-static guint
-adjust_rate (gint n, gint d)
-{
-  if (n == 0)
-    return 10000;
-
-  if (d != 1 && d != 1001) {
-    /* otherwise there are probably rounding errors and we should rather guess
-     * if it's close enough to a well known framerate */
-    gst_video_guess_framerate (gst_util_uint64_scale (d, GST_SECOND, n), &n,
-        &d);
-  }
-
-  return gst_util_uint64_scale (n, 100, d);
-}
-
 static gboolean
 gst_qt_mux_video_sink_set_caps (GstQTPad * qtpad, GstCaps * caps)
 {
@@ -4141,7 +4124,8 @@ gst_qt_mux_video_sink_set_caps (GstQTPad * qtpad, GstCaps * caps)
   /* bring frame numerator into a range that ensures both reasonable resolution
    * as well as a fair duration */
   rate = qtmux->trak_timescale ?
-      qtmux->trak_timescale : adjust_rate (framerate_num, framerate_den);
+      qtmux->trak_timescale : atom_framerate_to_timescale (framerate_num,
+      framerate_den);
   GST_DEBUG_OBJECT (qtmux, "Rate of video track selected: %" G_GUINT32_FORMAT,
       rate);
 

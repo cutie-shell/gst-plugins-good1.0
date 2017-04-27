@@ -807,7 +807,8 @@ handle_mq_output (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
     g_warning ("Buffer list handling not implemented");
     return GST_PAD_PROBE_DROP;
   }
-  if (info->type & GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM) {
+  if (info->type & GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM ||
+      info->type & GST_PAD_PROBE_TYPE_EVENT_FLUSH) {
     GstEvent *event = gst_pad_probe_info_get_event (info);
     gboolean locked = FALSE;
 
@@ -1371,7 +1372,8 @@ handle_mq_input (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
     g_warning ("Buffer list handling not implemented");
     return GST_PAD_PROBE_DROP;
   }
-  if (info->type & GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM) {
+  if (info->type & GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM ||
+      info->type & GST_PAD_PROBE_TYPE_EVENT_FLUSH) {
     GstEvent *event = gst_pad_probe_info_get_event (info);
 
     GST_LOG_OBJECT (pad, "Event %" GST_PTR_FORMAT, event);
@@ -1749,6 +1751,7 @@ gst_splitmux_sink_request_new_pad (GstElement * element,
         mux_template =
             gst_element_class_get_pad_template (GST_ELEMENT_GET_CLASS
             (splitmux->muxer), "audio");
+        name = NULL;
       }
     }
     if (mux_template == NULL) {
@@ -1756,6 +1759,7 @@ gst_splitmux_sink_request_new_pad (GstElement * element,
       mux_template =
           gst_element_class_get_pad_template (GST_ELEMENT_GET_CLASS
           (splitmux->muxer), "sink_%d");
+      name = NULL;
     }
   }
 
@@ -1800,7 +1804,8 @@ gst_splitmux_sink_request_new_pad (GstElement * element,
 
   mq_stream_ctx_ref (ctx);
   ctx->src_pad_block_id =
-      gst_pad_add_probe (q_src, GST_PAD_PROBE_TYPE_DATA_DOWNSTREAM,
+      gst_pad_add_probe (q_src,
+      GST_PAD_PROBE_TYPE_DATA_DOWNSTREAM | GST_PAD_PROBE_TYPE_EVENT_FLUSH,
       (GstPadProbeCallback) handle_mq_output, ctx, (GDestroyNotify)
       _pad_block_destroy_src_notify);
   if (is_video && splitmux->reference_ctx != NULL) {
@@ -1817,7 +1822,8 @@ gst_splitmux_sink_request_new_pad (GstElement * element,
 
   mq_stream_ctx_ref (ctx);
   ctx->sink_pad_block_id =
-      gst_pad_add_probe (q_sink, GST_PAD_PROBE_TYPE_DATA_DOWNSTREAM,
+      gst_pad_add_probe (q_sink,
+      GST_PAD_PROBE_TYPE_DATA_DOWNSTREAM | GST_PAD_PROBE_TYPE_EVENT_FLUSH,
       (GstPadProbeCallback) handle_mq_input, ctx, (GDestroyNotify)
       _pad_block_destroy_sink_notify);
 

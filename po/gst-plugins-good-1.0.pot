@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.11.90\n"
+"Project-Id-Version: gst-plugins-good 1.11.91\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-04-07 15:17+0300\n"
+"POT-Creation-Date: 2017-04-27 15:56+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -62,7 +62,7 @@ msgstr ""
 msgid "Server sent bad data."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1498
+#: ext/soup/gstsouphttpsrc.c:1479
 msgid "Server does not support seeking."
 msgstr ""
 
@@ -70,50 +70,50 @@ msgstr ""
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:678 gst/isomp4/qtdemux.c:682
+#: gst/isomp4/qtdemux.c:698 gst/isomp4/qtdemux.c:702
 msgid "This file contains no playable streams."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:728 gst/isomp4/qtdemux.c:6363 gst/isomp4/qtdemux.c:6431
-#: gst/isomp4/qtdemux.c:6744
+#: gst/isomp4/qtdemux.c:748 gst/isomp4/qtdemux.c:6418 gst/isomp4/qtdemux.c:6486
+#: gst/isomp4/qtdemux.c:6799 gst/isomp4/qtdemux.c:7990
 msgid "This file is invalid and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2815
+#: gst/isomp4/qtdemux.c:2855
 msgid "Cannot play stream because it is encrypted with PlayReady DRM."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3981 gst/isomp4/qtdemux.c:7482
-#: gst/isomp4/qtdemux.c:7489 gst/isomp4/qtdemux.c:8359
-#: gst/isomp4/qtdemux.c:8790 gst/isomp4/qtdemux.c:8797
-#: gst/isomp4/qtdemux.c:11445
+#: gst/isomp4/qtdemux.c:4027 gst/isomp4/qtdemux.c:7542
+#: gst/isomp4/qtdemux.c:7549 gst/isomp4/qtdemux.c:8462
+#: gst/isomp4/qtdemux.c:8899 gst/isomp4/qtdemux.c:8906
+#: gst/isomp4/qtdemux.c:11616
 msgid "This file is corrupt and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:4223
+#: gst/isomp4/qtdemux.c:4269
 msgid "Invalid atom size."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:4301
+#: gst/isomp4/qtdemux.c:4347
 msgid "This file is incomplete and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:9786
+#: gst/isomp4/qtdemux.c:9916
 msgid "The video in this file might not play correctly."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:11486
+#: gst/isomp4/qtdemux.c:11657
 #, c-format
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6348
+#: gst/rtsp/gstrtspsrc.c:6355
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6353
+#: gst/rtsp/gstrtspsrc.c:6360
 msgid ""
 "No supported stream was found. You might need to allow more transport "
 "protocols or may otherwise be missing the right GStreamer RTSP extension "
@@ -248,7 +248,7 @@ msgstr ""
 msgid "AUX 2 Out"
 msgstr ""
 
-#: sys/v4l2/gstv4l2bufferpool.c:1678
+#: sys/v4l2/gstv4l2bufferpool.c:1684
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr ""
@@ -364,7 +364,7 @@ msgstr ""
 msgid "Failed to allocated required memory."
 msgstr ""
 
-#: sys/v4l2/gstv4l2src.c:525 sys/v4l2/gstv4l2videodec.c:709
+#: sys/v4l2/gstv4l2src.c:525 sys/v4l2/gstv4l2videodec.c:695
 msgid "Failed to allocate required memory."
 msgstr ""
 
@@ -388,11 +388,11 @@ msgstr ""
 msgid "Encoder on device %s has no supported output format"
 msgstr ""
 
-#: sys/v4l2/gstv4l2videodec.c:723
+#: sys/v4l2/gstv4l2videodec.c:709
 msgid "Failed to start decoding thread."
 msgstr ""
 
-#: sys/v4l2/gstv4l2videodec.c:731
+#: sys/v4l2/gstv4l2videodec.c:716
 msgid "Failed to process frame."
 msgstr ""
 

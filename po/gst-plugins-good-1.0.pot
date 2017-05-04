@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.11.91\n"
+"Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-04-27 15:56+0300\n"
+"POT-Creation-Date: 2017-05-04 15:05+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -74,35 +74,35 @@ msgstr ""
 msgid "This file contains no playable streams."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:748 gst/isomp4/qtdemux.c:6418 gst/isomp4/qtdemux.c:6486
-#: gst/isomp4/qtdemux.c:6799 gst/isomp4/qtdemux.c:7990
+#: gst/isomp4/qtdemux.c:748 gst/isomp4/qtdemux.c:6427 gst/isomp4/qtdemux.c:6495
+#: gst/isomp4/qtdemux.c:6808 gst/isomp4/qtdemux.c:7999
 msgid "This file is invalid and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2855
+#: gst/isomp4/qtdemux.c:2859
 msgid "Cannot play stream because it is encrypted with PlayReady DRM."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:4027 gst/isomp4/qtdemux.c:7542
-#: gst/isomp4/qtdemux.c:7549 gst/isomp4/qtdemux.c:8462
-#: gst/isomp4/qtdemux.c:8899 gst/isomp4/qtdemux.c:8906
-#: gst/isomp4/qtdemux.c:11616
+#: gst/isomp4/qtdemux.c:4036 gst/isomp4/qtdemux.c:7551
+#: gst/isomp4/qtdemux.c:7558 gst/isomp4/qtdemux.c:8471
+#: gst/isomp4/qtdemux.c:8908 gst/isomp4/qtdemux.c:8915
+#: gst/isomp4/qtdemux.c:11625
 msgid "This file is corrupt and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:4269
+#: gst/isomp4/qtdemux.c:4278
 msgid "Invalid atom size."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:4347
+#: gst/isomp4/qtdemux.c:4356
 msgid "This file is incomplete and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:9916
+#: gst/isomp4/qtdemux.c:9925
 msgid "The video in this file might not play correctly."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:11657
+#: gst/isomp4/qtdemux.c:11666
 #, c-format
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""

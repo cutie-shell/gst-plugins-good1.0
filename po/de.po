@@ -12,18 +12,19 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.7.2\n"
+"Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-05-04 15:05+0300\n"
-"PO-Revision-Date: 2016-02-22 23:42+0100\n"
+"POT-Creation-Date: 2017-06-20 11:18+0300\n"
+"PO-Revision-Date: 2017-05-26 19:59+0200\n"
 "Last-Translator: Christian Kirbach <christian.kirbach@gmail.com>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.8.7\n"
+"X-Generator: Poedit 2.0.1\n"
 
 msgid "Jack server not found"
 msgstr "Jack-Server nicht gefunden"
@@ -58,7 +59,7 @@ msgstr ""
 "unerwartet."
 
 msgid "Server sent bad data."
-msgstr "Server gab unerwartete Daten zurück."
+msgstr "Server gab unbrauchbare Daten zurück."
 
 msgid "Server does not support seeking."
 msgstr "Suchlauf wird nicht vom Server unterstützt."
@@ -272,13 +273,11 @@ msgstr "Das Video-Gerät gab kein Ausgabeformat an."
 msgid "Video device returned invalid dimensions."
 msgstr "Das Video-Gerät gab ungültige Abmessungen zurück."
 
-#, fuzzy
 msgid "Video device uses an unsupported interlacing method."
 msgstr ""
-"Video-Geräte verwendet eine nicht unterstützt Methode der "
+"Das Video-Geräte verwendet eine nicht unterstützt Methode der "
 "Zeilenverschachtelung."
 
-#, fuzzy
 msgid "Video device uses an unsupported pixel format."
 msgstr "Das Video-Gerät verwendet ein nicht unterstütztes Pixelformat."
 

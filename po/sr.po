@@ -1,14 +1,14 @@
 # Serbian translation of gst-plugins
-# Copyright (C) 2014 Free Software Foundation, Inc.
+# Copyright © 2014 Free Software Foundation, Inc.
 # This file is distributed under the same license as the gst-plugins-good package.
 # Danilo Segan <dsegan@gmx.net>, 2004.
-# Мирослав Николић <miroslavnikolic@rocketmail.com>, 2011—2016.
+# Мирослав Николић <miroslavnikolic@rocketmail.com>, 2011—2017.
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good-1.7.2\n"
+"Project-Id-Version: gst-plugins-good-1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-05-04 15:05+0300\n"
-"PO-Revision-Date: 2016-03-05 09:52+0200\n"
+"POT-Creation-Date: 2017-06-20 11:18+0300\n"
+"PO-Revision-Date: 2017-05-07 12:21+0200\n"
 "Last-Translator: Мирослав Николић <miroslavnikolic@rocketmail.com>\n"
 "Language-Team: Serbian <(nothing)>\n"
 "Language: sr\n"
@@ -17,6 +17,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"X-Project-Style: gnome\n"
 
 msgid "Jack server not found"
 msgstr "Нисам пронашао сервер утичнице"
@@ -256,13 +258,11 @@ msgstr "Видео уређај не обезбеђује излазни зап�
 msgid "Video device returned invalid dimensions."
 msgstr "Видео уређај је вратио неисправне димензије."
 
-#, fuzzy
 msgid "Video device uses an unsupported interlacing method."
-msgstr "Видео уређаји користе неподржани метод преплитања."
+msgstr "Видео уређај користи неподржани метод преплитања."
 
-#, fuzzy
 msgid "Video device uses an unsupported pixel format."
-msgstr "Видео уређаји користе неподржани запис сличице."
+msgstr "Видео уређај користи неподржани запис сличице."
 
 msgid "Failed to configure internal buffer pool."
 msgstr "Нисам успео да подесим унутрашњи смештај међумеморије."

@@ -2,13 +2,13 @@
 # This file is put in the public domain.
 #
 # Tomislav Krznar <tomislav.krznar@gmail.com>, 2012.
-# Božidar Putanec <bozidarp@yahoo.com>, 2016.
+# Božidar Putanec <bozidarp@yahoo.com>, 2016, 2017.
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good-1.10.0\n"
+"Project-Id-Version: gst-plugins-good-1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-05-04 15:05+0300\n"
-"PO-Revision-Date: 2016-11-19 10:22-0800\n"
+"POT-Creation-Date: 2017-06-20 11:18+0300\n"
+"PO-Revision-Date: 2017-05-04 16:09-0800\n"
 "Last-Translator: Božidar Putanec <bozidarp@yahoo.com>\n"
 "Language-Team: Croatian <lokalizacija@linux.hr>\n"
 "Language: hr\n"
@@ -18,10 +18,10 @@ msgstr ""
 "X-Bugs: Report translation errors to the Language-Team address.\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 1.8.7.1\n"
+"X-Generator: Lokalize 2.0\n"
 
 msgid "Jack server not found"
-msgstr "‘Jack’ poslužitelj nije pronađen"
+msgstr "Poslužitelj Jack nije pronađen"
 
 msgid "Failed to decode JPEG image"
 msgstr "Nije uspjelo dekodirati JPEG sliku"
@@ -263,14 +263,11 @@ msgstr "Videouređaj nije predočio izlazni format."
 msgid "Video device returned invalid dimensions."
 msgstr "Videouređaj je uzvratio s neispravnim dimenzijama."
 
-#, fuzzy
 msgid "Video device uses an unsupported interlacing method."
-msgstr ""
-"Videouređaj koristi nepodržanu metodu poluslika (prored i frekvenciju)."
+msgstr "Videouređaj koristi nepodržanu metodu poluslika."
 
-#, fuzzy
 msgid "Video device uses an unsupported pixel format."
-msgstr "Videouređaj koristi nepodržani format piksela."
+msgstr "Videouređaj koristi format piksela koji nije podržan."
 
 msgid "Failed to configure internal buffer pool."
 msgstr "Nije uspjelo konfigurirati internu zalihu međuspremnika."

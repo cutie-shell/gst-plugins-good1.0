@@ -87,6 +87,7 @@ enum
 };
 
 #define  DEFAULT_MAX_GAP_TIME      (2 * GST_SECOND)
+#define  INVALID_DATA_THRESHOLD    (2 * 1024 * 1024)
 
 static GstStaticPadTemplate sink_templ = GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
@@ -2173,13 +2174,19 @@ next:
   }
 
 finish:
-  if (keyunit) {
+  if (keyunit && seeksegment.rate > 0) {
     GST_DEBUG_OBJECT (demux, "seek to key unit, adjusting segment start from %"
         GST_TIME_FORMAT " to %" GST_TIME_FORMAT,
         GST_TIME_ARGS (seeksegment.start), GST_TIME_ARGS (entry->time));
     seeksegment.start = MAX (entry->time, demux->stream_start_time);
     seeksegment.position = seeksegment.start;
     seeksegment.time = seeksegment.start - demux->stream_start_time;
+  } else if (keyunit) {
+    GST_DEBUG_OBJECT (demux, "seek to key unit, adjusting segment stop from %"
+        GST_TIME_FORMAT " to %" GST_TIME_FORMAT,
+        GST_TIME_ARGS (seeksegment.stop), GST_TIME_ARGS (entry->time));
+    seeksegment.stop = MAX (entry->time, demux->stream_start_time);
+    seeksegment.position = seeksegment.stop;
   }
 
   if (demux->streaming) {
@@ -2361,6 +2368,17 @@ gst_matroska_demux_handle_src_event (GstPad * pad, GstObject * parent,
         gst_event_unref (event);
         return FALSE;
       }
+
+      {
+        guint32 seqnum = gst_event_get_seqnum (event);
+        if (seqnum == demux->segment_seqnum) {
+          GST_LOG_OBJECT (pad,
+              "Drop duplicated SEEK event seqnum %" G_GUINT32_FORMAT, seqnum);
+          gst_event_unref (event);
+          return TRUE;
+        }
+      }
+
       if (!demux->streaming)
         res = gst_matroska_demux_handle_seek_event (demux, pad, event);
       else
@@ -4384,8 +4402,21 @@ gst_matroska_demux_parse_id (GstMatroskaDemux * demux, guint32 id,
       break;
     case GST_MATROSKA_READ_STATE_SCANNING:
       if (id != GST_MATROSKA_ID_CLUSTER &&
-          id != GST_MATROSKA_ID_CLUSTERTIMECODE)
+          id != GST_MATROSKA_ID_CLUSTERTIMECODE) {
+        if (demux->common.start_resync_offset != -1) {
+          /* we need to skip byte per byte if we are scanning for a new cluster
+           * after invalid data is found
+           */
+          read = 1;
+        }
         goto skip;
+      } else {
+        if (demux->common.start_resync_offset != -1) {
+          GST_LOG_OBJECT (demux, "Resync done, new cluster found!");
+          demux->common.start_resync_offset = -1;
+          demux->common.state = demux->common.state_to_restore;
+        }
+      }
       /* fall-through */
     case GST_MATROSKA_READ_STATE_HEADER:
     case GST_MATROSKA_READ_STATE_DATA:
@@ -4840,9 +4871,29 @@ next:
   if (G_UNLIKELY (ret != GST_FLOW_OK && ret != GST_FLOW_EOS)) {
     if (demux->common.ebml_segment_length != G_MAXUINT64
         && demux->common.offset >=
-        demux->common.ebml_segment_start + demux->common.ebml_segment_length)
-      ret = GST_FLOW_EOS;
-    return ret;
+        demux->common.ebml_segment_start + demux->common.ebml_segment_length) {
+      return GST_FLOW_OK;
+    } else {
+      gint64 bytes_scanned;
+      if (demux->common.start_resync_offset == -1) {
+        demux->common.start_resync_offset = demux->common.offset;
+        demux->common.state_to_restore = demux->common.state;
+      }
+      bytes_scanned = demux->common.offset - demux->common.start_resync_offset;
+      if (bytes_scanned <= INVALID_DATA_THRESHOLD) {
+        GST_WARNING_OBJECT (demux,
+            "parse error, looking for next cluster, actual offset %"
+            G_GUINT64_FORMAT ", start resync offset %" G_GUINT64_FORMAT,
+            demux->common.offset, demux->common.start_resync_offset);
+        demux->common.state = GST_MATROSKA_READ_STATE_SCANNING;
+        ret = GST_FLOW_OK;
+      } else {
+        GST_WARNING_OBJECT (demux,
+            "unrecoverable parse error, next cluster not found and threshold "
+            "exceeded, bytes scanned %" G_GINT64_FORMAT, bytes_scanned);
+        return ret;
+      }
+    }
   }
 
   GST_LOG_OBJECT (demux, "Offset %" G_GUINT64_FORMAT ", Element id 0x%x, "
@@ -4936,7 +4987,8 @@ gst_matroska_demux_handle_sink_event (GstPad * pad, GstObject * parent,
     }
     case GST_EVENT_EOS:
     {
-      if (demux->common.state != GST_MATROSKA_READ_STATE_DATA) {
+      if (demux->common.state != GST_MATROSKA_READ_STATE_DATA
+          && demux->common.state != GST_MATROSKA_READ_STATE_SCANNING) {
         gst_event_unref (event);
         GST_ELEMENT_ERROR (demux, STREAM, DEMUX,
             (NULL), ("got eos and didn't receive a complete header object"));

@@ -91,7 +91,8 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 noinst_PROGRAMS = server-alsasrc-PCMA$(EXEEXT) client-PCMA$(EXEEXT) \
-	client-rtpaux$(EXEEXT) server-rtpaux$(EXEEXT)
+	client-rtpaux$(EXEEXT) server-rtpaux$(EXEEXT) \
+	client-rtpbundle$(EXEEXT) server-rtpbundle$(EXEEXT)
 subdir = tests/examples/rtp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/common/m4/as-ac-expand.m4 \
@@ -152,6 +153,14 @@ client_rtpaux_DEPENDENCIES = $(am__DEPENDENCIES_1)
 client_rtpaux_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(client_rtpaux_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+am_client_rtpbundle_OBJECTS =  \
+	client_rtpbundle-client-rtpbundle.$(OBJEXT)
+client_rtpbundle_OBJECTS = $(am_client_rtpbundle_OBJECTS)
+client_rtpbundle_DEPENDENCIES = $(am__DEPENDENCIES_1)
+client_rtpbundle_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(client_rtpbundle_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
+	-o $@
 am_server_alsasrc_PCMA_OBJECTS =  \
 	server_alsasrc_PCMA-server-alsasrc-PCMA.$(OBJEXT)
 server_alsasrc_PCMA_OBJECTS = $(am_server_alsasrc_PCMA_OBJECTS)
@@ -167,6 +176,14 @@ server_rtpaux_DEPENDENCIES = $(am__DEPENDENCIES_1)
 server_rtpaux_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(server_rtpaux_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+am_server_rtpbundle_OBJECTS =  \
+	server_rtpbundle-server-rtpbundle.$(OBJEXT)
+server_rtpbundle_OBJECTS = $(am_server_rtpbundle_OBJECTS)
+server_rtpbundle_DEPENDENCIES = $(am__DEPENDENCIES_1)
+server_rtpbundle_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(server_rtpbundle_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
+	-o $@
 SCRIPTS = $(noinst_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -203,9 +220,11 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(client_PCMA_SOURCES) $(client_rtpaux_SOURCES) \
-	$(server_alsasrc_PCMA_SOURCES) $(server_rtpaux_SOURCES)
+	$(client_rtpbundle_SOURCES) $(server_alsasrc_PCMA_SOURCES) \
+	$(server_rtpaux_SOURCES) $(server_rtpbundle_SOURCES)
 DIST_SOURCES = $(client_PCMA_SOURCES) $(client_rtpaux_SOURCES) \
-	$(server_alsasrc_PCMA_SOURCES) $(server_rtpaux_SOURCES)
+	$(client_rtpbundle_SOURCES) $(server_alsasrc_PCMA_SOURCES) \
+	$(server_rtpaux_SOURCES) $(server_rtpbundle_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -572,6 +591,12 @@ server_rtpaux_LDADD = $(GST_LIBS)
 client_rtpaux_SOURCES = client-rtpaux.c
 client_rtpaux_CFLAGS = $(GST_CFLAGS) $(GST_PLUGINS_BASE_CFLAGS)
 client_rtpaux_LDADD = $(GST_LIBS)
+server_rtpbundle_SOURCES = server-rtpbundle.c
+server_rtpbundle_CFLAGS = $(GST_CFLAGS) $(GST_PLUGINS_BASE_CFLAGS)
+server_rtpbundle_LDADD = $(GST_LIBS)
+client_rtpbundle_SOURCES = client-rtpbundle.c
+client_rtpbundle_CFLAGS = $(GST_CFLAGS) $(GST_PLUGINS_BASE_CFLAGS)
+client_rtpbundle_LDADD = $(GST_LIBS)
 server_alsasrc_PCMA_SOURCES = server-alsasrc-PCMA.c
 server_alsasrc_PCMA_CFLAGS = $(GST_CFLAGS)
 server_alsasrc_PCMA_LDADD = $(GST_LIBS) $(LIBM)
@@ -644,6 +669,10 @@ client-rtpaux$(EXEEXT): $(client_rtpaux_OBJECTS) $(client_rtpaux_DEPENDENCIES) $
 	@rm -f client-rtpaux$(EXEEXT)
 	$(AM_V_CCLD)$(client_rtpaux_LINK) $(client_rtpaux_OBJECTS) $(client_rtpaux_LDADD) $(LIBS)
 
+client-rtpbundle$(EXEEXT): $(client_rtpbundle_OBJECTS) $(client_rtpbundle_DEPENDENCIES) $(EXTRA_client_rtpbundle_DEPENDENCIES) 
+	@rm -f client-rtpbundle$(EXEEXT)
+	$(AM_V_CCLD)$(client_rtpbundle_LINK) $(client_rtpbundle_OBJECTS) $(client_rtpbundle_LDADD) $(LIBS)
+
 server-alsasrc-PCMA$(EXEEXT): $(server_alsasrc_PCMA_OBJECTS) $(server_alsasrc_PCMA_DEPENDENCIES) $(EXTRA_server_alsasrc_PCMA_DEPENDENCIES) 
 	@rm -f server-alsasrc-PCMA$(EXEEXT)
 	$(AM_V_CCLD)$(server_alsasrc_PCMA_LINK) $(server_alsasrc_PCMA_OBJECTS) $(server_alsasrc_PCMA_LDADD) $(LIBS)
@@ -651,6 +680,10 @@ server-alsasrc-PCMA$(EXEEXT): $(server_alsasrc_PCMA_OBJECTS) $(server_alsasrc_PC
 server-rtpaux$(EXEEXT): $(server_rtpaux_OBJECTS) $(server_rtpaux_DEPENDENCIES) $(EXTRA_server_rtpaux_DEPENDENCIES) 
 	@rm -f server-rtpaux$(EXEEXT)
 	$(AM_V_CCLD)$(server_rtpaux_LINK) $(server_rtpaux_OBJECTS) $(server_rtpaux_LDADD) $(LIBS)
+
+server-rtpbundle$(EXEEXT): $(server_rtpbundle_OBJECTS) $(server_rtpbundle_DEPENDENCIES) $(EXTRA_server_rtpbundle_DEPENDENCIES) 
+	@rm -f server-rtpbundle$(EXEEXT)
+	$(AM_V_CCLD)$(server_rtpbundle_LINK) $(server_rtpbundle_OBJECTS) $(server_rtpbundle_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -660,8 +693,10 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client_PCMA-client-PCMA.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client_rtpaux-client-rtpaux.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client_rtpbundle-client-rtpbundle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server_alsasrc_PCMA-server-alsasrc-PCMA.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server_rtpaux-server-rtpaux.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server_rtpbundle-server-rtpbundle.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -715,6 +750,20 @@ client_rtpaux-client-rtpaux.obj: client-rtpaux.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(client_rtpaux_CFLAGS) $(CFLAGS) -c -o client_rtpaux-client-rtpaux.obj `if test -f 'client-rtpaux.c'; then $(CYGPATH_W) 'client-rtpaux.c'; else $(CYGPATH_W) '$(srcdir)/client-rtpaux.c'; fi`
 
+client_rtpbundle-client-rtpbundle.o: client-rtpbundle.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(client_rtpbundle_CFLAGS) $(CFLAGS) -MT client_rtpbundle-client-rtpbundle.o -MD -MP -MF $(DEPDIR)/client_rtpbundle-client-rtpbundle.Tpo -c -o client_rtpbundle-client-rtpbundle.o `test -f 'client-rtpbundle.c' || echo '$(srcdir)/'`client-rtpbundle.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/client_rtpbundle-client-rtpbundle.Tpo $(DEPDIR)/client_rtpbundle-client-rtpbundle.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client-rtpbundle.c' object='client_rtpbundle-client-rtpbundle.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(client_rtpbundle_CFLAGS) $(CFLAGS) -c -o client_rtpbundle-client-rtpbundle.o `test -f 'client-rtpbundle.c' || echo '$(srcdir)/'`client-rtpbundle.c
+
+client_rtpbundle-client-rtpbundle.obj: client-rtpbundle.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(client_rtpbundle_CFLAGS) $(CFLAGS) -MT client_rtpbundle-client-rtpbundle.obj -MD -MP -MF $(DEPDIR)/client_rtpbundle-client-rtpbundle.Tpo -c -o client_rtpbundle-client-rtpbundle.obj `if test -f 'client-rtpbundle.c'; then $(CYGPATH_W) 'client-rtpbundle.c'; else $(CYGPATH_W) '$(srcdir)/client-rtpbundle.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/client_rtpbundle-client-rtpbundle.Tpo $(DEPDIR)/client_rtpbundle-client-rtpbundle.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client-rtpbundle.c' object='client_rtpbundle-client-rtpbundle.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(client_rtpbundle_CFLAGS) $(CFLAGS) -c -o client_rtpbundle-client-rtpbundle.obj `if test -f 'client-rtpbundle.c'; then $(CYGPATH_W) 'client-rtpbundle.c'; else $(CYGPATH_W) '$(srcdir)/client-rtpbundle.c'; fi`
+
 server_alsasrc_PCMA-server-alsasrc-PCMA.o: server-alsasrc-PCMA.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_alsasrc_PCMA_CFLAGS) $(CFLAGS) -MT server_alsasrc_PCMA-server-alsasrc-PCMA.o -MD -MP -MF $(DEPDIR)/server_alsasrc_PCMA-server-alsasrc-PCMA.Tpo -c -o server_alsasrc_PCMA-server-alsasrc-PCMA.o `test -f 'server-alsasrc-PCMA.c' || echo '$(srcdir)/'`server-alsasrc-PCMA.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/server_alsasrc_PCMA-server-alsasrc-PCMA.Tpo $(DEPDIR)/server_alsasrc_PCMA-server-alsasrc-PCMA.Po
@@ -742,6 +791,20 @@ server_rtpaux-server-rtpaux.obj: server-rtpaux.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='server-rtpaux.c' object='server_rtpaux-server-rtpaux.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_rtpaux_CFLAGS) $(CFLAGS) -c -o server_rtpaux-server-rtpaux.obj `if test -f 'server-rtpaux.c'; then $(CYGPATH_W) 'server-rtpaux.c'; else $(CYGPATH_W) '$(srcdir)/server-rtpaux.c'; fi`
+
+server_rtpbundle-server-rtpbundle.o: server-rtpbundle.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_rtpbundle_CFLAGS) $(CFLAGS) -MT server_rtpbundle-server-rtpbundle.o -MD -MP -MF $(DEPDIR)/server_rtpbundle-server-rtpbundle.Tpo -c -o server_rtpbundle-server-rtpbundle.o `test -f 'server-rtpbundle.c' || echo '$(srcdir)/'`server-rtpbundle.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/server_rtpbundle-server-rtpbundle.Tpo $(DEPDIR)/server_rtpbundle-server-rtpbundle.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='server-rtpbundle.c' object='server_rtpbundle-server-rtpbundle.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_rtpbundle_CFLAGS) $(CFLAGS) -c -o server_rtpbundle-server-rtpbundle.o `test -f 'server-rtpbundle.c' || echo '$(srcdir)/'`server-rtpbundle.c
+
+server_rtpbundle-server-rtpbundle.obj: server-rtpbundle.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_rtpbundle_CFLAGS) $(CFLAGS) -MT server_rtpbundle-server-rtpbundle.obj -MD -MP -MF $(DEPDIR)/server_rtpbundle-server-rtpbundle.Tpo -c -o server_rtpbundle-server-rtpbundle.obj `if test -f 'server-rtpbundle.c'; then $(CYGPATH_W) 'server-rtpbundle.c'; else $(CYGPATH_W) '$(srcdir)/server-rtpbundle.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/server_rtpbundle-server-rtpbundle.Tpo $(DEPDIR)/server_rtpbundle-server-rtpbundle.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='server-rtpbundle.c' object='server_rtpbundle-server-rtpbundle.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(server_rtpbundle_CFLAGS) $(CFLAGS) -c -o server_rtpbundle-server-rtpbundle.obj `if test -f 'server-rtpbundle.c'; then $(CYGPATH_W) 'server-rtpbundle.c'; else $(CYGPATH_W) '$(srcdir)/server-rtpbundle.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

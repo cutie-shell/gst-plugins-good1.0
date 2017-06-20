@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good-1.7.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-02-23 15:16+0200\n"
+"POT-Creation-Date: 2017-05-04 15:05+0300\n"
 "PO-Revision-Date: 2016-03-27 23:54+0200\n"
 "Last-Translator: Joe Hansen <joedalton2@yahoo.dk>\n"
 "Language-Team: Danish <dansk@dansk-gruppen.dk>\n"
@@ -37,9 +37,6 @@ msgstr "Kunne ikke forbinde til server"
 msgid "No URL set."
 msgstr "Ingen adresse angivet."
 
-msgid "Server does not support seeking."
-msgstr "Server understøtter ikke søgning."
-
 msgid "Could not resolve server name."
 msgstr "Kunne ikke slå servernavn op."
 
@@ -56,6 +53,9 @@ msgstr ""
 
 msgid "Server sent bad data."
 msgstr "Server sendte ugyldige data."
+
+msgid "Server does not support seeking."
+msgstr "Server understøtter ikke søgning."
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Ingen eller defekt inddatalyd, AVI-sekvens vil blive ødelagt."

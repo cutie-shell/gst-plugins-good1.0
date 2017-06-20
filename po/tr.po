@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.4.1\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-02-23 15:16+0200\n"
+"POT-Creation-Date: 2017-05-04 15:05+0300\n"
 "PO-Revision-Date: 2015-01-10 21:07+0100\n"
 "Last-Translator: Volkan Gezer <volkangezer@gmail.com>\n"
 "Language-Team: Turkish <gnu-tr-u12a@lists.sourceforge.net>\n"
@@ -36,9 +36,6 @@ msgstr "Sunucuya bağlanamıyor"
 msgid "No URL set."
 msgstr "Hiç bir URL ayarlanmamış."
 
-msgid "Server does not support seeking."
-msgstr "Sunucu aramayı desteklemiyor."
-
 msgid "Could not resolve server name."
 msgstr "Sunucu adı çözümlenemiyor."
 
@@ -57,6 +54,9 @@ msgstr ""
 
 msgid "Server sent bad data."
 msgstr "Sunucu yetersiz veri gönderdi."
+
+msgid "Server does not support seeking."
+msgstr "Sunucu aramayı desteklemiyor."
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Geçerli bir ses girişi bulunamadı. AVI akışı kesilecek."

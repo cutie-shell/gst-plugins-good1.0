@@ -110,6 +110,16 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-qtmux.html#GstQTMux--reserved-moov-update-period" title="The “reserved-moov-update-period” property">reserved-moov-update-period</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-qtmux.html#GstQTMux--interleave-bytes" title="The “interleave-bytes” property">interleave-bytes</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-qtmux.html#GstQTMux--interleave-time" title="The “interleave-time” property">interleave-time</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -252,6 +262,10 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
+<td> audio/x-raw, format=(string){ S32LE, S32BE, S24LE, S24BE, S16LE, S16BE, S8, U8 }, layout=(string)interleaved, channel-mask=(bitmask)0x0000000000000000, channels=(int)[ 1, 16 ], rate=(int)[ 1, 2147483647 ]</td>
+</tr>
+<tr>
+<td><p><span class="term"></span></p></td>
 <td> audio/mpeg, mpegversion=(int)1, layer=(int)3, channels=(int)[ 1, 2 ], rate=(int)[ 1, 2147483647 ]</td>
 </tr>
 <tr>
@@ -340,7 +354,11 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> video/x-prores, variant=(string){ standard, lt, hq, proxy }, width=(int)[ 16, 2147483647 ], height=(int)[ 16, 2147483647 ]</td>
+<td> video/x-prores, variant=(string){ standard, lt, hq, proxy, 4444, 4444xq }, width=(int)[ 16, 2147483647 ], height=(int)[ 16, 2147483647 ]</td>
+</tr>
+<tr>
+<td><p><span class="term"></span></p></td>
+<td> video/x-cineform, width=(int)[ 16, 2147483647 ], height=(int)[ 16, 2147483647 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
@@ -349,6 +367,10 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 <tr>
 <td><p><span class="term"></span></p></td>
 <td> video/x-h264, stream-format=(string)avc, alignment=(string)au, width=(int)[ 16, 2147483647 ], height=(int)[ 16, 2147483647 ]</td>
+</tr>
+<tr>
+<td><p><span class="term"></span></p></td>
+<td> video/x-h265, stream-format=(string){ hvc1, hev1 }, alignment=(string)au, width=(int)[ 16, 2147483647 ], height=(int)[ 16, 2147483647 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
@@ -463,10 +485,9 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 <div class="refsect2">
 <a name="GstQTMux--movie-timescale"></a><h3>The <code class="literal">“movie-timescale”</code> property</h3>
 <pre class="programlisting">  “movie-timescale”          <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
-<p>Timescale to use in the movie (units per second).</p>
+<p>Timescale to use in the movie (units per second, 0 == default).</p>
 <p>Flags: Read / Write / Construct</p>
-<p>Allowed values: &gt;= 1</p>
-<p>Default value: 1800</p>
+<p>Default value: 0</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -524,6 +545,22 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 <p>When used with reserved-max-duration, periodically updates the index tables with information muxed so far.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: 18446744073709551615</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstQTMux--interleave-bytes"></a><h3>The <code class="literal">“interleave-bytes”</code> property</h3>
+<pre class="programlisting">  “interleave-bytes”         <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
+<p>Interleave between streams in bytes.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstQTMux--interleave-time"></a><h3>The <code class="literal">“interleave-time”</code> property</h3>
+<pre class="programlisting">  “interleave-time”          <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
+<p>Interleave between streams in nanoseconds.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 250000000</p>
 </div>
 </div>
 </div>

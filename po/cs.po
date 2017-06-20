@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good-1.7.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-02-23 15:16+0200\n"
+"POT-Creation-Date: 2017-05-04 15:05+0300\n"
 "PO-Revision-Date: 2016-02-27 16:40+0100\n"
 "Last-Translator: Marek Černocký <marek@manet.cz>\n"
 "Language-Team: Czech <translation-team-cs@lists.sourceforge.net>\n"
@@ -38,9 +38,6 @@ msgstr "Nezdařilo se spojení se serverem"
 msgid "No URL set."
 msgstr "Není nastavena žádná adresa URL."
 
-msgid "Server does not support seeking."
-msgstr "Server nepodporuje přeskakování."
-
 msgid "Could not resolve server name."
 msgstr "Nezdařil se překlad názvu serveru."
 
@@ -56,6 +53,9 @@ msgstr "Došlo k chybě sítě nebo server neočekávaně ukončil spojení."
 
 msgid "Server sent bad data."
 msgstr "Server odeslal chybná data."
+
+msgid "Server does not support seeking."
+msgstr "Server nepodporuje přeskakování."
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Žádný nebo neplatný zvukový vstup, proud AVI bude poškozen."

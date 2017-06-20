@@ -497,7 +497,7 @@ gst_v4l2sink_set_caps (GstBaseSink * bsink, GstCaps * caps)
   GstV4l2Sink *v4l2sink = GST_V4L2SINK (bsink);
   GstV4l2Object *obj = v4l2sink->v4l2object;
 
-  LOG_CAPS (v4l2sink, caps);
+  GST_DEBUG_OBJECT (v4l2sink, "caps: %" GST_PTR_FORMAT, caps);
 
   if (!GST_V4L2_IS_OPEN (obj)) {
     GST_DEBUG_OBJECT (v4l2sink, "device is not open");
@@ -603,8 +603,16 @@ gst_v4l2sink_show_frame (GstVideoSink * vsink, GstBuffer * buf)
       goto activate_failed;
   }
 
+  gst_buffer_ref (buf);
+again:
   ret = gst_v4l2_buffer_pool_process (GST_V4L2_BUFFER_POOL_CAST (obj->pool),
       &buf);
+  if (ret == GST_FLOW_FLUSHING) {
+    ret = gst_base_sink_wait_preroll (GST_BASE_SINK (vsink));
+    if (ret == GST_FLOW_OK)
+      goto again;
+  }
+  gst_buffer_unref (buf);
 
   return ret;
 

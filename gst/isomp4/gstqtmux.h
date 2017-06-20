@@ -117,9 +117,6 @@ struct _GstQTPad
   GstClockTime first_ts;
   GstClockTime first_dts;
 
-  guint buf_head;
-  guint buf_tail;
-
   /* all the atom and chunk book-keeping is delegated here
    * unowned/uncounted reference, parent MOOV owns */
   AtomTRAK *trak;
@@ -144,6 +141,11 @@ struct _GstQTPad
   GstQTPadPrepareBufferFunc prepare_buf_func;
   GstQTPadSetCapsFunc set_caps;
   GstQTPadCreateEmptyBufferFunc create_empty_buffer;
+
+  /* SMPTE timecode */
+  GstVideoTimeCode *first_tc;
+  GstClockTime first_pts;
+  guint64 tc_pos;
 };
 
 typedef enum _GstQTMuxState
@@ -196,6 +198,12 @@ struct _GstQTMux
   /* Last DTS across all pads (= duration) */
   GstClockTime last_dts;
 
+  /* Last pad we used for writing the current chunk */
+  GstQTPad *current_pad;
+  guint64 current_chunk_size;
+  GstClockTime current_chunk_duration;
+  guint64 current_chunk_offset;
+
   /* atom helper objects */
   AtomsContext *context;
   AtomFTYP *ftyp;
@@ -205,11 +213,6 @@ struct _GstQTMux
 
   /* Set when tags are received, cleared when written to moov */
   gboolean tags_changed;
-
-  /* SMPTE timecode */
-  GstVideoTimeCode *first_tc;
-  GstClockTime first_pts;
-  guint64 tc_pos;
 
   /* fragmented file index */
   AtomMFRA *mfra;
@@ -246,6 +249,10 @@ struct _GstQTMux
   GstClockTime reserved_duration_remaining;
   /* Multiplier for conversion from reserved_max_duration to bytes */
   guint reserved_bytes_per_sec_per_trak;
+
+  guint64 interleave_bytes;
+  GstClockTime interleave_time;
+  gboolean interleave_bytes_set, interleave_time_set;
 
   /* Reserved minimum MOOV size in bytes
    * This is converted from reserved_max_duration

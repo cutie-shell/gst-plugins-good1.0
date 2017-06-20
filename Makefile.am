@@ -13,14 +13,12 @@ SUBDIRS = $(ALWAYS_SUBDIRS)
 
 DIST_SUBDIRS = $(ALWAYS_SUBDIRS)
 
-# include before EXTRA_DIST for win32 assignment
-include $(top_srcdir)/common/win32.mak
-
 EXTRA_DIST = \
-	gst-plugins-good.spec depcomp \
+	depcomp \
 	AUTHORS COPYING NEWS README RELEASE REQUIREMENTS \
 	ChangeLog gst-plugins-good.doap autogen.sh \
-	$(win32)
+	$(shell find "$(top_srcdir)" -type f -name meson.build ! -path "$(top_srcdir)/$(PACKAGE_TARNAME)-*" ) \
+	meson_options.txt config.h.meson
 
 DISTCLEANFILES = _stdint.h
 
@@ -49,30 +47,33 @@ build-checks:
 	true
 endif
 
-win32-update:
-	cp $(top_builddir)/win32/common/config.h-new \
-	    $(top_srcdir)/win32/common/config.h
-
 include $(top_srcdir)/common/coverage/lcov.mak
 
 # cruft: plugins that have been merged or moved or renamed
 
 CRUFT_FILES = \
+	$(top_builddir)/gst-plugins-good.spec \
+	$(top_builddir)/win32/common/config.h-new \
 	$(top_builddir)/common/shave \
 	$(top_builddir)/common/shave-libtool \
+	$(top_builddir)/docs/plugins/xml/plugin-shout2send.xml \
+	$(top_builddir)/ext/pulse/.libs/libgstpulse.so \
+	$(top_builddir)/ext/soup/.libs/libgstsouphttpsrc.so \
 	$(top_builddir)/gst/median/.libs/*.{so,dll,DLL,dylib} \
 	$(top_builddir)/gst/qtdemux/.libs/*.{so,dll,DLL,dylib} \
 	$(top_builddir)/gst/quicktime/.libs/*.{so,dll,DLL,dylib} \
 	$(top_builddir)/gst/videofilter/.libs/*videoflip.{so,dll,DLL,dylib} \
 	$(top_builddir)/gst/videofilter/.libs/*videobalance.{so,dll,DLL,dylib} \
-	$(top_builddir)/gst/videofilter/.libs/*gamma.{so,dll,DLL,dylib}
+	$(top_builddir)/gst/videofilter/.libs/*gamma.{so,dll,DLL,dylib} \
+	$(top_builddir)/sys/oss4/.libs/libgstoss4audio.so
 
 CRUFT_DIRS = \
 	$(top_srcdir)/docs/plugins/tmpl \
 	$(top_srcdir)/gst/median \
 	$(top_srcdir)/gst/qtdemux \
 	$(top_srcdir)/gst/quicktime \
-	$(top_srcdir)/ext/annodex
+	$(top_srcdir)/ext/annodex \
+	$(top_srcdir)/tests/examples/pulse
 
 include $(top_srcdir)/common/cruft.mak
 

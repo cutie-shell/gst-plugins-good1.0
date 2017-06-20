@@ -299,7 +299,6 @@ gst_rtp_h264_set_src_caps (GstRtpH264Depay * rtph264depay)
       len += 2 + gst_buffer_get_size (g_ptr_array_index (rtph264depay->pps, i));
 
     codec_data = gst_buffer_new_and_alloc (len);
-    g_debug ("alloc_len: %u", len);
     gst_buffer_map (codec_data, &map, GST_MAP_READWRITE);
     data = map.data;
 
@@ -441,8 +440,9 @@ gst_rtp_h264_set_src_caps (GstRtpH264Depay * rtph264depay)
 
   gst_caps_unref (srccaps);
 
-  /* Insert SPS and PPS into the stream on next opportunity */
-  if (rtph264depay->sps->len > 0 || rtph264depay->pps->len > 0) {
+  /* Insert SPS and PPS into the stream on next opportunity (if bytestream) */
+  if (rtph264depay->byte_stream
+      && (rtph264depay->sps->len > 0 || rtph264depay->pps->len > 0)) {
     gint i;
     GstBuffer *codec_data;
     GstMapInfo map;
@@ -698,6 +698,10 @@ gst_rtp_h264_depay_setcaps (GstRTPBaseDepayload * depayload, GstCaps * caps)
       gint state = 0;
 
       nal_len = strlen (params[i]);
+      if (nal_len == 0) {
+        GST_WARNING_OBJECT (depayload, "empty param '%s' (#%d)", params[i], i);
+        continue;
+      }
       nal = gst_buffer_new_and_alloc (nal_len);
       gst_buffer_map (nal, &nalmap, GST_MAP_READWRITE);
 

@@ -553,10 +553,10 @@ top_srcdir = @top_srcdir@
 @USE_JACK_TRUE@JACK_DIR = jack
 @USE_CAIRO_FALSE@CAIRO_DIR = 
 @USE_CAIRO_TRUE@CAIRO_DIR = cairo
-SUBDIRS = audiofx equalizer $(JACK_DIR) level pulse \
+SUBDIRS = audiofx equalizer $(JACK_DIR) level \
 	rtp shapewipe spectrum v4l2 $(CAIRO_DIR)
 
-DIST_SUBDIRS = audiofx equalizer jack level pulse \
+DIST_SUBDIRS = audiofx equalizer jack level \
 	rtp shapewipe spectrum v4l2 cairo
 
 all: all-recursive

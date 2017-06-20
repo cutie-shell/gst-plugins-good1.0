@@ -92,7 +92,7 @@
         <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstObject.html#GstObject-struct">GstObject</a>
             <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElement.html#GstElement-struct">GstElement</a>
                 <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-libs-1.0GstBaseTransform.html#GstBaseTransform-struct">GstBaseTransform</a>
-                    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-gstaudiofilter.html#GstAudioFilter-struct">GstAudioFilter</a>
+                    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0GstAudioFilter.html#GstAudioFilter-struct">GstAudioFilter</a>
                         <span class="lineart">╰──</span> GstAudioFXBaseFIRFilter
                             <span class="lineart">╰──</span> GstAudioFIRFilter
 </pre>
@@ -362,9 +362,9 @@ FIR filters as they're depending on the sampling rate.</p>
   <span class="gtkdoc opt">}</span>
 
   <span class="comment">/* Calculate the inverse FT of the frequency response */</span>
-  fft <span class="gtkdoc opt">=</span> <span class="function"><a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-gstfftf64.html#gst-fft-f64-new">gst_fft_f64_new</a></span> <span class="gtkdoc opt">(</span><span class="number">32</span><span class="gtkdoc opt">,</span> TRUE<span class="gtkdoc opt">);</span>
-  <span class="function"><a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-gstfftf64.html#gst-fft-f64-inverse-fft">gst_fft_f64_inverse_fft</a></span> <span class="gtkdoc opt">(</span>fft<span class="gtkdoc opt">,</span> frequency_response<span class="gtkdoc opt">,</span> tmp<span class="gtkdoc opt">);</span>
-  <span class="function"><a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-gstfftf64.html#gst-fft-f64-free">gst_fft_f64_free</a></span> <span class="gtkdoc opt">(</span>fft<span class="gtkdoc opt">);</span>
+  fft <span class="gtkdoc opt">=</span> <span class="function"><a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-GstFFTF64.html#gst-fft-f64-new">gst_fft_f64_new</a></span> <span class="gtkdoc opt">(</span><span class="number">32</span><span class="gtkdoc opt">,</span> TRUE<span class="gtkdoc opt">);</span>
+  <span class="function"><a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-GstFFTF64.html#gst-fft-f64-inverse-fft">gst_fft_f64_inverse_fft</a></span> <span class="gtkdoc opt">(</span>fft<span class="gtkdoc opt">,</span> frequency_response<span class="gtkdoc opt">,</span> tmp<span class="gtkdoc opt">);</span>
+  <span class="function"><a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-GstFFTF64.html#gst-fft-f64-free">gst_fft_f64_free</a></span> <span class="gtkdoc opt">(</span>fft<span class="gtkdoc opt">);</span>
 
   <span class="comment">/* Shift the inverse FT of the frequency response by 16,</span>
 <span class="comment">   * i.e. the half of the kernel length to get the</span>

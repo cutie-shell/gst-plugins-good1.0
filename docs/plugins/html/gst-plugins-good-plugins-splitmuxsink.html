@@ -87,6 +87,12 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--send-keyframe-requests" title="The “send-keyframe-requests” property">send-keyframe-requests</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type">
+<a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--max-size-timecode" title="The “max-size-timecode” property">max-size-timecode</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -98,12 +104,20 @@
 <col width="300px" class="signals_name">
 <col width="200px" class="signals_flags">
 </colgroup>
-<tbody><tr>
+<tbody>
+<tr>
 <td class="signal_type">
 <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gchar"><span class="returnvalue">gchar</span></a>*</td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink-format-location" title="The “format-location” signal">format-location</a></td>
 <td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobjectgobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
-</tr></tbody>
+</tr>
+<tr>
+<td class="signal_type">
+<a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gchar"><span class="returnvalue">gchar</span></a>*</td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink-format-location-full" title="The “format-location-full” signal">format-location-full</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobjectgobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+</tbody>
 </table></div>
 </div>
 <a name="GstSplitMuxSink"></a><div class="refsect1">
@@ -347,6 +361,14 @@ and 1MB maximum size.
 <p>Flags: Read / Write</p>
 <p>Default value: FALSE</p>
 </div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink--max-size-timecode"></a><h3>The <code class="literal">“max-size-timecode”</code> property</h3>
+<pre class="programlisting">  “max-size-timecode”        <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
+<p>Maximum difference in timecode between first and last frame. Separator is assumed to be ":" everywhere (e.g. 01:00:00:00). Will only be effective if a timecode track is present.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: NULL</p>
+</div>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-splitmuxsink.signal-details"></a><h2>Signal Details</h2>
@@ -385,6 +407,53 @@ user_function (<a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#
 </div>
 <div class="refsect3">
 <a name="GstSplitMuxSink-format-location.returns"></a><h4>Returns</h4>
+<p> the location to be used for the next output file</p>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobjectgobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink-format-location-full"></a><h3>The <code class="literal">“format-location-full”</code> signal</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gchar"><span class="returnvalue">gchar</span></a>*
+user_function (<a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink"><span class="type">GstSplitMuxSink</span></a> *splitmux,
+               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a>            fragment_id,
+               <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstSample.html#GstSample-struct"><span class="type">GstSample</span></a>       *first_sample,
+               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
+<div class="refsect3">
+<a name="GstSplitMuxSink-format-location-full.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>splitmux</p></td>
+<td class="parameter_description"><p>the <a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink"><span class="type">GstSplitMuxSink</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>fragment_id</p></td>
+<td class="parameter_description"><p>the sequence number of the file to be created</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>first_sample</p></td>
+<td class="parameter_description"><p>A <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstSample.html#GstSample-struct"><span class="type">GstSample</span></a> containing the first buffer
+from the reference stream in the new file</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="GstSplitMuxSink-format-location-full.returns"></a><h4>Returns</h4>
 <p> the location to be used for the next output file</p>
 </div>
 <p>Flags: <a href="/usr/share/gtk-doc/html/gobjectgobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>

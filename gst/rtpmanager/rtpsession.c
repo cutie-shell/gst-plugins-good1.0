@@ -662,8 +662,6 @@ rtp_session_init (RTPSession * sess)
   sess->rtp_profile = DEFAULT_RTP_PROFILE;
   sess->reduced_size_rtcp = DEFAULT_RTCP_REDUCED_SIZE;
 
-  sess->last_keyframe_request = GST_CLOCK_TIME_NONE;
-
   sess->is_doing_ptp = TRUE;
 }
 
@@ -2565,13 +2563,13 @@ rtp_session_process_app (RTPSession * sess, GstRTCPPacket * packet,
 
 static gboolean
 rtp_session_request_local_key_unit (RTPSession * sess, RTPSource * src,
-    gboolean fir, GstClockTime current_time)
+    guint32 media_ssrc, gboolean fir, GstClockTime current_time)
 {
   guint32 round_trip = 0;
 
   rtp_source_get_last_rb (src, NULL, NULL, NULL, NULL, NULL, NULL, &round_trip);
 
-  if (sess->last_keyframe_request != GST_CLOCK_TIME_NONE && round_trip) {
+  if (src->last_keyframe_request != GST_CLOCK_TIME_NONE && round_trip) {
     GstClockTime round_trip_in_ns = gst_util_uint64_scale (round_trip,
         GST_SECOND, 65536);
 
@@ -2580,24 +2578,24 @@ rtp_session_request_local_key_unit (RTPSession * sess, RTPSource * src,
     if (round_trip_in_ns > 5 * GST_SECOND)
       round_trip_in_ns = GST_SECOND / 2;
 
-    if (current_time - sess->last_keyframe_request < 2 * round_trip_in_ns) {
-      GST_DEBUG ("Ignoring %s request because one was send without one "
+    if (current_time - src->last_keyframe_request < 2 * round_trip_in_ns) {
+      GST_DEBUG ("Ignoring %s request from %X because one was send without one "
           "RTT (%" GST_TIME_FORMAT " < %" GST_TIME_FORMAT ")",
-          fir ? "FIR" : "PLI",
-          GST_TIME_ARGS (current_time - sess->last_keyframe_request),
+          fir ? "FIR" : "PLI", rtp_source_get_ssrc (src),
+          GST_TIME_ARGS (current_time - src->last_keyframe_request),
           GST_TIME_ARGS (round_trip_in_ns));
       return FALSE;
     }
   }
 
-  sess->last_keyframe_request = current_time;
+  src->last_keyframe_request = current_time;
 
-  GST_LOG ("received %s request from %X %p(%p)", fir ? "FIR" : "PLI",
-      rtp_source_get_ssrc (src), sess->callbacks.process_rtp,
+  GST_LOG ("received %s request from %X about %X %p(%p)", fir ? "FIR" : "PLI",
+      rtp_source_get_ssrc (src), media_ssrc, sess->callbacks.process_rtp,
       sess->callbacks.request_key_unit);
 
   RTP_SESSION_UNLOCK (sess);
-  sess->callbacks.request_key_unit (sess, fir,
+  sess->callbacks.request_key_unit (sess, media_ssrc, fir,
       sess->request_key_unit_user_data);
   RTP_SESSION_LOCK (sess);
 
@@ -2617,12 +2615,14 @@ rtp_session_process_pli (RTPSession * sess, guint32 sender_ssrc,
   if (src == NULL)
     return;
 
-  rtp_session_request_local_key_unit (sess, src, FALSE, current_time);
+  rtp_session_request_local_key_unit (sess, src, media_ssrc, FALSE,
+      current_time);
 }
 
 static void
 rtp_session_process_fir (RTPSession * sess, guint32 sender_ssrc,
-    guint8 * fci_data, guint fci_length, GstClockTime current_time)
+    guint32 media_ssrc, guint8 * fci_data, guint fci_length,
+    GstClockTime current_time)
 {
   RTPSource *src;
   guint32 ssrc;
@@ -2673,7 +2673,8 @@ rtp_session_process_fir (RTPSession * sess, guint32 sender_ssrc,
   if (!our_request)
     return;
 
-  rtp_session_request_local_key_unit (sess, src, TRUE, current_time);
+  rtp_session_request_local_key_unit (sess, src, media_ssrc, TRUE,
+      current_time);
 }
 
 static void
@@ -2764,8 +2765,8 @@ rtp_session_process_feedback (RTPSession * sess, GstRTCPPacket * packet,
           case GST_RTCP_PSFB_TYPE_FIR:
             if (src)
               src->stats.recv_fir_count++;
-            rtp_session_process_fir (sess, sender_ssrc, fci_data, fci_length,
-                current_time);
+            rtp_session_process_fir (sess, sender_ssrc, media_ssrc, fci_data,
+                fci_length, current_time);
             break;
           default:
             break;
@@ -2774,6 +2775,8 @@ rtp_session_process_feedback (RTPSession * sess, GstRTCPPacket * packet,
       case GST_RTCP_TYPE_RTPFB:
         switch (fbtype) {
           case GST_RTCP_RTPFB_TYPE_NACK:
+            if (src)
+              src->stats.recv_nack_count++;
             rtp_session_process_nack (sess, sender_ssrc, media_ssrc,
                 fci_data, fci_length, current_time);
             break;
@@ -3263,6 +3266,7 @@ early_exit:
 typedef struct
 {
   RTPSource *source;
+  gboolean is_bye;
   GstBuffer *buffer;
 } ReportOutput;
 
@@ -3526,6 +3530,7 @@ session_nack (const gchar * key, RTPSource * source, ReportData * data)
 
   rtp_source_clear_nacks (source);
   data->may_suppress = FALSE;
+  source->stats.sent_nack_count += n_nacks;
 }
 
 /* perform cleanup of sources that timed out */
@@ -3873,6 +3878,7 @@ static void
 generate_rtcp (const gchar * key, RTPSource * source, ReportData * data)
 {
   RTPSession *sess = data->sess;
+  gboolean is_bye = FALSE;
   ReportOutput *output;
 
   /* only generate RTCP for active internal sources */
@@ -3891,6 +3897,7 @@ generate_rtcp (const gchar * key, RTPSource * source, ReportData * data)
   if (source->marked_bye) {
     /* send BYE */
     make_source_bye (sess, source, data);
+    is_bye = TRUE;
   } else if (!data->is_early) {
     /* loop over all known sources and add report blocks. If we are early, we
      * just make a minimal RTCP packet and skip this step */
@@ -3915,6 +3922,7 @@ generate_rtcp (const gchar * key, RTPSource * source, ReportData * data)
 
   output = g_slice_new (ReportOutput);
   output->source = g_object_ref (source);
+  output->is_bye = is_bye;
   output->buffer = data->rtcp;
   /* queue the RTCP packet to push later */
   g_queue_push_tail (&data->output, output);
@@ -4060,7 +4068,7 @@ rtp_session_on_timeout (RTPSession * sess, GstClockTime current_time,
 
   GST_DEBUG ("Time since last RTCP: %" GST_TIME_FORMAT " - %" GST_TIME_FORMAT
       " = %" GST_TIME_FORMAT, GST_TIME_ARGS (data.current_time),
-      GST_TIME_ARGS (sess->last_rtcp_send_time),
+      GST_TIME_ARGS (sess->last_rtcp_check_time),
       GST_TIME_ARGS (data.current_time - sess->last_rtcp_check_time));
   sess->last_rtcp_check_time = data.current_time;
   sess->first_rtcp = FALSE;
@@ -4098,7 +4106,7 @@ done:
       GST_DEBUG ("%p, sending RTCP packet, avg size %u, %u", &sess->stats,
           sess->stats.avg_rtcp_packet_size, packet_size);
       result =
-          sess->callbacks.send_rtcp (sess, source, buffer,
+          sess->callbacks.send_rtcp (sess, source, buffer, output->is_bye,
           sess->send_rtcp_user_data);
 
       RTP_SESSION_LOCK (sess);

@@ -163,21 +163,20 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(plugindir)"
 LTLIBRARIES = $(plugin_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-libgstoss4audio_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+libgstoss4_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
-am_libgstoss4audio_la_OBJECTS = libgstoss4audio_la-oss4-audio.lo \
-	libgstoss4audio_la-oss4-property-probe.lo \
-	libgstoss4audio_la-oss4-sink.lo \
-	libgstoss4audio_la-oss4-source.lo
-libgstoss4audio_la_OBJECTS = $(am_libgstoss4audio_la_OBJECTS)
+am_libgstoss4_la_OBJECTS = libgstoss4_la-oss4-audio.lo \
+	libgstoss4_la-oss4-property-probe.lo \
+	libgstoss4_la-oss4-sink.lo libgstoss4_la-oss4-source.lo
+libgstoss4_la_OBJECTS = $(am_libgstoss4_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-libgstoss4audio_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(libgstoss4audio_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
-	$(CCLD) $(libgstoss4audio_la_CFLAGS) $(CFLAGS) \
-	$(libgstoss4audio_la_LDFLAGS) $(LDFLAGS) -o $@
+libgstoss4_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(libgstoss4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
+	$(CCLD) $(libgstoss4_la_CFLAGS) $(CFLAGS) \
+	$(libgstoss4_la_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -212,8 +211,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libgstoss4audio_la_SOURCES)
-DIST_SOURCES = $(libgstoss4audio_la_SOURCES)
+SOURCES = $(libgstoss4_la_SOURCES)
+DIST_SOURCES = $(libgstoss4_la_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -573,21 +572,21 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-plugin_LTLIBRARIES = libgstoss4audio.la
-libgstoss4audio_la_SOURCES = \
+plugin_LTLIBRARIES = libgstoss4.la
+libgstoss4_la_SOURCES = \
 	oss4-audio.c          \
 	oss4-property-probe.c \
 	oss4-sink.c           \
 	oss4-source.c
 
-libgstoss4audio_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS)
-libgstoss4audio_la_LIBADD = \
+libgstoss4_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS)
+libgstoss4_la_LIBADD = \
 	$(GST_PLUGINS_BASE_LIBS) \
 	-lgstaudio-$(GST_API_VERSION) \
 	$(GST_LIBS)
 
-libgstoss4audio_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS) 
-libgstoss4audio_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
+libgstoss4_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS) 
+libgstoss4_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
 noinst_HEADERS = \
 	oss4-audio.h          \
 	oss4-property-probe.h \
@@ -664,8 +663,8 @@ clean-pluginLTLIBRARIES:
 	  rm -f $${locs}; \
 	}
 
-libgstoss4audio.la: $(libgstoss4audio_la_OBJECTS) $(libgstoss4audio_la_DEPENDENCIES) $(EXTRA_libgstoss4audio_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libgstoss4audio_la_LINK) -rpath $(plugindir) $(libgstoss4audio_la_OBJECTS) $(libgstoss4audio_la_LIBADD) $(LIBS)
+libgstoss4.la: $(libgstoss4_la_OBJECTS) $(libgstoss4_la_DEPENDENCIES) $(EXTRA_libgstoss4_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libgstoss4_la_LINK) -rpath $(plugindir) $(libgstoss4_la_OBJECTS) $(libgstoss4_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -673,10 +672,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstoss4audio_la-oss4-audio.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstoss4audio_la-oss4-property-probe.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstoss4audio_la-oss4-sink.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstoss4audio_la-oss4-source.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstoss4_la-oss4-audio.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstoss4_la-oss4-property-probe.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstoss4_la-oss4-sink.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstoss4_la-oss4-source.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -702,33 +701,33 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
-libgstoss4audio_la-oss4-audio.lo: oss4-audio.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4audio_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4audio_la_CFLAGS) $(CFLAGS) -MT libgstoss4audio_la-oss4-audio.lo -MD -MP -MF $(DEPDIR)/libgstoss4audio_la-oss4-audio.Tpo -c -o libgstoss4audio_la-oss4-audio.lo `test -f 'oss4-audio.c' || echo '$(srcdir)/'`oss4-audio.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstoss4audio_la-oss4-audio.Tpo $(DEPDIR)/libgstoss4audio_la-oss4-audio.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='oss4-audio.c' object='libgstoss4audio_la-oss4-audio.lo' libtool=yes @AMDEPBACKSLASH@
+libgstoss4_la-oss4-audio.lo: oss4-audio.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4_la_CFLAGS) $(CFLAGS) -MT libgstoss4_la-oss4-audio.lo -MD -MP -MF $(DEPDIR)/libgstoss4_la-oss4-audio.Tpo -c -o libgstoss4_la-oss4-audio.lo `test -f 'oss4-audio.c' || echo '$(srcdir)/'`oss4-audio.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstoss4_la-oss4-audio.Tpo $(DEPDIR)/libgstoss4_la-oss4-audio.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='oss4-audio.c' object='libgstoss4_la-oss4-audio.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4audio_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4audio_la_CFLAGS) $(CFLAGS) -c -o libgstoss4audio_la-oss4-audio.lo `test -f 'oss4-audio.c' || echo '$(srcdir)/'`oss4-audio.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4_la_CFLAGS) $(CFLAGS) -c -o libgstoss4_la-oss4-audio.lo `test -f 'oss4-audio.c' || echo '$(srcdir)/'`oss4-audio.c
 
-libgstoss4audio_la-oss4-property-probe.lo: oss4-property-probe.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4audio_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4audio_la_CFLAGS) $(CFLAGS) -MT libgstoss4audio_la-oss4-property-probe.lo -MD -MP -MF $(DEPDIR)/libgstoss4audio_la-oss4-property-probe.Tpo -c -o libgstoss4audio_la-oss4-property-probe.lo `test -f 'oss4-property-probe.c' || echo '$(srcdir)/'`oss4-property-probe.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstoss4audio_la-oss4-property-probe.Tpo $(DEPDIR)/libgstoss4audio_la-oss4-property-probe.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='oss4-property-probe.c' object='libgstoss4audio_la-oss4-property-probe.lo' libtool=yes @AMDEPBACKSLASH@
+libgstoss4_la-oss4-property-probe.lo: oss4-property-probe.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4_la_CFLAGS) $(CFLAGS) -MT libgstoss4_la-oss4-property-probe.lo -MD -MP -MF $(DEPDIR)/libgstoss4_la-oss4-property-probe.Tpo -c -o libgstoss4_la-oss4-property-probe.lo `test -f 'oss4-property-probe.c' || echo '$(srcdir)/'`oss4-property-probe.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstoss4_la-oss4-property-probe.Tpo $(DEPDIR)/libgstoss4_la-oss4-property-probe.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='oss4-property-probe.c' object='libgstoss4_la-oss4-property-probe.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4audio_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4audio_la_CFLAGS) $(CFLAGS) -c -o libgstoss4audio_la-oss4-property-probe.lo `test -f 'oss4-property-probe.c' || echo '$(srcdir)/'`oss4-property-probe.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4_la_CFLAGS) $(CFLAGS) -c -o libgstoss4_la-oss4-property-probe.lo `test -f 'oss4-property-probe.c' || echo '$(srcdir)/'`oss4-property-probe.c
 
-libgstoss4audio_la-oss4-sink.lo: oss4-sink.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4audio_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4audio_la_CFLAGS) $(CFLAGS) -MT libgstoss4audio_la-oss4-sink.lo -MD -MP -MF $(DEPDIR)/libgstoss4audio_la-oss4-sink.Tpo -c -o libgstoss4audio_la-oss4-sink.lo `test -f 'oss4-sink.c' || echo '$(srcdir)/'`oss4-sink.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstoss4audio_la-oss4-sink.Tpo $(DEPDIR)/libgstoss4audio_la-oss4-sink.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='oss4-sink.c' object='libgstoss4audio_la-oss4-sink.lo' libtool=yes @AMDEPBACKSLASH@
+libgstoss4_la-oss4-sink.lo: oss4-sink.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4_la_CFLAGS) $(CFLAGS) -MT libgstoss4_la-oss4-sink.lo -MD -MP -MF $(DEPDIR)/libgstoss4_la-oss4-sink.Tpo -c -o libgstoss4_la-oss4-sink.lo `test -f 'oss4-sink.c' || echo '$(srcdir)/'`oss4-sink.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstoss4_la-oss4-sink.Tpo $(DEPDIR)/libgstoss4_la-oss4-sink.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='oss4-sink.c' object='libgstoss4_la-oss4-sink.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4audio_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4audio_la_CFLAGS) $(CFLAGS) -c -o libgstoss4audio_la-oss4-sink.lo `test -f 'oss4-sink.c' || echo '$(srcdir)/'`oss4-sink.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4_la_CFLAGS) $(CFLAGS) -c -o libgstoss4_la-oss4-sink.lo `test -f 'oss4-sink.c' || echo '$(srcdir)/'`oss4-sink.c
 
-libgstoss4audio_la-oss4-source.lo: oss4-source.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4audio_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4audio_la_CFLAGS) $(CFLAGS) -MT libgstoss4audio_la-oss4-source.lo -MD -MP -MF $(DEPDIR)/libgstoss4audio_la-oss4-source.Tpo -c -o libgstoss4audio_la-oss4-source.lo `test -f 'oss4-source.c' || echo '$(srcdir)/'`oss4-source.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstoss4audio_la-oss4-source.Tpo $(DEPDIR)/libgstoss4audio_la-oss4-source.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='oss4-source.c' object='libgstoss4audio_la-oss4-source.lo' libtool=yes @AMDEPBACKSLASH@
+libgstoss4_la-oss4-source.lo: oss4-source.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4_la_CFLAGS) $(CFLAGS) -MT libgstoss4_la-oss4-source.lo -MD -MP -MF $(DEPDIR)/libgstoss4_la-oss4-source.Tpo -c -o libgstoss4_la-oss4-source.lo `test -f 'oss4-source.c' || echo '$(srcdir)/'`oss4-source.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstoss4_la-oss4-source.Tpo $(DEPDIR)/libgstoss4_la-oss4-source.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='oss4-source.c' object='libgstoss4_la-oss4-source.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4audio_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4audio_la_CFLAGS) $(CFLAGS) -c -o libgstoss4audio_la-oss4-source.lo `test -f 'oss4-source.c' || echo '$(srcdir)/'`oss4-source.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstoss4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstoss4_la_CFLAGS) $(CFLAGS) -c -o libgstoss4_la-oss4-source.lo `test -f 'oss4-source.c' || echo '$(srcdir)/'`oss4-source.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

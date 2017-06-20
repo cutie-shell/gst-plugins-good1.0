@@ -694,7 +694,7 @@ process_buffer (GstRtpRtxSend * rtx, GstBuffer * buffer)
   rtptime = gst_rtp_buffer_get_timestamp (&rtp);
   gst_rtp_buffer_unmap (&rtp);
 
-  GST_LOG_OBJECT (rtx,
+  GST_TRACE_OBJECT (rtx,
       "Processing buffer seqnum: %" G_GUINT16_FORMAT ", ssrc: %"
       G_GUINT32_FORMAT, seqnum, ssrc);
 
@@ -767,11 +767,12 @@ gst_rtp_rtx_send_src_loop (GstRtpRtxSend * rtx)
     GST_LOG_OBJECT (rtx, "pushing rtx buffer %p", data->object);
 
     if (G_LIKELY (GST_IS_BUFFER (data->object))) {
-      gst_pad_push (rtx->srcpad, GST_BUFFER (data->object));
-
       GST_OBJECT_LOCK (rtx);
+      /* Update statistics just before pushing. */
       rtx->num_rtx_packets++;
       GST_OBJECT_UNLOCK (rtx);
+
+      gst_pad_push (rtx->srcpad, GST_BUFFER (data->object));
     } else if (GST_IS_EVENT (data->object)) {
       gst_pad_push_event (rtx->srcpad, GST_EVENT (data->object));
 

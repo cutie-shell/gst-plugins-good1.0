@@ -230,6 +230,7 @@ libparser_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @USE_PLUGIN_RTPMANAGER_TRUE@am__EXEEXT_26 = elements/rtpaux$(EXEEXT) \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpbin$(EXEEXT) \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpbin_buffer_list$(EXEEXT) \
+@USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpbundle$(EXEEXT) \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpcollision$(EXEEXT) \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpjitterbuffer$(EXEEXT) \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpmux$(EXEEXT) \
@@ -316,7 +317,7 @@ elements_audiochebband_SOURCES = elements/audiochebband.c
 elements_audiochebband_OBJECTS =  \
 	elements/elements_audiochebband-audiochebband.$(OBJEXT)
 elements_audiochebband_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_2)
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1)
 elements_audiochebband_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_audiochebband_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
@@ -325,7 +326,7 @@ elements_audiocheblimit_SOURCES = elements/audiocheblimit.c
 elements_audiocheblimit_OBJECTS =  \
 	elements/elements_audiocheblimit-audiocheblimit.$(OBJEXT)
 elements_audiocheblimit_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_2)
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1)
 elements_audiocheblimit_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_audiocheblimit_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
@@ -379,7 +380,7 @@ elements_audiowsincband_SOURCES = elements/audiowsincband.c
 elements_audiowsincband_OBJECTS =  \
 	elements/elements_audiowsincband-audiowsincband.$(OBJEXT)
 elements_audiowsincband_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_2)
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1)
 elements_audiowsincband_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_audiowsincband_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
@@ -388,7 +389,7 @@ elements_audiowsinclimit_SOURCES = elements/audiowsinclimit.c
 elements_audiowsinclimit_OBJECTS =  \
 	elements/elements_audiowsinclimit-audiowsinclimit.$(OBJEXT)
 elements_audiowsinclimit_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_2)
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1)
 elements_audiowsinclimit_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_audiowsinclimit_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
@@ -444,7 +445,7 @@ elements_equalizer_SOURCES = elements/equalizer.c
 elements_equalizer_OBJECTS =  \
 	elements/elements_equalizer-equalizer.$(OBJEXT)
 elements_equalizer_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_2)
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1)
 elements_equalizer_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_equalizer_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
@@ -615,15 +616,20 @@ elements_rgvolume_SOURCES = elements/rgvolume.c
 elements_rgvolume_OBJECTS =  \
 	elements/elements_rgvolume-rgvolume.$(OBJEXT)
 elements_rgvolume_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_2)
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1)
 elements_rgvolume_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_rgvolume_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
 elements_rtp_payloading_SOURCES = elements/rtp-payloading.c
-elements_rtp_payloading_OBJECTS = elements/rtp-payloading.$(OBJEXT)
-elements_rtp_payloading_LDADD = $(LDADD)
-elements_rtp_payloading_DEPENDENCIES = $(am__DEPENDENCIES_1)
+elements_rtp_payloading_OBJECTS =  \
+	elements/elements_rtp_payloading-rtp-payloading.$(OBJEXT)
+elements_rtp_payloading_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+elements_rtp_payloading_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(elements_rtp_payloading_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 elements_rtpaux_SOURCES = elements/rtpaux.c
 elements_rtpaux_OBJECTS = elements/elements_rtpaux-rtpaux.$(OBJEXT)
 elements_rtpaux_DEPENDENCIES = $(am__DEPENDENCIES_1) \
@@ -645,6 +651,15 @@ elements_rtpbin_buffer_list_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 elements_rtpbin_buffer_list_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_rtpbin_buffer_list_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+elements_rtpbundle_SOURCES = elements/rtpbundle.c
+elements_rtpbundle_OBJECTS =  \
+	elements/elements_rtpbundle-rtpbundle.$(OBJEXT)
+elements_rtpbundle_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
+elements_rtpbundle_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(elements_rtpbundle_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 elements_rtpcollision_SOURCES = elements/rtpcollision.c
 elements_rtpcollision_OBJECTS =  \
@@ -736,9 +751,15 @@ elements_spectrum_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(elements_spectrum_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
 elements_splitmux_SOURCES = elements/splitmux.c
-elements_splitmux_OBJECTS = elements/splitmux.$(OBJEXT)
-elements_splitmux_LDADD = $(LDADD)
-elements_splitmux_DEPENDENCIES = $(am__DEPENDENCIES_1)
+elements_splitmux_OBJECTS =  \
+	elements/elements_splitmux-splitmux.$(OBJEXT)
+elements_splitmux_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_1)
+elements_splitmux_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(elements_splitmux_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
+	-o $@
 elements_sunaudio_SOURCES = elements/sunaudio.c
 elements_sunaudio_OBJECTS =  \
 	elements/elements_sunaudio-sunaudio.$(OBJEXT)
@@ -951,8 +972,8 @@ SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/qtdemux.c elements/qtmux.c elements/rganalysis.c \
 	elements/rglimiter.c elements/rgvolume.c \
 	elements/rtp-payloading.c elements/rtpaux.c elements/rtpbin.c \
-	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpcollision.c \
-	elements/rtph261.c elements/rtph263.c \
+	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpbundle.c \
+	elements/rtpcollision.c elements/rtph261.c elements/rtph263.c \
 	elements/rtpjitterbuffer.c elements/rtpmux.c elements/rtprtx.c \
 	elements/rtpsession.c elements/rtpvp9.c elements/shapewipe.c \
 	elements/souphttpsrc.c elements/spectrum.c elements/splitmux.c \
@@ -991,8 +1012,8 @@ DIST_SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/qtdemux.c elements/qtmux.c elements/rganalysis.c \
 	elements/rglimiter.c elements/rgvolume.c \
 	elements/rtp-payloading.c elements/rtpaux.c elements/rtpbin.c \
-	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpcollision.c \
-	elements/rtph261.c elements/rtph263.c \
+	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpbundle.c \
+	elements/rtpcollision.c elements/rtph261.c elements/rtph263.c \
 	elements/rtpjitterbuffer.c elements/rtpmux.c elements/rtprtx.c \
 	elements/rtpsession.c elements/rtpvp9.c elements/shapewipe.c \
 	elements/souphttpsrc.c elements/spectrum.c elements/splitmux.c \
@@ -1710,6 +1731,7 @@ CLEANFILES = core.* test-registry.*
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpaux \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpbin \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpbin_buffer_list \
+@USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpbundle \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpcollision \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpjitterbuffer \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpmux \
@@ -1799,9 +1821,9 @@ elements_aspectratiocrop_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLA
 elements_audioamplify_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_audioamplify_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)
 elements_audiochebband_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
-elements_audiochebband_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)
+elements_audiochebband_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD) $(LIBM)
 elements_audiocheblimit_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
-elements_audiocheblimit_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)
+elements_audiocheblimit_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD) $(LIBM)
 elements_audiodynamic_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_audiodynamic_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)
 elements_audioecho_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
@@ -1817,19 +1839,21 @@ elements_audiopanorama_CFLAGS = \
 	$(CFLAGS) $(AM_CFLAGS)
 
 elements_audiowsincband_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
-elements_audiowsincband_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)
+elements_audiowsincband_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD) $(LIBM)
 elements_audiowsinclimit_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
-elements_audiowsinclimit_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)
+elements_audiowsinclimit_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD) $(LIBM)
 elements_autodetect_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_autodetect_LDADD = $(GST_BASE_LIBS) $(LDADD)
 elements_equalizer_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
-elements_equalizer_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)
+elements_equalizer_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD) $(LIBM)
 elements_rganalysis_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rganalysis_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)
 elements_rglimiter_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rglimiter_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)
 elements_rgvolume_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
-elements_rgvolume_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)
+elements_rgvolume_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD) $(LIBM)
+elements_rtp_payloading_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
+elements_rtp_payloading_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
 elements_spectrum_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_spectrum_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)
 elements_alphacolor_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
@@ -1859,6 +1883,8 @@ elements_mulawdec_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
 elements_mulawenc_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
 elements_multifile_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
 elements_multifile_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstvideo-$(GST_API_VERSION) $(GST_LIBS) $(LDADD) $(LIBM)
+elements_splitmux_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
+elements_splitmux_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstapp-$(GST_API_VERSION) $(GST_LIBS) $(LDADD) $(LIBM)
 elements_qtmux_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
 elements_qtmux_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstpbutils-@GST_API_VERSION@ \
              $(GST_BASE_LIBS) $(GST_LIBS) $(GST_CHECK_LIBS)
@@ -1903,6 +1929,8 @@ elements_rtpcollision_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rtpcollision_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_NET_LIBS) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)
 elements_rtpaux_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rtpaux_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(LDADD)
+elements_rtpbundle_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
+elements_rtpbundle_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(LDADD)
 
 # FIXME: configure should check for gdk-pixbuf not gtk
 # only need video.h header, not the lib
@@ -2306,12 +2334,12 @@ elements/elements_rgvolume-rgvolume.$(OBJEXT):  \
 elements/rgvolume$(EXEEXT): $(elements_rgvolume_OBJECTS) $(elements_rgvolume_DEPENDENCIES) $(EXTRA_elements_rgvolume_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/rgvolume$(EXEEXT)
 	$(AM_V_CCLD)$(elements_rgvolume_LINK) $(elements_rgvolume_OBJECTS) $(elements_rgvolume_LDADD) $(LIBS)
-elements/rtp-payloading.$(OBJEXT): elements/$(am__dirstamp) \
-	elements/$(DEPDIR)/$(am__dirstamp)
+elements/elements_rtp_payloading-rtp-payloading.$(OBJEXT):  \
+	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
 
 elements/rtp-payloading$(EXEEXT): $(elements_rtp_payloading_OBJECTS) $(elements_rtp_payloading_DEPENDENCIES) $(EXTRA_elements_rtp_payloading_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/rtp-payloading$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(elements_rtp_payloading_OBJECTS) $(elements_rtp_payloading_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(elements_rtp_payloading_LINK) $(elements_rtp_payloading_OBJECTS) $(elements_rtp_payloading_LDADD) $(LIBS)
 elements/elements_rtpaux-rtpaux.$(OBJEXT): elements/$(am__dirstamp) \
 	elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2330,6 +2358,12 @@ elements/elements_rtpbin_buffer_list-rtpbin_buffer_list.$(OBJEXT):  \
 elements/rtpbin_buffer_list$(EXEEXT): $(elements_rtpbin_buffer_list_OBJECTS) $(elements_rtpbin_buffer_list_DEPENDENCIES) $(EXTRA_elements_rtpbin_buffer_list_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/rtpbin_buffer_list$(EXEEXT)
 	$(AM_V_CCLD)$(elements_rtpbin_buffer_list_LINK) $(elements_rtpbin_buffer_list_OBJECTS) $(elements_rtpbin_buffer_list_LDADD) $(LIBS)
+elements/elements_rtpbundle-rtpbundle.$(OBJEXT):  \
+	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
+
+elements/rtpbundle$(EXEEXT): $(elements_rtpbundle_OBJECTS) $(elements_rtpbundle_DEPENDENCIES) $(EXTRA_elements_rtpbundle_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/rtpbundle$(EXEEXT)
+	$(AM_V_CCLD)$(elements_rtpbundle_LINK) $(elements_rtpbundle_OBJECTS) $(elements_rtpbundle_LDADD) $(LIBS)
 elements/elements_rtpcollision-rtpcollision.$(OBJEXT):  \
 	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2396,12 +2430,12 @@ elements/elements_spectrum-spectrum.$(OBJEXT):  \
 elements/spectrum$(EXEEXT): $(elements_spectrum_OBJECTS) $(elements_spectrum_DEPENDENCIES) $(EXTRA_elements_spectrum_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/spectrum$(EXEEXT)
 	$(AM_V_CCLD)$(elements_spectrum_LINK) $(elements_spectrum_OBJECTS) $(elements_spectrum_LDADD) $(LIBS)
-elements/splitmux.$(OBJEXT): elements/$(am__dirstamp) \
-	elements/$(DEPDIR)/$(am__dirstamp)
+elements/elements_splitmux-splitmux.$(OBJEXT):  \
+	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
 
 elements/splitmux$(EXEEXT): $(elements_splitmux_OBJECTS) $(elements_splitmux_DEPENDENCIES) $(EXTRA_elements_splitmux_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/splitmux$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(elements_splitmux_OBJECTS) $(elements_splitmux_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(elements_splitmux_LINK) $(elements_splitmux_OBJECTS) $(elements_splitmux_LDADD) $(LIBS)
 elements/elements_sunaudio-sunaudio.$(OBJEXT):  \
 	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2622,8 +2656,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rganalysis-rganalysis.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rglimiter-rglimiter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rgvolume-rgvolume.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtp_payloading-rtp-payloading.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpaux-rtpaux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpbin_buffer_list-rtpbin_buffer_list.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpbundle-rtpbundle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpcollision-rtpcollision.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtph261-rtph261.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtph263-rtph263.Po@am__quote@
@@ -2633,6 +2669,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpsession-rtpsession.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_souphttpsrc-souphttpsrc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_spectrum-spectrum.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_splitmux-splitmux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_sunaudio-sunaudio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_udpsrc-udpsrc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_videocrop-videocrop.Po@am__quote@
@@ -2651,11 +2688,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/matroskaparse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/mpegaudioparse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/qtdemux.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/rtp-payloading.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/rtpbin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/rtpvp9.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/shapewipe.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/splitmux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/udpsink.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/videobox.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/vp8dec.Po@am__quote@
@@ -3141,6 +3176,20 @@ elements/elements_rgvolume-rgvolume.obj: elements/rgvolume.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rgvolume_CFLAGS) $(CFLAGS) -c -o elements/elements_rgvolume-rgvolume.obj `if test -f 'elements/rgvolume.c'; then $(CYGPATH_W) 'elements/rgvolume.c'; else $(CYGPATH_W) '$(srcdir)/elements/rgvolume.c'; fi`
 
+elements/elements_rtp_payloading-rtp-payloading.o: elements/rtp-payloading.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtp_payloading_CFLAGS) $(CFLAGS) -MT elements/elements_rtp_payloading-rtp-payloading.o -MD -MP -MF elements/$(DEPDIR)/elements_rtp_payloading-rtp-payloading.Tpo -c -o elements/elements_rtp_payloading-rtp-payloading.o `test -f 'elements/rtp-payloading.c' || echo '$(srcdir)/'`elements/rtp-payloading.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtp_payloading-rtp-payloading.Tpo elements/$(DEPDIR)/elements_rtp_payloading-rtp-payloading.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtp-payloading.c' object='elements/elements_rtp_payloading-rtp-payloading.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtp_payloading_CFLAGS) $(CFLAGS) -c -o elements/elements_rtp_payloading-rtp-payloading.o `test -f 'elements/rtp-payloading.c' || echo '$(srcdir)/'`elements/rtp-payloading.c
+
+elements/elements_rtp_payloading-rtp-payloading.obj: elements/rtp-payloading.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtp_payloading_CFLAGS) $(CFLAGS) -MT elements/elements_rtp_payloading-rtp-payloading.obj -MD -MP -MF elements/$(DEPDIR)/elements_rtp_payloading-rtp-payloading.Tpo -c -o elements/elements_rtp_payloading-rtp-payloading.obj `if test -f 'elements/rtp-payloading.c'; then $(CYGPATH_W) 'elements/rtp-payloading.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtp-payloading.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtp_payloading-rtp-payloading.Tpo elements/$(DEPDIR)/elements_rtp_payloading-rtp-payloading.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtp-payloading.c' object='elements/elements_rtp_payloading-rtp-payloading.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtp_payloading_CFLAGS) $(CFLAGS) -c -o elements/elements_rtp_payloading-rtp-payloading.obj `if test -f 'elements/rtp-payloading.c'; then $(CYGPATH_W) 'elements/rtp-payloading.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtp-payloading.c'; fi`
+
 elements/elements_rtpaux-rtpaux.o: elements/rtpaux.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpaux_CFLAGS) $(CFLAGS) -MT elements/elements_rtpaux-rtpaux.o -MD -MP -MF elements/$(DEPDIR)/elements_rtpaux-rtpaux.Tpo -c -o elements/elements_rtpaux-rtpaux.o `test -f 'elements/rtpaux.c' || echo '$(srcdir)/'`elements/rtpaux.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtpaux-rtpaux.Tpo elements/$(DEPDIR)/elements_rtpaux-rtpaux.Po
@@ -3168,6 +3217,20 @@ elements/elements_rtpbin_buffer_list-rtpbin_buffer_list.obj: elements/rtpbin_buf
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtpbin_buffer_list.c' object='elements/elements_rtpbin_buffer_list-rtpbin_buffer_list.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpbin_buffer_list_CFLAGS) $(CFLAGS) -c -o elements/elements_rtpbin_buffer_list-rtpbin_buffer_list.obj `if test -f 'elements/rtpbin_buffer_list.c'; then $(CYGPATH_W) 'elements/rtpbin_buffer_list.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpbin_buffer_list.c'; fi`
+
+elements/elements_rtpbundle-rtpbundle.o: elements/rtpbundle.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpbundle_CFLAGS) $(CFLAGS) -MT elements/elements_rtpbundle-rtpbundle.o -MD -MP -MF elements/$(DEPDIR)/elements_rtpbundle-rtpbundle.Tpo -c -o elements/elements_rtpbundle-rtpbundle.o `test -f 'elements/rtpbundle.c' || echo '$(srcdir)/'`elements/rtpbundle.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtpbundle-rtpbundle.Tpo elements/$(DEPDIR)/elements_rtpbundle-rtpbundle.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtpbundle.c' object='elements/elements_rtpbundle-rtpbundle.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpbundle_CFLAGS) $(CFLAGS) -c -o elements/elements_rtpbundle-rtpbundle.o `test -f 'elements/rtpbundle.c' || echo '$(srcdir)/'`elements/rtpbundle.c
+
+elements/elements_rtpbundle-rtpbundle.obj: elements/rtpbundle.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpbundle_CFLAGS) $(CFLAGS) -MT elements/elements_rtpbundle-rtpbundle.obj -MD -MP -MF elements/$(DEPDIR)/elements_rtpbundle-rtpbundle.Tpo -c -o elements/elements_rtpbundle-rtpbundle.obj `if test -f 'elements/rtpbundle.c'; then $(CYGPATH_W) 'elements/rtpbundle.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpbundle.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtpbundle-rtpbundle.Tpo elements/$(DEPDIR)/elements_rtpbundle-rtpbundle.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtpbundle.c' object='elements/elements_rtpbundle-rtpbundle.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpbundle_CFLAGS) $(CFLAGS) -c -o elements/elements_rtpbundle-rtpbundle.obj `if test -f 'elements/rtpbundle.c'; then $(CYGPATH_W) 'elements/rtpbundle.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpbundle.c'; fi`
 
 elements/elements_rtpcollision-rtpcollision.o: elements/rtpcollision.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpcollision_CFLAGS) $(CFLAGS) -MT elements/elements_rtpcollision-rtpcollision.o -MD -MP -MF elements/$(DEPDIR)/elements_rtpcollision-rtpcollision.Tpo -c -o elements/elements_rtpcollision-rtpcollision.o `test -f 'elements/rtpcollision.c' || echo '$(srcdir)/'`elements/rtpcollision.c
@@ -3294,6 +3357,20 @@ elements/elements_spectrum-spectrum.obj: elements/spectrum.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/spectrum.c' object='elements/elements_spectrum-spectrum.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_spectrum_CFLAGS) $(CFLAGS) -c -o elements/elements_spectrum-spectrum.obj `if test -f 'elements/spectrum.c'; then $(CYGPATH_W) 'elements/spectrum.c'; else $(CYGPATH_W) '$(srcdir)/elements/spectrum.c'; fi`
+
+elements/elements_splitmux-splitmux.o: elements/splitmux.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_splitmux_CFLAGS) $(CFLAGS) -MT elements/elements_splitmux-splitmux.o -MD -MP -MF elements/$(DEPDIR)/elements_splitmux-splitmux.Tpo -c -o elements/elements_splitmux-splitmux.o `test -f 'elements/splitmux.c' || echo '$(srcdir)/'`elements/splitmux.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_splitmux-splitmux.Tpo elements/$(DEPDIR)/elements_splitmux-splitmux.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/splitmux.c' object='elements/elements_splitmux-splitmux.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_splitmux_CFLAGS) $(CFLAGS) -c -o elements/elements_splitmux-splitmux.o `test -f 'elements/splitmux.c' || echo '$(srcdir)/'`elements/splitmux.c
+
+elements/elements_splitmux-splitmux.obj: elements/splitmux.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_splitmux_CFLAGS) $(CFLAGS) -MT elements/elements_splitmux-splitmux.obj -MD -MP -MF elements/$(DEPDIR)/elements_splitmux-splitmux.Tpo -c -o elements/elements_splitmux-splitmux.obj `if test -f 'elements/splitmux.c'; then $(CYGPATH_W) 'elements/splitmux.c'; else $(CYGPATH_W) '$(srcdir)/elements/splitmux.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_splitmux-splitmux.Tpo elements/$(DEPDIR)/elements_splitmux-splitmux.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/splitmux.c' object='elements/elements_splitmux-splitmux.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_splitmux_CFLAGS) $(CFLAGS) -c -o elements/elements_splitmux-splitmux.obj `if test -f 'elements/splitmux.c'; then $(CYGPATH_W) 'elements/splitmux.c'; else $(CYGPATH_W) '$(srcdir)/elements/splitmux.c'; fi`
 
 elements/elements_sunaudio-sunaudio.o: elements/sunaudio.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_sunaudio_CFLAGS) $(CFLAGS) -MT elements/elements_sunaudio-sunaudio.o -MD -MP -MF elements/$(DEPDIR)/elements_sunaudio-sunaudio.Tpo -c -o elements/elements_sunaudio-sunaudio.o `test -f 'elements/sunaudio.c' || echo '$(srcdir)/'`elements/sunaudio.c
@@ -4096,6 +4173,13 @@ elements/rtpbin.log: elements/rtpbin$(EXEEXT)
 elements/rtpbin_buffer_list.log: elements/rtpbin_buffer_list$(EXEEXT)
 	@p='elements/rtpbin_buffer_list$(EXEEXT)'; \
 	b='elements/rtpbin_buffer_list'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+elements/rtpbundle.log: elements/rtpbundle$(EXEEXT)
+	@p='elements/rtpbundle$(EXEEXT)'; \
+	b='elements/rtpbundle'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

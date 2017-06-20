@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins 0.8.3\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-02-23 15:16+0200\n"
+"POT-Creation-Date: 2017-05-04 15:05+0300\n"
 "PO-Revision-Date: 2004-08-07 20:29+0200\n"
 "Last-Translator: Laurent Dhima <laurenti@alblinux.net>\n"
 "Language-Team: Albanian <begraj@hotmail.com>\n"
@@ -34,10 +34,6 @@ msgid "No URL set."
 msgstr ""
 
 #, fuzzy
-msgid "Server does not support seeking."
-msgstr "Dispozitivi juaj OSS mund të mos provohet korrektësisht"
-
-#, fuzzy
 msgid "Could not resolve server name."
 msgstr "E pamundur mbyllja e dispozitivit të kontrollit \"%s\"."
 
@@ -54,6 +50,10 @@ msgstr ""
 
 msgid "Server sent bad data."
 msgstr ""
+
+#, fuzzy
+msgid "Server does not support seeking."
+msgstr "Dispozitivi juaj OSS mund të mos provohet korrektësisht"
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Input audio i gabuar ose mungon, stream AVI mund të jetë i dëmtuar."

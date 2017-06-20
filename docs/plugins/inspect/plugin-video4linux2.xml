@@ -3,7 +3,7 @@
   <description>elements for Video 4 Linux</description>
   <filename>../../sys/v4l2/.libs/libgstvideo4linux2.so</filename>
   <basename>libgstvideo4linux2.so</basename>
-  <version>1.10.4</version>
+  <version>1.12.0</version>
   <license>LGPL</license>
   <source>gst-plugins-good</source>
   <package>GStreamer Good Plug-ins source release</package>
@@ -38,7 +38,7 @@
       <longname>Video (video4linux2) Source</longname>
       <class>Source/Video</class>
       <description>Reads frames from a Video4Linux2 device</description>
-      <author>Edgard Lima &lt;edgard.lima@indt.org.br&gt;, Stefan Kost &lt;ensonic@users.sf.net&gt;</author>
+      <author>Edgard Lima &lt;edgard.lima@gmail.com&gt;, Stefan Kost &lt;ensonic@users.sf.net&gt;</author>
       <pads>
         <caps>
           <name>src</name>

@@ -1,24 +1,25 @@
 # Danish translation of gst-plugins-good.
-# Copyright (C) 2016 gst.
+# Copyright (C) 2017 gst.
 # This file is distributed under the same license as the gst-plugins-good package.
 # Mogens Jaeger <mogens@jaeger.tf>, 2007.
-# Joe Hansen <joedalton2@yahoo.dk>, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016.
+# Joe Hansen <joedalton2@yahoo.dk>, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017.
 #
 # gain -> forhøjelse
 # boost -> øgning?
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good-1.7.2\n"
+"Project-Id-Version: gst-plugins-good-1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-05-04 15:05+0300\n"
-"PO-Revision-Date: 2016-03-27 23:54+0200\n"
+"POT-Creation-Date: 2017-06-20 11:18+0300\n"
+"PO-Revision-Date: 2017-05-21 23:54+0200\n"
 "Last-Translator: Joe Hansen <joedalton2@yahoo.dk>\n"
 "Language-Team: Danish <dansk@dansk-gruppen.dk>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
 
 msgid "Jack server not found"
 msgstr "Jack-server blev ikke fundet"
@@ -261,13 +262,11 @@ msgid "Video device returned invalid dimensions."
 msgstr "Videoenhed returnerede ugyldige dimensioner."
 
 # http://en.wikipedia.org/wiki/Interlaced_video
-#, fuzzy
 msgid "Video device uses an unsupported interlacing method."
-msgstr "Videoenheder bruger en interlace-metode, der ikke er understøttet."
+msgstr "Videoenheden bruger en interlace-metode, der ikke er understøttet."
 
-#, fuzzy
 msgid "Video device uses an unsupported pixel format."
-msgstr "Videoenheder bruger et billedpunktsformat, der ikke er understøttet."
+msgstr "Videoenheden bruger et billedpunktsformat, der ikke er understøttet."
 
 msgid "Failed to configure internal buffer pool."
 msgstr "Kunne ikke konfigurere intern mellemlagerkø."
@@ -427,12 +426,3 @@ msgstr "Ændring af opløsning under kørsel er endnu ikke understøttet."
 
 msgid "Cannot operate without a clock"
 msgstr "Kan ikke fungere uden et ur"
-
-#~ msgid "Internal data stream error."
-#~ msgstr "Intern datastrømsfejl."
-
-#~ msgid "Internal data flow error."
-#~ msgstr "Intern datastrømsfejl."
-
-#~ msgid "Device '%s' does not support video capture"
-#~ msgstr "Enheden »%s« understøtter ikke videooptagelse"

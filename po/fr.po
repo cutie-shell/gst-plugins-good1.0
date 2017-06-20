@@ -4,20 +4,21 @@
 #
 # Nicolas Velin <nicolas@velin.fr>, 2008.
 # Claude Paroz <claude@2xlibre.net>, 2008-2011.
-# Stéphane Aulery <lkppo@free.fr>, 2015.
+# Stéphane Aulery <lkppo@free.fr>, 2015, 2017.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.7.2\n"
+"Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-05-04 15:05+0300\n"
-"PO-Revision-Date: 2016-02-20 16:27+0100\n"
+"POT-Creation-Date: 2017-06-20 11:18+0300\n"
+"PO-Revision-Date: 2017-05-05 22:27+0200\n"
 "Last-Translator: Stéphane Aulery <lkppo@free.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
 
 msgid "Jack server not found"
 msgstr "serveur Jack introuvable"
@@ -267,13 +268,11 @@ msgstr "Le périphérique vidéo n’a pas fourni de format de sortie."
 msgid "Video device returned invalid dimensions."
 msgstr "Le périphérique vidéo a retourné une dimensions incorrecte."
 
-#, fuzzy
 msgid "Video device uses an unsupported interlacing method."
 msgstr ""
 "Le périphérique vidéo utilise une méthode d’entrelacement non prise en "
 "charge."
 
-#, fuzzy
 msgid "Video device uses an unsupported pixel format."
 msgstr "Le périphérique vidéo utilise un format de pixel non pris en charge."
 

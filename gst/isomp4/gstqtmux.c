@@ -2545,7 +2545,7 @@ gst_qt_mux_update_edit_lists (GstQTMux * qtmux)
         if (lateness > 0) {
           GST_DEBUG_OBJECT (qtmux,
               "Pad %s is a late stream by %" GST_TIME_FORMAT,
-              GST_PAD_NAME (qtpad->collect.pad), GST_TIME_ARGS (lateness));
+              GST_PAD_NAME (qtpad->collect.pad), GST_TIME_ARGS (diff));
 
           atom_trak_set_elst_entry (qtpad->trak, 0, lateness, (guint32) - 1,
               (guint32) (1 * 65536.0));
@@ -2599,6 +2599,10 @@ gst_qt_mux_update_timecode (GstQTMux * qtmux, GstQTPad * qtpad)
   GstBuffer *buf;
   GstMapInfo map;
   guint64 offset = qtpad->tc_pos;
+  GstQTMuxClass *qtmux_klass = (GstQTMuxClass *) (G_OBJECT_GET_CLASS (qtmux));
+
+  if (qtmux_klass->format != GST_QT_MUX_FORMAT_QT)
+    return GST_FLOW_OK;
 
   g_assert (qtpad->tc_pos != -1);
 
@@ -3112,6 +3116,10 @@ gst_qt_mux_check_and_update_timecode (GstQTMux * qtmux, GstQTPad * pad,
   GstBuffer *tc_buf;
   gsize szret;
   guint32 frames_since_daily_jam;
+  GstQTMuxClass *qtmux_klass = (GstQTMuxClass *) (G_OBJECT_GET_CLASS (qtmux));
+
+  if (qtmux_klass->format != GST_QT_MUX_FORMAT_QT)
+    return ret;
 
   if (buf == NULL || (pad->tc_trak != NULL && pad->tc_pos == -1))
     return ret;

@@ -49,7 +49,7 @@ debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstrtsp.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstshapewipe.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstshout2.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstsmpte.so
-debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstsouphttpsrc.so
+debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstsoup.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstspectrum.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstspeex.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgsttaglib.so

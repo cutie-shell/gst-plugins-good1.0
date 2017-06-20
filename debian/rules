@@ -45,7 +45,7 @@ gst_abi=$(gst_major).$(gst_minor)
 gst_lib=libgstreamer$(gst_abi)-0
 gst_lib_dev=libgstreamer$(gst_abi)-dev
 # what gstreamer version is needed
-gst_lib_dev_dep=$(gst_lib_dev) (>= 1.10.0)
+gst_lib_dev_dep=$(gst_lib_dev) (>= 1.12.0)
 
 gst_pkgname=gstreamer$(gst_abi)
 gst_deb_abi=$(gst_abi)-0
@@ -87,7 +87,7 @@ endif
 ifeq ($(DEB_HOST_ARCH_OS),hurd)
 CONFIG_ARGS += --disable-oss4
 else
-oss4 = debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/gstreamer-$(gst_abi)/libgstoss4audio.so
+oss4 = debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/gstreamer-$(gst_abi)/libgstoss4.so
 endif
 
 ifeq ($(DEB_HOST_ARCH_OS),linux)

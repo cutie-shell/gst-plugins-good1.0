@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.7.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-02-23 15:16+0200\n"
+"POT-Creation-Date: 2017-05-04 15:05+0300\n"
 "PO-Revision-Date: 2016-02-20 16:40+0100\n"
 "Last-Translator: Freek de Kruijf <f.de.kruijf@gmail.com>\n"
 "Language-Team: Dutch <vertaling@vrijschrift.org>\n"
@@ -34,9 +34,6 @@ msgstr "Kan geen verbinding maken met server"
 msgid "No URL set."
 msgstr "Geen URL ingesteld."
 
-msgid "Server does not support seeking."
-msgstr "Zoeken wordt door de server niet ondersteund."
-
 msgid "Could not resolve server name."
 msgstr "Kan de servernaam niet opzoeken."
 
@@ -54,6 +51,9 @@ msgstr ""
 
 msgid "Server sent bad data."
 msgstr "De server stuurde onjuiste gegevens."
+
+msgid "Server does not support seeking."
+msgstr "Zoeken wordt door de server niet ondersteund."
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Geen of ongeldig invoergeluid, AVI-stroom zal slecht zijn."

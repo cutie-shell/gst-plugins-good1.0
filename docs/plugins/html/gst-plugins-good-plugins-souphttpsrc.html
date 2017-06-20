@@ -246,8 +246,8 @@ and writes it to a local file.
 4</pre></td>
         <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v souphttpsrc user<span class="gtkdoc opt">-</span>agent<span class="gtkdoc opt">=</span><span class="string">&quot;FooPlayer 0.99 beta&quot;</span>
     automatic<span class="gtkdoc opt">-</span>redirect<span class="gtkdoc opt">=</span><span class="keyword">false</span> proxy<span class="gtkdoc opt">=</span>http<span class="gtkdoc opt">:</span><span class="gtkdoc slc">//proxy.intranet.local:8080</span>
-    location<span class="gtkdoc opt">=</span>http<span class="gtkdoc opt">:</span><span class="gtkdoc slc">//music.foobar.com/demo.mp3 ! mad ! audioconvert</span>
-    <span class="gtkdoc opt">!</span> audioresample <span class="gtkdoc opt">!</span> alsasink</pre></td>
+    location<span class="gtkdoc opt">=</span>http<span class="gtkdoc opt">:</span><span class="gtkdoc slc">//music.foobar.com/demo.mp3 ! mpgaudioparse</span>
+    <span class="gtkdoc opt">!</span> mpg123audiodec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioresample <span class="gtkdoc opt">!</span> autoaudiosink</pre></td>
       </tr>
     </tbody>
   </table>
@@ -397,7 +397,7 @@ multiplexer to timestamp the frames in the resulting file.
 <pre class="programlisting">  “user-agent”               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
 <p>Value of the User-Agent HTTP request header field.</p>
 <p>Flags: Read / Write</p>
-<p>Default value: "GStreamer souphttpsrc "</p>
+<p>Default value: "GStreamer souphttpsrc 1.12.0 "</p>
 </div>
 <hr>
 <div class="refsect2">

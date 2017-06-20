@@ -1,7 +1,7 @@
 /* GStreamer
  *
  * Copyright (C) 2001-2002 Ronald Bultje <rbultje@ronald.bitfreak.net>
- *               2006 Edgard Lima <edgard.lima@indt.org.br>
+ *               2006 Edgard Lima <edgard.lima@gmail.com>
  *
  * gstv4l2object.c: base class for V4L2 elements
  *
@@ -17,10 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301,
  * USA.
  */
-
-/* FIXME 0.11: suppress warnings for deprecated API such as GValueArray
- * with newer GLib versions (>= 2.31.0) */
-#define GLIB_DISABLE_DEPRECATION_WARNINGS
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -3074,9 +3070,10 @@ store_info:
   GST_DEBUG_OBJECT (v4l2object->element, "Got sizeimage %" G_GSIZE_FORMAT,
       info->size);
 
-  /* to avoid copies we need video meta if top or left padding */
+  /* to avoid copies we need video meta if there is padding */
   v4l2object->need_video_meta =
-      ((align->padding_top + align->padding_left) != 0);
+      ((align->padding_top + align->padding_left + align->padding_right +
+          align->padding_bottom) != 0);
 
   /* ... or if stride is non "standard" */
   if (!standard_stride)
@@ -3463,13 +3460,14 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
   if (v4l2_ioctl (fd, VIDIOC_G_PARM, &streamparm) < 0)
     goto get_parm_failed;
 
-  GST_VIDEO_INFO_FPS_N (&info) =
-      streamparm.parm.capture.timeperframe.denominator;
-  GST_VIDEO_INFO_FPS_D (&info) = streamparm.parm.capture.timeperframe.numerator;
-
   if (v4l2object->type == V4L2_BUF_TYPE_VIDEO_CAPTURE
       || v4l2object->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
-    GST_DEBUG_OBJECT (v4l2object->element, "Got framerate: %u/%u",
+    GST_VIDEO_INFO_FPS_N (&info) =
+        streamparm.parm.capture.timeperframe.denominator;
+    GST_VIDEO_INFO_FPS_D (&info) =
+        streamparm.parm.capture.timeperframe.numerator;
+
+    GST_DEBUG_OBJECT (v4l2object->element, "Got capture framerate: %u/%u",
         streamparm.parm.capture.timeperframe.denominator,
         streamparm.parm.capture.timeperframe.numerator);
 
@@ -3478,13 +3476,13 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
      * causing them to not output data (several models of Thinkpad cameras
      * have this problem at least).
      * So, don't skip. */
-    GST_LOG_OBJECT (v4l2object->element, "Setting framerate to %u/%u", fps_n,
-        fps_d);
+    GST_LOG_OBJECT (v4l2object->element, "Setting capture framerate to %u/%u",
+        fps_n, fps_d);
     /* We want to change the frame rate, so check whether we can. Some cheap USB
      * cameras don't have the capability */
     if ((streamparm.parm.capture.capability & V4L2_CAP_TIMEPERFRAME) == 0) {
       GST_DEBUG_OBJECT (v4l2object->element,
-          "Not setting framerate (not supported)");
+          "Not setting capture framerate (not supported)");
       goto done;
     }
 
@@ -3502,12 +3500,54 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
       fps_d = streamparm.parm.capture.timeperframe.numerator;
       fps_n = streamparm.parm.capture.timeperframe.denominator;
 
-      GST_INFO_OBJECT (v4l2object->element, "Set framerate to %u/%u", fps_n,
-          fps_d);
+      GST_INFO_OBJECT (v4l2object->element, "Set capture framerate to %u/%u",
+          fps_n, fps_d);
     } else {
       /* fix v4l2 capture driver to provide framerate values */
       GST_WARNING_OBJECT (v4l2object->element,
           "Reuse caps framerate %u/%u - fix v4l2 capture driver", fps_n, fps_d);
+    }
+
+    GST_VIDEO_INFO_FPS_N (&info) = fps_n;
+    GST_VIDEO_INFO_FPS_D (&info) = fps_d;
+  } else if (v4l2object->type == V4L2_BUF_TYPE_VIDEO_OUTPUT
+      || v4l2object->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+    GST_VIDEO_INFO_FPS_N (&info) =
+        streamparm.parm.output.timeperframe.denominator;
+    GST_VIDEO_INFO_FPS_D (&info) =
+        streamparm.parm.output.timeperframe.numerator;
+
+    GST_DEBUG_OBJECT (v4l2object->element, "Got output framerate: %u/%u",
+        streamparm.parm.output.timeperframe.denominator,
+        streamparm.parm.output.timeperframe.numerator);
+
+    GST_LOG_OBJECT (v4l2object->element, "Setting output framerate to %u/%u",
+        fps_n, fps_d);
+    if ((streamparm.parm.output.capability & V4L2_CAP_TIMEPERFRAME) == 0) {
+      GST_DEBUG_OBJECT (v4l2object->element,
+          "Not setting output framerate (not supported)");
+      goto done;
+    }
+
+    /* Note: V4L2 wants the frame interval, we have the frame rate */
+    streamparm.parm.output.timeperframe.numerator = fps_d;
+    streamparm.parm.output.timeperframe.denominator = fps_n;
+
+    if (v4l2_ioctl (fd, VIDIOC_S_PARM, &streamparm) < 0)
+      goto set_parm_failed;
+
+    if (streamparm.parm.output.timeperframe.numerator > 0 &&
+        streamparm.parm.output.timeperframe.denominator > 0) {
+      /* get new values */
+      fps_d = streamparm.parm.output.timeperframe.numerator;
+      fps_n = streamparm.parm.output.timeperframe.denominator;
+
+      GST_INFO_OBJECT (v4l2object->element, "Set output framerate to %u/%u",
+          fps_n, fps_d);
+    } else {
+      /* fix v4l2 output driver to provide framerate values */
+      GST_WARNING_OBJECT (v4l2object->element,
+          "Reuse caps framerate %u/%u - fix v4l2 output driver", fps_n, fps_d);
     }
 
     GST_VIDEO_INFO_FPS_N (&info) = fps_n;
@@ -3925,7 +3965,6 @@ gst_v4l2_object_get_caps (GstV4l2Object * v4l2object, GstCaps * filter)
   }
 
   GST_INFO_OBJECT (v4l2object->element, "probed caps: %" GST_PTR_FORMAT, ret);
-  LOG_CAPS (v4l2object->element, ret);
 
   return ret;
 }

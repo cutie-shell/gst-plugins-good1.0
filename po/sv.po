@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.7.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-02-23 15:16+0200\n"
+"POT-Creation-Date: 2017-05-04 15:05+0300\n"
 "PO-Revision-Date: 2016-02-20 16:13+0100\n"
 "Last-Translator: Sebastian Rasmussen <sebras@gmail.com>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -36,9 +36,6 @@ msgstr "Kunde inte ansluta till servern"
 msgid "No URL set."
 msgstr "Ingen URL inställd."
 
-msgid "Server does not support seeking."
-msgstr "Servern stöder inte sökning/spolning."
-
 msgid "Could not resolve server name."
 msgstr "Kunde inte slå upp servernamnet."
 
@@ -54,6 +51,9 @@ msgstr "Ett nätverksfel inträffade eller servern stängde anslutningen ovänta
 
 msgid "Server sent bad data."
 msgstr "Servern skickade felaktigt data."
+
+msgid "Server does not support seeking."
+msgstr "Servern stöder inte sökning/spolning."
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Inget eller ogiltigt ingångsljud. AVI-strömmen kommer att skadas."

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins 0.8.1\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-02-23 15:16+0200\n"
+"POT-Creation-Date: 2017-05-04 15:05+0300\n"
 "PO-Revision-Date: 2004-04-26 10:41-0400\n"
 "Last-Translator: Gareth Owen <gowen72@yahoo.com>\n"
 "Language-Team: English (British) <en_gb@li.org>\n"
@@ -34,10 +34,6 @@ msgid "No URL set."
 msgstr ""
 
 #, fuzzy
-msgid "Server does not support seeking."
-msgstr "Your oss device could not be probed correctly"
-
-#, fuzzy
 msgid "Could not resolve server name."
 msgstr "Could not close control device \"%s\"."
 
@@ -54,6 +50,10 @@ msgstr ""
 
 msgid "Server sent bad data."
 msgstr ""
+
+#, fuzzy
+msgid "Server does not support seeking."
+msgstr "Your oss device could not be probed correctly"
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "No or invalid input audio, AVI stream will be corrupt."

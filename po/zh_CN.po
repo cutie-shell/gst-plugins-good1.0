@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.10.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-02-23 15:16+0200\n"
+"POT-Creation-Date: 2017-05-04 15:05+0300\n"
 "PO-Revision-Date: 2016-11-02 13:39+0800\n"
 "Last-Translator: Tianze Wang <zwpwjwtz@126.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -35,9 +35,6 @@ msgstr "无法连接至服务器"
 msgid "No URL set."
 msgstr "未设置URL。"
 
-msgid "Server does not support seeking."
-msgstr "设备不支持定位。"
-
 msgid "Could not resolve server name."
 msgstr "无法解析服务器名。"
 
@@ -53,6 +50,9 @@ msgstr "发生了网络错误，或服务器意外地关闭了连接。"
 
 msgid "Server sent bad data."
 msgstr "服务器发送了错误的数据。"
+
+msgid "Server does not support seeking."
+msgstr "设备不支持定位。"
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "没有或无效的输入音频，AVI 流将损坏。"

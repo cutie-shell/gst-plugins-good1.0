@@ -19,6 +19,8 @@
  */
 #include <gst/check/gstcheck.h>
 #include <gst/check/gstharness.h>
+#include <gst/audio/audio.h>
+#include <gst/base/base.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -649,6 +651,174 @@ GST_START_TEST (rtp_h264)
 }
 
 GST_END_TEST;
+
+/* H264 data generated with:
+ * videotestsrc pattern=black ! video/x-raw,width=16,height=16 ! openh264enc */
+static const guint8 h264_16x16_black_bs[] = {
+  0x00, 0x00, 0x00, 0x01, 0x67, 0x42, 0xd0, 0x0b,
+  0x8c, 0x8d, 0x4e, 0x40, 0x3c, 0x22, 0x11, 0xa8,
+  0x00, 0x00, 0x00, 0x01, 0x68, 0xce, 0x3c, 0x80,
+  0x00, 0x00, 0x00, 0x01, 0x65, 0xb8, 0x00, 0x04,
+  0x00, 0x00, 0x09, 0xe4, 0xc5, 0x00, 0x01, 0x19,
+  0xfc
+};
+
+static GstSample *
+rtp_h264depay_run (const gchar * stream_format)
+{
+  GstHarness *h;
+  GstSample *sample;
+  GstBuffer *buf;
+  GstEvent *e;
+  GstCaps *out_caps;
+  GstCaps *in_caps;
+  gboolean seen_caps = FALSE;
+  gsize size;
+
+  h = gst_harness_new_parse ("rtph264pay ! rtph264depay");
+
+  /* Our input data is in byte-stream format (not that it matters) */
+  in_caps = gst_caps_new_simple ("video/x-h264",
+      "stream-format", G_TYPE_STRING, "byte-stream",
+      "alignment", G_TYPE_STRING, "au",
+      "profile", G_TYPE_STRING, "baseline",
+      "width", G_TYPE_INT, 16,
+      "height", G_TYPE_INT, 16, "framerate", GST_TYPE_FRACTION, 30, 1, NULL);
+
+  /* Force rtph264depay to output format as requested */
+  out_caps = gst_caps_new_simple ("video/x-h264",
+      "stream-format", G_TYPE_STRING, stream_format,
+      "alignment", G_TYPE_STRING, "au", NULL);
+
+  gst_harness_set_caps (h, in_caps, out_caps);
+  in_caps = NULL;
+  out_caps = NULL;
+
+  gst_harness_play (h);
+
+  size = sizeof (h264_16x16_black_bs);
+  buf = gst_buffer_new_wrapped (g_memdup (h264_16x16_black_bs, size), size);
+  fail_unless_equals_int (gst_harness_push (h, buf), GST_FLOW_OK);
+  fail_unless (gst_harness_push_event (h, gst_event_new_eos ()));
+
+  while ((e = gst_harness_try_pull_event (h))) {
+    if (GST_EVENT_TYPE (e) == GST_EVENT_CAPS) {
+      GstCaps *caps = NULL;
+
+      gst_event_parse_caps (e, &caps);
+      gst_caps_replace (&out_caps, caps);
+      seen_caps = TRUE;
+    }
+    gst_event_unref (e);
+  }
+  fail_unless (seen_caps);
+
+  buf = gst_harness_pull (h);
+  sample = gst_sample_new (buf, out_caps, NULL, NULL);
+  gst_buffer_unref (buf);
+  gst_caps_replace (&out_caps, NULL);
+
+  gst_harness_teardown (h);
+  return sample;
+}
+
+GST_START_TEST (rtp_h264depay_avc)
+{
+  const GValue *val;
+  GstStructure *st;
+  GstMapInfo map = GST_MAP_INFO_INIT;
+  GstBuffer *buf;
+  GstSample *s;
+  GstCaps *caps;
+
+  s = rtp_h264depay_run ("avc");
+
+  /* must have codec_data in output caps */
+  caps = gst_sample_get_caps (s);
+  st = gst_caps_get_structure (caps, 0);
+  GST_LOG ("caps: %" GST_PTR_FORMAT, caps);
+  fail_unless (gst_structure_has_field (st, "stream-format"));
+  fail_unless (gst_structure_has_field (st, "alignment"));
+  fail_unless (gst_structure_has_field (st, "level"));
+  fail_unless (gst_structure_has_field (st, "profile"));
+  val = gst_structure_get_value (st, "codec_data");
+  fail_unless (val != NULL);
+
+  buf = gst_sample_get_buffer (s);
+  fail_unless (gst_buffer_map (buf, &map, GST_MAP_READ));
+  GST_MEMDUMP ("H.264 AVC frame", map.data, map.size);
+  fail_unless (map.size >= 4 + 13);
+  /* Want IDR slice as very first thing.
+   * We assume nal size markers are 4 bytes here. */
+  fail_unless_equals_int (map.data[4] & 0x1f, 5);
+  gst_buffer_unmap (buf, &map);
+
+  gst_sample_unref (s);
+}
+
+GST_END_TEST;
+
+GST_START_TEST (rtp_h264depay_bytestream)
+{
+  GstByteReader br;
+  GstStructure *st;
+  GstMapInfo map = GST_MAP_INFO_INIT;
+  GstBuffer *buf;
+  GstSample *s;
+  GstCaps *caps;
+  guint32 dw;
+  guint8 b;
+  guint off, left;
+
+  s = rtp_h264depay_run ("byte-stream");
+
+  /* must not have codec_data in output caps */
+  caps = gst_sample_get_caps (s);
+  st = gst_caps_get_structure (caps, 0);
+  GST_LOG ("caps: %" GST_PTR_FORMAT, caps);
+  fail_if (gst_structure_has_field (st, "codec_data"));
+
+  buf = gst_sample_get_buffer (s);
+  fail_unless (gst_buffer_map (buf, &map, GST_MAP_READ));
+  GST_MEMDUMP ("H.264 byte-stream frame", map.data, map.size);
+  fail_unless (map.size > 40);
+  gst_byte_reader_init (&br, map.data, map.size);
+  /* We assume nal sync markers are 4 bytes... */
+  fail_unless (gst_byte_reader_get_uint32_be (&br, &dw));
+  fail_unless_equals_int (dw, 0x00000001);
+  /* Want SPS as very first thing */
+  fail_unless (gst_byte_reader_get_uint8 (&br, &b));
+  fail_unless_equals_int (b & 0x1f, 7);
+  /* Then, we want the PPS */
+  left = gst_byte_reader_get_remaining (&br);
+  off = gst_byte_reader_masked_scan_uint32 (&br, 0xffffffff, 1, 0, left);
+  fail_if (off == (guint) - 1);
+  gst_byte_reader_skip (&br, off + 4);
+  fail_unless (gst_byte_reader_get_uint8 (&br, &b));
+  fail_unless_equals_int (b & 0x1f, 8);
+  /* FIXME: looks like we get two sets of SPS/PPS ?! */
+  left = gst_byte_reader_get_remaining (&br);
+  off = gst_byte_reader_masked_scan_uint32 (&br, 0xffffffff, 1, 0, left);
+  fail_if (off == (guint) - 1);
+  gst_byte_reader_skip (&br, off + 4);
+  left = gst_byte_reader_get_remaining (&br);
+  off = gst_byte_reader_masked_scan_uint32 (&br, 0xffffffff, 1, 0, left);
+  fail_if (off == (guint) - 1);
+  gst_byte_reader_skip (&br, off + 4);
+  /* Finally, we want an IDR slice */
+  left = gst_byte_reader_get_remaining (&br);
+  off = gst_byte_reader_masked_scan_uint32 (&br, 0xffffffff, 1, 0, left);
+  fail_if (off == (guint) - 1);
+  gst_byte_reader_skip (&br, off + 4);
+  fail_unless (gst_byte_reader_get_uint8 (&br, &b));
+  fail_unless_equals_int (b & 0x1f, 5);
+  gst_buffer_unmap (buf, &map);
+
+  gst_sample_unref (s);
+}
+
+GST_END_TEST;
+
 static const guint8 rtp_h264_list_lt_mtu_frame_data[] =
     /* not packetized, next NAL starts with 0001 */
 { 0x00, 0x00, 0x00, 0x01, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1329,6 +1499,95 @@ GST_START_TEST (rtp_gst_custom_event)
 
 GST_END_TEST;
 
+GST_START_TEST (rtp_vorbis_renegotiate)
+{
+  GstElement *pipeline;
+  GstElement *enc, *pay, *depay, *dec, *sink;
+  GstPad *sinkpad, *srcpad;
+  GstCaps *templcaps, *caps, *filter, *srccaps;
+  GstSegment segment;
+  GstBuffer *buffer;
+  GstMapInfo map;
+  GstAudioInfo info;
+
+  pipeline = gst_pipeline_new (NULL);
+  enc = gst_element_factory_make ("vorbisenc", NULL);
+  pay = gst_element_factory_make ("rtpvorbispay", NULL);
+  depay = gst_element_factory_make ("rtpvorbisdepay", NULL);
+  dec = gst_element_factory_make ("vorbisdec", NULL);
+  sink = gst_element_factory_make ("fakesink", NULL);
+  g_object_set (sink, "async", FALSE, NULL);
+  gst_bin_add_many (GST_BIN (pipeline), enc, pay, depay, dec, sink, NULL);
+  fail_unless (gst_element_link_many (enc, pay, depay, dec, sink, NULL));
+  fail_unless_equals_int (gst_element_set_state (pipeline, GST_STATE_PLAYING),
+      GST_STATE_CHANGE_SUCCESS);
+
+  sinkpad = gst_element_get_static_pad (enc, "sink");
+  srcpad = gst_element_get_static_pad (dec, "src");
+
+  templcaps = gst_pad_get_pad_template_caps (sinkpad);
+  filter =
+      gst_caps_new_simple ("audio/x-raw", "channels", G_TYPE_INT, 2, "rate",
+      G_TYPE_INT, 44100, NULL);
+  caps = gst_caps_intersect (templcaps, filter);
+  caps = gst_caps_fixate (caps);
+
+  gst_segment_init (&segment, GST_FORMAT_TIME);
+  fail_unless (gst_pad_send_event (sinkpad,
+          gst_event_new_stream_start ("test")));
+  fail_unless (gst_pad_send_event (sinkpad, gst_event_new_caps (caps)));
+  fail_unless (gst_pad_send_event (sinkpad, gst_event_new_segment (&segment)));
+
+  gst_audio_info_from_caps (&info, caps);
+  buffer = gst_buffer_new_and_alloc (44100 * info.bpf);
+  gst_buffer_map (buffer, &map, GST_MAP_WRITE);
+  gst_audio_format_fill_silence (info.finfo, map.data, map.size);
+  gst_buffer_unmap (buffer, &map);
+  GST_BUFFER_PTS (buffer) = 0;
+  GST_BUFFER_DURATION (buffer) = 1 * GST_SECOND;
+
+  fail_unless_equals_int (gst_pad_chain (sinkpad, buffer), GST_FLOW_OK);
+
+  srccaps = gst_pad_get_current_caps (srcpad);
+  fail_unless (gst_caps_can_intersect (srccaps, caps));
+  gst_caps_unref (srccaps);
+
+  gst_caps_unref (caps);
+  gst_caps_unref (filter);
+  filter =
+      gst_caps_new_simple ("audio/x-raw", "channels", G_TYPE_INT, 2, "rate",
+      G_TYPE_INT, 48000, NULL);
+  caps = gst_caps_intersect (templcaps, filter);
+  caps = gst_caps_fixate (caps);
+
+  fail_unless (gst_pad_send_event (sinkpad, gst_event_new_caps (caps)));
+
+  gst_audio_info_from_caps (&info, caps);
+  buffer = gst_buffer_new_and_alloc (48000 * info.bpf);
+  gst_buffer_map (buffer, &map, GST_MAP_WRITE);
+  gst_audio_format_fill_silence (info.finfo, map.data, map.size);
+  gst_buffer_unmap (buffer, &map);
+  GST_BUFFER_PTS (buffer) = 0;
+  GST_BUFFER_DURATION (buffer) = 1 * GST_SECOND;
+  GST_BUFFER_FLAG_SET (buffer, GST_BUFFER_FLAG_DISCONT);
+
+  fail_unless_equals_int (gst_pad_chain (sinkpad, buffer), GST_FLOW_OK);
+
+  srccaps = gst_pad_get_current_caps (srcpad);
+  fail_unless (gst_caps_can_intersect (srccaps, caps));
+  gst_caps_unref (srccaps);
+
+  gst_caps_unref (caps);
+  gst_caps_unref (filter);
+  gst_caps_unref (templcaps);
+  gst_object_unref (sinkpad);
+  gst_object_unref (srcpad);
+  gst_element_set_state (pipeline, GST_STATE_NULL);
+  gst_object_unref (pipeline);
+}
+
+GST_END_TEST;
+
 /*
  * Creates the test suite.
  *
@@ -1356,6 +1615,8 @@ rtp_payloading_suite (void)
   tcase_add_test (tc_chain, rtp_h263);
   tcase_add_test (tc_chain, rtp_h263p);
   tcase_add_test (tc_chain, rtp_h264);
+  tcase_add_test (tc_chain, rtp_h264depay_avc);
+  tcase_add_test (tc_chain, rtp_h264depay_bytestream);
   tcase_add_test (tc_chain, rtp_h264_list_lt_mtu);
   tcase_add_test (tc_chain, rtp_h264_list_lt_mtu_avc);
   tcase_add_test (tc_chain, rtp_h264_list_gt_mtu);
@@ -1388,6 +1649,7 @@ rtp_payloading_suite (void)
     tcase_add_loop_test (tc_chain, rtp_jpeg_packet_loss, 0, 7);
   tcase_add_test (tc_chain, rtp_g729);
   tcase_add_test (tc_chain, rtp_gst_custom_event);
+  tcase_add_test (tc_chain, rtp_vorbis_renegotiate);
   return s;
 }
 

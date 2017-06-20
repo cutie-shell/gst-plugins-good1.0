@@ -94,6 +94,16 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-gdkpixbufoverlay.html#GstGdkPixbufOverlay--positioning-mode" title="The “positioning-mode” property">positioning-mode</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-gdkpixbufoverlay.html#GstGdkPixbufOverlay--coef-x" title="The “coef-x” property">coef-x</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-gdkpixbufoverlay.html#GstGdkPixbufOverlay--coef-y" title="The “coef-y” property">coef-y</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -117,7 +127,7 @@
         <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstObject.html#GstObject-struct">GstObject</a>
             <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElement.html#GstElement-struct">GstElement</a>
                 <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-libs-1.0GstBaseTransform.html#GstBaseTransform-struct">GstBaseTransform</a>
-                    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0gst-plugins-base-libs-gstvideofilter.html#GstVideoFilter-struct">GstVideoFilter</a>
+                    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0GstVideoFilter.html#GstVideoFilter-struct">GstVideoFilter</a>
                         <span class="lineart">╰──</span> GstGdkPixbufOverlay
 </pre>
 </div>
@@ -287,18 +297,18 @@ videotestsrc.
 <div class="refsect2">
 <a name="GstGdkPixbufOverlay--relative-x"></a><h3>The <code class="literal">“relative-x”</code> property</h3>
 <pre class="programlisting">  “relative-x”               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></pre>
-<p>Horizontal offset of overlay image in fractions of video image width, from top-left corner of video image.</p>
+<p>Horizontal offset of overlay image in fractions of video image width, from top-left corner of video image (in relative positioning).</p>
 <p>Flags: Read / Write</p>
-<p>Allowed values: [0,1]</p>
+<p>Allowed values: [-1,1]</p>
 <p>Default value: 0</p>
 </div>
 <hr>
 <div class="refsect2">
 <a name="GstGdkPixbufOverlay--relative-y"></a><h3>The <code class="literal">“relative-y”</code> property</h3>
 <pre class="programlisting">  “relative-y”               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></pre>
-<p>Vertical offset of overlay image in fractions of video image height, from top-left corner of video image.</p>
+<p>Vertical offset of overlay image in fractions of video image height, from top-left corner of video image (in relative positioning).</p>
 <p>Flags: Read / Write</p>
-<p>Allowed values: [0,1]</p>
+<p>Allowed values: [-1,1]</p>
 <p>Default value: 0</p>
 </div>
 <hr>
@@ -332,6 +342,34 @@ smoothly slide logos into and out of the frame if desired.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: pixels-relative-to-edges</p>
 <p class="since">Since: 1.6</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstGdkPixbufOverlay--coef-x"></a><h3>The <code class="literal">“coef-x”</code> property</h3>
+<pre class="programlisting">  “coef-x”                   <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></pre>
+<p>In absolute positioning mode, the x coordinate of overlay image's
+top-left corner is now given by
+offset-x + (relative-x * overlay_width) + (coef-x * video_width).
+This allows to align the image absolutely and relatively
+to any edge or center position.</p>
+<p>Flags: Read / Write</p>
+<p>Allowed values: [-1,1]</p>
+<p>Default value: 0</p>
+<p class="since">Since: 1.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstGdkPixbufOverlay--coef-y"></a><h3>The <code class="literal">“coef-y”</code> property</h3>
+<pre class="programlisting">  “coef-y”                   <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></pre>
+<p>In absolute positioning mode, the y coordinate of overlay image's
+top-left corner is now given by
+offset-y + (relative-y * overlay_height) + (coef-y * video_height).
+This allows to align the image absolutely and relatively
+to any edge or center position.</p>
+<p>Flags: Read / Write</p>
+<p>Allowed values: [-1,1]</p>
+<p>Default value: 0</p>
+<p class="since">Since: 1.12</p>
 </div>
 </div>
 </div>

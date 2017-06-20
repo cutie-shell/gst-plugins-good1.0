@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.7.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-02-23 15:16+0200\n"
+"POT-Creation-Date: 2017-05-04 15:05+0300\n"
 "PO-Revision-Date: 2016-02-21 09:55+0300\n"
 "Last-Translator: Yuri Kozlov <yuray@komyakino.ru>\n"
 "Language-Team: Russian <gnu@d07.ru>\n"
@@ -38,9 +38,6 @@ msgstr "Не удалось соединиться с сервером"
 msgid "No URL set."
 msgstr "URL не задан."
 
-msgid "Server does not support seeking."
-msgstr "Сервер не поддерживает поиск."
-
 msgid "Could not resolve server name."
 msgstr "Не удалось определить имя сервера."
 
@@ -56,6 +53,9 @@ msgstr "Произошла сетевая ошибка или сервер не�
 
 msgid "Server sent bad data."
 msgstr "Сервер прислал некорректные данные."
+
+msgid "Server does not support seeking."
+msgstr "Сервер не поддерживает поиск."
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr ""

@@ -194,10 +194,13 @@ struct _RTPSource {
   gboolean     send_fir;
   guint8       current_send_fir_seqnum;
   gint         last_fir_count;
+  GstClockTime last_keyframe_request;
 
   gboolean     send_nack;
   GArray      *nacks;
 
+  gboolean      pt_set;
+  guint8        pt;
 };
 
 struct _RTPSourceClass {

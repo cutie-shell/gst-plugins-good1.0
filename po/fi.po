@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 0.10.25.3\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-02-23 15:16+0200\n"
+"POT-Creation-Date: 2017-05-04 15:05+0300\n"
 "PO-Revision-Date: 2010-11-17 23:03+0200\n"
 "Last-Translator: Tommi Vainikainen <Tommi.Vainikainen@iki.fi>\n"
 "Language-Team: Finnish <translation-team-fi@lists.sourceforge.net>\n"
@@ -38,9 +38,6 @@ msgstr "Palvelimeen ei saatu yhteyttä"
 msgid "No URL set."
 msgstr "Ei URL:ää asetettuna."
 
-msgid "Server does not support seeking."
-msgstr "Pavelin ei tue kelausta."
-
 msgid "Could not resolve server name."
 msgstr "Palvelimen nimeä ei saatu selvitettyä."
 
@@ -57,6 +54,9 @@ msgstr "Tapahtui verkkovirhe tai palvelin sulki yhteyden yllättäen."
 
 msgid "Server sent bad data."
 msgstr "Palvelin lähetti virheellistä dataa."
+
+msgid "Server does not support seeking."
+msgstr "Pavelin ei tue kelausta."
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr ""

@@ -52,6 +52,16 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtprtxqueue.html#GstRTPRtxQueue--max-size-time" title="The “max-size-time” property">max-size-time</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtprtxqueue.html#GstRTPRtxQueue--fulfilled-requests" title="The “fulfilled-requests” property">fulfilled-requests</a></td>
+<td class="property_flags">Read</td>
+</tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtprtxqueue.html#GstRTPRtxQueue--requests" title="The “requests” property">requests</a></td>
+<td class="property_flags">Read</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -79,10 +89,75 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtprtxqueue.description"></a><h2>Description</h2>
+<p>rtprtxqueue maintains a queue of transmitted RTP packets, up to a
+configurable limit (see <span class="type">“max-size-time”</span>,
+<span class="type">“max-size-packets”</span>), and retransmits them upon request
+from the downstream rtpsession (GstRTPRetransmissionRequest event).</p>
+<p>This element is similar to rtprtxsend, but it has differences:</p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem"><p>Retransmission from rtprtxqueue is not RFC 4588 compliant. The
+retransmitted packets have the same ssrc and payload type as the original
+stream.</p></li>
+<li class="listitem"><p>As a side-effect of the above, rtprtxqueue does not require the use of
+rtprtxreceive on the receiving end. rtpjitterbuffer alone is able to
+reconstruct the stream.</p></li>
+<li class="listitem"><p>Retransmission from rtprtxqueue happens as soon as the next regular flow
+packet is chained, while rtprtxsend retransmits as soon as the retransmission
+event is received, using a helper thread.</p></li>
+<li class="listitem"><p>rtprtxqueue can be used with rtpbin without the need of hooking to its
+<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-request-aux-sender" title="The “request-aux-sender” signal"><span class="type">“request-aux-sender”</span></a> signal, which means it can be used with
+rtpbin using gst-launch.</p></li>
+</ul></div>
+<p>See also <a class="link" href="gst-plugins-good-plugins-rtprtxsend.html#GstRtpRtxSend"><span class="type">GstRtpRtxSend</span></a>, <a class="link" href="gst-plugins-good-plugins-rtprtxreceive.html#GstRtpRtxReceive"><span class="type">GstRtpRtxReceive</span></a></p>
+<div class="refsect2">
+<a name="id-1.2.200.7.6"></a><h3>Example pipelines</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2
+3
+4
+5</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> rtpbin name<span class="gtkdoc opt">=</span>b rtp<span class="gtkdoc opt">-</span>profile<span class="gtkdoc opt">=</span>avpf \
+   audiotestsrc is<span class="gtkdoc opt">-</span>live<span class="gtkdoc opt">=</span><span class="keyword">true</span> <span class="gtkdoc opt">!</span> opusenc <span class="gtkdoc opt">!</span> rtpopuspay pt<span class="gtkdoc opt">=</span><span class="number">96</span> <span class="gtkdoc opt">!</span> rtprtxqueue <span class="gtkdoc opt">!</span> b<span class="gtkdoc opt">.</span>send_rtp_sink_0 \
+   b<span class="gtkdoc opt">.</span>send_rtp_src_0 <span class="gtkdoc opt">!</span> identity drop<span class="gtkdoc opt">-</span>probability<span class="gtkdoc opt">=</span><span class="number">0.01</span> <span class="gtkdoc opt">!</span> udpsink host<span class="gtkdoc opt">=</span><span class="string">&quot;127.0.0.1&quot;</span> port<span class="gtkdoc opt">=</span><span class="number">5000</span> \
+   udpsrc port<span class="gtkdoc opt">=</span><span class="number">5001</span> <span class="gtkdoc opt">!</span> b<span class="gtkdoc opt">.</span>recv_rtcp_sink_0 \
+   b<span class="gtkdoc opt">.</span>send_rtcp_src_0 <span class="gtkdoc opt">!</span> udpsink host<span class="gtkdoc opt">=</span><span class="string">&quot;127.0.0.1&quot;</span> port<span class="gtkdoc opt">=</span><span class="number">5002</span> sync<span class="gtkdoc opt">=</span><span class="keyword">false</span> async<span class="gtkdoc opt">=</span><span class="keyword">false</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p> Sender pipeline</p>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1
+2
+3
+4
+5
+6</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> rtpbin name<span class="gtkdoc opt">=</span>b rtp<span class="gtkdoc opt">-</span>profile<span class="gtkdoc opt">=</span>avpf <span class="keyword">do</span><span class="gtkdoc opt">-</span>retransmission<span class="gtkdoc opt">=</span><span class="keyword">true</span> \
+   udpsrc port<span class="gtkdoc opt">=</span><span class="number">5000</span> caps<span class="gtkdoc opt">=</span><span class="string">&quot;application/x-rtp,media=(string)audio,clock-rate=(int)48000,encoding-name=(string)OPUS,payload=(int)96&quot;</span> <span class="gtkdoc opt">!</span> \
+       b<span class="gtkdoc opt">.</span>recv_rtp_sink_0 \
+   b<span class="gtkdoc opt">. !</span> rtpopusdepay <span class="gtkdoc opt">!</span> opusdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioresample <span class="gtkdoc opt">!</span> autoaudiosink \
+   udpsrc port<span class="gtkdoc opt">=</span><span class="number">5002</span> <span class="gtkdoc opt">!</span> b<span class="gtkdoc opt">.</span>recv_rtcp_sink_0 \
+   b<span class="gtkdoc opt">.</span>send_rtcp_src_0 <span class="gtkdoc opt">!</span> udpsink host<span class="gtkdoc opt">=</span><span class="string">&quot;127.0.0.1&quot;</span> port<span class="gtkdoc opt">=</span><span class="number">5001</span> sync<span class="gtkdoc opt">=</span><span class="keyword">false</span> async<span class="gtkdoc opt">=</span><span class="keyword">false</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p> Receiver pipeline</p>
+</div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.200.7.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.200.7.7.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -108,7 +183,7 @@
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.200.7.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.200.7.7.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -187,6 +262,22 @@
 <pre class="programlisting">  “max-size-time”            <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
 <p>Amount of ms to queue (0 = unlimited).</p>
 <p>Flags: Read / Write</p>
+<p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTPRtxQueue--fulfilled-requests"></a><h3>The <code class="literal">“fulfilled-requests”</code> property</h3>
+<pre class="programlisting">  “fulfilled-requests”       <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<p>Number of fulfilled retransmission requests.</p>
+<p>Flags: Read</p>
+<p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTPRtxQueue--requests"></a><h3>The <code class="literal">“requests”</code> property</h3>
+<pre class="programlisting">  “requests”                 <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<p>Total number of retransmission requests.</p>
+<p>Flags: Read</p>
 <p>Default value: 0</p>
 </div>
 </div>

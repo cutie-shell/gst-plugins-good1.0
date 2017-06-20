@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 0.10.25.3\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-02-23 15:16+0200\n"
+"POT-Creation-Date: 2017-05-04 15:05+0300\n"
 "PO-Revision-Date: 2010-10-25 10:11+0200\n"
 "Last-Translator: Luca Ferretti <elle.uca@infinito.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
@@ -33,9 +33,6 @@ msgstr "Impossibile connettersi al server"
 msgid "No URL set."
 msgstr "Nessun URL impostato."
 
-msgid "Server does not support seeking."
-msgstr "Il server non supporta il posizionamento."
-
 msgid "Could not resolve server name."
 msgstr "Impossibile risolvere il nome del server."
 
@@ -54,6 +51,9 @@ msgstr ""
 
 msgid "Server sent bad data."
 msgstr "In server ha inviato dati errati."
+
+msgid "Server does not support seeking."
+msgstr "Il server non supporta il posizionamento."
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr ""

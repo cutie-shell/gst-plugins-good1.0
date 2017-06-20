@@ -60,6 +60,7 @@ typedef struct _GstSplitMuxPartPad
   gboolean flushing;
   gboolean seen_buffer;
 
+  gboolean is_sparse;
   GstClockTime max_ts;
   GstSegment segment;
 
@@ -341,6 +342,12 @@ splitmux_part_pad_event (GstPad * pad, GstObject * parent, GstEvent * event)
     goto drop_event;
 
   switch (GST_EVENT_TYPE (event)) {
+    case GST_EVENT_STREAM_START:{
+      GstStreamFlags flags;
+      gst_event_parse_stream_flags (event, &flags);
+      part_pad->is_sparse = (flags & GST_STREAM_FLAG_SPARSE);
+      break;
+    }
     case GST_EVENT_SEGMENT:{
       GstSegment *seg = &part_pad->segment;
 
@@ -816,12 +823,12 @@ gst_splitmux_part_reader_seek_to_time_locked (GstSplitMuxPartReader * reader,
 /* Map the passed segment to 'internal' time from 0 to length of this piece and seek. Lock cannot be held */
 static gboolean
 gst_splitmux_part_reader_seek_to_segment (GstSplitMuxPartReader * reader,
-    GstSegment * target_seg)
+    GstSegment * target_seg, GstSeekFlags extra_flags)
 {
   GstSeekFlags flags;
   GstClockTime start = 0, stop = GST_CLOCK_TIME_NONE;
 
-  flags = target_seg->flags | GST_SEEK_FLAG_FLUSH;
+  flags = target_seg->flags | GST_SEEK_FLAG_FLUSH | extra_flags;
 
   SPLITMUX_PART_LOCK (reader);
   if (target_seg->start >= reader->start_offset)
@@ -1043,6 +1050,9 @@ gst_splitmux_part_reader_change_state (GstElement * element,
        * changing the states of things, and type finding can continue */
       SPLITMUX_PART_LOCK (reader);
       g_object_set (reader->src, "location", reader->path, NULL);
+      reader->prep_state = PART_STATE_PREPARING_COLLECT_STREAMS;
+      gst_splitmux_part_reader_set_flushing_locked (reader, FALSE);
+      reader->running = TRUE;
       SPLITMUX_PART_UNLOCK (reader);
       SPLITMUX_PART_TYPE_LOCK (reader);
       break;
@@ -1083,9 +1093,6 @@ gst_splitmux_part_reader_change_state (GstElement * element,
       SPLITMUX_PART_TYPE_UNLOCK (reader);
 
       SPLITMUX_PART_LOCK (reader);
-      reader->prep_state = PART_STATE_PREPARING_COLLECT_STREAMS;
-      gst_splitmux_part_reader_set_flushing_locked (reader, FALSE);
-      reader->running = TRUE;
 
       while (reader->prep_state == PART_STATE_PREPARING_COLLECT_STREAMS) {
         GST_LOG_OBJECT (reader, "Waiting to collect all output streams");
@@ -1168,11 +1175,11 @@ gst_splitmux_part_reader_set_location (GstSplitMuxPartReader * reader,
 
 gboolean
 gst_splitmux_part_reader_activate (GstSplitMuxPartReader * reader,
-    GstSegment * seg)
+    GstSegment * seg, GstSeekFlags extra_flags)
 {
   GST_DEBUG_OBJECT (reader, "Activating part reader");
 
-  if (!gst_splitmux_part_reader_seek_to_segment (reader, seg)) {
+  if (!gst_splitmux_part_reader_seek_to_segment (reader, seg, extra_flags)) {
     GST_ERROR_OBJECT (reader, "Failed to seek part to %" GST_SEGMENT_FORMAT,
         seg);
     return FALSE;
@@ -1237,7 +1244,7 @@ gst_splitmux_part_reader_get_end_offset (GstSplitMuxPartReader * reader)
   SPLITMUX_PART_LOCK (reader);
   for (cur = g_list_first (reader->pads); cur != NULL; cur = g_list_next (cur)) {
     GstSplitMuxPartPad *part_pad = SPLITMUX_PART_PAD_CAST (cur->data);
-    if (part_pad->max_ts < ret)
+    if (!part_pad->is_sparse && part_pad->max_ts < ret)
       ret = part_pad->max_ts;
   }
 

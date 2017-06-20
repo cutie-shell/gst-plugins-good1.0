@@ -1,7 +1,7 @@
 /* GStreamer
  *
  * Copyright (C) 2001-2002 Ronald Bultje <rbultje@ronald.bitfreak.net>
- *               2006 Edgard Lima <edgard.lima@indt.org.br>
+ *               2006 Edgard Lima <edgard.lima@gmail.com>
  *               2009 Texas Instruments, Inc - http://www.ti.com/
  *
  * gstv4l2bufferpool.c V4L2 buffer pool class
@@ -292,6 +292,9 @@ gst_v4l2_buffer_pool_import_userptr (GstV4l2BufferPool * pool,
   gst_mini_object_set_qdata (GST_MINI_OBJECT (dest), GST_V4L2_IMPORT_QUARK,
       data, (GDestroyNotify) _unmap_userptr_frame);
 
+  gst_buffer_copy_into (dest, src,
+      GST_BUFFER_COPY_FLAGS | GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
+
   return ret;
 
 not_our_buffer:
@@ -345,6 +348,9 @@ gst_v4l2_buffer_pool_import_dmabuf (GstV4l2BufferPool * pool,
 
   gst_mini_object_set_qdata (GST_MINI_OBJECT (dest), GST_V4L2_IMPORT_QUARK,
       gst_buffer_ref (src), (GDestroyNotify) gst_buffer_unref);
+
+  gst_buffer_copy_into (dest, src,
+      GST_BUFFER_COPY_FLAGS | GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
 
   return GST_FLOW_OK;
 
@@ -955,8 +961,8 @@ gst_v4l2_buffer_pool_flush_stop (GstBufferPool * bpool)
   GST_OBJECT_LOCK (pool);
   gst_v4l2_buffer_pool_streamoff (pool);
   /* Remember buffers to re-enqueue */
-  memcpy(buffers, pool->buffers, sizeof(buffers));
-  memset(pool->buffers, 0, sizeof(pool->buffers));
+  memcpy (buffers, pool->buffers, sizeof (buffers));
+  memset (pool->buffers, 0, sizeof (pool->buffers));
   GST_OBJECT_UNLOCK (pool);
 
   /* Reset our state */
@@ -1868,7 +1874,6 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf)
 
           GST_LOG_OBJECT (pool, "processing buffer %i from our pool", index);
 
-          index = group->buffer.index;
           if (pool->buffers[index] != NULL) {
             GST_LOG_OBJECT (pool, "buffer %i already queued, copying", index);
             goto copying;

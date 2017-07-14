@@ -376,7 +376,7 @@ The message's structure contains these fields:</p>
       <span class="gtkdoc opt">}</span>
     <span class="gtkdoc opt">}</span>
   <span class="gtkdoc opt">}</span>
-  <span class="comment">/* we handled the message we want, and ignored the ones we didn't want.</span>
+  <span class="comment">/* we handled the message we want, and ignored the ones we didn&apos;t want.</span>
 <span class="comment">   * so the core can unref the message for us */</span>
   <span class="keyword">return</span> TRUE<span class="gtkdoc opt">;</span>
 <span class="gtkdoc opt">}</span>
@@ -415,7 +415,7 @@ The message's structure contains these fields:</p>
   <span class="keyword">if</span> <span class="gtkdoc opt">(!</span><span class="function"><a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElement.html#gst-element-link">gst_element_link</a></span> <span class="gtkdoc opt">(</span>level<span class="gtkdoc opt">,</span> fakesink<span class="gtkdoc opt">))</span>
     <span class="function"><a href="/usr/share/gtk-doc/html/glibglib-Message-Logging.html#g-error">g_error</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;Failed to link level and fakesink&quot;</span><span class="gtkdoc opt">);</span>
 
-  <span class="comment">/* make sure we'll get messages */</span>
+  <span class="comment">/* make sure we&apos;ll get messages */</span>
   <span class="function"><a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#g-object-set">g_object_set</a></span> <span class="gtkdoc opt">(</span><span class="function"><a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#G-OBJECT:CAPS">G_OBJECT</a></span> <span class="gtkdoc opt">(</span>level<span class="gtkdoc opt">),</span> <span class="string">&quot;post-messages&quot;</span><span class="gtkdoc opt">,</span> TRUE<span class="gtkdoc opt">,</span> NULL<span class="gtkdoc opt">);</span>
   <span class="comment">/* run synced and not as fast as we can */</span>
   <span class="function"><a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#g-object-set">g_object_set</a></span> <span class="gtkdoc opt">(</span><span class="function"><a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#G-OBJECT:CAPS">G_OBJECT</a></span> <span class="gtkdoc opt">(</span>fakesink<span class="gtkdoc opt">),</span> <span class="string">&quot;sync&quot;</span><span class="gtkdoc opt">,</span> TRUE<span class="gtkdoc opt">,</span> NULL<span class="gtkdoc opt">);</span>

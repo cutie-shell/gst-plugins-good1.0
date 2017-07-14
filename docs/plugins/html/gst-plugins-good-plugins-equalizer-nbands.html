@@ -92,7 +92,7 @@ the center frequency, band width and gain.</p>
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span>song<span class="gtkdoc opt">.</span>ogg <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> vorbisdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> equalizer<span class="gtkdoc opt">-</span>nbands num<span class="gtkdoc opt">-</span>bands<span class="gtkdoc opt">=</span><span class="number">15</span> band5<span class="gtkdoc opt">::</span>gain<span class="gtkdoc opt">=</span><span class="number">6.0</span> <span class="gtkdoc opt">!</span> alsasink</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span>song<span class="gtkdoc opt">.</span>ogg <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> vorbisdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> equalizer<span class="gtkdoc opt">-</span>nbands num<span class="gtkdoc opt">-</span>bands<span class="gtkdoc opt">=</span><span class="number">15</span> <span class="gtkdoc kwc">band5</span><span class="gtkdoc opt">::</span>gain<span class="gtkdoc opt">=</span><span class="number">6.0</span> <span class="gtkdoc opt">!</span> alsasink</pre></td>
       </tr>
     </tbody>
   </table>

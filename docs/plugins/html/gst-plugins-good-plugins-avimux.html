@@ -94,10 +94,10 @@ GstAviMux implements
 5
 6</pre></td>
         <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> videotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">250</span> \
-<span class="gtkdoc opt">!</span> <span class="string">'video/x-raw,format=(string)I420,width=320,height=240,framerate=(fraction)25/1'</span> \
+<span class="gtkdoc opt">!</span> <span class="string">&apos;video/x-raw,format=(string)I420,width=320,height=240,framerate=(fraction)25/1&apos;</span> \
 <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span> \
 audiotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">440</span> <span class="gtkdoc opt">!</span> audioconvert \
-<span class="gtkdoc opt">!</span> <span class="string">'audio/x-raw,rate=44100,channels=2'</span> <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span> \
+<span class="gtkdoc opt">!</span> <span class="string">&apos;audio/x-raw,rate=44100,channels=2&apos;</span> <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span> \
 avimux name<span class="gtkdoc opt">=</span>mux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>test<span class="gtkdoc opt">.</span>avi</pre></td>
       </tr>
     </tbody>
@@ -117,9 +117,9 @@ test sound.
 5
 6</pre></td>
         <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> videotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">250</span> \
-<span class="gtkdoc opt">!</span> <span class="string">'video/x-raw,format=(string)I420,width=320,height=240,framerate=(fraction)25/1'</span> \
+<span class="gtkdoc opt">!</span> <span class="string">&apos;video/x-raw,format=(string)I420,width=320,height=240,framerate=(fraction)25/1&apos;</span> \
 <span class="gtkdoc opt">!</span> xvidenc <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span> \
-audiotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">440</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> <span class="string">'audio/x-raw,rate=44100,channels=2'</span> \
+audiotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">440</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> <span class="string">&apos;audio/x-raw,rate=44100,channels=2&apos;</span> \
 <span class="gtkdoc opt">!</span> lame <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span> \
 avimux name<span class="gtkdoc opt">=</span>mux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>test<span class="gtkdoc opt">.</span>avi</pre></td>
       </tr>

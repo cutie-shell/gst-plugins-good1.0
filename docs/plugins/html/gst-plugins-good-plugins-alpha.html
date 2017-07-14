@@ -142,7 +142,7 @@ the transparent color.</p>
 4</pre></td>
         <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> videotestsrc pattern<span class="gtkdoc opt">=</span>snow <span class="gtkdoc opt">!</span> mixer<span class="gtkdoc opt">.</span>sink_0 \
   videotestsrc pattern<span class="gtkdoc opt">=</span>smpte75 <span class="gtkdoc opt">!</span> alpha method<span class="gtkdoc opt">=</span>green <span class="gtkdoc opt">!</span> mixer<span class="gtkdoc opt">.</span>sink_1 \
-  videomixer name<span class="gtkdoc opt">=</span>mixer sink_0<span class="gtkdoc opt">::</span>zorder<span class="gtkdoc opt">=</span><span class="number">0</span> sink_1<span class="gtkdoc opt">::</span>zorder<span class="gtkdoc opt">=</span><span class="number">1</span> <span class="gtkdoc opt">!</span> \
+  videomixer name<span class="gtkdoc opt">=</span>mixer <span class="gtkdoc kwc">sink_0</span><span class="gtkdoc opt">::</span>zorder<span class="gtkdoc opt">=</span><span class="number">0</span> <span class="gtkdoc kwc">sink_1</span><span class="gtkdoc opt">::</span>zorder<span class="gtkdoc opt">=</span><span class="number">1</span> <span class="gtkdoc opt">!</span> \
   videoconvert <span class="gtkdoc opt">!</span> autovideosink</pre></td>
       </tr>
     </tbody>

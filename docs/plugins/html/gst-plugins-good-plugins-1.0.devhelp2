@@ -661,6 +661,8 @@
     <keyword type="property" name="The “min-index-interval” property" link="gst-plugins-good-plugins-matroskamux.html#GstMatroskaMux--min-index-interval"/>
     <keyword type="property" name="The “streamable” property" link="gst-plugins-good-plugins-matroskamux.html#GstMatroskaMux--streamable"/>
     <keyword type="property" name="The “timecodescale” property" link="gst-plugins-good-plugins-matroskamux.html#GstMatroskaMux--timecodescale"/>
+    <keyword type="property" name="The “max-cluster-duration” property" link="gst-plugins-good-plugins-matroskamux.html#GstMatroskaMux--max-cluster-duration"/>
+    <keyword type="property" name="The “min-cluster-duration” property" link="gst-plugins-good-plugins-matroskamux.html#GstMatroskaMux--min-cluster-duration"/>
     <keyword type="struct" name="GstMatroskaParse" link="gst-plugins-good-plugins-matroskaparse.html#GstMatroskaParse-struct"/>
     <keyword type="struct" name="GstMJ2Mux" link="gst-plugins-good-plugins-mj2mux.html#GstMJ2Mux-struct"/>
     <keyword type="property" name="The “dts-method” property" link="gst-plugins-good-plugins-mj2mux.html#GstMJ2Mux--dts-method"/>

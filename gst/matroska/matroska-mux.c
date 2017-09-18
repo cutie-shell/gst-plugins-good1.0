@@ -70,7 +70,9 @@ enum
   PROP_DOCTYPE_VERSION,
   PROP_MIN_INDEX_INTERVAL,
   PROP_STREAMABLE,
-  PROP_TIMECODESCALE
+  PROP_TIMECODESCALE,
+  PROP_MIN_CLUSTER_DURATION,
+  PROP_MAX_CLUSTER_DURATION
 };
 
 #define  DEFAULT_DOCTYPE_VERSION         2
@@ -78,6 +80,8 @@ enum
 #define  DEFAULT_MIN_INDEX_INTERVAL      0
 #define  DEFAULT_STREAMABLE              FALSE
 #define  DEFAULT_TIMECODESCALE           GST_MSECOND
+#define  DEFAULT_MIN_CLUSTER_DURATION    500 * GST_MSECOND
+#define  DEFAULT_MAX_CLUSTER_DURATION    65535 * GST_MSECOND
 
 /* WAVEFORMATEX is gst_riff_strf_auds + an extra guint16 extension size */
 #define WAVEFORMATEX_SIZE  (2 + sizeof (gst_riff_strf_auds))
@@ -344,6 +348,20 @@ gst_matroska_mux_class_init (GstMatroskaMuxClass * klass)
           "TimecodeScale used to calculate the Raw Timecode of a Block", 1,
           GST_SECOND, DEFAULT_TIMECODESCALE,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (gobject_class, PROP_MIN_CLUSTER_DURATION,
+      g_param_spec_int64 ("min-cluster-duration", "Minimum cluster duration",
+          "Desidered cluster duration as nanoseconds. A new cluster will be "
+          "created irrespective of this property if a force key unit event "
+          "is received. 0 means create a new cluster for each video keyframe "
+          "or for each audio buffer in audio only streams.", 0,
+          G_MAXINT64, DEFAULT_MIN_CLUSTER_DURATION,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (gobject_class, PROP_MAX_CLUSTER_DURATION,
+      g_param_spec_int64 ("max-cluster-duration", "Maximum cluster duration",
+          "A new cluster will be created if its duration exceeds this value. "
+          "0 means no maximum duration.", 0,
+          G_MAXINT64, DEFAULT_MAX_CLUSTER_DURATION,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gstelement_class->change_state =
       GST_DEBUG_FUNCPTR (gst_matroska_mux_change_state);
@@ -471,6 +489,8 @@ gst_matroska_mux_init (GstMatroskaMux * mux, gpointer g_class)
   mux->min_index_interval = DEFAULT_MIN_INDEX_INTERVAL;
   mux->ebml_write->streamable = DEFAULT_STREAMABLE;
   mux->time_scale = DEFAULT_TIMECODESCALE;
+  mux->min_cluster_duration = DEFAULT_MIN_CLUSTER_DURATION;
+  mux->max_cluster_duration = DEFAULT_MAX_CLUSTER_DURATION;
 
   /* initialize internal variables */
   mux->index = NULL;
@@ -664,7 +684,6 @@ gst_matroska_mux_reset (GstElement * element)
   mux->index = NULL;
 
   /* reset timers */
-  mux->max_cluster_duration = G_MAXINT16 * mux->time_scale;
   mux->duration = 0;
 
   /* reset cluster */
@@ -2704,7 +2723,8 @@ gst_matroska_mux_write_chapter_edition (GstMatroskaMux * mux,
  * Start a new matroska file (write headers etc...)
  */
 static void
-gst_matroska_mux_start (GstMatroskaMux * mux)
+gst_matroska_mux_start (GstMatroskaMux * mux, GstMatroskaPad * first_pad,
+    GstBuffer * first_pad_buf)
 {
   GstEbmlWrite *ebml = mux->ebml_write;
   const gchar *doctype;
@@ -2874,12 +2894,30 @@ gst_matroska_mux_start (GstMatroskaMux * mux)
   for (collected = mux->collect->data; collected;
       collected = g_slist_next (collected)) {
     GstMatroskaPad *collect_pad;
+    GstBuffer *buf;
 
     collect_pad = (GstMatroskaPad *) collected->data;
 
     /* This will cause an error at a later time */
     if (collect_pad->track->codec_id == NULL)
       continue;
+
+    /* For audio tracks, use the first buffers duration as the default
+     * duration if we didn't get any better idea from the caps event already
+     */
+    if (collect_pad->track->type == GST_MATROSKA_TRACK_TYPE_AUDIO &&
+        collect_pad->track->default_duration == 0) {
+      if (collect_pad == first_pad)
+        buf = first_pad_buf ? gst_buffer_ref (first_pad_buf) : NULL;
+      else
+        buf = gst_collect_pads_peek (mux->collect, collected->data);
+
+      if (buf && GST_BUFFER_DURATION_IS_VALID (buf))
+        collect_pad->track->default_duration =
+            GST_BUFFER_DURATION (buf) + collect_pad->track->codec_delay;
+      if (buf)
+        gst_buffer_unref (buf);
+    }
 
     collect_pad->track->num = tracknum++;
     child = gst_ebml_write_master_start (ebml, GST_MATROSKA_ID_TRACKENTRY);
@@ -3526,6 +3564,8 @@ gst_matroska_mux_write_data (GstMatroskaMux * mux, GstMatroskaPad * collect_pad,
   gboolean is_video_keyframe = FALSE;
   gboolean is_video_invisible = FALSE;
   gboolean is_audio_only = FALSE;
+  gboolean is_min_duration_reached = FALSE;
+  gboolean is_max_duration_exceeded = FALSE;
   GstMatroskamuxPad *pad;
   gint flags = 0;
   GstClockTime buffer_timestamp;
@@ -3602,13 +3642,20 @@ gst_matroska_mux_write_data (GstMatroskaMux * mux, GstMatroskaPad * collect_pad,
 
   is_audio_only = (collect_pad->track->type == GST_MATROSKA_TRACK_TYPE_AUDIO) &&
       (mux->num_streams == 1);
+  is_min_duration_reached = (mux->min_cluster_duration == 0
+      || (buffer_timestamp > mux->cluster_time
+          && (buffer_timestamp - mux->cluster_time) >=
+          mux->min_cluster_duration));
+  is_max_duration_exceeded = (mux->max_cluster_duration > 0
+      && buffer_timestamp > mux->cluster_time
+      && (buffer_timestamp - mux->cluster_time) >= mux->max_cluster_duration);
 
   if (mux->cluster) {
     /* start a new cluster at every keyframe, at every GstForceKeyUnit event,
      * or when we may be reaching the limit of the relative timestamp */
-    if (mux->cluster_time +
-        mux->max_cluster_duration < buffer_timestamp
-        || is_video_keyframe || mux->force_key_unit_event || is_audio_only) {
+    if (is_max_duration_exceeded || (is_video_keyframe
+            && is_min_duration_reached) || mux->force_key_unit_event
+        || (is_audio_only && is_min_duration_reached)) {
       if (!mux->ebml_write->streamable)
         gst_ebml_write_master_finish (ebml, mux->cluster);
 
@@ -3786,7 +3833,7 @@ gst_matroska_mux_handle_buffer (GstCollectPads * pads, GstCollectData * data,
   GstClockTime buffer_timestamp;
   GstMatroskaMux *mux = GST_MATROSKA_MUX (user_data);
   GstEbmlWrite *ebml = mux->ebml_write;
-  GstMatroskaPad *best;
+  GstMatroskaPad *best = (GstMatroskaPad *) data;
   GstFlowReturn ret = GST_FLOW_OK;
   GST_DEBUG_OBJECT (mux, "Collected pads");
 
@@ -3799,13 +3846,10 @@ gst_matroska_mux_handle_buffer (GstCollectPads * pads, GstCollectData * data,
     }
     mux->state = GST_MATROSKA_MUX_STATE_HEADER;
     gst_ebml_start_streamheader (ebml);
-    gst_matroska_mux_start (mux);
+    gst_matroska_mux_start (mux, best, buf);
     gst_matroska_mux_stop_streamheader (mux);
     mux->state = GST_MATROSKA_MUX_STATE_DATA;
   }
-
-  /* provided with stream to write from */
-  best = (GstMatroskaPad *) data;
 
   /* if there is no best pad, we have reached EOS */
   if (best == NULL) {
@@ -3940,6 +3984,12 @@ gst_matroska_mux_set_property (GObject * object,
     case PROP_TIMECODESCALE:
       mux->time_scale = g_value_get_int64 (value);
       break;
+    case PROP_MIN_CLUSTER_DURATION:
+      mux->min_cluster_duration = g_value_get_int64 (value);
+      break;
+    case PROP_MAX_CLUSTER_DURATION:
+      mux->max_cluster_duration = g_value_get_int64 (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -3970,6 +4020,12 @@ gst_matroska_mux_get_property (GObject * object,
       break;
     case PROP_TIMECODESCALE:
       g_value_set_int64 (value, mux->time_scale);
+      break;
+    case PROP_MIN_CLUSTER_DURATION:
+      g_value_set_int64 (value, mux->min_cluster_duration);
+      break;
+    case PROP_MAX_CLUSTER_DURATION:
+      g_value_set_int64 (value, mux->max_cluster_duration);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

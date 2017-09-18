@@ -69,6 +69,16 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-matroskamux.html#GstMatroskaMux--timecodescale" title="The “timecodescale” property">timecodescale</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gint64"><span class="type">gint64</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-matroskamux.html#GstMatroskaMux--max-cluster-duration" title="The “max-cluster-duration” property">max-cluster-duration</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gint64"><span class="type">gint64</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-matroskamux.html#GstMatroskaMux--min-cluster-duration" title="The “min-cluster-duration” property">min-cluster-duration</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -476,6 +486,24 @@ GstMatroskaMux implements
 <p>Flags: Read / Write</p>
 <p>Allowed values: [1,1000000000]</p>
 <p>Default value: 1000000</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstMatroskaMux--max-cluster-duration"></a><h3>The <code class="literal">“max-cluster-duration”</code> property</h3>
+<pre class="programlisting">  “max-cluster-duration”     <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gint64"><span class="type">gint64</span></a></pre>
+<p>A new cluster will be created if its duration exceeds this value. 0 means no maximum duration.</p>
+<p>Flags: Read / Write</p>
+<p>Allowed values: &gt;= 0</p>
+<p>Default value: 65535000000</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstMatroskaMux--min-cluster-duration"></a><h3>The <code class="literal">“min-cluster-duration”</code> property</h3>
+<pre class="programlisting">  “min-cluster-duration”     <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gint64"><span class="type">gint64</span></a></pre>
+<p>Desidered cluster duration as nanoseconds. A new cluster will be created irrespective of this property if a force key unit event is received. 0 means create a new cluster for each video keyframe or for each audio buffer in audio only streams.</p>
+<p>Flags: Read / Write</p>
+<p>Allowed values: &gt;= 0</p>
+<p>Default value: 500000000</p>
 </div>
 </div>
 </div>

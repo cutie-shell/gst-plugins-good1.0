@@ -5,6 +5,10 @@ include /usr/share/cdbs/1/class/gnome.mk
 include /usr/share/cdbs/1/rules/utils.mk
 include /usr/share/cdbs/1/rules/autoreconf.mk
 
+# Work-around for gtk-doc bug:
+# https://bugzilla.gnome.org/show_bug.cgi?id=783926
+export PYTHONIOENCODING="utf-8"
+
 DEB_BUILD_PARALLEL = 1
 
 DEB_DH_AUTORECONF_ARGS += --as-needed

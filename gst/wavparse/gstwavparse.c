@@ -194,6 +194,22 @@ gst_wavparse_class_init (GstWavParseClass * klass)
 }
 
 static void
+gst_wavparse_notes_free (GstWavParseNote * note)
+{
+  if (note)
+    g_free (note->text);
+  g_free (note);
+}
+
+static void
+gst_wavparse_labls_free (GstWavParseLabl * labl)
+{
+  if (labl)
+    g_free (labl->text);
+  g_free (labl);
+}
+
+static void
 gst_wavparse_reset (GstWavParse * wav)
 {
   wav->state = GST_WAVPARSE_START;
@@ -211,6 +227,7 @@ gst_wavparse_reset (GstWavParse * wav)
   wav->dataleft = 0;
   wav->datasize = 0;
   wav->datastart = 0;
+  wav->chunk_size = 0;
   wav->duration = 0;
   wav->got_fmt = FALSE;
   wav->first = TRUE;
@@ -233,8 +250,11 @@ gst_wavparse_reset (GstWavParse * wav)
     g_list_free_full (wav->cues, g_free);
   wav->cues = NULL;
   if (wav->labls)
-    g_list_free_full (wav->labls, g_free);
+    g_list_free_full (wav->labls, (GDestroyNotify) gst_wavparse_labls_free);
   wav->labls = NULL;
+  if (wav->notes)
+    g_list_free_full (wav->notes, (GDestroyNotify) gst_wavparse_notes_free);
+  wav->notes = NULL;
   if (wav->caps)
     gst_caps_unref (wav->caps);
   wav->caps = NULL;
@@ -1317,6 +1337,8 @@ gst_wavparse_stream_headers (GstWavParse * wav)
           GST_DEBUG_OBJECT (wav, "Using ds64 datasize");
           size64 = wav->datasize;
         }
+        wav->chunk_size = size64;
+
         /* If size is zero, then the data chunk probably actually extends to
            the end of the file */
         if (size64 == 0 && upstream_size) {
@@ -1959,9 +1981,31 @@ iterate_adapter:
       "offset: %" G_GINT64_FORMAT " , end: %" G_GINT64_FORMAT " , dataleft: %"
       G_GINT64_FORMAT, wav->offset, wav->end_offset, wav->dataleft);
 
-  /* Get the next n bytes and output them */
-  if (wav->dataleft == 0 || wav->dataleft < wav->blockalign)
-    goto found_eos;
+  if ((wav->dataleft == 0 || wav->dataleft < wav->blockalign)) {
+    /* In case chunk size is not declared in the begining get size from the
+     * file size directly */
+    if (wav->chunk_size == 0) {
+      gint64 upstream_size = 0;
+
+      /* Get the size of the file   */
+      if (!gst_pad_peer_query_duration (wav->sinkpad, GST_FORMAT_BYTES,
+              &upstream_size))
+        goto found_eos;
+
+      if (upstream_size < wav->offset + wav->datastart)
+        goto found_eos;
+
+      /* If file has updated since the beggining continue reading the file */
+      wav->dataleft = upstream_size - wav->offset - wav->datastart;
+      wav->end_offset = upstream_size;
+
+      /* Get the next n bytes and output them, if we can */
+      if (wav->dataleft == 0 || wav->dataleft < wav->blockalign)
+        goto found_eos;
+    } else {
+      goto found_eos;
+    }
+  }
 
   /* scale the amount of data by the segment rate so we get equal
    * amounts of data regardless of the playback rate */

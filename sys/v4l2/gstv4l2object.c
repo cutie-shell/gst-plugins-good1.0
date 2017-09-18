@@ -644,13 +644,17 @@ gst_v4l2_object_set_property_helper (GstV4l2Object * v4l2object,
       break;
     }
     case PROP_PIXEL_ASPECT_RATIO:
-      g_free (v4l2object->par);
+      if (v4l2object->par) {
+        g_value_unset (v4l2object->par);
+        g_free (v4l2object->par);
+      }
       v4l2object->par = g_new0 (GValue, 1);
       g_value_init (v4l2object->par, GST_TYPE_FRACTION);
       if (!g_value_transform (value, v4l2object->par)) {
         g_warning ("Could not transform string to aspect ratio");
         gst_value_set_fraction (v4l2object->par, 1, 1);
       }
+
       GST_DEBUG_OBJECT (v4l2object->element, "set PAR to %d/%d",
           gst_value_get_fraction_numerator (v4l2object->par),
           gst_value_get_fraction_denominator (v4l2object->par));
@@ -878,6 +882,12 @@ gst_v4l2_object_close (GstV4l2Object * v4l2object)
 
   if (v4l2object->formats) {
     gst_v4l2_object_clear_format_list (v4l2object);
+  }
+
+  if (v4l2object->par) {
+    g_value_unset (v4l2object->par);
+    g_free (v4l2object->par);
+    v4l2object->par = NULL;
   }
 
   return TRUE;
@@ -1960,7 +1970,7 @@ gst_v4l2_object_get_colorspace (struct v4l2_format *fmt,
     case V4L2_COLORSPACE_BT2020:
       cinfo->range = GST_VIDEO_COLOR_RANGE_16_235;
       cinfo->matrix = GST_VIDEO_COLOR_MATRIX_BT2020;
-      cinfo->transfer = GST_VIDEO_TRANSFER_BT709;
+      cinfo->transfer = GST_VIDEO_TRANSFER_BT2020_12;
       cinfo->primaries = GST_VIDEO_COLOR_PRIMARIES_BT2020;
       break;
     case V4L2_COLORSPACE_SMPTE240M:
@@ -2037,7 +2047,7 @@ gst_v4l2_object_get_colorspace (struct v4l2_format *fmt,
       cinfo->matrix = GST_VIDEO_COLOR_MATRIX_BT709;
       break;
     case V4L2_YCBCR_ENC_BT2020_CONST_LUM:
-      GST_FIXME ("BT2020 with constant lumma is not defined, assuming BT2020");
+      GST_FIXME ("BT2020 with constant luma is not defined, assuming BT2020");
       /* fallthrough */
     case V4L2_YCBCR_ENC_BT2020:
       cinfo->matrix = GST_VIDEO_COLOR_MATRIX_BT2020;
@@ -2062,7 +2072,10 @@ gst_v4l2_object_get_colorspace (struct v4l2_format *fmt,
 
   switch (transfer) {
     case V4L2_XFER_FUNC_709:
-      cinfo->transfer = GST_VIDEO_TRANSFER_BT709;
+      if (fmt->fmt.pix.height >= 2160)
+        cinfo->transfer = GST_VIDEO_TRANSFER_BT2020_12;
+      else
+        cinfo->transfer = GST_VIDEO_TRANSFER_BT709;
       break;
     case V4L2_XFER_FUNC_SRGB:
       cinfo->transfer = GST_VIDEO_TRANSFER_SRGB;
@@ -3188,6 +3201,9 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
         else
           colorspace = V4L2_COLORSPACE_SRGB;
         break;
+      case GST_VIDEO_COLOR_PRIMARIES_BT2020:
+        colorspace = V4L2_COLORSPACE_BT2020;
+        break;
       case GST_VIDEO_COLOR_PRIMARIES_BT470M:
         colorspace = V4L2_COLORSPACE_470_SYSTEM_M;
         break;
@@ -3266,6 +3282,7 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
       case GST_VIDEO_TRANSFER_GAMMA10:
         transfer = V4L2_XFER_FUNC_NONE;
         break;
+      case GST_VIDEO_TRANSFER_BT2020_12:
       case GST_VIDEO_TRANSFER_BT709:
         transfer = V4L2_XFER_FUNC_709;
         break;

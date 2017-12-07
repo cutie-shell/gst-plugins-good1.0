@@ -8,7 +8,7 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-pngenc.html" title="pngenc">
 <link rel="next" href="gst-plugins-good-plugins-pulsesink.html" title="pulsesink">
-<meta name="generator" content="GTK-Doc V1.25 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.26 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -43,23 +43,23 @@
 </colgroup>
 <tbody>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-progressreport.html#GstProgressReport--silent" title="The “silent” property">silent</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-progressreport.html#GstProgressReport--update-freq" title="The “update-freq” property">update-freq</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
 <td class="property_type">
-<a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-progressreport.html#GstProgressReport--format" title="The “format” property">format</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-progressreport.html#GstProgressReport--do-query" title="The “do-query” property">do-query</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -81,11 +81,11 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-progressreport.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
-    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
-        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstObject.html#GstObject-struct">GstObject</a>
-            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElement.html#GstElement-struct">GstElement</a>
-                <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-libs-1.0GstBaseTransform.html#GstBaseTransform-struct">GstBaseTransform</a>
+<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstObject.html#GstObject-struct">GstObject</a>
+            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct">GstElement</a>
+                <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-libs-1.0/GstBaseTransform.html#GstBaseTransform-struct">GstBaseTransform</a>
                     <span class="lineart">╰──</span> GstProgressReport
 </pre>
 </div>
@@ -101,7 +101,7 @@ whenever progress has been queried (since gst-plugins-good 0.10.6 only).</p>
 <p>Since the element was originally designed for debugging purposes, it will
 by default also print information about the current progress to the
 terminal. This can be prevented by setting the <a class="link" href="gst-plugins-good-plugins-progressreport.html#GstProgressReport--silent" title="The “silent” property"><span class="type">“silent”</span></a>
-property to <a href="/usr/share/gtk-doc/html/glibglib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a>.</p>
+property to <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a>.</p>
 <p>This element is most useful in transcoding pipelines or other situations
 where just querying the pipeline might not lead to the wanted result. For
 progress in TIME format, the element is best placed in a 'raw stream'
@@ -237,7 +237,7 @@ a whole).</p>
 <a name="gst-plugins-good-plugins-progressreport.property-details"></a><h2>Property Details</h2>
 <div class="refsect2">
 <a name="GstProgressReport--silent"></a><h3>The <code class="literal">“silent”</code> property</h3>
-<pre class="programlisting">  “silent”                   <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<pre class="programlisting">  “silent”                   <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
 <p>Do not print output to stdout.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: FALSE</p>
@@ -245,7 +245,7 @@ a whole).</p>
 <hr>
 <div class="refsect2">
 <a name="GstProgressReport--update-freq"></a><h3>The <code class="literal">“update-freq”</code> property</h3>
-<pre class="programlisting">  “update-freq”              <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
+<pre class="programlisting">  “update-freq”              <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
 <p>Number of seconds between reports when data is flowing.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &gt;= 1</p>
@@ -254,7 +254,7 @@ a whole).</p>
 <hr>
 <div class="refsect2">
 <a name="GstProgressReport--format"></a><h3>The <code class="literal">“format”</code> property</h3>
-<pre class="programlisting">  “format”                   <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
+<pre class="programlisting">  “format”                   <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
 <p>Format to use for the querying.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: "auto"</p>
@@ -262,7 +262,7 @@ a whole).</p>
 <hr>
 <div class="refsect2">
 <a name="GstProgressReport--do-query"></a><h3>The <code class="literal">“do-query”</code> property</h3>
-<pre class="programlisting">  “do-query”                 <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<pre class="programlisting">  “do-query”                 <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
 <p>Use a query instead of buffer metadata to determine stream position.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: TRUE</p>
@@ -270,6 +270,6 @@ a whole).</p>
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.25</div>
+<hr>Generated by GTK-Doc V1.26</div>
 </body>
 </html>

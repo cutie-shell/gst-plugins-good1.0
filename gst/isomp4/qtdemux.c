@@ -2532,7 +2532,7 @@ gst_qtdemux_stream_clear (GstQTDemux * qtdemux, QtDemuxStream * stream)
 }
 
 static void
-gst_qtdemux_stream_free (GstQTDemux * qtdemux, QtDemuxStream * stream)
+gst_qtdemux_stream_reset (GstQTDemux * qtdemux, QtDemuxStream * stream)
 {
   gint i;
   gst_qtdemux_stream_clear (qtdemux, stream);
@@ -2543,12 +2543,21 @@ gst_qtdemux_stream_free (GstQTDemux * qtdemux, QtDemuxStream * stream)
       entry->caps = NULL;
     }
   }
+  g_free (stream->stsd_entries);
+  stream->stsd_entries = NULL;
+  stream->stsd_entries_length = 0;
+}
+
+
+static void
+gst_qtdemux_stream_free (GstQTDemux * qtdemux, QtDemuxStream * stream)
+{
+  gst_qtdemux_stream_reset(qtdemux, stream);
   gst_tag_list_unref (stream->stream_tags);
   if (stream->pad) {
     gst_element_remove_pad (GST_ELEMENT_CAST (qtdemux), stream->pad);
     gst_flow_combiner_remove_pad (qtdemux->flowcombiner, stream->pad);
   }
-  g_free (stream->stsd_entries);
   g_free (stream);
 }
 
@@ -9613,11 +9622,8 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
       goto skip_track;
     }
 
-    stream->stream_tags = gst_tag_list_make_writable (stream->stream_tags);
-
-    /* flush samples data from this track from previous moov */
-    gst_qtdemux_stream_flush_segments_data (qtdemux, stream);
-    gst_qtdemux_stream_flush_samples_data (qtdemux, stream);
+    /* reset reused stream */
+    gst_qtdemux_stream_reset(qtdemux, stream);
   }
   /* need defaults for fragments */
   qtdemux_parse_trex (qtdemux, stream, &dummy, &dummy, &dummy);
@@ -10286,7 +10292,7 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
                   /* parse, if found */
                   GstBuffer *buf;
 
-                  GST_DEBUG_OBJECT (qtdemux, "found avcC codec_data in stsd");
+                  GST_DEBUG_OBJECT (qtdemux, "found hvcC codec_data in stsd");
 
                   /* First 4 bytes are the length of the atom, the next 4 bytes
                    * are the fourcc, the next 1 byte is the version, and the

@@ -8,7 +8,7 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-audiochebband.html" title="audiochebband">
 <link rel="next" href="gst-plugins-good-plugins-audiodynamic.html" title="audiodynamic">
-<meta name="generator" content="GTK-Doc V1.25 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.26 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -43,7 +43,7 @@
 </colgroup>
 <tbody>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gfloat"><span class="type">gfloat</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gfloat"><span class="type">gfloat</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-audiocheblimit.html#GstAudioChebLimit--cutoff" title="The “cutoff” property">cutoff</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -53,17 +53,17 @@
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-audiocheblimit.html#GstAudioChebLimit--poles" title="The “poles” property">poles</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gfloat"><span class="type">gfloat</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gfloat"><span class="type">gfloat</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-audiocheblimit.html#GstAudioChebLimit--ripple" title="The “ripple” property">ripple</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-audiocheblimit.html#GstAudioChebLimit--type" title="The “type” property">type</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -85,12 +85,12 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-audiocheblimit.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
-    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
-        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstObject.html#GstObject-struct">GstObject</a>
-            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElement.html#GstElement-struct">GstElement</a>
-                <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-libs-1.0GstBaseTransform.html#GstBaseTransform-struct">GstBaseTransform</a>
-                    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0GstAudioFilter.html#GstAudioFilter-struct">GstAudioFilter</a>
+<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstObject.html#GstObject-struct">GstObject</a>
+            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct">GstElement</a>
+                <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-libs-1.0/GstBaseTransform.html#GstBaseTransform-struct">GstBaseTransform</a>
+                    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0/GstAudioFilter.html#GstAudioFilter-struct">GstAudioFilter</a>
                         <span class="lineart">╰──</span> GstAudioFXBaseIIRFilter
                             <span class="lineart">╰──</span> GstAudioChebLimit
 </pre>
@@ -226,7 +226,7 @@ gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span
 <a name="gst-plugins-good-plugins-audiocheblimit.property-details"></a><h2>Property Details</h2>
 <div class="refsect2">
 <a name="GstAudioChebLimit--cutoff"></a><h3>The <code class="literal">“cutoff”</code> property</h3>
-<pre class="programlisting">  “cutoff”                   <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gfloat"><span class="type">gfloat</span></a></pre>
+<pre class="programlisting">  “cutoff”                   <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gfloat"><span class="type">gfloat</span></a></pre>
 <p>Cut off frequency (Hz).</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: [0,100000]</p>
@@ -243,7 +243,7 @@ gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span
 <hr>
 <div class="refsect2">
 <a name="GstAudioChebLimit--poles"></a><h3>The <code class="literal">“poles”</code> property</h3>
-<pre class="programlisting">  “poles”                    <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
+<pre class="programlisting">  “poles”                    <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
 <p>Number of poles to use, will be rounded up to the next even number.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: [2,32]</p>
@@ -252,7 +252,7 @@ gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span
 <hr>
 <div class="refsect2">
 <a name="GstAudioChebLimit--ripple"></a><h3>The <code class="literal">“ripple”</code> property</h3>
-<pre class="programlisting">  “ripple”                   <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gfloat"><span class="type">gfloat</span></a></pre>
+<pre class="programlisting">  “ripple”                   <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gfloat"><span class="type">gfloat</span></a></pre>
 <p>Amount of ripple (dB).</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: [0,200]</p>
@@ -261,7 +261,7 @@ gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span
 <hr>
 <div class="refsect2">
 <a name="GstAudioChebLimit--type"></a><h3>The <code class="literal">“type”</code> property</h3>
-<pre class="programlisting">  “type”                     <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
+<pre class="programlisting">  “type”                     <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
 <p>Type of the chebychev filter.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: [1,2]</p>
@@ -270,6 +270,6 @@ gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.25</div>
+<hr>Generated by GTK-Doc V1.26</div>
 </body>
 </html>

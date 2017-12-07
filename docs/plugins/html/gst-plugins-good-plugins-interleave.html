@@ -8,7 +8,7 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-imagefreeze.html" title="imagefreeze">
 <link rel="next" href="gst-plugins-good-plugins-ismlmux.html" title="ismlmux">
-<meta name="generator" content="GTK-Doc V1.25 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.26 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -44,12 +44,12 @@
 <tbody>
 <tr>
 <td class="property_type">
-<a href="/usr/share/gtk-doc/html/gobjectgobject-Value-arrays.html#GValueArray"><span class="type">GValueArray</span></a> *</td>
+<a href="/usr/share/gtk-doc/html/gobject/gobject-Value-arrays.html#GValueArray"><span class="type">GValueArray</span></a> *</td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-interleave.html#GstInterleave--channel-positions" title="The “channel-positions” property">channel-positions</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-interleave.html#GstInterleave--channel-positions-from-input" title="The “channel-positions-from-input” property">channel-positions-from-input</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -71,10 +71,10 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-interleave.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
-    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
-        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstObject.html#GstObject-struct">GstObject</a>
-            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElement.html#GstElement-struct">GstElement</a>
+<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstObject.html#GstObject-struct">GstObject</a>
+            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct">GstElement</a>
                 <span class="lineart">╰──</span> GstInterleave
 </pre>
 </div>
@@ -214,7 +214,7 @@ code is by using the channel-positions property of the interleave element.
 <a name="gst-plugins-good-plugins-interleave.property-details"></a><h2>Property Details</h2>
 <div class="refsect2">
 <a name="GstInterleave--channel-positions"></a><h3>The <code class="literal">“channel-positions”</code> property</h3>
-<pre class="programlisting">  “channel-positions”        <a href="/usr/share/gtk-doc/html/gobjectgobject-Value-arrays.html#GValueArray"><span class="type">GValueArray</span></a> *</pre>
+<pre class="programlisting">  “channel-positions”        <a href="/usr/share/gtk-doc/html/gobject/gobject-Value-arrays.html#GValueArray"><span class="type">GValueArray</span></a> *</pre>
 <p>Channel positions: This property controls the channel positions
 that are used on the src caps. The number of elements should be
 the same as the number of sink pads and the array should contain
@@ -228,10 +228,10 @@ is not given a NONE layout will be used.</p>
 <hr>
 <div class="refsect2">
 <a name="GstInterleave--channel-positions-from-input"></a><h3>The <code class="literal">“channel-positions-from-input”</code> property</h3>
-<pre class="programlisting">  “channel-positions-from-input” <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
-<p>Channel positions from input: If this property is set to <a href="/usr/share/gtk-doc/html/glibglib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> the channel
+<pre class="programlisting">  “channel-positions-from-input” <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<p>Channel positions from input: If this property is set to <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> the channel
 positions will be taken from the input caps if valid channel positions for
-the output can be constructed from them. If this is set to <a href="/usr/share/gtk-doc/html/glibglib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> setting the
+the output can be constructed from them. If this is set to <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> setting the
 channel-positions property overwrites this property again.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: TRUE</p>
@@ -243,6 +243,6 @@ channel-positions property overwrites this property again.</p>
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.25</div>
+<hr>Generated by GTK-Doc V1.26</div>
 </body>
 </html>

@@ -1181,7 +1181,7 @@
     <keyword type="struct" name="struct GstShapeWipe" link="gst-plugins-good-plugins-shapewipe.html#GstShapeWipe-struct"/>
     <keyword type="property" name="The “border” property" link="gst-plugins-good-plugins-shapewipe.html#GstShapeWipe--border"/>
     <keyword type="property" name="The “position” property" link="gst-plugins-good-plugins-shapewipe.html#GstShapeWipe--position"/>
-    <keyword type="struct" name="struct GstShout2send" link="gst-plugins-good-plugins-shout2send.html#GstShout2send-struct"/>
+    <keyword type="struct" name="struct GstShout2send" link="gst-plugins-good-plugins-shout2send.html#GstShout2send"/>
     <keyword type="property" name="The “description” property" link="gst-plugins-good-plugins-shout2send.html#GstShout2send--description"/>
     <keyword type="property" name="The “genre” property" link="gst-plugins-good-plugins-shout2send.html#GstShout2send--genre"/>
     <keyword type="property" name="The “ip” property" link="gst-plugins-good-plugins-shout2send.html#GstShout2send--ip"/>

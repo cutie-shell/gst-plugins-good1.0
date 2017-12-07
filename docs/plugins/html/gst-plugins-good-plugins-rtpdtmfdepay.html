@@ -8,7 +8,7 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-rtpdec.html" title="rtpdec">
 <link rel="next" href="gst-plugins-good-plugins-rtpdtmfmux.html" title="rtpdtmfmux">
-<meta name="generator" content="GTK-Doc V1.25 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.26 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -43,12 +43,12 @@
 </colgroup>
 <tbody>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpdtmfdepay.html#GstRtpDTMFDepay--max-duration" title="The “max-duration” property">max-duration</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpdtmfdepay.html#GstRtpDTMFDepay--unit-time" title="The “unit-time” property">unit-time</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -70,18 +70,18 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpdtmfdepay.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
-    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
-        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstObject.html#GstObject-struct">GstObject</a>
-            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElement.html#GstElement-struct">GstElement</a>
-                <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0GstRTPBaseDepayload.html#GstRTPBaseDepayload-struct">GstRTPBaseDepayload</a>
+<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstObject.html#GstObject-struct">GstObject</a>
+            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct">GstElement</a>
+                <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0/GstRTPBaseDepayload.html#GstRTPBaseDepayload-struct">GstRTPBaseDepayload</a>
                     <span class="lineart">╰──</span> GstRtpDTMFDepay
 </pre>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpdtmfdepay.description"></a><h2>Description</h2>
 <p>This element takes RTP DTMF packets and produces sound. It also emits a
-message on the <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstBus.html#GstBus-struct"><span class="type">GstBus</span></a>.</p>
+message on the <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstBus.html#GstBus-struct"><span class="type">GstBus</span></a>.</p>
 <p>The message is called "dtmf-event" and has the following fields</p>
 <div class="informaltable"><table class="informaltable" border="1">
 <colgroup>
@@ -228,7 +228,7 @@ valid DTMF is from 0 to -36 dBm0.
 <a name="gst-plugins-good-plugins-rtpdtmfdepay.property-details"></a><h2>Property Details</h2>
 <div class="refsect2">
 <a name="GstRtpDTMFDepay--max-duration"></a><h3>The <code class="literal">“max-duration”</code> property</h3>
-<pre class="programlisting">  “max-duration”             <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<pre class="programlisting">  “max-duration”             <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
 <p>The maxumimum duration (ms) of the outgoing soundpacket. (0 = no limit).</p>
 <p>Flags: Read / Write</p>
 <p>Default value: 0</p>
@@ -236,7 +236,7 @@ valid DTMF is from 0 to -36 dBm0.
 <hr>
 <div class="refsect2">
 <a name="GstRtpDTMFDepay--unit-time"></a><h3>The <code class="literal">“unit-time”</code> property</h3>
-<pre class="programlisting">  “unit-time”                <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<pre class="programlisting">  “unit-time”                <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
 <p>The smallest unit (ms) the duration must be a multiple of (0 disables it).</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &lt;= 1000</p>
@@ -249,6 +249,6 @@ valid DTMF is from 0 to -36 dBm0.
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.25</div>
+<hr>Generated by GTK-Doc V1.26</div>
 </body>
 </html>

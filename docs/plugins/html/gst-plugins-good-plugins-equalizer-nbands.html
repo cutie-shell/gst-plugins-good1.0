@@ -8,7 +8,7 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-equalizer-3bands.html" title="equalizer-3bands">
 <link rel="next" href="gst-plugins-good-plugins-flacdec.html" title="flacdec">
-<meta name="generator" content="GTK-Doc V1.25 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.26 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -43,7 +43,7 @@
 <col width="200px" class="properties_flags">
 </colgroup>
 <tbody><tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-equalizer-nbands.html#GstIirEqualizerNBands--num-bands" title="The “num-bands” property">num-bands</a></td>
 <td class="property_flags">Read / Write / Construct</td>
 </tr></tbody>
@@ -64,12 +64,12 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-equalizer-nbands.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
-    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
-        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstObject.html#GstObject-struct">GstObject</a>
-            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElement.html#GstElement-struct">GstElement</a>
-                <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-libs-1.0GstBaseTransform.html#GstBaseTransform-struct">GstBaseTransform</a>
-                    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0GstAudioFilter.html#GstAudioFilter-struct">GstAudioFilter</a>
+<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstObject.html#GstObject-struct">GstObject</a>
+            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct">GstElement</a>
+                <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-libs-1.0/GstBaseTransform.html#GstBaseTransform-struct">GstBaseTransform</a>
+                    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0/GstAudioFilter.html#GstAudioFilter-struct">GstAudioFilter</a>
                         <span class="lineart">╰──</span> <a class="link" href="gst-plugins-good-plugins-iirequalizer.html#GstIirEqualizer">GstIirEqualizer</a>
                             <span class="lineart">╰──</span> GstIirEqualizerNBands
 </pre>
@@ -78,7 +78,7 @@
 <a name="gst-plugins-good-plugins-equalizer-nbands.implemented-interfaces"></a><h2>Implemented Interfaces</h2>
 <p>
 GstIirEqualizerNBands implements
- <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstChildProxy.html#GstChildProxy-struct">GstChildProxy</a> and  <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstPreset.html#GstPreset-struct">GstPreset</a>.</p>
+ <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstChildProxy.html#GstChildProxy-struct">GstChildProxy</a> and  <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstPreset.html#GstPreset-struct">GstPreset</a>.</p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-equalizer-nbands.description"></a><h2>Description</h2>
@@ -168,17 +168,17 @@ the center frequency, band width and gain.</p>
 
 <span class="gtkdoc opt">...</span>
 
-  equalizer <span class="gtkdoc opt">=</span> <span class="function"><a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElementFactory.html#gst-element-factory-make">gst_element_factory_make</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;equalizer-nbands&quot;</span><span class="gtkdoc opt">,</span> <span class="string">&quot;equalizer&quot;</span><span class="gtkdoc opt">);</span>
-  <span class="function"><a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#g-object-set">g_object_set</a></span> <span class="gtkdoc opt">(</span><span class="function"><a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#G-OBJECT:CAPS">G_OBJECT</a></span> <span class="gtkdoc opt">(</span>equalizer<span class="gtkdoc opt">),</span> <span class="string">&quot;num-bands&quot;</span><span class="gtkdoc opt">,</span> <span class="number">5</span><span class="gtkdoc opt">,</span> NULL<span class="gtkdoc opt">);</span>
+  equalizer <span class="gtkdoc opt">=</span> <span class="function"><a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElementFactory.html#gst-element-factory-make">gst_element_factory_make</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;equalizer-nbands&quot;</span><span class="gtkdoc opt">,</span> <span class="string">&quot;equalizer&quot;</span><span class="gtkdoc opt">);</span>
+  <span class="function"><a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#g-object-set">g_object_set</a></span> <span class="gtkdoc opt">(</span><span class="function"><a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#G-OBJECT:CAPS">G_OBJECT</a></span> <span class="gtkdoc opt">(</span>equalizer<span class="gtkdoc opt">),</span> <span class="string">&quot;num-bands&quot;</span><span class="gtkdoc opt">,</span> <span class="number">5</span><span class="gtkdoc opt">,</span> NULL<span class="gtkdoc opt">);</span>
 
 <span class="gtkdoc opt">...</span>
 
   <span class="keyword">for</span> <span class="gtkdoc opt">(</span>i <span class="gtkdoc opt">=</span> <span class="number">0</span><span class="gtkdoc opt">;</span> i <span class="gtkdoc opt">&lt;</span> <span class="number">5</span><span class="gtkdoc opt">;</span> i<span class="gtkdoc opt">++) {</span>
-    band <span class="gtkdoc opt">=</span> <span class="function"><a href="/usr/share/gtk-doc/html/gstreamer-1.0GstChildProxy.html#gst-child-proxy-get-child-by-index">gst_child_proxy_get_child_by_index</a></span> <span class="gtkdoc opt">(</span><span class="function">GST_CHILD_PROXY</span> <span class="gtkdoc opt">(</span>equalizer<span class="gtkdoc opt">),</span> i<span class="gtkdoc opt">);</span>
-    <span class="function"><a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#g-object-set">g_object_set</a></span> <span class="gtkdoc opt">(</span><span class="function"><a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#G-OBJECT:CAPS">G_OBJECT</a></span> <span class="gtkdoc opt">(</span>band<span class="gtkdoc opt">),</span> <span class="string">&quot;freq&quot;</span><span class="gtkdoc opt">,</span> state<span class="gtkdoc opt">[</span>i<span class="gtkdoc opt">].</span>freq<span class="gtkdoc opt">,</span>
+    band <span class="gtkdoc opt">=</span> <span class="function"><a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstChildProxy.html#gst-child-proxy-get-child-by-index">gst_child_proxy_get_child_by_index</a></span> <span class="gtkdoc opt">(</span><span class="function">GST_CHILD_PROXY</span> <span class="gtkdoc opt">(</span>equalizer<span class="gtkdoc opt">),</span> i<span class="gtkdoc opt">);</span>
+    <span class="function"><a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#g-object-set">g_object_set</a></span> <span class="gtkdoc opt">(</span><span class="function"><a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#G-OBJECT:CAPS">G_OBJECT</a></span> <span class="gtkdoc opt">(</span>band<span class="gtkdoc opt">),</span> <span class="string">&quot;freq&quot;</span><span class="gtkdoc opt">,</span> state<span class="gtkdoc opt">[</span>i<span class="gtkdoc opt">].</span>freq<span class="gtkdoc opt">,</span>
         <span class="string">&quot;bandwidth&quot;</span><span class="gtkdoc opt">,</span> state<span class="gtkdoc opt">[</span>i<span class="gtkdoc opt">].</span>width<span class="gtkdoc opt">,</span>
 	<span class="string">&quot;gain&quot;</span><span class="gtkdoc opt">,</span> state<span class="gtkdoc opt">[</span>i<span class="gtkdoc opt">].</span>gain<span class="gtkdoc opt">);</span>
-    <span class="function"><a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#g-object-unref">g_object_unref</a></span> <span class="gtkdoc opt">(</span><span class="function"><a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#G-OBJECT:CAPS">G_OBJECT</a></span> <span class="gtkdoc opt">(</span>band<span class="gtkdoc opt">));</span>
+    <span class="function"><a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#g-object-unref">g_object_unref</a></span> <span class="gtkdoc opt">(</span><span class="function"><a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#G-OBJECT:CAPS">G_OBJECT</a></span> <span class="gtkdoc opt">(</span>band<span class="gtkdoc opt">));</span>
   <span class="gtkdoc opt">}</span>
 
 <span class="gtkdoc opt">...</span></pre></td>
@@ -284,7 +284,7 @@ the center frequency, band width and gain.</p>
 <a name="gst-plugins-good-plugins-equalizer-nbands.property-details"></a><h2>Property Details</h2>
 <div class="refsect2">
 <a name="GstIirEqualizerNBands--num-bands"></a><h3>The <code class="literal">“num-bands”</code> property</h3>
-<pre class="programlisting">  “num-bands”                <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<pre class="programlisting">  “num-bands”                <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
 <p>number of different bands to use.</p>
 <p>Flags: Read / Write / Construct</p>
 <p>Allowed values: [1,64]</p>
@@ -293,6 +293,6 @@ the center frequency, band width and gain.</p>
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.25</div>
+<hr>Generated by GTK-Doc V1.26</div>
 </body>
 </html>

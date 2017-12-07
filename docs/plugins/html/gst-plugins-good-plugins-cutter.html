@@ -8,7 +8,7 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-cpureport.html" title="cpureport">
 <link rel="next" href="gst-plugins-good-plugins-dcaparse.html" title="dcaparse">
-<meta name="generator" content="GTK-Doc V1.25 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.26 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -43,27 +43,27 @@
 </colgroup>
 <tbody>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-cutter.html#GstCutter--leaky" title="The “leaky” property">leaky</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-cutter.html#GstCutter--pre-length" title="The “pre-length” property">pre-length</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-cutter.html#GstCutter--run-length" title="The “run-length” property">run-length</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-cutter.html#GstCutter--threshold" title="The “threshold” property">threshold</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-cutter.html#GstCutter--threshold-dB" title="The “threshold-dB” property">threshold-dB</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -85,10 +85,10 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-cutter.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
-    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
-        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstObject.html#GstObject-struct">GstObject</a>
-            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElement.html#GstElement-struct">GstElement</a>
+<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstObject.html#GstObject-struct">GstObject</a>
+            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct">GstElement</a>
                 <span class="lineart">╰──</span> GstCutter
 </pre>
 </div>
@@ -100,14 +100,14 @@ silence is signalled by bus messages named</p>
 <p>The message's structure contains two fields:</p>
 <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
 <li class="listitem"><p>
-  <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstClock.html#GstClockTime"><span class="type">GstClockTime</span></a>
+  <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstClock.html#GstClockTime"><span class="type">GstClockTime</span></a>
   <code class="classname">"timestamp"</code>:
   the timestamp of the buffer that triggered the message.
   </p></li>
 <li class="listitem"><p>
   gboolean
   <code class="classname">"above"</code>:
-  <a href="/usr/share/gtk-doc/html/glibglib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> for begin of silence and <a href="/usr/share/gtk-doc/html/glibglib-Standard-Macros.html#FALSE:CAPS"><code class="literal">FALSE</code></a> for end of silence.
+  <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> for begin of silence and <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#FALSE:CAPS"><code class="literal">FALSE</code></a> for end of silence.
   </p></li>
 </ul></div>
 <div class="refsect2">
@@ -220,7 +220,7 @@ silence is signalled by bus messages named</p>
 <a name="gst-plugins-good-plugins-cutter.property-details"></a><h2>Property Details</h2>
 <div class="refsect2">
 <a name="GstCutter--leaky"></a><h3>The <code class="literal">“leaky”</code> property</h3>
-<pre class="programlisting">  “leaky”                    <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<pre class="programlisting">  “leaky”                    <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
 <p>do we leak buffers when below threshold ?.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: FALSE</p>
@@ -228,7 +228,7 @@ silence is signalled by bus messages named</p>
 <hr>
 <div class="refsect2">
 <a name="GstCutter--pre-length"></a><h3>The <code class="literal">“pre-length”</code> property</h3>
-<pre class="programlisting">  “pre-length”               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
+<pre class="programlisting">  “pre-length”               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
 <p>Length of pre-recording buffer (in nanoseconds).</p>
 <p>Flags: Read / Write</p>
 <p>Default value: 0</p>
@@ -236,7 +236,7 @@ silence is signalled by bus messages named</p>
 <hr>
 <div class="refsect2">
 <a name="GstCutter--run-length"></a><h3>The <code class="literal">“run-length”</code> property</h3>
-<pre class="programlisting">  “run-length”               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
+<pre class="programlisting">  “run-length”               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
 <p>Length of drop below threshold before cut_stop (in nanoseconds).</p>
 <p>Flags: Read / Write</p>
 <p>Default value: 0</p>
@@ -244,7 +244,7 @@ silence is signalled by bus messages named</p>
 <hr>
 <div class="refsect2">
 <a name="GstCutter--threshold"></a><h3>The <code class="literal">“threshold”</code> property</h3>
-<pre class="programlisting">  “threshold”                <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></pre>
+<pre class="programlisting">  “threshold”                <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></pre>
 <p>Volume threshold before trigger.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: 0</p>
@@ -252,7 +252,7 @@ silence is signalled by bus messages named</p>
 <hr>
 <div class="refsect2">
 <a name="GstCutter--threshold-dB"></a><h3>The <code class="literal">“threshold-dB”</code> property</h3>
-<pre class="programlisting">  “threshold-dB”             <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></pre>
+<pre class="programlisting">  “threshold-dB”             <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></pre>
 <p>Volume threshold before trigger (in dB).</p>
 <p>Flags: Read / Write</p>
 <p>Default value: 0</p>
@@ -260,6 +260,6 @@ silence is signalled by bus messages named</p>
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.25</div>
+<hr>Generated by GTK-Doc V1.26</div>
 </body>
 </html>

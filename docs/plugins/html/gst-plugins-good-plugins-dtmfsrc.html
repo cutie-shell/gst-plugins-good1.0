@@ -8,7 +8,7 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-directsoundsink.html" title="directsoundsink">
 <link rel="next" href="gst-plugins-good-plugins-dv1394src.html" title="dv1394src">
-<meta name="generator" content="GTK-Doc V1.25 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.26 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -42,7 +42,7 @@
 <col width="200px" class="properties_flags">
 </colgroup>
 <tbody><tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-dtmfsrc.html#GstDTMFSrc--interval" title="The “interval” property">interval</a></td>
 <td class="property_flags">Read / Write</td>
 </tr></tbody>
@@ -63,11 +63,11 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-dtmfsrc.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
-    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
-        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstObject.html#GstObject-struct">GstObject</a>
-            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElement.html#GstElement-struct">GstElement</a>
-                <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-libs-1.0GstBaseSrc.html#GstBaseSrc-struct">GstBaseSrc</a>
+<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstObject.html#GstObject-struct">GstObject</a>
+            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct">GstElement</a>
+                <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-libs-1.0/GstBaseSrc.html#GstBaseSrc-struct">GstBaseSrc</a>
                     <span class="lineart">╰──</span> GstDTMFSrc
 </pre>
 </div>
@@ -149,11 +149,11 @@ event = gst_event_new_custom (GST_EVENT_CUSTOM_UPSTREAM, structure);
 gst_element_send_event (pipeline, event);
 </pre>
 <p>When a DTMF tone actually starts or stop, a "dtmf-event-processed"
-element <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstMessage.html#GstMessage-struct"><span class="type">GstMessage</span></a> with the same fields as the "dtmf-event"
-<a href="/usr/share/gtk-doc/html/gstreamer-1.0GstEvent.html#GstEvent-struct"><span class="type">GstEvent</span></a> that was used to request the event. Also, if any event
+element <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstMessage.html#GstMessage-struct"><span class="type">GstMessage</span></a> with the same fields as the "dtmf-event"
+<a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstEvent.html#GstEvent-struct"><span class="type">GstEvent</span></a> that was used to request the event. Also, if any event
 has not been processed when the element goes from the PAUSED to the
 READY state, then a "dtmf-event-dropped" message is posted on the
-<a href="/usr/share/gtk-doc/html/gstreamer-1.0GstBus.html#GstBus-struct"><span class="type">GstBus</span></a> in the order that they were received.</p>
+<a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstBus.html#GstBus-struct"><span class="type">GstBus</span></a> in the order that they were received.</p>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
@@ -238,7 +238,7 @@ READY state, then a "dtmf-event-dropped" message is posted on the
 <a name="gst-plugins-good-plugins-dtmfsrc.property-details"></a><h2>Property Details</h2>
 <div class="refsect2">
 <a name="GstDTMFSrc--interval"></a><h3>The <code class="literal">“interval”</code> property</h3>
-<pre class="programlisting">  “interval”                 <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<pre class="programlisting">  “interval”                 <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
 <p>Interval in ms between two tone packets.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: [10,50]</p>
@@ -251,6 +251,6 @@ READY state, then a "dtmf-event-dropped" message is posted on the
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.25</div>
+<hr>Generated by GTK-Doc V1.26</div>
 </body>
 </html>

@@ -38,6 +38,11 @@
 #include <gudev/gudev.h>
 #endif
 
+/* Only available since Linux 4.8 */
+#ifndef V4L2_CAP_TOUCH
+#define V4L2_CAP_TOUCH 0x10000000
+#endif
+
 static GstV4l2Device *gst_v4l2_device_new (const gchar * device_path,
     const gchar * device_name, GstCaps * caps, GstV4l2DeviceType type,
     GstStructure * props);
@@ -137,8 +142,13 @@ gst_v4l2_device_provider_probe_device (GstV4l2DeviceProvider * provider,
       v4l2obj->vcap.device_caps, NULL);
 
   if (v4l2obj->device_caps &
-      (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE))
+      (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE)) {
+    /* We ignore touch sensing devices; those are't really video */
+    if (v4l2obj->device_caps & V4L2_CAP_TOUCH)
+      goto close;
+
     type = GST_V4L2_DEVICE_TYPE_SOURCE;
+  }
 
   if (v4l2obj->device_caps &
       (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE)) {

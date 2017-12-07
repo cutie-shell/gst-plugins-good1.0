@@ -8,7 +8,7 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-cairooverlay.html" title="cairooverlay">
 <link rel="next" href="gst-plugins-good-plugins-cpureport.html" title="cpureport">
-<meta name="generator" content="GTK-Doc V1.25 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.26 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -44,17 +44,17 @@
 <tbody>
 <tr>
 <td class="property_type">
-<a href="/usr/share/gtk-doc/html/gstreamer-1.0GstCaps.html#GstCaps-struct"><span class="type">GstCaps</span></a> *</td>
+<a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstCaps.html#GstCaps-struct"><span class="type">GstCaps</span></a> *</td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-capssetter.html#GstCapsSetter--caps" title="The “caps” property">caps</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-capssetter.html#GstCapsSetter--join" title="The “join” property">join</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-capssetter.html#GstCapsSetter--replace" title="The “replace” property">replace</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -76,11 +76,11 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-capssetter.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
-    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
-        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstObject.html#GstObject-struct">GstObject</a>
-            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElement.html#GstElement-struct">GstElement</a>
-                <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-libs-1.0GstBaseTransform.html#GstBaseTransform-struct">GstBaseTransform</a>
+<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstObject.html#GstObject-struct">GstObject</a>
+            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct">GstElement</a>
+                <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-libs-1.0/GstBaseTransform.html#GstBaseTransform-struct">GstBaseTransform</a>
                     <span class="lineart">╰──</span> GstCapsSetter
 </pre>
 </div>
@@ -90,10 +90,10 @@
 updated using (fields of) <a class="link" href="gst-plugins-good-plugins-capssetter.html#GstCapsSetter--caps" title="The “caps” property"><span class="type">“caps”</span></a>. Note that this may contain
 multiple structures (though not likely recommended), but each of these must
 be fixed (or will otherwise be rejected).</p>
-<p>If <a class="link" href="gst-plugins-good-plugins-capssetter.html#GstCapsSetter--join" title="The “join” property"><span class="type">“join”</span></a> is <a href="/usr/share/gtk-doc/html/glibglib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a>, then the incoming caps' mime-type is
+<p>If <a class="link" href="gst-plugins-good-plugins-capssetter.html#GstCapsSetter--join" title="The “join” property"><span class="type">“join”</span></a> is <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a>, then the incoming caps' mime-type is
 compared to the mime-type(s) of provided caps and only matching structure(s)
 are considered for updating.</p>
-<p>If <a class="link" href="gst-plugins-good-plugins-capssetter.html#GstCapsSetter--replace" title="The “replace” property"><span class="type">“replace”</span></a> is <a href="/usr/share/gtk-doc/html/glibglib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a>, then any caps update is preceded by
+<p>If <a class="link" href="gst-plugins-good-plugins-capssetter.html#GstCapsSetter--replace" title="The “replace” property"><span class="type">“replace”</span></a> is <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a>, then any caps update is preceded by
 clearing existing fields, making provided fields (as a whole) replace
 incoming ones. Otherwise, no clearing is performed, in which case provided
 fields are added/merged onto incoming caps</p>
@@ -197,14 +197,14 @@ alike.</p>
 <a name="gst-plugins-good-plugins-capssetter.property-details"></a><h2>Property Details</h2>
 <div class="refsect2">
 <a name="GstCapsSetter--caps"></a><h3>The <code class="literal">“caps”</code> property</h3>
-<pre class="programlisting">  “caps”                     <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstCaps.html#GstCaps-struct"><span class="type">GstCaps</span></a> *</pre>
+<pre class="programlisting">  “caps”                     <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstCaps.html#GstCaps-struct"><span class="type">GstCaps</span></a> *</pre>
 <p>Merge these caps (thereby overwriting) in the stream.</p>
 <p>Flags: Read / Write</p>
 </div>
 <hr>
 <div class="refsect2">
 <a name="GstCapsSetter--join"></a><h3>The <code class="literal">“join”</code> property</h3>
-<pre class="programlisting">  “join”                     <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<pre class="programlisting">  “join”                     <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
 <p>Match incoming caps' mime-type to mime-type of provided caps.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: TRUE</p>
@@ -212,7 +212,7 @@ alike.</p>
 <hr>
 <div class="refsect2">
 <a name="GstCapsSetter--replace"></a><h3>The <code class="literal">“replace”</code> property</h3>
-<pre class="programlisting">  “replace”                  <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<pre class="programlisting">  “replace”                  <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
 <p>Drop fields of incoming caps.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: FALSE</p>
@@ -220,6 +220,6 @@ alike.</p>
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.25</div>
+<hr>Generated by GTK-Doc V1.26</div>
 </body>
 </html>

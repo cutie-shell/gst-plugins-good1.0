@@ -1364,8 +1364,10 @@ gst_flv_demux_video_negotiate (GstFlvDemux * demux, guint32 codec_tag)
     goto beach;
   }
 
-  gst_caps_set_simple (caps, "pixel-aspect-ratio", GST_TYPE_FRACTION,
-      demux->par_x, demux->par_y, NULL);
+  if (demux->got_par) {
+    gst_caps_set_simple (caps, "pixel-aspect-ratio", GST_TYPE_FRACTION,
+        demux->par_x, demux->par_y, NULL);
+  }
 
   if (G_LIKELY (demux->w)) {
     gst_caps_set_simple (caps, "width", G_TYPE_INT, demux->w, NULL);
@@ -1502,6 +1504,12 @@ gst_flv_demux_parse_tag_video (GstFlvDemux * demux, GstBuffer * buffer)
     cts = GST_READ_UINT24_BE (data + 9);
     cts = (cts + 0xff800000) ^ 0xff800000;
 
+    if (cts < 0 && ABS (cts) > dts) {
+      GST_ERROR_OBJECT (demux, "Detected a negative composition time offset "
+          "'%d' that would lead to negative PTS, fixing", cts);
+      cts += ABS (cts) - dts;
+    }
+
     GST_LOG_OBJECT (demux, "got cts %d", cts);
   }
 
@@ -1514,6 +1522,11 @@ gst_flv_demux_parse_tag_video (GstFlvDemux * demux, GstBuffer * buffer)
     switch (avc_packet_type) {
       case 0:
       {
+        if (demux->tag_data_size < codec_data) {
+          GST_ERROR_OBJECT (demux, "Got invalid H.264 codec, ignoring.");
+          break;
+        }
+
         /* AVCDecoderConfigurationRecord data */
         GST_LOG_OBJECT (demux, "got an H.264 codec data packet");
         if (demux->video_codec_data) {
@@ -2558,6 +2571,9 @@ gst_flv_demux_get_metadata (GstFlvDemux * demux)
   GST_DEBUG_OBJECT (demux, "last tag size: %" G_GSIZE_FORMAT, tag_size);
   gst_buffer_unref (buffer);
   buffer = NULL;
+
+  if (G_UNLIKELY (offset < tag_size))
+    goto exit;
 
   offset -= tag_size;
   if (GST_FLOW_OK != gst_flv_demux_pull_range (demux, demux->sinkpad, offset,

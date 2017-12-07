@@ -8,7 +8,7 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-rtpspeexpay.html" title="rtpspeexpay">
 <link rel="next" href="gst-plugins-good-plugins-rtpstreamdepay.html" title="rtpstreamdepay">
-<meta name="generator" content="GTK-Doc V1.25 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.26 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -45,17 +45,17 @@
 <tr>
 <td class="signal_type"><span class="returnvalue">void</span></td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux-clear-ssrc" title="The “clear-ssrc” signal">clear-ssrc</a></td>
-<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobjectgobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></td>
 </tr>
 <tr>
 <td class="signal_type"><span class="returnvalue">void</span></td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux-new-ssrc-pad" title="The “new-ssrc-pad” signal">new-ssrc-pad</a></td>
-<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobjectgobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
 </tr>
 <tr>
 <td class="signal_type"><span class="returnvalue">void</span></td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux-removed-ssrc-pad" title="The “removed-ssrc-pad” signal">removed-ssrc-pad</a></td>
-<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobjectgobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
 </tr>
 </tbody>
 </table></div>
@@ -75,10 +75,10 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpssrcdemux.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
-    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobjectgobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
-        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstObject.html#GstObject-struct">GstObject</a>
-            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElement.html#GstElement-struct">GstElement</a>
+<pre class="screen">    <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct">GObject</a>
+    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+        <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstObject.html#GstObject-struct">GstObject</a>
+            <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct">GstElement</a>
                 <span class="lineart">╰──</span> GstRtpSsrcDemux
 </pre>
 </div>
@@ -250,8 +250,8 @@ to fakesink, discarding the other SSRCs.
 <a name="GstRtpSsrcDemux-clear-ssrc"></a><h3>The <code class="literal">“clear-ssrc”</code> signal</h3>
 <pre class="programlisting"><span class="returnvalue">void</span>
 user_function (<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux"><span class="type">GstRtpSsrcDemux</span></a> *demux,
-               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a>            ssrc,
-               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a>            ssrc,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
 <p>Action signal to remove the pad for SSRC.</p>
 <div class="refsect3">
 <a name="GstRtpSsrcDemux-clear-ssrc.parameters"></a><h4>Parameters</h4>
@@ -280,16 +280,16 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#
 </tbody>
 </table></div>
 </div>
-<p>Flags: <a href="/usr/share/gtk-doc/html/gobjectgobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></p>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></p>
 </div>
 <hr>
 <div class="refsect2">
 <a name="GstRtpSsrcDemux-new-ssrc-pad"></a><h3>The <code class="literal">“new-ssrc-pad”</code> signal</h3>
 <pre class="programlisting"><span class="returnvalue">void</span>
 user_function (<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux"><span class="type">GstRtpSsrcDemux</span></a> *demux,
-               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a>            ssrc,
-               <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstPad.html#GstPad-struct"><span class="type">GstPad</span></a>          *pad,
-               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a>            ssrc,
+               <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstPad.html#GstPad-struct"><span class="type">GstPad</span></a>          *pad,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
 <p>Emited when a new SSRC pad has been created.</p>
 <div class="refsect3">
 <a name="GstRtpSsrcDemux-new-ssrc-pad.parameters"></a><h4>Parameters</h4>
@@ -323,16 +323,16 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#
 </tbody>
 </table></div>
 </div>
-<p>Flags: <a href="/usr/share/gtk-doc/html/gobjectgobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
 </div>
 <hr>
 <div class="refsect2">
 <a name="GstRtpSsrcDemux-removed-ssrc-pad"></a><h3>The <code class="literal">“removed-ssrc-pad”</code> signal</h3>
 <pre class="programlisting"><span class="returnvalue">void</span>
 user_function (<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux"><span class="type">GstRtpSsrcDemux</span></a> *demux,
-               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a>            ssrc,
-               <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstPad.html#GstPad-struct"><span class="type">GstPad</span></a>          *pad,
-               <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a>            ssrc,
+               <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstPad.html#GstPad-struct"><span class="type">GstPad</span></a>          *pad,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
 <p>Emited when a SSRC pad has been removed.</p>
 <div class="refsect3">
 <a name="GstRtpSsrcDemux-removed-ssrc-pad.parameters"></a><h4>Parameters</h4>
@@ -366,11 +366,11 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#
 </tbody>
 </table></div>
 </div>
-<p>Flags: <a href="/usr/share/gtk-doc/html/gobjectgobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
 </div>
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.25</div>
+<hr>Generated by GTK-Doc V1.26</div>
 </body>
 </html>

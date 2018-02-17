@@ -176,8 +176,8 @@ am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 libgstautodetect_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(libgstautodetect_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(libgstautodetect_la_CFLAGS) $(CFLAGS) \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(libgstautodetect_la_CFLAGS) $(CFLAGS) \
 	$(libgstautodetect_la_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -295,6 +295,7 @@ ERROR_CFLAGS = @ERROR_CFLAGS@
 ERROR_CXXFLAGS = @ERROR_CXXFLAGS@
 ERROR_OBJCFLAGS = @ERROR_OBJCFLAGS@
 EXEEXT = @EXEEXT@
+EXTRA_CFLAGS = @EXTRA_CFLAGS@
 FFLAGS = @FFLAGS@
 FGREP = @FGREP@
 FLAC_CFLAGS = @FLAC_CFLAGS@
@@ -318,6 +319,8 @@ GLIB_PREFIX = @GLIB_PREFIX@
 GLIB_REQ = @GLIB_REQ@
 GMSGFMT = @GMSGFMT@
 GMSGFMT_015 = @GMSGFMT_015@
+GNUSTL_CFLAGS = @GNUSTL_CFLAGS@
+GNUSTL_LIBS = @GNUSTL_LIBS@
 GREP = @GREP@
 GSTPB_PLUGINS_DIR = @GSTPB_PLUGINS_DIR@
 GSTPB_PREFIX = @GSTPB_PREFIX@
@@ -333,6 +336,8 @@ GST_CONTROLLER_CFLAGS = @GST_CONTROLLER_CFLAGS@
 GST_CONTROLLER_LIBS = @GST_CONTROLLER_LIBS@
 GST_CURRENT = @GST_CURRENT@
 GST_CXXFLAGS = @GST_CXXFLAGS@
+GST_GL_CFLAGS = @GST_GL_CFLAGS@
+GST_GL_LIBS = @GST_GL_LIBS@
 GST_LEVEL_DEFAULT = @GST_LEVEL_DEFAULT@
 GST_LIBS = @GST_LIBS@
 GST_LIBVERSION = @GST_LIBVERSION@
@@ -355,10 +360,17 @@ GST_PLUGINS_DIR = @GST_PLUGINS_DIR@
 GST_PLUGINS_NONPORTED = @GST_PLUGINS_NONPORTED@
 GST_PLUGINS_SELECTED = @GST_PLUGINS_SELECTED@
 GST_PLUGIN_LDFLAGS = @GST_PLUGIN_LDFLAGS@
-GST_PLUGIN_LIBTOOLFLAGS = @GST_PLUGIN_LIBTOOLFLAGS@
 GST_PREFIX = @GST_PREFIX@
 GST_REVISION = @GST_REVISION@
 GST_TOOLS_DIR = @GST_TOOLS_DIR@
+GTK3_CFLAGS = @GTK3_CFLAGS@
+GTK3_GL_CFLAGS = @GTK3_GL_CFLAGS@
+GTK3_GL_LIBS = @GTK3_GL_LIBS@
+GTK3_LIBS = @GTK3_LIBS@
+GTK3_WAYLAND_CFLAGS = @GTK3_WAYLAND_CFLAGS@
+GTK3_WAYLAND_LIBS = @GTK3_WAYLAND_LIBS@
+GTK3_X11_CFLAGS = @GTK3_X11_CFLAGS@
+GTK3_X11_LIBS = @GTK3_X11_LIBS@
 GTKDOC_CHECK = @GTKDOC_CHECK@
 GTKDOC_DEPS_CFLAGS = @GTKDOC_DEPS_CFLAGS@
 GTKDOC_DEPS_LIBS = @GTKDOC_DEPS_LIBS@
@@ -373,6 +385,7 @@ GUDEV_LIBS = @GUDEV_LIBS@
 HAVE_AVC1394 = @HAVE_AVC1394@
 HAVE_CXX = @HAVE_CXX@
 HAVE_DIRECTSOUND = @HAVE_DIRECTSOUND@
+HAVE_LAME = @HAVE_LAME@
 HAVE_ROM1394 = @HAVE_ROM1394@
 HAVE_ZLIB = @HAVE_ZLIB@
 HTML_DIR = @HTML_DIR@
@@ -390,6 +403,8 @@ JACK_1_9_7_LIBS = @JACK_1_9_7_LIBS@
 JACK_CFLAGS = @JACK_CFLAGS@
 JACK_LIBS = @JACK_LIBS@
 JPEG_LIBS = @JPEG_LIBS@
+LAME_CFLAGS = @LAME_CFLAGS@
+LAME_LIBS = @LAME_LIBS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBCACA_CFLAGS = @LIBCACA_CFLAGS@
@@ -402,6 +417,8 @@ LIBIEC61883_LIBS = @LIBIEC61883_LIBS@
 LIBINTL = @LIBINTL@
 LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
+LIBPNG_1_5_CFLAGS = @LIBPNG_1_5_CFLAGS@
+LIBPNG_1_5_LIBS = @LIBPNG_1_5_LIBS@
 LIBPNG_CFLAGS = @LIBPNG_CFLAGS@
 LIBPNG_LIBS = @LIBPNG_LIBS@
 LIBRT = @LIBRT@
@@ -420,6 +437,9 @@ MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
+MOC = @MOC@
+MPG123_CFLAGS = @MPG123_CFLAGS@
+MPG123_LIBS = @MPG123_LIBS@
 MSGFMT = @MSGFMT@
 MSGFMT_015 = @MSGFMT_015@
 MSGMERGE = @MSGMERGE@
@@ -463,9 +483,20 @@ PYTHON_EXEC_PREFIX = @PYTHON_EXEC_PREFIX@
 PYTHON_PLATFORM = @PYTHON_PLATFORM@
 PYTHON_PREFIX = @PYTHON_PREFIX@
 PYTHON_VERSION = @PYTHON_VERSION@
+QT_ANDROID_CFLAGS = @QT_ANDROID_CFLAGS@
+QT_ANDROID_LIBS = @QT_ANDROID_LIBS@
+QT_CFLAGS = @QT_CFLAGS@
+QT_LIBS = @QT_LIBS@
+QT_MAC_CFLAGS = @QT_MAC_CFLAGS@
+QT_MAC_LIBS = @QT_MAC_LIBS@
+QT_WAYLAND_CFLAGS = @QT_WAYLAND_CFLAGS@
+QT_WAYLAND_LIBS = @QT_WAYLAND_LIBS@
+QT_X11_CFLAGS = @QT_X11_CFLAGS@
+QT_X11_LIBS = @QT_X11_LIBS@
 RANLIB = @RANLIB@
 RAW1394_CFLAGS = @RAW1394_CFLAGS@
 RAW1394_LIBS = @RAW1394_LIBS@
+RCC = @RCC@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -479,11 +510,16 @@ STRIP = @STRIP@
 TAGLIB_CFLAGS = @TAGLIB_CFLAGS@
 TAGLIB_CXXFLAGS = @TAGLIB_CXXFLAGS@
 TAGLIB_LIBS = @TAGLIB_LIBS@
+TWOLAME_CFLAGS = @TWOLAME_CFLAGS@
+TWOLAME_LIBS = @TWOLAME_LIBS@
+UIC = @UIC@
 USE_NLS = @USE_NLS@
 VALGRIND_CFLAGS = @VALGRIND_CFLAGS@
 VALGRIND_LIBS = @VALGRIND_LIBS@
 VALGRIND_PATH = @VALGRIND_PATH@
 VERSION = @VERSION@
+VISIBILITY_CFLAGS = @VISIBILITY_CFLAGS@
+VISIBILITY_CXXFLAGS = @VISIBILITY_CXXFLAGS@
 VPX_130_CFLAGS = @VPX_130_CFLAGS@
 VPX_130_LIBS = @VPX_130_LIBS@
 VPX_140_CFLAGS = @VPX_140_CFLAGS@
@@ -585,7 +621,6 @@ libgstautodetect_la_SOURCES = \
 libgstautodetect_la_CFLAGS = $(GST_CFLAGS)
 libgstautodetect_la_LIBADD = $(GST_LIBS)
 libgstautodetect_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
-libgstautodetect_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
 noinst_HEADERS = \
 	gstautoaudiosink.h \
 	gstautoaudiosrc.h \
@@ -702,39 +737,39 @@ distclean-compile:
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
 libgstautodetect_la-gstautoaudiosink.lo: gstautoaudiosink.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstautodetect_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -MT libgstautodetect_la-gstautoaudiosink.lo -MD -MP -MF $(DEPDIR)/libgstautodetect_la-gstautoaudiosink.Tpo -c -o libgstautodetect_la-gstautoaudiosink.lo `test -f 'gstautoaudiosink.c' || echo '$(srcdir)/'`gstautoaudiosink.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -MT libgstautodetect_la-gstautoaudiosink.lo -MD -MP -MF $(DEPDIR)/libgstautodetect_la-gstautoaudiosink.Tpo -c -o libgstautodetect_la-gstautoaudiosink.lo `test -f 'gstautoaudiosink.c' || echo '$(srcdir)/'`gstautoaudiosink.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstautodetect_la-gstautoaudiosink.Tpo $(DEPDIR)/libgstautodetect_la-gstautoaudiosink.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstautoaudiosink.c' object='libgstautodetect_la-gstautoaudiosink.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstautodetect_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -c -o libgstautodetect_la-gstautoaudiosink.lo `test -f 'gstautoaudiosink.c' || echo '$(srcdir)/'`gstautoaudiosink.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -c -o libgstautodetect_la-gstautoaudiosink.lo `test -f 'gstautoaudiosink.c' || echo '$(srcdir)/'`gstautoaudiosink.c
 
 libgstautodetect_la-gstautoaudiosrc.lo: gstautoaudiosrc.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstautodetect_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -MT libgstautodetect_la-gstautoaudiosrc.lo -MD -MP -MF $(DEPDIR)/libgstautodetect_la-gstautoaudiosrc.Tpo -c -o libgstautodetect_la-gstautoaudiosrc.lo `test -f 'gstautoaudiosrc.c' || echo '$(srcdir)/'`gstautoaudiosrc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -MT libgstautodetect_la-gstautoaudiosrc.lo -MD -MP -MF $(DEPDIR)/libgstautodetect_la-gstautoaudiosrc.Tpo -c -o libgstautodetect_la-gstautoaudiosrc.lo `test -f 'gstautoaudiosrc.c' || echo '$(srcdir)/'`gstautoaudiosrc.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstautodetect_la-gstautoaudiosrc.Tpo $(DEPDIR)/libgstautodetect_la-gstautoaudiosrc.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstautoaudiosrc.c' object='libgstautodetect_la-gstautoaudiosrc.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstautodetect_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -c -o libgstautodetect_la-gstautoaudiosrc.lo `test -f 'gstautoaudiosrc.c' || echo '$(srcdir)/'`gstautoaudiosrc.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -c -o libgstautodetect_la-gstautoaudiosrc.lo `test -f 'gstautoaudiosrc.c' || echo '$(srcdir)/'`gstautoaudiosrc.c
 
 libgstautodetect_la-gstautodetect.lo: gstautodetect.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstautodetect_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -MT libgstautodetect_la-gstautodetect.lo -MD -MP -MF $(DEPDIR)/libgstautodetect_la-gstautodetect.Tpo -c -o libgstautodetect_la-gstautodetect.lo `test -f 'gstautodetect.c' || echo '$(srcdir)/'`gstautodetect.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -MT libgstautodetect_la-gstautodetect.lo -MD -MP -MF $(DEPDIR)/libgstautodetect_la-gstautodetect.Tpo -c -o libgstautodetect_la-gstautodetect.lo `test -f 'gstautodetect.c' || echo '$(srcdir)/'`gstautodetect.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstautodetect_la-gstautodetect.Tpo $(DEPDIR)/libgstautodetect_la-gstautodetect.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstautodetect.c' object='libgstautodetect_la-gstautodetect.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstautodetect_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -c -o libgstautodetect_la-gstautodetect.lo `test -f 'gstautodetect.c' || echo '$(srcdir)/'`gstautodetect.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -c -o libgstautodetect_la-gstautodetect.lo `test -f 'gstautodetect.c' || echo '$(srcdir)/'`gstautodetect.c
 
 libgstautodetect_la-gstautovideosink.lo: gstautovideosink.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstautodetect_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -MT libgstautodetect_la-gstautovideosink.lo -MD -MP -MF $(DEPDIR)/libgstautodetect_la-gstautovideosink.Tpo -c -o libgstautodetect_la-gstautovideosink.lo `test -f 'gstautovideosink.c' || echo '$(srcdir)/'`gstautovideosink.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -MT libgstautodetect_la-gstautovideosink.lo -MD -MP -MF $(DEPDIR)/libgstautodetect_la-gstautovideosink.Tpo -c -o libgstautodetect_la-gstautovideosink.lo `test -f 'gstautovideosink.c' || echo '$(srcdir)/'`gstautovideosink.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstautodetect_la-gstautovideosink.Tpo $(DEPDIR)/libgstautodetect_la-gstautovideosink.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstautovideosink.c' object='libgstautodetect_la-gstautovideosink.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstautodetect_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -c -o libgstautodetect_la-gstautovideosink.lo `test -f 'gstautovideosink.c' || echo '$(srcdir)/'`gstautovideosink.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -c -o libgstautodetect_la-gstautovideosink.lo `test -f 'gstautovideosink.c' || echo '$(srcdir)/'`gstautovideosink.c
 
 libgstautodetect_la-gstautovideosrc.lo: gstautovideosrc.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstautodetect_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -MT libgstautodetect_la-gstautovideosrc.lo -MD -MP -MF $(DEPDIR)/libgstautodetect_la-gstautovideosrc.Tpo -c -o libgstautodetect_la-gstautovideosrc.lo `test -f 'gstautovideosrc.c' || echo '$(srcdir)/'`gstautovideosrc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -MT libgstautodetect_la-gstautovideosrc.lo -MD -MP -MF $(DEPDIR)/libgstautodetect_la-gstautovideosrc.Tpo -c -o libgstautodetect_la-gstautovideosrc.lo `test -f 'gstautovideosrc.c' || echo '$(srcdir)/'`gstautovideosrc.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstautodetect_la-gstautovideosrc.Tpo $(DEPDIR)/libgstautodetect_la-gstautovideosrc.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstautovideosrc.c' object='libgstautodetect_la-gstautovideosrc.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstautodetect_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -c -o libgstautodetect_la-gstautovideosrc.lo `test -f 'gstautovideosrc.c' || echo '$(srcdir)/'`gstautovideosrc.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstautodetect_la_CFLAGS) $(CFLAGS) -c -o libgstautodetect_la-gstautovideosrc.lo `test -f 'gstautovideosrc.c' || echo '$(srcdir)/'`gstautovideosrc.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

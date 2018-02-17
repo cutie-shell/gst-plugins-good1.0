@@ -188,6 +188,12 @@ else
 check_jpeg =
 endif
 
+if USE_LAME
+check_lame = pipelines/lame
+else
+check_lame =
+endif
+
 if USE_PLUGIN_LEVEL
 check_level = elements/level
 else
@@ -201,6 +207,12 @@ check_matroska = \
 	elements/matroskaparse
 else
 check_matroska =
+endif
+
+if USE_MPG123
+check_mpg123 = elements/mpg123audiodec
+else
+check_mpg123 =
 endif
 
 if USE_PLUGIN_MULTIFILE
@@ -223,6 +235,7 @@ check_rtp = \
 	elements/rtp-payloading \
 	elements/rtph261 \
 	elements/rtph263 \
+	elements/rtph264 \
 	elements/rtpvp9
 else
 check_rtp =
@@ -255,12 +268,6 @@ else
 check_spectrum =
 endif
 
-if USE_SUNAUDIO
-check_sunaudio = elements/sunaudio
-else
-check_sunaudio =
-endif
-
 if USE_PLUGIN_SHAPEWIPE
 check_shapewipe = elements/shapewipe
 else
@@ -273,6 +280,12 @@ check_taglib = \
 	elements/apev2mux
 else
 check_taglib =
+endif
+
+if USE_TWOLAME
+check_twolame = pipelines/twolame
+else
+check_twolame =
 endif
 
 if USE_PLUGIN_UDP
@@ -372,9 +385,11 @@ check_PROGRAMS = \
 	$(check_imagefreeze) \
 	$(check_interleave) \
 	$(check_jpeg) \
+	$(check_lame) \
 	$(check_law) \
 	$(check_level) \
 	$(check_matroska) \
+	$(check_mpg123) \
 	$(check_multifile) \
 	$(check_replaygain) \
 	$(check_rtp) \
@@ -382,8 +397,8 @@ check_PROGRAMS = \
 	$(check_shapewipe) \
 	$(check_soup) \
 	$(check_spectrum) \
-	$(check_sunaudio) \
 	$(check_taglib) \
+	$(check_twolame) \
 	$(check_udp) \
 	$(check_videobox) \
 	$(check_videocrop) \
@@ -420,7 +435,7 @@ noinst_LTLIBRARIES = libparser.la
 libparser_la_SOURCES = elements/parser.c elements/parser.h
 libparser_la_CFLAGS = \
 	-I$(top_srcdir)/tests/check \
-	$(GST_CHECK_CFLAGS) $(GST_OPTION_CFLAGS) -DGST_USE_UNSTABLE_API
+	$(AM_CFLAGS) -DGST_USE_UNSTABLE_API
 
 elements_aacparse_LDADD = libparser.la $(LDADD)
 
@@ -519,6 +534,11 @@ elements_jpegenc_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstapp-$(GST_API_VERSION) $(
 
 elements_matroskamux_LDADD = $(GST_BASE_LIBS) $(LDADD) $(LIBM)
 
+elements_mpg123audiodec_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
+elements_mpg123audiodec_LDADD = \
+	$(GST_PLUGINS_BASE_LIBS) -lgstaudio-@GST_API_VERSION@ -lgstfft-@GST_API_VERSION@ \
+	-lgstapp-@GST_API_VERSION@ $(GST_BASE_LIBS) $(GST_LIBS) $(LDADD)
+
 elements_mulawdec_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
 
 elements_mulawenc_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
@@ -540,11 +560,20 @@ elements_rtpbin_buffer_list_LDADD = $(GST_PLUGINS_BASE_LIBS) \
              $(GST_BASE_LIBS) $(GST_LIBS) $(GST_CHECK_LIBS) $(LDADD)
 elements_rtpbin_buffer_list_SOURCES = elements/rtpbin_buffer_list.c
 
+elements_rtpbin_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(GST_CFLAGS) \
+	$(WARNING_CFLAGS) $(ERROR_CFLAGS) $(GST_CHECK_CFLAGS) $(AM_CFLAGS)
+elements_rtpbin_LDADD = $(GST_PLUGINS_BASE_LIBS) \
+             -lgstrtp-$(GST_API_VERSION) \
+             $(GST_BASE_LIBS) $(GST_LIBS) $(GST_CHECK_LIBS) $(LDADD)
+
 elements_rtph261_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
 elements_rtph261_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
 
 elements_rtph263_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
 elements_rtph263_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
+
+elements_rtph264_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
+elements_rtph264_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstapp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
 
 elements_rtpmux_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
 elements_rtpmux_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
@@ -552,12 +581,8 @@ elements_rtpmux_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(G
 elements_souphttpsrc_CFLAGS = $(SOUP_CFLAGS) $(AM_CFLAGS)
 elements_souphttpsrc_LDADD = $(SOUP_LIBS) $(LDADD)
 
-elements_sunaudio_CFLAGS = \
-	$(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) \
-	$(AM_CFLAGS)
-elements_sunaudio_LDADD = \
-	$(GST_PLUGINS_BASE_LIBS) \
-	$(LDADD)
+elements_udpsink_CFLAGS = $(AM_CFLAGS) $(GIO_CFLAGS)
+elements_udpsink_LDADD = $(LDADD) $(GIO_LIBS)
 
 elements_udpsrc_CFLAGS = $(AM_CFLAGS) $(GIO_CFLAGS)
 elements_udpsrc_LDADD = $(LDADD) $(GIO_LIBS)

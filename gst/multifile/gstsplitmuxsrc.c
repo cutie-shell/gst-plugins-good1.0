@@ -428,6 +428,7 @@ gst_splitmux_handle_event (GstSplitMuxSrc * splitmux,
       break;
     }
     case GST_EVENT_SEGMENT:{
+      GstClockTime duration;
       GstSegment seg;
 
       gst_event_copy_segment (event, &seg);
@@ -461,6 +462,15 @@ gst_splitmux_handle_event (GstSplitMuxSrc * splitmux,
           seg.time = splitpad->segment.time;
         }
       }
+
+      GST_OBJECT_LOCK (splitmux);
+      duration = splitmux->total_duration;
+      GST_OBJECT_UNLOCK (splitmux);
+
+      if (duration > 0)
+        seg.duration = duration;
+      else
+        seg.duration = GST_CLOCK_TIME_NONE;
 
       GST_INFO_OBJECT (splitpad,
           "Forwarding segment %" GST_SEGMENT_FORMAT, &seg);
@@ -1211,18 +1221,21 @@ splitmux_src_pad_query (GstPad * pad, GstObject * parent, GstQuery * query)
       break;
     }
     case GST_QUERY_DURATION:{
+      GstClockTime duration;
       GstFormat fmt;
+
       gst_query_parse_duration (query, &fmt, NULL);
       if (fmt != GST_FORMAT_TIME)
         break;
 
       GST_OBJECT_LOCK (splitmux);
-      if (splitmux->total_duration > 0) {
-        gst_query_set_duration (query, GST_FORMAT_TIME,
-            splitmux->total_duration);
+      duration = splitmux->total_duration;
+      GST_OBJECT_UNLOCK (splitmux);
+
+      if (duration > 0 && duration != GST_CLOCK_TIME_NONE) {
+        gst_query_set_duration (query, GST_FORMAT_TIME, duration);
         ret = TRUE;
       }
-      GST_OBJECT_UNLOCK (splitmux);
       break;
     }
     case GST_QUERY_SEEKING:{

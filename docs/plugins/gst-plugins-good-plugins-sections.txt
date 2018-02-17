@@ -1044,6 +1044,38 @@ gst_goom2k1_get_type
 </SECTION>
 
 <SECTION>
+<FILE>element-gtkglsink</FILE>
+<TITLE>gtkglsink</TITLE>
+GstGtkGLSink
+<SUBSECTION Standard>
+GstGtkGLSinkClass
+GST_GTK_GL_SINK
+GST_GTK_GL_SINK_CAST
+GST_IS_GTK_GL_SINK
+GST_GTK_GL_SINK_CLASS
+GST_IS_GTK_GL_SINK_CLASS
+GST_TYPE_GTK_GL_SINK
+<SUBSECTION Private>
+gst_gtk_gl_sink_get_type
+</SECTION>
+
+<SECTION>
+<FILE>element-gtksink</FILE>
+<TITLE>gtksink</TITLE>
+GstGtkSink
+<SUBSECTION Standard>
+GstGtkSinkClass
+GST_GTK_SINK
+GST_GTK_SINK_CAST
+GST_IS_GTK_SINK
+GST_GTK_SINK_CLASS
+GST_IS_GTK_SINK_CLASS
+GST_TYPE_GTK_SINK
+<SUBSECTION Private>
+gst_gtk_sink_get_type
+</SECTION>
+
+<SECTION>
 <FILE>element-hdv1394src</FILE>
 <TITLE>hdv1394src</TITLE>
 GstHDV1394Src
@@ -1284,6 +1316,21 @@ gst_jpeg_enc_get_type
 </SECTION>
 
 <SECTION>
+<FILE>element-lamemp3enc</FILE>
+<TITLE>lamemp3enc</TITLE>
+GstLameMP3Enc
+<SUBSECTION Standard>
+GstLameMP3EncClass
+GST_LAMEMP3ENC
+GST_LAMEMP3ENC_CLASS
+GST_IS_LAMEMP3ENC
+GST_IS_LAMEMP3ENC_CLASS
+GST_TYPE_LAMEMP3ENC
+gst_lamemp3enc_get_type
+gst_lamemp3enc_register
+</SECTION>
+
+<SECTION>
 <FILE>element-level</FILE>
 <TITLE>level</TITLE>
 GstLevel
@@ -1407,6 +1454,20 @@ GST_IS_MPEG_AUDIO_PARSE_CLASS
 GST_TYPE_MPEG_AUDIO_PARSE
 <SUBSECTION Private>
 gst_mpeg_audio_parse_get_type
+</SECTION>
+
+<SECTION>
+<FILE>element-mpg123audiodec</FILE>
+<TITLE>mpg123audiodec</TITLE>
+GstMpg123AudioDec
+<SUBSECTION Standard>
+GstMpg123AudioDecClass
+GST_MPG123_AUDIO_DEC
+GST_MPG123_AUDIO_DEC_CLASS
+GST_IS_MPG123_AUDIO_DEC
+GST_IS_MPG123_AUDIO_DEC_CLASS
+GST_TYPE_MPG123_AUDIO_DEC
+gst_mpg123_audio_dec_get_type
 </SECTION>
 
 <SECTION>
@@ -1770,6 +1831,38 @@ GST_IS_PUSH_FILE_SRC_CLASS
 GST_TYPE_PUSH_FILE_SRC
 <SUBSECTION Private>
 gst_push_file_src_get_type
+</SECTION>
+
+<SECTION>
+<FILE>element-qmlglsink</FILE>
+<TITLE>qmlglsink</TITLE>
+GstQtSink
+<SUBSECTION Standard>
+GstQtSinkClass
+GST_QT_SINK
+GST_QT_SINK_CAST
+GST_IS_QT_SINK
+GST_QT_SINK_CLASS
+GST_IS_QT_SINK_CLASS
+GST_TYPE_QT_SINK
+<SUBSECTION Private>
+gst_qt_sink_get_type
+</SECTION>
+
+<SECTION>
+<FILE>element-qmlglsrc</FILE>
+<TITLE>qmlglsrc</TITLE>
+GstQtSrc
+<SUBSECTION Standard>
+GstQtSrcClass
+GST_QT_SRC
+GST_QT_SRC_CAST
+GST_IS_QT_SRC
+GST_QT_SRC_CLASS
+GST_IS_QT_SRC_CLASS
+GST_TYPE_QT_SRC
+<SUBSECTION Private>
+gst_qt_src_get_type
 </SECTION>
 
 <SECTION>
@@ -2819,6 +2912,38 @@ gst_rtp_klv_pay_get_type
 </SECTION>
 
 <SECTION>
+<FILE>element-rtpL8depay</FILE>
+<TITLE>rtpL8depay</TITLE>
+GstRtpL8Depay
+<SUBSECTION Standard>
+GstRtpL8DepayClass
+GST_RTP_L8_DEPAY
+GST_RTP_L8_DEPAY_CAST
+GST_IS_RTP_L8_DEPAY
+GST_RTP_L8_DEPAY_CLASS
+GST_IS_RTP_L8_DEPAY_CLASS
+GST_TYPE_RTP_L8_DEPAY
+<SUBSECTION Private>
+gst_rtp_l8_depay_get_type
+</SECTION>
+
+<SECTION>
+<FILE>element-rtpL8pay</FILE>
+<TITLE>rtpL8pay</TITLE>
+GstRtpL8Pay
+<SUBSECTION Standard>
+GstRtpL8PayClass
+GST_RTP_L8_PAY
+GST_RTP_L8_PAY_CAST
+GST_IS_RTP_L8_PAY
+GST_RTP_L8_PAY_CLASS
+GST_IS_RTP_L8_PAY_CLASS
+GST_TYPE_RTP_L8_PAY
+<SUBSECTION Private>
+gst_rtp_l8_pay_get_type
+</SECTION>
+
+<SECTION>
 <FILE>element-rtpL16depay</FILE>
 <TITLE>rtpL16depay</TITLE>
 GstRtpL16Depay
@@ -3843,6 +3968,20 @@ GST_IS_TEST_CLASS
 GST_TYPE_TEST
 <SUBSECTION Private>
 gst_test_get_type
+</SECTION>
+
+<SECTION>
+<FILE>element-twolamemp2enc</FILE>
+<TITLE>twolame</TITLE>
+GstTwoLame
+<SUBSECTION Standard>
+GstTwoLameClass
+GST_TWO_LAME
+GST_TWO_LAME_CLASS
+GST_IS_TWO_LAME
+GST_IS_TWO_LAME_CLASS
+GST_TYPE_TWO_LAME
+gst_two_lame_get_type
 </SECTION>
 
 <SECTION>

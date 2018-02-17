@@ -79,16 +79,17 @@ GST_START_TEST (test_udpsrc_empty_packet)
     if (g_socket_send_to (socket, sa, "HeLL0", 6, NULL, NULL) == 6) {
       GstMapInfo map;
       GstBuffer *buf;
-      guint len;
+      guint len = 0;
 
       GST_INFO ("sent 6 bytes");
 
       g_mutex_lock (&check_mutex);
-      do {
+      len = g_list_length (buffers);
+      while (len < 1) {
         g_cond_wait (&check_cond, &check_mutex);
         len = g_list_length (buffers);
         GST_INFO ("%u buffers", len);
-      } while (len < 1);
+      }
 
       /* wait a bit more for a second buffer */
       if (len < 2) {
@@ -145,7 +146,9 @@ GST_START_TEST (test_udpsrc)
   GstMemory *mem;
   gchar data[48000];
   gsize max_size;
-  int i, len;
+  int i, len = 0;
+  gssize sent;
+  GError *err = NULL;
 
   for (i = 0; i < G_N_ELEMENTS (data); ++i)
     data[i] = i & 0xff;
@@ -153,29 +156,35 @@ GST_START_TEST (test_udpsrc)
   if (!udpsrc_setup (&udpsrc, &socket, &sinkpad, &sa))
     goto no_socket;
 
-  if (g_socket_send_to (socket, sa, data, 48000, NULL, NULL) != 48000)
+  if ((sent = g_socket_send_to (socket, sa, data, 48000, NULL, &err)) == -1)
     goto send_failure;
+  fail_unless_equals_int (sent, 48000);
 
-  if (g_socket_send_to (socket, sa, data, 21000, NULL, NULL) != 21000)
+  if ((sent = g_socket_send_to (socket, sa, data, 21000, NULL, &err)) == -1)
     goto send_failure;
+  fail_unless_equals_int (sent, 21000);
 
-  if (g_socket_send_to (socket, sa, data, 500, NULL, NULL) != 500)
+  if ((sent = g_socket_send_to (socket, sa, data, 500, NULL, &err)) == -1)
     goto send_failure;
+  fail_unless_equals_int (sent, 500);
 
-  if (g_socket_send_to (socket, sa, data, 1600, NULL, NULL) != 1600)
+  if ((sent = g_socket_send_to (socket, sa, data, 1600, NULL, &err)) == -1)
     goto send_failure;
+  fail_unless_equals_int (sent, 1600);
 
-  if (g_socket_send_to (socket, sa, data, 1600, NULL, NULL) != 1400)
+  if ((sent = g_socket_send_to (socket, sa, data, 1400, NULL, &err)) == -1)
     goto send_failure;
+  fail_unless_equals_int (sent, 1400);
 
   GST_INFO ("sent some packets");
 
   g_mutex_lock (&check_mutex);
-  do {
+  len = g_list_length (buffers);
+  while (len < 5) {
     g_cond_wait (&check_cond, &check_mutex);
     len = g_list_length (buffers);
     GST_INFO ("%u buffers", len);
-  } while (len < 5);
+  }
 
   /* check that large packets are made up of multiple memory chunks and that
    * the first one is fairly small */
@@ -218,8 +227,14 @@ GST_START_TEST (test_udpsrc)
   g_list_free (buffers);
   buffers = NULL;
 
+  g_mutex_unlock (&check_mutex);
+
 no_socket:
 send_failure:
+  if (err) {
+    GST_WARNING ("Socket send error, skipping test: %s", err->message);
+    g_clear_error (&err);
+  }
 
   gst_element_set_state (udpsrc, GST_STATE_NULL);
 

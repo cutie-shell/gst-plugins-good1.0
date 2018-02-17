@@ -3,7 +3,7 @@
   <description>GdkPixbuf-based image decoder, overlay and sink</description>
   <filename>../../ext/gdk_pixbuf/.libs/libgstgdkpixbuf.so</filename>
   <basename>libgstgdkpixbuf.so</basename>
-  <version>1.12.4</version>
+  <version>1.13.1</version>
   <license>LGPL</license>
   <source>gst-plugins-good</source>
   <package>GStreamer Good Plug-ins source release</package>
@@ -20,7 +20,7 @@
           <name>sink</name>
           <direction>sink</direction>
           <presence>always</presence>
-          <details>image/png; image/gif; image/x-icon; application/x-navi-animation; image/x-cmu-raster; image/x-sun-raster; image/x-pixmap; image/tiff; image/x-portable-anymap; image/x-portable-bitmap; image/x-portable-graymap; image/x-portable-pixmap; image/bmp; image/x-bmp; image/x-MS-bmp; image/vnd.wap.wbmp; image/x-bitmap; image/x-tga; image/x-pcx; image/svg; image/svg+xml</details>
+          <details>image/png; image/x-icon; application/x-navi-animation; image/x-cmu-raster; image/x-sun-raster; image/x-pixmap; image/tiff; image/x-portable-anymap; image/x-portable-bitmap; image/x-portable-graymap; image/x-portable-pixmap; image/bmp; image/x-bmp; image/x-MS-bmp; image/vnd.wap.wbmp; image/x-bitmap; image/x-tga; image/x-pcx; image/svg; image/svg+xml</details>
         </caps>
         <caps>
           <name>src</name>

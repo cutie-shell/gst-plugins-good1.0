@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-12-07 19:21+0200\n"
+"POT-Creation-Date: 2018-02-15 17:06+0000\n"
 "PO-Revision-Date: 2017-05-05 10:55+0300\n"
 "Last-Translator: Mehmet Kececi <mkececi@mehmetkececi.com>\n"
 "Language-Team: Turkish <gnu-tr-u12a@lists.sourceforge.net>\n"
@@ -27,6 +27,16 @@ msgstr "Jack sunucusu bulunamadı"
 
 msgid "Failed to decode JPEG image"
 msgstr "JPEG görüntüsünü çözümlenemedi"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -58,6 +68,9 @@ msgstr "Sunucu yetersiz veri gönderdi."
 
 msgid "Server does not support seeking."
 msgstr "Sunucu aramayı desteklemiyor."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Geçerli bir ses girişi bulunamadı. AVI akışı kesilecek."
@@ -150,60 +163,6 @@ msgstr "CoreAudio aygıtı bulunamadı"
 msgid "CoreAudio device could not be opened"
 msgstr "CoreAudio aygıt açılamadı"
 
-msgid "Record Source"
-msgstr "Kayıt Kaynağı"
-
-msgid "Microphone"
-msgstr "Mikrofon"
-
-msgid "Line In"
-msgstr "Hat Girişi"
-
-msgid "Internal CD"
-msgstr "Dahili CD"
-
-msgid "SPDIF In"
-msgstr "SPDIF Girişi"
-
-msgid "AUX 1 In"
-msgstr "AUX 1 Giriş"
-
-msgid "AUX 2 In"
-msgstr "AUX 2 Giriş"
-
-msgid "Codec Loopback"
-msgstr "Kodek Geridönüşü"
-
-msgid "SunVTS Loopback"
-msgstr "SunVTS Geridönüşü"
-
-msgid "Volume"
-msgstr "Ses Girişi"
-
-msgid "Gain"
-msgstr "Kazanç"
-
-msgid "Monitor"
-msgstr "Hoparlör"
-
-msgid "Built-in Speaker"
-msgstr "Varsayılan Hoparlör"
-
-msgid "Headphone"
-msgstr "Kulaklık"
-
-msgid "Line Out"
-msgstr "Hat Çıkışı"
-
-msgid "SPDIF Out"
-msgstr "SPDIF Çıkış"
-
-msgid "AUX 1 Out"
-msgstr "AUX 1 Çıkış"
-
-msgid "AUX 2 Out"
-msgstr "AUX 2 Çıkış"
-
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr "%d bayt bilgili '%s' aygıtından okumada hata."
@@ -226,6 +185,14 @@ msgstr ""
 "Bu aygıtın sürücüsü '%s' bilinen IO yöntemlerinden herhangi birisini "
 "desteklemiyor."
 
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Aygıt %s üzerindeki kodlayıcı girdi biçimini deskteklemiyor"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
 #, c-format
 msgid "Device '%s' is busy"
 msgstr "Aygıt '%s' meşgul"
@@ -241,6 +208,14 @@ msgstr "Aygıt '%s' belirtilen kipte görüntü yakalayamadı"
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr "Aygıt '%s' bitişik olmayan düzlemleri desteklemiyor"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Aygıt '%s' video yakalamayı desteklemiyor"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Aygıt '%s' video yakalamayı desteklemiyor"
 
 #, c-format
 msgid "Could not get parameters on device '%s'"
@@ -321,6 +296,10 @@ msgstr "Çözme işi başlaması başarısız."
 
 msgid "Failed to process frame."
 msgstr "İşlem çerçevesi başarısız."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Çözme işi başlaması başarısız."
 
 #, c-format
 msgid ""
@@ -419,14 +398,65 @@ msgstr "Çalışırken çözünürlüğü değiştirmek henüz desteklenmiyor."
 msgid "Cannot operate without a clock"
 msgstr "Saat olmadan çalışamaz"
 
+#~ msgid "Record Source"
+#~ msgstr "Kayıt Kaynağı"
+
+#~ msgid "Microphone"
+#~ msgstr "Mikrofon"
+
+#~ msgid "Line In"
+#~ msgstr "Hat Girişi"
+
+#~ msgid "Internal CD"
+#~ msgstr "Dahili CD"
+
+#~ msgid "SPDIF In"
+#~ msgstr "SPDIF Girişi"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "AUX 1 Giriş"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "AUX 2 Giriş"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Kodek Geridönüşü"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "SunVTS Geridönüşü"
+
+#~ msgid "Volume"
+#~ msgstr "Ses Girişi"
+
+#~ msgid "Gain"
+#~ msgstr "Kazanç"
+
+#~ msgid "Monitor"
+#~ msgstr "Hoparlör"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Varsayılan Hoparlör"
+
+#~ msgid "Headphone"
+#~ msgstr "Kulaklık"
+
+#~ msgid "Line Out"
+#~ msgstr "Hat Çıkışı"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "SPDIF Çıkış"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "AUX 1 Çıkış"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "AUX 2 Çıkış"
+
 #~ msgid "Internal data stream error."
 #~ msgstr "İç veri akım hatası."
 
 #~ msgid "Internal data flow error."
 #~ msgstr "İç veri akış hatası."
-
-#~ msgid "Device '%s' does not support video capture"
-#~ msgstr "Aygıt '%s' video yakalamayı desteklemiyor"
 
 #~ msgid "Could not establish connection to sound server"
 #~ msgstr "Ses sunucusuyla bağlantı kurulumayor"

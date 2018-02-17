@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-12-07 19:21+0200\n"
+"POT-Creation-Date: 2018-02-15 17:06+0000\n"
 "PO-Revision-Date: 2017-05-05 19:23+0300\n"
 "Last-Translator: Yuri Kozlov <yuray@komyakino.ru>\n"
 "Language-Team: Russian <gnu@d07.ru>\n"
@@ -27,6 +27,16 @@ msgstr "Сервер Jack не найден"
 
 msgid "Failed to decode JPEG image"
 msgstr "Не удалось декодировать JPEG-изображение"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -57,6 +67,9 @@ msgstr "Сервер прислал некорректные данные."
 
 msgid "Server does not support seeking."
 msgstr "Сервер не поддерживает поиск."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr ""
@@ -158,60 +171,6 @@ msgstr "Устройство CoreAudio не найдено"
 msgid "CoreAudio device could not be opened"
 msgstr "Невозможно открыть устройство CoreAudio"
 
-msgid "Record Source"
-msgstr "Устройство записи"
-
-msgid "Microphone"
-msgstr "Микрофон"
-
-msgid "Line In"
-msgstr "Линейный вход"
-
-msgid "Internal CD"
-msgstr "Внутренний CD"
-
-msgid "SPDIF In"
-msgstr "Вход SPDIF"
-
-msgid "AUX 1 In"
-msgstr "Вход AUX 1"
-
-msgid "AUX 2 In"
-msgstr "Вход AUX 2"
-
-msgid "Codec Loopback"
-msgstr "Петля Codec"
-
-msgid "SunVTS Loopback"
-msgstr "Петля SunVTS"
-
-msgid "Volume"
-msgstr "Уровень"
-
-msgid "Gain"
-msgstr "Уровень"
-
-msgid "Monitor"
-msgstr "Мониторинг"
-
-msgid "Built-in Speaker"
-msgstr "Внутренний динамик"
-
-msgid "Headphone"
-msgstr "Наушник"
-
-msgid "Line Out"
-msgstr "Линейный выход"
-
-msgid "SPDIF Out"
-msgstr "Выход SPDIF"
-
-msgid "AUX 1 Out"
-msgstr "Выход AUX 1"
-
-msgid "AUX 2 Out"
-msgstr "Выход AUX 2"
-
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr "Ошибка чтения %d байт из устройства «%s»."
@@ -236,6 +195,14 @@ msgstr ""
 "Драйвер устройства «%s» не поддерживает ни один из известных методов ввода-"
 "вывода."
 
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Кодировщик на устройстве %s не поддерживает входной формат"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
 #, c-format
 msgid "Device '%s' is busy"
 msgstr "Устройство «%s» занято"
@@ -252,6 +219,14 @@ msgstr "Устройство «%s» не может осуществлять з�
 msgid "Device '%s' does support non-contiguous planes"
 msgstr ""
 "Устройство «%s» поддерживает прерывистые матрицы (non-contiguous planes)"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Устройство «%s» не поддерживает захват видео"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Устройство «%s» не поддерживает захват видео"
 
 #, c-format
 msgid "Could not get parameters on device '%s'"
@@ -332,6 +307,10 @@ msgstr "Не удалось запустить нить декодировани
 
 msgid "Failed to process frame."
 msgstr "Не удалось обработать кадр."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Не удалось запустить нить декодирования."
 
 #, c-format
 msgid ""
@@ -435,14 +414,65 @@ msgstr ""
 msgid "Cannot operate without a clock"
 msgstr "Операция невозможна без часов"
 
+#~ msgid "Record Source"
+#~ msgstr "Устройство записи"
+
+#~ msgid "Microphone"
+#~ msgstr "Микрофон"
+
+#~ msgid "Line In"
+#~ msgstr "Линейный вход"
+
+#~ msgid "Internal CD"
+#~ msgstr "Внутренний CD"
+
+#~ msgid "SPDIF In"
+#~ msgstr "Вход SPDIF"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "Вход AUX 1"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "Вход AUX 2"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Петля Codec"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "Петля SunVTS"
+
+#~ msgid "Volume"
+#~ msgstr "Уровень"
+
+#~ msgid "Gain"
+#~ msgstr "Уровень"
+
+#~ msgid "Monitor"
+#~ msgstr "Мониторинг"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Внутренний динамик"
+
+#~ msgid "Headphone"
+#~ msgstr "Наушник"
+
+#~ msgid "Line Out"
+#~ msgstr "Линейный выход"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "Выход SPDIF"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "Выход AUX 1"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "Выход AUX 2"
+
 #~ msgid "Internal data stream error."
 #~ msgstr "Внутренняя ошибка потока данных."
 
 #~ msgid "Internal data flow error."
 #~ msgstr "Внутренняя ошибка потока данных."
-
-#~ msgid "Device '%s' does not support video capture"
-#~ msgstr "Устройство «%s» не поддерживает захват видео"
 
 #~ msgid "Could not establish connection to sound server"
 #~ msgstr "Не удалось установить соединение с сервером звука"

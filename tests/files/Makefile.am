@@ -3,6 +3,7 @@ EXTRA_DIST = \
 	audiotestsrc.flac \
 	audiotestsrc.wav \
 	gradient.j2k \
+	h264.rtp \
 	id3-407349-1.tag \
 	id3-407349-2.tag \
 	id3-447000-wcop.tag \
@@ -11,8 +12,10 @@ EXTRA_DIST = \
 	image.jpg \
 	pcm16sine.flv \
 	pinknoise-vorbis.mkv \
+	stream.mp2 \
+	cbr_stream.mp3 \
+	vbr_stream.mp3 \
 	test-cert.pem \
 	test-key.pem \
 	splitvideo00.ogg splitvideo01.ogg \
 	splitvideo02.ogg
-

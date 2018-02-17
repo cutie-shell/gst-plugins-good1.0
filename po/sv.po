@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-12-07 19:21+0200\n"
+"POT-Creation-Date: 2018-02-15 17:06+0000\n"
 "PO-Revision-Date: 2017-05-21 19:00+0800\n"
 "Last-Translator: Sebastian Rasmussen <sebras@gmail.com>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -25,6 +25,16 @@ msgstr "Jack-server hittades ej"
 
 msgid "Failed to decode JPEG image"
 msgstr "Misslyckades med att avkoda JPEG-bild"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -55,6 +65,9 @@ msgstr "Servern skickade felaktigt data."
 
 msgid "Server does not support seeking."
 msgstr "Servern stöder inte sökning/spolning."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Inget eller ogiltigt ingångsljud. AVI-strömmen kommer att skadas."
@@ -153,60 +166,6 @@ msgstr "CoreAudio-enhet hittades inte"
 msgid "CoreAudio device could not be opened"
 msgstr "CoreAudio-enhet kunde inte öppnas"
 
-msgid "Record Source"
-msgstr "Inspelningskälla"
-
-msgid "Microphone"
-msgstr "Mikrofon"
-
-msgid "Line In"
-msgstr "Linje-In"
-
-msgid "Internal CD"
-msgstr "Intern cd-spelare"
-
-msgid "SPDIF In"
-msgstr "SPDIF In"
-
-msgid "AUX 1 In"
-msgstr "AUX 1 In"
-
-msgid "AUX 2 In"
-msgstr "AUX 2 In"
-
-msgid "Codec Loopback"
-msgstr "Omkodar-återkopplingsslinga"
-
-msgid "SunVTS Loopback"
-msgstr "SunVTS-återkopplingsslinga"
-
-msgid "Volume"
-msgstr "Volym"
-
-msgid "Gain"
-msgstr "Förstärk"
-
-msgid "Monitor"
-msgstr "Monitor"
-
-msgid "Built-in Speaker"
-msgstr "Inbyggd högtalare"
-
-msgid "Headphone"
-msgstr "Hörlur"
-
-msgid "Line Out"
-msgstr "Linje ut"
-
-msgid "SPDIF Out"
-msgstr "SPDIF ut"
-
-msgid "AUX 1 Out"
-msgstr "AUX 1 ut"
-
-msgid "AUX 2 Out"
-msgstr "AUX 2 ut"
-
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr "Fel vid läsning av %d byte från enheten \"%s\"."
@@ -229,6 +188,14 @@ msgstr "Drivrutinen för enheten \"%s\" stöder inte IO-metod %d"
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr "Drivrutinen för enheten \"%s\" stöder inte någon känd IO-metod."
 
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Kodaren på enheten %s har inget ingångsformat som stöds"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
 #, c-format
 msgid "Device '%s' is busy"
 msgstr "Enheten \"%s\" är upptagen"
@@ -244,6 +211,14 @@ msgstr "Enheten \"%s\" kan inte fånga i det angivna formatet"
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr "Enheten \"%s\" stöder inte icke-kontinuerliga plan"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Enheten \"%s\" stöder inte videoinfångning."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Enheten \"%s\" stöder inte videoinfångning."
 
 #, c-format
 msgid "Could not get parameters on device '%s'"
@@ -326,6 +301,10 @@ msgstr "Misslyckades med att starta avkodningstråd."
 
 msgid "Failed to process frame."
 msgstr "Misslyckades att behandla ram."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Misslyckades med att starta avkodningstråd."
 
 #, c-format
 msgid ""
@@ -432,11 +411,62 @@ msgstr "Ändring av upplösning vid körtid stöds inte än."
 msgid "Cannot operate without a clock"
 msgstr "Kan inte fungera utan en klocka"
 
+#~ msgid "Record Source"
+#~ msgstr "Inspelningskälla"
+
+#~ msgid "Microphone"
+#~ msgstr "Mikrofon"
+
+#~ msgid "Line In"
+#~ msgstr "Linje-In"
+
+#~ msgid "Internal CD"
+#~ msgstr "Intern cd-spelare"
+
+#~ msgid "SPDIF In"
+#~ msgstr "SPDIF In"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "AUX 1 In"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "AUX 2 In"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Omkodar-återkopplingsslinga"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "SunVTS-återkopplingsslinga"
+
+#~ msgid "Volume"
+#~ msgstr "Volym"
+
+#~ msgid "Gain"
+#~ msgstr "Förstärk"
+
+#~ msgid "Monitor"
+#~ msgstr "Monitor"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Inbyggd högtalare"
+
+#~ msgid "Headphone"
+#~ msgstr "Hörlur"
+
+#~ msgid "Line Out"
+#~ msgstr "Linje ut"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "SPDIF ut"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "AUX 1 ut"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "AUX 2 ut"
+
 #~ msgid "Internal data stream error."
 #~ msgstr "Internt fel i dataström."
 
 #~ msgid "Internal data flow error."
 #~ msgstr "Internt fel i dataflöde."
-
-#~ msgid "Device '%s' does not support video capture"
-#~ msgstr "Enheten \"%s\" stöder inte videoinfångning."

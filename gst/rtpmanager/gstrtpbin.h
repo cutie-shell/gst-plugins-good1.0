@@ -75,6 +75,9 @@ struct _GstRtpBin {
   guint32         max_misorder_time;
   gboolean        rfc7273_sync;
   guint           max_streams;
+  guint64         max_ts_offset_adjustment;
+  gint64          max_ts_offset;
+  gboolean        max_ts_offset_is_set;
 
   /* a list of session */
   GSList         *sessions;

@@ -182,9 +182,9 @@ am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 libgstisomp4_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
-	$(CCLD) $(libgstisomp4_la_CFLAGS) $(CFLAGS) \
-	$(libgstisomp4_la_LDFLAGS) $(LDFLAGS) -o $@
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(libgstisomp4_la_CFLAGS) $(CFLAGS) $(libgstisomp4_la_LDFLAGS) \
+	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -302,6 +302,7 @@ ERROR_CFLAGS = @ERROR_CFLAGS@
 ERROR_CXXFLAGS = @ERROR_CXXFLAGS@
 ERROR_OBJCFLAGS = @ERROR_OBJCFLAGS@
 EXEEXT = @EXEEXT@
+EXTRA_CFLAGS = @EXTRA_CFLAGS@
 FFLAGS = @FFLAGS@
 FGREP = @FGREP@
 FLAC_CFLAGS = @FLAC_CFLAGS@
@@ -325,6 +326,8 @@ GLIB_PREFIX = @GLIB_PREFIX@
 GLIB_REQ = @GLIB_REQ@
 GMSGFMT = @GMSGFMT@
 GMSGFMT_015 = @GMSGFMT_015@
+GNUSTL_CFLAGS = @GNUSTL_CFLAGS@
+GNUSTL_LIBS = @GNUSTL_LIBS@
 GREP = @GREP@
 GSTPB_PLUGINS_DIR = @GSTPB_PLUGINS_DIR@
 GSTPB_PREFIX = @GSTPB_PREFIX@
@@ -340,6 +343,8 @@ GST_CONTROLLER_CFLAGS = @GST_CONTROLLER_CFLAGS@
 GST_CONTROLLER_LIBS = @GST_CONTROLLER_LIBS@
 GST_CURRENT = @GST_CURRENT@
 GST_CXXFLAGS = @GST_CXXFLAGS@
+GST_GL_CFLAGS = @GST_GL_CFLAGS@
+GST_GL_LIBS = @GST_GL_LIBS@
 GST_LEVEL_DEFAULT = @GST_LEVEL_DEFAULT@
 GST_LIBS = @GST_LIBS@
 GST_LIBVERSION = @GST_LIBVERSION@
@@ -362,10 +367,17 @@ GST_PLUGINS_DIR = @GST_PLUGINS_DIR@
 GST_PLUGINS_NONPORTED = @GST_PLUGINS_NONPORTED@
 GST_PLUGINS_SELECTED = @GST_PLUGINS_SELECTED@
 GST_PLUGIN_LDFLAGS = @GST_PLUGIN_LDFLAGS@
-GST_PLUGIN_LIBTOOLFLAGS = @GST_PLUGIN_LIBTOOLFLAGS@
 GST_PREFIX = @GST_PREFIX@
 GST_REVISION = @GST_REVISION@
 GST_TOOLS_DIR = @GST_TOOLS_DIR@
+GTK3_CFLAGS = @GTK3_CFLAGS@
+GTK3_GL_CFLAGS = @GTK3_GL_CFLAGS@
+GTK3_GL_LIBS = @GTK3_GL_LIBS@
+GTK3_LIBS = @GTK3_LIBS@
+GTK3_WAYLAND_CFLAGS = @GTK3_WAYLAND_CFLAGS@
+GTK3_WAYLAND_LIBS = @GTK3_WAYLAND_LIBS@
+GTK3_X11_CFLAGS = @GTK3_X11_CFLAGS@
+GTK3_X11_LIBS = @GTK3_X11_LIBS@
 GTKDOC_CHECK = @GTKDOC_CHECK@
 GTKDOC_DEPS_CFLAGS = @GTKDOC_DEPS_CFLAGS@
 GTKDOC_DEPS_LIBS = @GTKDOC_DEPS_LIBS@
@@ -380,6 +392,7 @@ GUDEV_LIBS = @GUDEV_LIBS@
 HAVE_AVC1394 = @HAVE_AVC1394@
 HAVE_CXX = @HAVE_CXX@
 HAVE_DIRECTSOUND = @HAVE_DIRECTSOUND@
+HAVE_LAME = @HAVE_LAME@
 HAVE_ROM1394 = @HAVE_ROM1394@
 HAVE_ZLIB = @HAVE_ZLIB@
 HTML_DIR = @HTML_DIR@
@@ -397,6 +410,8 @@ JACK_1_9_7_LIBS = @JACK_1_9_7_LIBS@
 JACK_CFLAGS = @JACK_CFLAGS@
 JACK_LIBS = @JACK_LIBS@
 JPEG_LIBS = @JPEG_LIBS@
+LAME_CFLAGS = @LAME_CFLAGS@
+LAME_LIBS = @LAME_LIBS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBCACA_CFLAGS = @LIBCACA_CFLAGS@
@@ -409,6 +424,8 @@ LIBIEC61883_LIBS = @LIBIEC61883_LIBS@
 LIBINTL = @LIBINTL@
 LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
+LIBPNG_1_5_CFLAGS = @LIBPNG_1_5_CFLAGS@
+LIBPNG_1_5_LIBS = @LIBPNG_1_5_LIBS@
 LIBPNG_CFLAGS = @LIBPNG_CFLAGS@
 LIBPNG_LIBS = @LIBPNG_LIBS@
 LIBRT = @LIBRT@
@@ -427,6 +444,9 @@ MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
+MOC = @MOC@
+MPG123_CFLAGS = @MPG123_CFLAGS@
+MPG123_LIBS = @MPG123_LIBS@
 MSGFMT = @MSGFMT@
 MSGFMT_015 = @MSGFMT_015@
 MSGMERGE = @MSGMERGE@
@@ -470,9 +490,20 @@ PYTHON_EXEC_PREFIX = @PYTHON_EXEC_PREFIX@
 PYTHON_PLATFORM = @PYTHON_PLATFORM@
 PYTHON_PREFIX = @PYTHON_PREFIX@
 PYTHON_VERSION = @PYTHON_VERSION@
+QT_ANDROID_CFLAGS = @QT_ANDROID_CFLAGS@
+QT_ANDROID_LIBS = @QT_ANDROID_LIBS@
+QT_CFLAGS = @QT_CFLAGS@
+QT_LIBS = @QT_LIBS@
+QT_MAC_CFLAGS = @QT_MAC_CFLAGS@
+QT_MAC_LIBS = @QT_MAC_LIBS@
+QT_WAYLAND_CFLAGS = @QT_WAYLAND_CFLAGS@
+QT_WAYLAND_LIBS = @QT_WAYLAND_LIBS@
+QT_X11_CFLAGS = @QT_X11_CFLAGS@
+QT_X11_LIBS = @QT_X11_LIBS@
 RANLIB = @RANLIB@
 RAW1394_CFLAGS = @RAW1394_CFLAGS@
 RAW1394_LIBS = @RAW1394_LIBS@
+RCC = @RCC@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -486,11 +517,16 @@ STRIP = @STRIP@
 TAGLIB_CFLAGS = @TAGLIB_CFLAGS@
 TAGLIB_CXXFLAGS = @TAGLIB_CXXFLAGS@
 TAGLIB_LIBS = @TAGLIB_LIBS@
+TWOLAME_CFLAGS = @TWOLAME_CFLAGS@
+TWOLAME_LIBS = @TWOLAME_LIBS@
+UIC = @UIC@
 USE_NLS = @USE_NLS@
 VALGRIND_CFLAGS = @VALGRIND_CFLAGS@
 VALGRIND_LIBS = @VALGRIND_LIBS@
 VALGRIND_PATH = @VALGRIND_PATH@
 VERSION = @VERSION@
+VISIBILITY_CFLAGS = @VISIBILITY_CFLAGS@
+VISIBILITY_CXXFLAGS = @VISIBILITY_CXXFLAGS@
 VPX_130_CFLAGS = @VPX_130_CFLAGS@
 VPX_130_LIBS = @VPX_130_LIBS@
 VPX_140_CFLAGS = @VPX_140_CFLAGS@
@@ -599,13 +635,13 @@ libgstisomp4_la_SOURCES = isomp4-plugin.c gstrtpxqtdepay.c \
 	gstqtmux.c gstqtmoovrecover.c atoms.c atomsrecovery.c descriptors.c \
 	properties.c gstqtmuxmap.c gstisoff.c
 
-libgstisomp4_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
 presetdir = $(datadir)/gstreamer-$(GST_API_VERSION)/presets
 preset_DATA = GstQTMux.prs
 noinst_HEADERS = \
 	qtatomparser.h   \
 	qtdemux.h        \
 	qtdemux_types.h  \
+	qtdemux_debug.h  \
 	qtdemux_dump.h   \
 	qtdemux_lang.h   \
 	qtpalette.h      \
@@ -743,102 +779,102 @@ distclean-compile:
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
 libgstisomp4_la-isomp4-plugin.lo: isomp4-plugin.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-isomp4-plugin.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-isomp4-plugin.Tpo -c -o libgstisomp4_la-isomp4-plugin.lo `test -f 'isomp4-plugin.c' || echo '$(srcdir)/'`isomp4-plugin.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-isomp4-plugin.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-isomp4-plugin.Tpo -c -o libgstisomp4_la-isomp4-plugin.lo `test -f 'isomp4-plugin.c' || echo '$(srcdir)/'`isomp4-plugin.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstisomp4_la-isomp4-plugin.Tpo $(DEPDIR)/libgstisomp4_la-isomp4-plugin.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='isomp4-plugin.c' object='libgstisomp4_la-isomp4-plugin.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-isomp4-plugin.lo `test -f 'isomp4-plugin.c' || echo '$(srcdir)/'`isomp4-plugin.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-isomp4-plugin.lo `test -f 'isomp4-plugin.c' || echo '$(srcdir)/'`isomp4-plugin.c
 
 libgstisomp4_la-gstrtpxqtdepay.lo: gstrtpxqtdepay.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-gstrtpxqtdepay.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-gstrtpxqtdepay.Tpo -c -o libgstisomp4_la-gstrtpxqtdepay.lo `test -f 'gstrtpxqtdepay.c' || echo '$(srcdir)/'`gstrtpxqtdepay.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-gstrtpxqtdepay.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-gstrtpxqtdepay.Tpo -c -o libgstisomp4_la-gstrtpxqtdepay.lo `test -f 'gstrtpxqtdepay.c' || echo '$(srcdir)/'`gstrtpxqtdepay.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstisomp4_la-gstrtpxqtdepay.Tpo $(DEPDIR)/libgstisomp4_la-gstrtpxqtdepay.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstrtpxqtdepay.c' object='libgstisomp4_la-gstrtpxqtdepay.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-gstrtpxqtdepay.lo `test -f 'gstrtpxqtdepay.c' || echo '$(srcdir)/'`gstrtpxqtdepay.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-gstrtpxqtdepay.lo `test -f 'gstrtpxqtdepay.c' || echo '$(srcdir)/'`gstrtpxqtdepay.c
 
 libgstisomp4_la-qtdemux.lo: qtdemux.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-qtdemux.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-qtdemux.Tpo -c -o libgstisomp4_la-qtdemux.lo `test -f 'qtdemux.c' || echo '$(srcdir)/'`qtdemux.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-qtdemux.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-qtdemux.Tpo -c -o libgstisomp4_la-qtdemux.lo `test -f 'qtdemux.c' || echo '$(srcdir)/'`qtdemux.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstisomp4_la-qtdemux.Tpo $(DEPDIR)/libgstisomp4_la-qtdemux.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='qtdemux.c' object='libgstisomp4_la-qtdemux.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-qtdemux.lo `test -f 'qtdemux.c' || echo '$(srcdir)/'`qtdemux.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-qtdemux.lo `test -f 'qtdemux.c' || echo '$(srcdir)/'`qtdemux.c
 
 libgstisomp4_la-qtdemux_types.lo: qtdemux_types.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-qtdemux_types.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-qtdemux_types.Tpo -c -o libgstisomp4_la-qtdemux_types.lo `test -f 'qtdemux_types.c' || echo '$(srcdir)/'`qtdemux_types.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-qtdemux_types.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-qtdemux_types.Tpo -c -o libgstisomp4_la-qtdemux_types.lo `test -f 'qtdemux_types.c' || echo '$(srcdir)/'`qtdemux_types.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstisomp4_la-qtdemux_types.Tpo $(DEPDIR)/libgstisomp4_la-qtdemux_types.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='qtdemux_types.c' object='libgstisomp4_la-qtdemux_types.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-qtdemux_types.lo `test -f 'qtdemux_types.c' || echo '$(srcdir)/'`qtdemux_types.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-qtdemux_types.lo `test -f 'qtdemux_types.c' || echo '$(srcdir)/'`qtdemux_types.c
 
 libgstisomp4_la-qtdemux_dump.lo: qtdemux_dump.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-qtdemux_dump.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-qtdemux_dump.Tpo -c -o libgstisomp4_la-qtdemux_dump.lo `test -f 'qtdemux_dump.c' || echo '$(srcdir)/'`qtdemux_dump.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-qtdemux_dump.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-qtdemux_dump.Tpo -c -o libgstisomp4_la-qtdemux_dump.lo `test -f 'qtdemux_dump.c' || echo '$(srcdir)/'`qtdemux_dump.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstisomp4_la-qtdemux_dump.Tpo $(DEPDIR)/libgstisomp4_la-qtdemux_dump.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='qtdemux_dump.c' object='libgstisomp4_la-qtdemux_dump.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-qtdemux_dump.lo `test -f 'qtdemux_dump.c' || echo '$(srcdir)/'`qtdemux_dump.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-qtdemux_dump.lo `test -f 'qtdemux_dump.c' || echo '$(srcdir)/'`qtdemux_dump.c
 
 libgstisomp4_la-qtdemux_lang.lo: qtdemux_lang.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-qtdemux_lang.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-qtdemux_lang.Tpo -c -o libgstisomp4_la-qtdemux_lang.lo `test -f 'qtdemux_lang.c' || echo '$(srcdir)/'`qtdemux_lang.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-qtdemux_lang.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-qtdemux_lang.Tpo -c -o libgstisomp4_la-qtdemux_lang.lo `test -f 'qtdemux_lang.c' || echo '$(srcdir)/'`qtdemux_lang.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstisomp4_la-qtdemux_lang.Tpo $(DEPDIR)/libgstisomp4_la-qtdemux_lang.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='qtdemux_lang.c' object='libgstisomp4_la-qtdemux_lang.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-qtdemux_lang.lo `test -f 'qtdemux_lang.c' || echo '$(srcdir)/'`qtdemux_lang.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-qtdemux_lang.lo `test -f 'qtdemux_lang.c' || echo '$(srcdir)/'`qtdemux_lang.c
 
 libgstisomp4_la-gstqtmux.lo: gstqtmux.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-gstqtmux.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-gstqtmux.Tpo -c -o libgstisomp4_la-gstqtmux.lo `test -f 'gstqtmux.c' || echo '$(srcdir)/'`gstqtmux.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-gstqtmux.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-gstqtmux.Tpo -c -o libgstisomp4_la-gstqtmux.lo `test -f 'gstqtmux.c' || echo '$(srcdir)/'`gstqtmux.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstisomp4_la-gstqtmux.Tpo $(DEPDIR)/libgstisomp4_la-gstqtmux.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstqtmux.c' object='libgstisomp4_la-gstqtmux.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-gstqtmux.lo `test -f 'gstqtmux.c' || echo '$(srcdir)/'`gstqtmux.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-gstqtmux.lo `test -f 'gstqtmux.c' || echo '$(srcdir)/'`gstqtmux.c
 
 libgstisomp4_la-gstqtmoovrecover.lo: gstqtmoovrecover.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-gstqtmoovrecover.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-gstqtmoovrecover.Tpo -c -o libgstisomp4_la-gstqtmoovrecover.lo `test -f 'gstqtmoovrecover.c' || echo '$(srcdir)/'`gstqtmoovrecover.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-gstqtmoovrecover.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-gstqtmoovrecover.Tpo -c -o libgstisomp4_la-gstqtmoovrecover.lo `test -f 'gstqtmoovrecover.c' || echo '$(srcdir)/'`gstqtmoovrecover.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstisomp4_la-gstqtmoovrecover.Tpo $(DEPDIR)/libgstisomp4_la-gstqtmoovrecover.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstqtmoovrecover.c' object='libgstisomp4_la-gstqtmoovrecover.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-gstqtmoovrecover.lo `test -f 'gstqtmoovrecover.c' || echo '$(srcdir)/'`gstqtmoovrecover.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-gstqtmoovrecover.lo `test -f 'gstqtmoovrecover.c' || echo '$(srcdir)/'`gstqtmoovrecover.c
 
 libgstisomp4_la-atoms.lo: atoms.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-atoms.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-atoms.Tpo -c -o libgstisomp4_la-atoms.lo `test -f 'atoms.c' || echo '$(srcdir)/'`atoms.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-atoms.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-atoms.Tpo -c -o libgstisomp4_la-atoms.lo `test -f 'atoms.c' || echo '$(srcdir)/'`atoms.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstisomp4_la-atoms.Tpo $(DEPDIR)/libgstisomp4_la-atoms.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='atoms.c' object='libgstisomp4_la-atoms.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-atoms.lo `test -f 'atoms.c' || echo '$(srcdir)/'`atoms.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-atoms.lo `test -f 'atoms.c' || echo '$(srcdir)/'`atoms.c
 
 libgstisomp4_la-atomsrecovery.lo: atomsrecovery.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-atomsrecovery.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-atomsrecovery.Tpo -c -o libgstisomp4_la-atomsrecovery.lo `test -f 'atomsrecovery.c' || echo '$(srcdir)/'`atomsrecovery.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-atomsrecovery.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-atomsrecovery.Tpo -c -o libgstisomp4_la-atomsrecovery.lo `test -f 'atomsrecovery.c' || echo '$(srcdir)/'`atomsrecovery.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstisomp4_la-atomsrecovery.Tpo $(DEPDIR)/libgstisomp4_la-atomsrecovery.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='atomsrecovery.c' object='libgstisomp4_la-atomsrecovery.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-atomsrecovery.lo `test -f 'atomsrecovery.c' || echo '$(srcdir)/'`atomsrecovery.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-atomsrecovery.lo `test -f 'atomsrecovery.c' || echo '$(srcdir)/'`atomsrecovery.c
 
 libgstisomp4_la-descriptors.lo: descriptors.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-descriptors.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-descriptors.Tpo -c -o libgstisomp4_la-descriptors.lo `test -f 'descriptors.c' || echo '$(srcdir)/'`descriptors.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-descriptors.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-descriptors.Tpo -c -o libgstisomp4_la-descriptors.lo `test -f 'descriptors.c' || echo '$(srcdir)/'`descriptors.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstisomp4_la-descriptors.Tpo $(DEPDIR)/libgstisomp4_la-descriptors.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='descriptors.c' object='libgstisomp4_la-descriptors.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-descriptors.lo `test -f 'descriptors.c' || echo '$(srcdir)/'`descriptors.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-descriptors.lo `test -f 'descriptors.c' || echo '$(srcdir)/'`descriptors.c
 
 libgstisomp4_la-properties.lo: properties.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-properties.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-properties.Tpo -c -o libgstisomp4_la-properties.lo `test -f 'properties.c' || echo '$(srcdir)/'`properties.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-properties.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-properties.Tpo -c -o libgstisomp4_la-properties.lo `test -f 'properties.c' || echo '$(srcdir)/'`properties.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstisomp4_la-properties.Tpo $(DEPDIR)/libgstisomp4_la-properties.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='properties.c' object='libgstisomp4_la-properties.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-properties.lo `test -f 'properties.c' || echo '$(srcdir)/'`properties.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-properties.lo `test -f 'properties.c' || echo '$(srcdir)/'`properties.c
 
 libgstisomp4_la-gstqtmuxmap.lo: gstqtmuxmap.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-gstqtmuxmap.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-gstqtmuxmap.Tpo -c -o libgstisomp4_la-gstqtmuxmap.lo `test -f 'gstqtmuxmap.c' || echo '$(srcdir)/'`gstqtmuxmap.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-gstqtmuxmap.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-gstqtmuxmap.Tpo -c -o libgstisomp4_la-gstqtmuxmap.lo `test -f 'gstqtmuxmap.c' || echo '$(srcdir)/'`gstqtmuxmap.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstisomp4_la-gstqtmuxmap.Tpo $(DEPDIR)/libgstisomp4_la-gstqtmuxmap.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstqtmuxmap.c' object='libgstisomp4_la-gstqtmuxmap.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-gstqtmuxmap.lo `test -f 'gstqtmuxmap.c' || echo '$(srcdir)/'`gstqtmuxmap.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-gstqtmuxmap.lo `test -f 'gstqtmuxmap.c' || echo '$(srcdir)/'`gstqtmuxmap.c
 
 libgstisomp4_la-gstisoff.lo: gstisoff.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-gstisoff.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-gstisoff.Tpo -c -o libgstisomp4_la-gstisoff.lo `test -f 'gstisoff.c' || echo '$(srcdir)/'`gstisoff.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-gstisoff.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-gstisoff.Tpo -c -o libgstisomp4_la-gstisoff.lo `test -f 'gstisoff.c' || echo '$(srcdir)/'`gstisoff.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstisomp4_la-gstisoff.Tpo $(DEPDIR)/libgstisomp4_la-gstisoff.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstisoff.c' object='libgstisomp4_la-gstisoff.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-gstisoff.lo `test -f 'gstisoff.c' || echo '$(srcdir)/'`gstisoff.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-gstisoff.lo `test -f 'gstisoff.c' || echo '$(srcdir)/'`gstisoff.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

@@ -8,7 +8,7 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-qtmoovrecover.html" title="qtmoovrecover">
 <link rel="next" href="gst-plugins-good-plugins-quarktv.html" title="quarktv">
-<meta name="generator" content="GTK-Doc V1.26 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.27 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -120,6 +120,16 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-qtmux.html#GstQTMux--interleave-time" title="The “interleave-time” property">interleave-time</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-qtmux.html#GstQTMux--max-raw-audio-drift" title="The “max-raw-audio-drift” property">max-raw-audio-drift</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-qtmux.html#GstQTMux--reserved-prefill" title="The “reserved-prefill” property">reserved-prefill</a></td>
+<td class="property_flags">Read / Write / Construct</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -166,9 +176,10 @@ Motion JPEG-2000 file format in ISO 15444-3 (mj2mux)
 and in various 3GPP(2) specs (gppmux).
 The fragmented file features defined (only) in ISO Base Media are used by
 ISMV files making up (a.o.) Smooth Streaming (ismlmux).</p>
-<p>A few properties (<a class="link" href="gst-plugins-good-plugins-qtmux.html#GstQTMux--movie-timescale" title="The “movie-timescale” property"><span class="type">“movie-timescale”</span></a>, <a class="link" href="gst-plugins-good-plugins-qtmux.html#GstQTMux--trak-timescale" title="The “trak-timescale” property"><span class="type">“trak-timescale”</span></a>) allow
-adjusting some technical parameters, which might be useful in (rare) cases to
-resolve compatibility issues in some situations.</p>
+<p>A few properties (<a class="link" href="gst-plugins-good-plugins-qtmux.html#GstQTMux--movie-timescale" title="The “movie-timescale” property"><span class="type">“movie-timescale”</span></a>, <a class="link" href="gst-plugins-good-plugins-qtmux.html#GstQTMux--trak-timescale" title="The “trak-timescale” property"><span class="type">“trak-timescale”</span></a>,
+<span class="type">“trak-timescale”</span>) allow adjusting some technical parameters,
+which might be useful in (rare) cases to resolve compatibility issues in
+some situations.</p>
 <p>Some other properties influence the result more fundamentally.
 A typical mov/mp4 file's metadata (aka moov) is located at the end of the
 file, somewhat contrary to this usually being called "the header".
@@ -194,7 +205,7 @@ space for headers is too small. Applications can monitor the
 <span class="type">“reserved-duration-remaining”</span> property to see how close to full
 the reserved space is becoming.</p>
 <div class="refsect2">
-<a name="id-1.2.117.8.9"></a><h3>Example pipelines</h3>
+<a name="id-1.2.123.8.9"></a><h3>Example pipelines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -211,7 +222,7 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.117.8.10.1"></a><h3>Element Information</h3>
+<a name="id-1.2.123.8.10.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -237,7 +248,7 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.117.8.10.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.123.8.10.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -266,11 +277,15 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/mpeg, mpegversion=(int)1, layer=(int)3, channels=(int)[ 1, 2 ], rate=(int)[ 1, 2147483647 ]</td>
+<td> audio/mpeg, mpegversion=(int)1, layer=(int)[ 1, 3 ], channels=(int)[ 1, 2 ], rate=(int)[ 1, 2147483647 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
 <td> audio/mpeg, mpegversion=(int)4, stream-format=(string)raw, channels=(int)[ 1, 8 ], rate=(int)[ 1, 2147483647 ]</td>
+</tr>
+<tr>
+<td><p><span class="term"></span></p></td>
+<td> audio/x-ac3, channels=(int)[ 1, 6 ], rate=(int)[ 1, 2147483647 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
@@ -295,6 +310,10 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 <tr>
 <td><p><span class="term"></span></p></td>
 <td> audio/x-alac, channels=(int)[ 1, 2 ], rate=(int)[ 1, 2147483647 ]</td>
+</tr>
+<tr>
+<td><p><span class="term"></span></p></td>
+<td> audio/x-opus, channel-mapping-family=(int)[ 0, 255 ], channels=(int)[ 1, 8 ], rate=(int)[ 1, 2147483647 ]</td>
 </tr>
 </tbody>
 </table></div>
@@ -386,7 +405,15 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
+<td> image/png, width=(int)[ 16, 2147483647 ], height=(int)[ 16, 2147483647 ]</td>
+</tr>
+<tr>
+<td><p><span class="term"></span></p></td>
 <td> video/x-vp8, width=(int)[ 16, 2147483647 ], height=(int)[ 16, 2147483647 ]</td>
+</tr>
+<tr>
+<td><p><span class="term"></span></p></td>
+<td> video/x-vp9, width=(int)[ 16, 2147483647 ], height=(int)[ 16, 2147483647 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
@@ -562,9 +589,25 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 <p>Flags: Read / Write</p>
 <p>Default value: 250000000</p>
 </div>
+<hr>
+<div class="refsect2">
+<a name="GstQTMux--max-raw-audio-drift"></a><h3>The <code class="literal">“max-raw-audio-drift”</code> property</h3>
+<pre class="programlisting">  “max-raw-audio-drift”      <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
+<p>Maximum allowed drift of raw audio samples vs. timestamps in nanoseconds.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 40000000</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstQTMux--reserved-prefill"></a><h3>The <code class="literal">“reserved-prefill”</code> property</h3>
+<pre class="programlisting">  “reserved-prefill”         <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<p>Prefill samples table of reserved duration.</p>
+<p>Flags: Read / Write / Construct</p>
+<p>Default value: FALSE</p>
+</div>
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.26</div>
+<hr>Generated by GTK-Doc V1.27</div>
 </body>
 </html>

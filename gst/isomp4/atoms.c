@@ -729,6 +729,33 @@ atom_ctts_free (AtomCTTS * ctts)
 }
 
 static void
+atom_svmi_init (AtomSVMI * svmi)
+{
+  guint8 flags[3] = { 0, 0, 0 };
+
+  atom_full_init (&svmi->header, FOURCC_svmi, 0, 0, 0, flags);
+  svmi->stereoscopic_composition_type = 0x00;
+  svmi->is_left_first = FALSE;
+}
+
+AtomSVMI *
+atom_svmi_new (guint8 stereoscopic_composition_type, gboolean is_left_first)
+{
+  AtomSVMI *svmi = g_new0 (AtomSVMI, 1);
+
+  atom_svmi_init (svmi);
+  svmi->stereoscopic_composition_type = stereoscopic_composition_type;
+  svmi->is_left_first = is_left_first;
+  return svmi;
+}
+
+static void
+atom_svmi_free (AtomSVMI * svmi)
+{
+  g_free (svmi);
+}
+
+static void
 atom_stts_init (AtomSTTS * stts)
 {
   guint8 flags[3] = { 0, 0, 0 };
@@ -822,6 +849,7 @@ atom_stbl_init (AtomSTBL * stbl)
   atom_stsz_init (&stbl->stsz);
   atom_stsc_init (&stbl->stsc);
   stbl->ctts = NULL;
+  stbl->svmi = NULL;
 
   atom_co64_init (&stbl->stco64);
 }
@@ -837,6 +865,9 @@ atom_stbl_clear (AtomSTBL * stbl)
   atom_stsz_clear (&stbl->stsz);
   if (stbl->ctts) {
     atom_ctts_free (stbl->ctts);
+  }
+  if (stbl->svmi) {
+    atom_svmi_free (stbl->svmi);
   }
   atom_stco64_clear (&stbl->stco64);
 }
@@ -1112,7 +1143,11 @@ atom_mdhd_init (AtomMDHD * mdhd)
 
   atom_full_init (&mdhd->header, FOURCC_mdhd, 0, 0, 0, flags);
   common_time_info_init (&mdhd->time_info);
-  mdhd->language_code = 0;
+  /* tempting as it may be to simply 0-initialize,
+   * that will have the demuxer (correctly) come up with 'eng' as language
+   * so explicitly specify undefined instead */
+  mdhd->language_code =
+      ('u' - 0x60) * 0x400 + ('n' - 0x60) * 0x20 + ('d' - 0x60);
   mdhd->quality = 0;
 }
 
@@ -2289,6 +2324,25 @@ atom_ctts_copy_data (AtomCTTS * ctts, guint8 ** buffer, guint64 * size,
 }
 
 guint64
+atom_svmi_copy_data (AtomSVMI * svmi, guint8 ** buffer, guint64 * size,
+    guint64 * offset)
+{
+  guint64 original_offset = *offset;
+
+  if (!atom_full_copy_data (&svmi->header, buffer, size, offset)) {
+    return 0;
+  }
+
+  prop_copy_uint8 (svmi->stereoscopic_composition_type, buffer, size, offset);
+  prop_copy_uint8 (svmi->is_left_first ? 1 : 0, buffer, size, offset);
+  /* stereo-mono change count */
+  prop_copy_uint32 (0, buffer, size, offset);
+
+  atom_write_size (buffer, size, offset, original_offset);
+  return *offset - original_offset;
+}
+
+guint64
 atom_stco64_copy_data (AtomSTCO64 * stco64, guint8 ** buffer, guint64 * size,
     guint64 * offset)
 {
@@ -2447,6 +2501,11 @@ atom_stbl_copy_data (AtomSTBL * stbl, guint8 ** buffer, guint64 * size,
   }
   if (stbl->ctts && stbl->ctts->do_pts) {
     if (!atom_ctts_copy_data (stbl->ctts, buffer, size, offset)) {
+      return 0;
+    }
+  }
+  if (stbl->svmi) {
+    if (!atom_svmi_copy_data (stbl->svmi, buffer, size, offset)) {
       return 0;
     }
   }
@@ -2934,7 +2993,7 @@ atom_wave_copy_data (AtomWAVE * wave, guint8 ** buffer,
 
 /* add samples to tables */
 
-static void
+void
 atom_stsc_add_new_entry (AtomSTSC * stsc, guint32 first_chunk, guint32 nsamples)
 {
   gint len;
@@ -3809,17 +3868,18 @@ atom_framerate_to_timescale (gint n, gint d)
 
 static SampleTableEntryTMCD *
 atom_trak_add_timecode_entry (AtomTRAK * trak, AtomsContext * context,
-    GstVideoTimeCode * tc)
+    guint32 trak_timescale, GstVideoTimeCode * tc)
 {
   AtomSTSD *stsd = &trak->mdia.minf.stbl.stsd;
   SampleTableEntryTMCD *tmcd = sample_entry_tmcd_new ();
+
+  g_assert (trak_timescale != 0);
 
   trak->mdia.hdlr.component_type = FOURCC_mhlr;
   trak->mdia.hdlr.handler_type = FOURCC_tmcd;
   g_free (trak->mdia.hdlr.name);
   trak->mdia.hdlr.name = g_strdup ("Time Code Media Handler");
-  trak->mdia.mdhd.time_info.timescale =
-      atom_framerate_to_timescale (tc->config.fps_n, tc->config.fps_d);
+  trak->mdia.mdhd.time_info.timescale = trak_timescale;
 
   tmcd->se.kind = TIMECODE;
   tmcd->se.data_reference_index = 1;
@@ -3828,9 +3888,10 @@ atom_trak_add_timecode_entry (AtomTRAK * trak, AtomsContext * context,
     tmcd->tc_flags |= TC_DROP_FRAME;
   tmcd->name.language_code = 0;
   tmcd->name.name = g_strdup ("Tape");
-  tmcd->timescale =
-      atom_framerate_to_timescale (tc->config.fps_n, tc->config.fps_d);
-  tmcd->frame_duration = 100;
+  tmcd->timescale = trak_timescale;
+  tmcd->frame_duration =
+      gst_util_uint64_scale (tmcd->timescale, tc->config.fps_d,
+      tc->config.fps_n);
   if (tc->config.fps_d == 1001)
     tmcd->n_frames = tc->config.fps_n / 1000;
   else
@@ -3880,7 +3941,7 @@ atom_trak_add_subtitle_entry (AtomTRAK * trak, AtomsContext * context,
 }
 
 
-static void
+void
 atom_trak_set_constant_size_samples (AtomTRAK * trak, guint32 sample_size)
 {
   trak->mdia.minf.stbl.stsz.sample_size = sample_size;
@@ -3987,7 +4048,7 @@ atom_trak_set_audio_type (AtomTRAK * trak, AtomsContext * context,
 
 SampleTableEntryTMCD *
 atom_trak_set_timecode_type (AtomTRAK * trak, AtomsContext * context,
-    GstVideoTimeCode * tc)
+    guint32 trak_timescale, GstVideoTimeCode * tc)
 {
   SampleTableEntryTMCD *ste;
   AtomGMHD *gmhd = trak->mdia.minf.gmhd;
@@ -3996,7 +4057,7 @@ atom_trak_set_timecode_type (AtomTRAK * trak, AtomsContext * context,
     return NULL;
   }
 
-  ste = atom_trak_add_timecode_entry (trak, context, tc);
+  ste = atom_trak_add_timecode_entry (trak, context, trak_timescale, tc);
 
   gmhd = atom_gmhd_new ();
   gmhd->gmin.graphics_mode = 0x0040;

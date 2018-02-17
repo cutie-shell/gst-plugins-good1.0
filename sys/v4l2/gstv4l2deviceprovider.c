@@ -31,16 +31,10 @@
 #include <gst/gst.h>
 
 #include "gstv4l2object.h"
-#include "v4l2_calls.h"
 #include "v4l2-utils.h"
 
 #ifdef HAVE_GUDEV
 #include <gudev/gudev.h>
-#endif
-
-/* Only available since Linux 4.8 */
-#ifndef V4L2_CAP_TOUCH
-#define V4L2_CAP_TOUCH 0x10000000
 #endif
 
 static GstV4l2Device *gst_v4l2_device_new (const gchar * device_path,
@@ -119,7 +113,7 @@ gst_v4l2_device_provider_probe_device (GstV4l2DeviceProvider * provider,
   if (!S_ISCHR (st.st_mode))
     goto destroy;
 
-  v4l2obj = gst_v4l2_object_new ((GstElement *) provider,
+  v4l2obj = gst_v4l2_object_new (NULL, GST_OBJECT (provider),
       V4L2_BUF_TYPE_VIDEO_CAPTURE, device_path, NULL, NULL, NULL);
 
   if (!gst_v4l2_open (v4l2obj))
@@ -148,6 +142,7 @@ gst_v4l2_device_provider_probe_device (GstV4l2DeviceProvider * provider,
       goto close;
 
     type = GST_V4L2_DEVICE_TYPE_SOURCE;
+    v4l2obj->skip_try_fmt_probes = TRUE;
   }
 
   if (v4l2obj->device_caps &

@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-12-07 19:21+0200\n"
+"POT-Creation-Date: 2018-02-15 17:06+0000\n"
 "PO-Revision-Date: 2017-05-26 19:59+0200\n"
 "Last-Translator: Christian Kirbach <christian.kirbach@gmail.com>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -31,6 +31,16 @@ msgstr "Jack-Server nicht gefunden"
 
 msgid "Failed to decode JPEG image"
 msgstr "Dekodieren des JPEG-Bildes schlug fehl"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -63,6 +73,9 @@ msgstr "Server gab unbrauchbare Daten zurück."
 
 msgid "Server does not support seeking."
 msgstr "Suchlauf wird nicht vom Server unterstützt."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Kein oder ungültiger Eingabeton, der AVI-Strom wird fehlerhaft sein."
@@ -164,61 +177,6 @@ msgstr "CoreAudio-Gerät nicht gefunden"
 msgid "CoreAudio device could not be opened"
 msgstr "CoreAudio-Gerät konnte nicht geöffnet werden"
 
-msgid "Record Source"
-msgstr "Aufnahmequelle"
-
-msgid "Microphone"
-msgstr "Mikrofon"
-
-msgid "Line In"
-msgstr "Line-Eingang"
-
-msgid "Internal CD"
-msgstr "Interne CD"
-
-msgid "SPDIF In"
-msgstr "SPDIF-Eingang"
-
-msgid "AUX 1 In"
-msgstr "AUX-Eingang 1"
-
-msgid "AUX 2 In"
-msgstr "AUX-Eingang 2"
-
-msgid "Codec Loopback"
-msgstr "Codec-Rückschleife"
-
-msgid "SunVTS Loopback"
-msgstr "SunVTS-Rückschleife"
-
-msgid "Volume"
-msgstr "Lautstärke"
-
-msgid "Gain"
-msgstr "Pegel"
-
-msgid "Monitor"
-msgstr "Monitor"
-
-msgid "Built-in Speaker"
-msgstr "Eingebauter Lautsprecher"
-
-msgid "Headphone"
-msgstr "Kopfhörer"
-
-# Hier ist mir noch nichts Besseres eingefallen.
-msgid "Line Out"
-msgstr "Ausgang"
-
-msgid "SPDIF Out"
-msgstr "SPDIF-Ausgang"
-
-msgid "AUX 1 Out"
-msgstr "AUX-Ausgang 1"
-
-msgid "AUX 2 Out"
-msgstr "AUX-Ausgang 2"
-
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr "Fehler beim Lesen von %d Bytes von Gerät »%s«."
@@ -242,6 +200,14 @@ msgstr "Der Treiber von Gerät »%s« unterstützt nicht die EA-Methode %d"
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr "Der Treiber von Gerät »%s« unterstützt keine bekannte EA-Methode"
 
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Der Kodierer auf Gerät %s hat kein unterstütztes Eingabeformat"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
 #, c-format
 msgid "Device '%s' is busy"
 msgstr "Gerät »%s« ist belegt"
@@ -257,6 +223,14 @@ msgstr "Das angegebene Format kann nicht vom Gerät »%s« ausgelesen werden"
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr "Gerät »%s« unterstützt getrennte Ebenen"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Gerät »%s« unterstützt keine Videoaufnahme"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Gerät »%s« unterstützt keine Videoaufnahme"
 
 #, c-format
 msgid "Could not get parameters on device '%s'"
@@ -342,6 +316,10 @@ msgstr "Beginn der Dekodierung des JPEG-Bildes schlug fehl"
 
 msgid "Failed to process frame."
 msgstr "Verarbeiten des Einzelbilds schlug fehl."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Beginn der Dekodierung des JPEG-Bildes schlug fehl"
 
 #, c-format
 msgid ""
@@ -446,14 +424,66 @@ msgstr "Ein Wechsel der Auflösung zur Laufzeit wird noch nicht unterstützt."
 msgid "Cannot operate without a clock"
 msgstr "Es kann nicht ohne einen Taktgeber gearbeitet werden."
 
+#~ msgid "Record Source"
+#~ msgstr "Aufnahmequelle"
+
+#~ msgid "Microphone"
+#~ msgstr "Mikrofon"
+
+#~ msgid "Line In"
+#~ msgstr "Line-Eingang"
+
+#~ msgid "Internal CD"
+#~ msgstr "Interne CD"
+
+#~ msgid "SPDIF In"
+#~ msgstr "SPDIF-Eingang"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "AUX-Eingang 1"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "AUX-Eingang 2"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Codec-Rückschleife"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "SunVTS-Rückschleife"
+
+#~ msgid "Volume"
+#~ msgstr "Lautstärke"
+
+#~ msgid "Gain"
+#~ msgstr "Pegel"
+
+#~ msgid "Monitor"
+#~ msgstr "Monitor"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Eingebauter Lautsprecher"
+
+#~ msgid "Headphone"
+#~ msgstr "Kopfhörer"
+
+# Hier ist mir noch nichts Besseres eingefallen.
+#~ msgid "Line Out"
+#~ msgstr "Ausgang"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "SPDIF-Ausgang"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "AUX-Ausgang 1"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "AUX-Ausgang 2"
+
 #~ msgid "Internal data stream error."
 #~ msgstr "Interner Datenstromfehler."
 
 #~ msgid "Internal data flow error."
 #~ msgstr "Interner Datenstromfehler."
-
-#~ msgid "Device '%s' does not support video capture"
-#~ msgstr "Gerät »%s« unterstützt keine Videoaufnahme"
 
 #~ msgid "Could not establish connection to sound server"
 #~ msgstr "Es konnte keine Verbindung zum Audio-Server hergestellt werden"

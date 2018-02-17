@@ -19,6 +19,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
+#include "qtdemux_debug.h"
 #include "qtdemux_types.h"
 #include "qtdemux_dump.h"
 #include "fourcc.h"
@@ -26,6 +27,8 @@
 #include "qtatomparser.h"
 
 #include <string.h>
+
+#define GST_CAT_DEFAULT qtdemux_debug
 
 #define GET_UINT8(data)   gst_byte_reader_get_uint8_unchecked(data)
 #define GET_UINT16(data)  gst_byte_reader_get_uint16_be_unchecked(data)
@@ -182,7 +185,7 @@ qtdemux_dump_hdlr (GstQTDemux * qtdemux, GstByteReader * data, int depth)
   guint32 version, type, subtype, manufacturer;
   const gchar *name;
 
-  if (!qt_atom_parser_has_remaining (data, 4 + 4 + 4 + 4 + 4 + 4 + 1))
+  if (!qt_atom_parser_has_remaining (data, 4 + 4 + 4 + 4 + 4 + 4))
     return FALSE;
 
   version = GET_UINT32 (data);
@@ -205,10 +208,10 @@ qtdemux_dump_hdlr (GstQTDemux * qtdemux, GstByteReader * data, int depth)
     GST_LOG ("%*s  name:          %s", depth, "", name);
   } else {
     gchar buf[256];
-    guint len;
+    guint8 len;
 
-    len = gst_byte_reader_get_uint8_unchecked (data);
-    if (qt_atom_parser_has_remaining (data, len)) {
+    if (gst_byte_reader_get_uint8 (data, &len)
+        && qt_atom_parser_has_remaining (data, len)) {
       memcpy (buf, gst_byte_reader_peek_data_unchecked (data), len);
       buf[len] = '\0';
       GST_LOG ("%*s  name:          %s", depth, "", buf);
@@ -453,7 +456,7 @@ qtdemux_dump_stsc (GstQTDemux * qtdemux, GstByteReader * data, int depth)
 gboolean
 qtdemux_dump_stsz (GstQTDemux * qtdemux, GstByteReader * data, int depth)
 {
-  guint32 ver_flags = 0, sample_size = 0, num_entries = 0;
+  guint32 ver_flags = 0, sample_size = 0, num_entries = 0, i;
 
   if (!gst_byte_reader_get_uint32_be (data, &ver_flags) ||
       !gst_byte_reader_get_uint32_be (data, &sample_size))
@@ -467,13 +470,11 @@ qtdemux_dump_stsz (GstQTDemux * qtdemux, GstByteReader * data, int depth)
       return FALSE;
 
     GST_LOG ("%*s  n entries:     %d", depth, "", num_entries);
-#if 0
     if (!qt_atom_parser_has_chunks (data, num_entries, 4))
       return FALSE;
     for (i = 0; i < num_entries; i++) {
-      GST_LOG ("%*s    sample size:   %u", depth, "", GET_UINT32 (data));
+      GST_TRACE ("%*s    sample size:   %u", depth, "", GET_UINT32 (data));
     }
-#endif
   }
   return TRUE;
 }
@@ -953,6 +954,31 @@ qtdemux_dump_fLaC (GstQTDemux * qtdemux, GstByteReader * data, int depth)
   GST_LOG ("%*s  channel count:  %d", depth, "", n_channels);
   GST_LOG ("%*s  sample size:    %d", depth, "", sample_size);
   GST_LOG ("%*s  sample rate:    %d", depth, "", (sample_rate >> 16));
+
+  return TRUE;
+}
+
+gboolean
+qtdemux_dump_gmin (GstQTDemux * qtdemux, GstByteReader * data, int depth)
+{
+  guint32 ver_flags;
+  guint16 graphics_mode, opc_r, opc_g, opc_b, balance;
+
+  if (!gst_byte_reader_get_uint32_be (data, &ver_flags))
+    return FALSE;
+
+  GST_LOG ("%*s  version/flags : %08x", depth, "", ver_flags);
+  if (!gst_byte_reader_get_uint16_be (data, &graphics_mode) ||
+      !gst_byte_reader_get_uint16_be (data, &opc_r) ||
+      !gst_byte_reader_get_uint16_be (data, &opc_g) ||
+      !gst_byte_reader_get_uint16_be (data, &opc_b) ||
+      !gst_byte_reader_get_uint16_be (data, &balance))
+    return FALSE;
+
+  GST_LOG ("%*s  graphics mode : 0x%x", depth, "", graphics_mode);
+  GST_LOG ("%*s  opcolor :       r:0x%x g:0x%x b:0x%x", depth, "", opc_r, opc_g,
+      opc_b);
+  GST_LOG ("%*s  balance :       %d", depth, "", balance);
 
   return TRUE;
 }

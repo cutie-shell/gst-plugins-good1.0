@@ -163,22 +163,22 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(plugindir)"
 LTLIBRARIES = $(plugin_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-libgstdirectsoundsink_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+libgstdirectsound_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
-am_libgstdirectsoundsink_la_OBJECTS =  \
-	libgstdirectsoundsink_la-gstdirectsoundsink.lo \
-	libgstdirectsoundsink_la-gstdirectsoundplugin.lo
-libgstdirectsoundsink_la_OBJECTS =  \
-	$(am_libgstdirectsoundsink_la_OBJECTS)
+am_libgstdirectsound_la_OBJECTS =  \
+	libgstdirectsound_la-gstdirectsoundsink.lo \
+	libgstdirectsound_la-gstdirectsounddevice.lo \
+	libgstdirectsound_la-gstdirectsoundplugin.lo
+libgstdirectsound_la_OBJECTS = $(am_libgstdirectsound_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-libgstdirectsoundsink_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(libgstdirectsoundsink_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(libgstdirectsoundsink_la_CFLAGS) \
-	$(CFLAGS) $(libgstdirectsoundsink_la_LDFLAGS) $(LDFLAGS) -o $@
+libgstdirectsound_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(libgstdirectsound_la_CFLAGS) $(CFLAGS) \
+	$(libgstdirectsound_la_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -213,8 +213,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libgstdirectsoundsink_la_SOURCES)
-DIST_SOURCES = $(libgstdirectsoundsink_la_SOURCES)
+SOURCES = $(libgstdirectsound_la_SOURCES)
+DIST_SOURCES = $(libgstdirectsound_la_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -295,6 +295,7 @@ ERROR_CFLAGS = @ERROR_CFLAGS@
 ERROR_CXXFLAGS = @ERROR_CXXFLAGS@
 ERROR_OBJCFLAGS = @ERROR_OBJCFLAGS@
 EXEEXT = @EXEEXT@
+EXTRA_CFLAGS = @EXTRA_CFLAGS@
 FFLAGS = @FFLAGS@
 FGREP = @FGREP@
 FLAC_CFLAGS = @FLAC_CFLAGS@
@@ -318,6 +319,8 @@ GLIB_PREFIX = @GLIB_PREFIX@
 GLIB_REQ = @GLIB_REQ@
 GMSGFMT = @GMSGFMT@
 GMSGFMT_015 = @GMSGFMT_015@
+GNUSTL_CFLAGS = @GNUSTL_CFLAGS@
+GNUSTL_LIBS = @GNUSTL_LIBS@
 GREP = @GREP@
 GSTPB_PLUGINS_DIR = @GSTPB_PLUGINS_DIR@
 GSTPB_PREFIX = @GSTPB_PREFIX@
@@ -333,6 +336,8 @@ GST_CONTROLLER_CFLAGS = @GST_CONTROLLER_CFLAGS@
 GST_CONTROLLER_LIBS = @GST_CONTROLLER_LIBS@
 GST_CURRENT = @GST_CURRENT@
 GST_CXXFLAGS = @GST_CXXFLAGS@
+GST_GL_CFLAGS = @GST_GL_CFLAGS@
+GST_GL_LIBS = @GST_GL_LIBS@
 GST_LEVEL_DEFAULT = @GST_LEVEL_DEFAULT@
 GST_LIBS = @GST_LIBS@
 GST_LIBVERSION = @GST_LIBVERSION@
@@ -355,10 +360,17 @@ GST_PLUGINS_DIR = @GST_PLUGINS_DIR@
 GST_PLUGINS_NONPORTED = @GST_PLUGINS_NONPORTED@
 GST_PLUGINS_SELECTED = @GST_PLUGINS_SELECTED@
 GST_PLUGIN_LDFLAGS = @GST_PLUGIN_LDFLAGS@
-GST_PLUGIN_LIBTOOLFLAGS = @GST_PLUGIN_LIBTOOLFLAGS@
 GST_PREFIX = @GST_PREFIX@
 GST_REVISION = @GST_REVISION@
 GST_TOOLS_DIR = @GST_TOOLS_DIR@
+GTK3_CFLAGS = @GTK3_CFLAGS@
+GTK3_GL_CFLAGS = @GTK3_GL_CFLAGS@
+GTK3_GL_LIBS = @GTK3_GL_LIBS@
+GTK3_LIBS = @GTK3_LIBS@
+GTK3_WAYLAND_CFLAGS = @GTK3_WAYLAND_CFLAGS@
+GTK3_WAYLAND_LIBS = @GTK3_WAYLAND_LIBS@
+GTK3_X11_CFLAGS = @GTK3_X11_CFLAGS@
+GTK3_X11_LIBS = @GTK3_X11_LIBS@
 GTKDOC_CHECK = @GTKDOC_CHECK@
 GTKDOC_DEPS_CFLAGS = @GTKDOC_DEPS_CFLAGS@
 GTKDOC_DEPS_LIBS = @GTKDOC_DEPS_LIBS@
@@ -373,6 +385,7 @@ GUDEV_LIBS = @GUDEV_LIBS@
 HAVE_AVC1394 = @HAVE_AVC1394@
 HAVE_CXX = @HAVE_CXX@
 HAVE_DIRECTSOUND = @HAVE_DIRECTSOUND@
+HAVE_LAME = @HAVE_LAME@
 HAVE_ROM1394 = @HAVE_ROM1394@
 HAVE_ZLIB = @HAVE_ZLIB@
 HTML_DIR = @HTML_DIR@
@@ -390,6 +403,8 @@ JACK_1_9_7_LIBS = @JACK_1_9_7_LIBS@
 JACK_CFLAGS = @JACK_CFLAGS@
 JACK_LIBS = @JACK_LIBS@
 JPEG_LIBS = @JPEG_LIBS@
+LAME_CFLAGS = @LAME_CFLAGS@
+LAME_LIBS = @LAME_LIBS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBCACA_CFLAGS = @LIBCACA_CFLAGS@
@@ -402,6 +417,8 @@ LIBIEC61883_LIBS = @LIBIEC61883_LIBS@
 LIBINTL = @LIBINTL@
 LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
+LIBPNG_1_5_CFLAGS = @LIBPNG_1_5_CFLAGS@
+LIBPNG_1_5_LIBS = @LIBPNG_1_5_LIBS@
 LIBPNG_CFLAGS = @LIBPNG_CFLAGS@
 LIBPNG_LIBS = @LIBPNG_LIBS@
 LIBRT = @LIBRT@
@@ -420,6 +437,9 @@ MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
+MOC = @MOC@
+MPG123_CFLAGS = @MPG123_CFLAGS@
+MPG123_LIBS = @MPG123_LIBS@
 MSGFMT = @MSGFMT@
 MSGFMT_015 = @MSGFMT_015@
 MSGMERGE = @MSGMERGE@
@@ -463,9 +483,20 @@ PYTHON_EXEC_PREFIX = @PYTHON_EXEC_PREFIX@
 PYTHON_PLATFORM = @PYTHON_PLATFORM@
 PYTHON_PREFIX = @PYTHON_PREFIX@
 PYTHON_VERSION = @PYTHON_VERSION@
+QT_ANDROID_CFLAGS = @QT_ANDROID_CFLAGS@
+QT_ANDROID_LIBS = @QT_ANDROID_LIBS@
+QT_CFLAGS = @QT_CFLAGS@
+QT_LIBS = @QT_LIBS@
+QT_MAC_CFLAGS = @QT_MAC_CFLAGS@
+QT_MAC_LIBS = @QT_MAC_LIBS@
+QT_WAYLAND_CFLAGS = @QT_WAYLAND_CFLAGS@
+QT_WAYLAND_LIBS = @QT_WAYLAND_LIBS@
+QT_X11_CFLAGS = @QT_X11_CFLAGS@
+QT_X11_LIBS = @QT_X11_LIBS@
 RANLIB = @RANLIB@
 RAW1394_CFLAGS = @RAW1394_CFLAGS@
 RAW1394_LIBS = @RAW1394_LIBS@
+RCC = @RCC@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -479,11 +510,16 @@ STRIP = @STRIP@
 TAGLIB_CFLAGS = @TAGLIB_CFLAGS@
 TAGLIB_CXXFLAGS = @TAGLIB_CXXFLAGS@
 TAGLIB_LIBS = @TAGLIB_LIBS@
+TWOLAME_CFLAGS = @TWOLAME_CFLAGS@
+TWOLAME_LIBS = @TWOLAME_LIBS@
+UIC = @UIC@
 USE_NLS = @USE_NLS@
 VALGRIND_CFLAGS = @VALGRIND_CFLAGS@
 VALGRIND_LIBS = @VALGRIND_LIBS@
 VALGRIND_PATH = @VALGRIND_PATH@
 VERSION = @VERSION@
+VISIBILITY_CFLAGS = @VISIBILITY_CFLAGS@
+VISIBILITY_CXXFLAGS = @VISIBILITY_CXXFLAGS@
 VPX_130_CFLAGS = @VPX_130_CFLAGS@
 VPX_130_LIBS = @VPX_130_LIBS@
 VPX_140_CFLAGS = @VPX_140_CFLAGS@
@@ -574,24 +610,27 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-plugin_LTLIBRARIES = libgstdirectsoundsink.la
-libgstdirectsoundsink_la_SOURCES = gstdirectsoundsink.c gstdirectsoundplugin.c
-libgstdirectsoundsink_la_CFLAGS = \
+plugin_LTLIBRARIES = libgstdirectsound.la
+libgstdirectsound_la_SOURCES = gstdirectsoundsink.c gstdirectsounddevice.c gstdirectsoundplugin.c
+libgstdirectsound_la_CFLAGS = \
 	$(GST_PLUGINS_BASE_CFLAGS) \
 	$(GST_BASE_CFLAGS) \
 	$(GST_CFLAGS) \
-	$(DIRECTSOUND_CFLAGS)
+	$(DIRECTSOUND_CFLAGS) \
+	-DGstDirectSoundDeviceProvider=GstDirectSoundSinkDeviceProvider \
+	-DGstDirectSoundDeviceProviderClass=GstDirectSoundSinkDeviceProviderClass \
+	-DGstDirectSoundDevice=GstDirectSoundSinkDevice \
+	-DGstDirectSoundDeviceClass=GstDirectSoundSinkDeviceClass
 
-libgstdirectsoundsink_la_LIBADD = \
+libgstdirectsound_la_LIBADD = \
 	$(GST_PLUGINS_BASE_LIBS) \
 	-lgstaudio-$(GST_API_VERSION) \
 	$(GST_BASE_LIBS) \
 	$(GST_LIBS) \
 	$(DIRECTSOUND_LIBS)
 
-libgstdirectsoundsink_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS) $(DIRECTSOUND_LDFLAGS)
-libgstdirectsoundsink_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
-noinst_HEADERS = gstdirectsoundsink.h
+libgstdirectsound_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS) $(DIRECTSOUND_LDFLAGS)
+noinst_HEADERS = gstdirectsoundsink.h gstdirectsounddevice.h
 all: all-am
 
 .SUFFIXES:
@@ -661,8 +700,8 @@ clean-pluginLTLIBRARIES:
 	  rm -f $${locs}; \
 	}
 
-libgstdirectsoundsink.la: $(libgstdirectsoundsink_la_OBJECTS) $(libgstdirectsoundsink_la_DEPENDENCIES) $(EXTRA_libgstdirectsoundsink_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libgstdirectsoundsink_la_LINK) -rpath $(plugindir) $(libgstdirectsoundsink_la_OBJECTS) $(libgstdirectsoundsink_la_LIBADD) $(LIBS)
+libgstdirectsound.la: $(libgstdirectsound_la_OBJECTS) $(libgstdirectsound_la_DEPENDENCIES) $(EXTRA_libgstdirectsound_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libgstdirectsound_la_LINK) -rpath $(plugindir) $(libgstdirectsound_la_OBJECTS) $(libgstdirectsound_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -670,8 +709,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstdirectsoundsink_la-gstdirectsoundplugin.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstdirectsoundsink_la-gstdirectsoundsink.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstdirectsound_la-gstdirectsounddevice.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstdirectsound_la-gstdirectsoundplugin.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstdirectsound_la-gstdirectsoundsink.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -697,19 +737,26 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
-libgstdirectsoundsink_la-gstdirectsoundsink.lo: gstdirectsoundsink.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstdirectsoundsink_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstdirectsoundsink_la_CFLAGS) $(CFLAGS) -MT libgstdirectsoundsink_la-gstdirectsoundsink.lo -MD -MP -MF $(DEPDIR)/libgstdirectsoundsink_la-gstdirectsoundsink.Tpo -c -o libgstdirectsoundsink_la-gstdirectsoundsink.lo `test -f 'gstdirectsoundsink.c' || echo '$(srcdir)/'`gstdirectsoundsink.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstdirectsoundsink_la-gstdirectsoundsink.Tpo $(DEPDIR)/libgstdirectsoundsink_la-gstdirectsoundsink.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstdirectsoundsink.c' object='libgstdirectsoundsink_la-gstdirectsoundsink.lo' libtool=yes @AMDEPBACKSLASH@
+libgstdirectsound_la-gstdirectsoundsink.lo: gstdirectsoundsink.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstdirectsound_la_CFLAGS) $(CFLAGS) -MT libgstdirectsound_la-gstdirectsoundsink.lo -MD -MP -MF $(DEPDIR)/libgstdirectsound_la-gstdirectsoundsink.Tpo -c -o libgstdirectsound_la-gstdirectsoundsink.lo `test -f 'gstdirectsoundsink.c' || echo '$(srcdir)/'`gstdirectsoundsink.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstdirectsound_la-gstdirectsoundsink.Tpo $(DEPDIR)/libgstdirectsound_la-gstdirectsoundsink.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstdirectsoundsink.c' object='libgstdirectsound_la-gstdirectsoundsink.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstdirectsoundsink_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstdirectsoundsink_la_CFLAGS) $(CFLAGS) -c -o libgstdirectsoundsink_la-gstdirectsoundsink.lo `test -f 'gstdirectsoundsink.c' || echo '$(srcdir)/'`gstdirectsoundsink.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstdirectsound_la_CFLAGS) $(CFLAGS) -c -o libgstdirectsound_la-gstdirectsoundsink.lo `test -f 'gstdirectsoundsink.c' || echo '$(srcdir)/'`gstdirectsoundsink.c
 
-libgstdirectsoundsink_la-gstdirectsoundplugin.lo: gstdirectsoundplugin.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstdirectsoundsink_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstdirectsoundsink_la_CFLAGS) $(CFLAGS) -MT libgstdirectsoundsink_la-gstdirectsoundplugin.lo -MD -MP -MF $(DEPDIR)/libgstdirectsoundsink_la-gstdirectsoundplugin.Tpo -c -o libgstdirectsoundsink_la-gstdirectsoundplugin.lo `test -f 'gstdirectsoundplugin.c' || echo '$(srcdir)/'`gstdirectsoundplugin.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstdirectsoundsink_la-gstdirectsoundplugin.Tpo $(DEPDIR)/libgstdirectsoundsink_la-gstdirectsoundplugin.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstdirectsoundplugin.c' object='libgstdirectsoundsink_la-gstdirectsoundplugin.lo' libtool=yes @AMDEPBACKSLASH@
+libgstdirectsound_la-gstdirectsounddevice.lo: gstdirectsounddevice.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstdirectsound_la_CFLAGS) $(CFLAGS) -MT libgstdirectsound_la-gstdirectsounddevice.lo -MD -MP -MF $(DEPDIR)/libgstdirectsound_la-gstdirectsounddevice.Tpo -c -o libgstdirectsound_la-gstdirectsounddevice.lo `test -f 'gstdirectsounddevice.c' || echo '$(srcdir)/'`gstdirectsounddevice.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstdirectsound_la-gstdirectsounddevice.Tpo $(DEPDIR)/libgstdirectsound_la-gstdirectsounddevice.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstdirectsounddevice.c' object='libgstdirectsound_la-gstdirectsounddevice.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstdirectsoundsink_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstdirectsoundsink_la_CFLAGS) $(CFLAGS) -c -o libgstdirectsoundsink_la-gstdirectsoundplugin.lo `test -f 'gstdirectsoundplugin.c' || echo '$(srcdir)/'`gstdirectsoundplugin.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstdirectsound_la_CFLAGS) $(CFLAGS) -c -o libgstdirectsound_la-gstdirectsounddevice.lo `test -f 'gstdirectsounddevice.c' || echo '$(srcdir)/'`gstdirectsounddevice.c
+
+libgstdirectsound_la-gstdirectsoundplugin.lo: gstdirectsoundplugin.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstdirectsound_la_CFLAGS) $(CFLAGS) -MT libgstdirectsound_la-gstdirectsoundplugin.lo -MD -MP -MF $(DEPDIR)/libgstdirectsound_la-gstdirectsoundplugin.Tpo -c -o libgstdirectsound_la-gstdirectsoundplugin.lo `test -f 'gstdirectsoundplugin.c' || echo '$(srcdir)/'`gstdirectsoundplugin.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstdirectsound_la-gstdirectsoundplugin.Tpo $(DEPDIR)/libgstdirectsound_la-gstdirectsoundplugin.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstdirectsoundplugin.c' object='libgstdirectsound_la-gstdirectsoundplugin.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstdirectsound_la_CFLAGS) $(CFLAGS) -c -o libgstdirectsound_la-gstdirectsoundplugin.lo `test -f 'gstdirectsoundplugin.c' || echo '$(srcdir)/'`gstdirectsoundplugin.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

@@ -42,7 +42,7 @@
 
 #include <gstv4l2bufferpool.h>
 
-#include "v4l2_calls.h"
+#include "gstv4l2object.h"
 #include "gst/gst-i18n-plugin.h"
 #include <gst/glib-compat-private.h>
 
@@ -610,67 +610,6 @@ wrong_config:
   }
 }
 
-static gboolean
-gst_v4l2_buffer_pool_streamon (GstV4l2BufferPool * pool)
-{
-  GstV4l2Object *obj = pool->obj;
-
-  switch (obj->mode) {
-    case GST_V4L2_IO_MMAP:
-    case GST_V4L2_IO_USERPTR:
-    case GST_V4L2_IO_DMABUF:
-    case GST_V4L2_IO_DMABUF_IMPORT:
-      if (!pool->streaming) {
-        if (v4l2_ioctl (pool->video_fd, VIDIOC_STREAMON, &obj->type) < 0)
-          goto streamon_failed;
-
-        pool->streaming = TRUE;
-
-        GST_DEBUG_OBJECT (pool, "Started streaming");
-      }
-      break;
-    default:
-      break;
-  }
-
-  return TRUE;
-
-streamon_failed:
-  {
-    GST_ERROR_OBJECT (pool, "error with STREAMON %d (%s)", errno,
-        g_strerror (errno));
-    return FALSE;
-  }
-}
-
-static void
-gst_v4l2_buffer_pool_streamoff (GstV4l2BufferPool * pool)
-{
-  GstV4l2Object *obj = pool->obj;
-
-  switch (obj->mode) {
-    case GST_V4L2_IO_MMAP:
-    case GST_V4L2_IO_USERPTR:
-    case GST_V4L2_IO_DMABUF:
-    case GST_V4L2_IO_DMABUF_IMPORT:
-      if (pool->streaming) {
-        if (v4l2_ioctl (pool->video_fd, VIDIOC_STREAMOFF, &obj->type) < 0)
-          GST_WARNING_OBJECT (pool, "STREAMOFF failed with errno %d (%s)",
-              errno, g_strerror (errno));
-
-        pool->streaming = FALSE;
-
-        GST_DEBUG_OBJECT (pool, "Stopped streaming");
-
-        if (pool->vallocator)
-          gst_v4l2_allocator_flush (pool->vallocator);
-      }
-      break;
-    default:
-      break;
-  }
-}
-
 static GstFlowReturn
 gst_v4l2_buffer_pool_resurect_buffer (GstV4l2BufferPool * pool)
 {
@@ -698,6 +637,98 @@ gst_v4l2_buffer_pool_resurect_buffer (GstV4l2BufferPool * pool)
 }
 
 static gboolean
+gst_v4l2_buffer_pool_streamon (GstV4l2BufferPool * pool)
+{
+  GstV4l2Object *obj = pool->obj;
+
+  if (pool->streaming)
+    return TRUE;
+
+  switch (obj->mode) {
+    case GST_V4L2_IO_MMAP:
+    case GST_V4L2_IO_USERPTR:
+    case GST_V4L2_IO_DMABUF:
+    case GST_V4L2_IO_DMABUF_IMPORT:
+      if (!V4L2_TYPE_IS_OUTPUT (pool->obj->type)) {
+        /* For captures, we need to enqueue buffers before we start streaming,
+         * so the driver don't underflow immediatly. As we have put then back
+         * into the base class queue, resurect them, then releasing will queue
+         * them back. */
+        while (gst_v4l2_buffer_pool_resurect_buffer (pool) == GST_FLOW_OK)
+          continue;
+      }
+
+      if (obj->ioctl (pool->video_fd, VIDIOC_STREAMON, &obj->type) < 0)
+        goto streamon_failed;
+
+      pool->streaming = TRUE;
+
+      GST_DEBUG_OBJECT (pool, "Started streaming");
+      break;
+    default:
+      break;
+  }
+
+  return TRUE;
+
+streamon_failed:
+  {
+    GST_ERROR_OBJECT (pool, "error with STREAMON %d (%s)", errno,
+        g_strerror (errno));
+    return FALSE;
+  }
+}
+
+/* Call with streamlock held, or when streaming threads are down */
+static void
+gst_v4l2_buffer_pool_streamoff (GstV4l2BufferPool * pool)
+{
+  GstBufferPoolClass *pclass = GST_BUFFER_POOL_CLASS (parent_class);
+  GstV4l2Object *obj = pool->obj;
+  gint i;
+
+  if (!pool->streaming)
+    return;
+
+  switch (obj->mode) {
+    case GST_V4L2_IO_MMAP:
+    case GST_V4L2_IO_USERPTR:
+    case GST_V4L2_IO_DMABUF:
+    case GST_V4L2_IO_DMABUF_IMPORT:
+
+      if (obj->ioctl (pool->video_fd, VIDIOC_STREAMOFF, &obj->type) < 0)
+        GST_WARNING_OBJECT (pool, "STREAMOFF failed with errno %d (%s)",
+            errno, g_strerror (errno));
+
+      pool->streaming = FALSE;
+
+      GST_DEBUG_OBJECT (pool, "Stopped streaming");
+
+      if (pool->vallocator)
+        gst_v4l2_allocator_flush (pool->vallocator);
+      break;
+    default:
+      break;
+  }
+
+  for (i = 0; i < VIDEO_MAX_FRAME; i++) {
+    if (pool->buffers[i]) {
+      GstBuffer *buffer = pool->buffers[i];
+      GstBufferPool *bpool = GST_BUFFER_POOL (pool);
+
+      pool->buffers[i] = NULL;
+
+      if (V4L2_TYPE_IS_OUTPUT (pool->obj->type))
+        gst_v4l2_buffer_pool_release_buffer (bpool, buffer);
+      else                      /* Don't re-enqueue capture buffer on stop */
+        pclass->release_buffer (bpool, buffer);
+
+      g_atomic_int_add (&pool->num_queued, -1);
+    }
+  }
+}
+
+static gboolean
 gst_v4l2_buffer_pool_start (GstBufferPool * bpool)
 {
   GstV4l2BufferPool *pool = GST_V4L2_BUFFER_POOL (bpool);
@@ -707,7 +738,7 @@ gst_v4l2_buffer_pool_start (GstBufferPool * bpool)
   GstCaps *caps;
   guint size, min_buffers, max_buffers;
   guint max_latency, min_latency, copy_threshold = 0;
-  gboolean can_allocate = FALSE;
+  gboolean can_allocate = FALSE, ret = TRUE;
 
   GST_DEBUG_OBJECT (pool, "activating pool");
 
@@ -728,7 +759,7 @@ gst_v4l2_buffer_pool_start (GstBufferPool * bpool)
        * queue to be initialized now. We only do this if we have a streaming
        * driver. */
       if (obj->device_caps & V4L2_CAP_STREAMING)
-        v4l2_read (obj->video_fd, NULL, 0);
+        obj->read (obj->video_fd, NULL, 0);
 #endif
       break;
     case GST_V4L2_IO_DMABUF:
@@ -838,12 +869,14 @@ gst_v4l2_buffer_pool_start (GstBufferPool * bpool)
   if (!pclass->start (bpool))
     goto start_failed;
 
-  if (!V4L2_TYPE_IS_OUTPUT (obj->type))
+  if (!V4L2_TYPE_IS_OUTPUT (obj->type)) {
     pool->group_released_handler =
         g_signal_connect_swapped (pool->vallocator, "group-released",
         G_CALLBACK (gst_v4l2_buffer_pool_resurect_buffer), pool);
+    ret = gst_v4l2_buffer_pool_streamon (pool);
+  }
 
-  return TRUE;
+  return ret;
 
   /* ERRORS */
 wrong_config:
@@ -862,7 +895,7 @@ no_buffers:
   }
 start_failed:
   {
-    GST_ERROR_OBJECT (pool, "failed to start streaming");
+    GST_ERROR_OBJECT (pool, "allocate failed");
     return FALSE;
   }
 other_pool_failed:
@@ -877,9 +910,7 @@ static gboolean
 gst_v4l2_buffer_pool_stop (GstBufferPool * bpool)
 {
   GstV4l2BufferPool *pool = GST_V4L2_BUFFER_POOL (bpool);
-  GstBufferPoolClass *pclass = GST_BUFFER_POOL_CLASS (parent_class);
   gboolean ret;
-  gint i;
 
   GST_DEBUG_OBJECT (pool, "stopping pool");
 
@@ -896,21 +927,6 @@ gst_v4l2_buffer_pool_stop (GstBufferPool * bpool)
   }
 
   gst_v4l2_buffer_pool_streamoff (pool);
-
-  for (i = 0; i < VIDEO_MAX_FRAME; i++) {
-    if (pool->buffers[i]) {
-      GstBuffer *buffer = pool->buffers[i];
-
-      pool->buffers[i] = NULL;
-
-      if (V4L2_TYPE_IS_OUTPUT (pool->obj->type))
-        gst_v4l2_buffer_pool_release_buffer (bpool, buffer);
-      else                      /* Don't re-enqueue capture buffer on stop */
-        pclass->release_buffer (bpool, buffer);
-
-      g_atomic_int_add (&pool->num_queued, -1);
-    }
-  }
 
   ret = GST_BUFFER_POOL_CLASS (parent_class)->stop (bpool);
 
@@ -950,64 +966,11 @@ static void
 gst_v4l2_buffer_pool_flush_stop (GstBufferPool * bpool)
 {
   GstV4l2BufferPool *pool = GST_V4L2_BUFFER_POOL (bpool);
-  GstV4l2Object *obj = pool->obj;
-  GstBuffer *buffers[VIDEO_MAX_FRAME];
-  gint i;
 
   GST_DEBUG_OBJECT (pool, "stop flushing");
 
-  /* If we haven't started streaming yet, simply call streamon */
-  if (!pool->streaming)
-    goto streamon;
-
   if (pool->other_pool)
     gst_buffer_pool_set_flushing (pool->other_pool, FALSE);
-
-  GST_OBJECT_LOCK (pool);
-  gst_v4l2_buffer_pool_streamoff (pool);
-  /* Remember buffers to re-enqueue */
-  memcpy (buffers, pool->buffers, sizeof (buffers));
-  memset (pool->buffers, 0, sizeof (pool->buffers));
-  GST_OBJECT_UNLOCK (pool);
-
-  /* Reset our state */
-  switch (obj->mode) {
-    case GST_V4L2_IO_RW:
-      break;
-    case GST_V4L2_IO_MMAP:
-    case GST_V4L2_IO_USERPTR:
-    case GST_V4L2_IO_DMABUF:
-    case GST_V4L2_IO_DMABUF_IMPORT:
-    {
-      for (i = 0; i < VIDEO_MAX_FRAME; i++) {
-        /* Re-enqueue buffers */
-        if (buffers[i]) {
-          GstBufferPool *bpool = (GstBufferPool *) pool;
-          GstBuffer *buffer = buffers[i];
-
-          /* Remove qdata, this will unmap any map data in
-           * userptr/dmabuf-import */
-          gst_mini_object_set_qdata (GST_MINI_OBJECT (buffer),
-              GST_V4L2_IMPORT_QUARK, NULL, NULL);
-
-          if (buffer->pool == NULL)
-            gst_v4l2_buffer_pool_release_buffer (bpool, buffer);
-
-          g_atomic_int_add (&pool->num_queued, -1);
-        }
-      }
-
-      break;
-    }
-    default:
-      g_assert_not_reached ();
-      break;
-  }
-
-streamon:
-  /* Start streaming on capture device only */
-  if (!V4L2_TYPE_IS_OUTPUT (obj->type))
-    gst_v4l2_buffer_pool_streamon (pool);
 
   gst_poll_set_flushing (pool->poll, FALSE);
 }
@@ -1080,9 +1043,8 @@ gst_v4l2_buffer_pool_qbuf (GstV4l2BufferPool * pool, GstBuffer * buf)
   gint index;
 
   if (!gst_v4l2_is_buffer_valid (buf, &group)) {
-    GST_LOG_OBJECT (pool, "unref copied/invalid buffer %p", buf);
-    gst_buffer_unref (buf);
-    return GST_FLOW_OK;
+    GST_ERROR_OBJECT (pool, "invalid buffer %p", buf);
+    return GST_FLOW_ERROR;
   }
 
   index = group->buffer.index;
@@ -1157,6 +1119,8 @@ gst_v4l2_buffer_pool_dqbuf (GstV4l2BufferPool * pool, GstBuffer ** buffer)
   GstV4l2Object *obj = pool->obj;
   GstClockTime timestamp;
   GstV4l2MemoryGroup *group;
+  GstVideoMeta *vmeta;
+  gsize size;
   gint i;
 
   if ((res = gst_v4l2_buffer_pool_poll (pool)) != GST_FLOW_OK)
@@ -1187,7 +1151,8 @@ gst_v4l2_buffer_pool_dqbuf (GstV4l2BufferPool * pool, GstBuffer ** buffer)
 
   timestamp = GST_TIMEVAL_TO_TIME (group->buffer.timestamp);
 
-#ifndef GST_DISABLE_GST_DEBUG
+  size = 0;
+  vmeta = gst_buffer_get_video_meta (outbuf);
   for (i = 0; i < group->n_mem; i++) {
     GST_LOG_OBJECT (pool,
         "dequeued buffer %p seq:%d (ix=%d), mem %p used %d, plane=%d, flags %08x, ts %"
@@ -1195,8 +1160,12 @@ gst_v4l2_buffer_pool_dqbuf (GstV4l2BufferPool * pool, GstBuffer ** buffer)
         group->buffer.sequence, group->buffer.index, group->mem[i],
         group->planes[i].bytesused, i, group->buffer.flags,
         GST_TIME_ARGS (timestamp), pool->num_queued, outbuf);
+
+    if (vmeta) {
+      vmeta->offset[i] = size;
+      size += gst_memory_get_sizes (group->mem[i], NULL, NULL);
+    }
   }
-#endif
 
   /* Ignore timestamp and field for OUTPUT device */
   if (V4L2_TYPE_IS_OUTPUT (obj->type))
@@ -1520,12 +1489,11 @@ gst_v4l2_buffer_pool_finalize (GObject * object)
   GstV4l2BufferPool *pool = GST_V4L2_BUFFER_POOL (object);
 
   if (pool->video_fd >= 0)
-    v4l2_close (pool->video_fd);
+    pool->obj->close (pool->video_fd);
 
   gst_poll_free (pool->poll);
 
-  /* FIXME Is this required to keep around ?
-   * This can't be done in dispose method because we must not set pointer
+  /* This can't be done in dispose method because we must not set pointer
    * to NULL as it is part of the v4l2object and dispose could be called
    * multiple times */
   gst_object_unref (pool->obj->element);
@@ -1585,7 +1553,7 @@ gst_v4l2_buffer_pool_new (GstV4l2Object * obj, GstCaps * caps)
   gchar *name, *parent_name;
   gint fd;
 
-  fd = v4l2_dup (obj->video_fd);
+  fd = obj->dup (obj->video_fd);
   if (fd < 0)
     goto dup_failed;
 
@@ -1597,6 +1565,7 @@ gst_v4l2_buffer_pool_new (GstV4l2Object * obj, GstCaps * caps)
 
   pool = (GstV4l2BufferPool *) g_object_new (GST_TYPE_V4L2_BUFFER_POOL,
       "name", name, NULL);
+  g_object_ref_sink (pool);
   g_free (name);
 
   gst_poll_fd_init (&pool->pollfd);
@@ -1611,8 +1580,7 @@ gst_v4l2_buffer_pool_new (GstV4l2Object * obj, GstCaps * caps)
   pool->obj = obj;
   pool->can_poll_device = TRUE;
 
-  pool->vallocator =
-      gst_v4l2_allocator_new (GST_OBJECT (pool), obj->video_fd, &obj->format);
+  pool->vallocator = gst_v4l2_allocator_new (GST_OBJECT (pool), obj);
   if (pool->vallocator == NULL)
     goto allocator_failed;
 
@@ -1659,7 +1627,7 @@ gst_v4l2_do_read (GstV4l2BufferPool * pool, GstBuffer * buf)
     if ((res = gst_v4l2_buffer_pool_poll (pool)) != GST_FLOW_OK)
       goto poll_error;
 
-    amount = v4l2_read (obj->video_fd, map.data, toread);
+    amount = obj->read (obj->video_fd, map.data, toread);
 
     if (amount == toread) {
       break;
@@ -1751,14 +1719,6 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf)
                 goto eos;
             }
 
-            /* verify that buffer contains a full frame for raw video */
-            if (GST_VIDEO_INFO_FORMAT (&obj->info) != GST_VIDEO_FORMAT_ENCODED
-                && size < GST_VIDEO_INFO_SIZE (&obj->info)) {
-              GST_WARNING_OBJECT (pool, "Invalid buffer size, this is likely "
-                  "due to a bug in your driver, dropping");
-              goto buffer_corrupted;
-            }
-
             num_queued = g_atomic_int_get (&pool->num_queued);
             GST_TRACE_OBJECT (pool, "Only %i buffer left in the capture queue.",
                 num_queued);
@@ -1827,12 +1787,20 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf)
         case GST_V4L2_IO_USERPTR:
         {
           struct UserPtrData *data;
+          GstBuffer *tmp;
 
           /* Replace our buffer with downstream allocated buffer */
           data = gst_mini_object_steal_qdata (GST_MINI_OBJECT (*buf),
               GST_V4L2_IMPORT_QUARK);
-          gst_buffer_replace (buf, data->buffer);
+          tmp = gst_buffer_ref (data->buffer);
           _unmap_userptr_frame (data);
+
+          /* Now tmp is writable, copy the flags and timestamp */
+          gst_buffer_copy_into (tmp, *buf,
+              GST_BUFFER_COPY_FLAGS | GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
+
+          gst_buffer_replace (buf, tmp);
+          gst_buffer_unref (tmp);
           break;
         }
 
@@ -1843,6 +1811,10 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf)
           /* Replace our buffer with downstream allocated buffer */
           tmp = gst_mini_object_steal_qdata (GST_MINI_OBJECT (*buf),
               GST_V4L2_IMPORT_QUARK);
+
+          gst_buffer_copy_into (tmp, *buf,
+              GST_BUFFER_COPY_FLAGS | GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
+
           gst_buffer_replace (buf, tmp);
           gst_buffer_unref (tmp);
           break;
@@ -2026,4 +1998,18 @@ gst_v4l2_buffer_pool_copy_at_threshold (GstV4l2BufferPool * pool, gboolean copy)
   GST_OBJECT_LOCK (pool);
   pool->enable_copy_threshold = copy;
   GST_OBJECT_UNLOCK (pool);
+}
+
+gboolean
+gst_v4l2_buffer_pool_flush (GstBufferPool * bpool)
+{
+  GstV4l2BufferPool *pool = GST_V4L2_BUFFER_POOL (bpool);
+  gboolean ret = TRUE;
+
+  gst_v4l2_buffer_pool_streamoff (pool);
+
+  if (!V4L2_TYPE_IS_OUTPUT (pool->obj->type))
+    ret = gst_v4l2_buffer_pool_streamon (pool);
+
+  return ret;
 }

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good-1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-12-07 19:21+0200\n"
+"POT-Creation-Date: 2018-02-15 17:06+0000\n"
 "PO-Revision-Date: 2017-05-04 16:09-0800\n"
 "Last-Translator: Božidar Putanec <bozidarp@yahoo.com>\n"
 "Language-Team: Croatian <lokalizacija@linux.hr>\n"
@@ -25,6 +25,16 @@ msgstr "Poslužitelj Jack nije pronađen"
 
 msgid "Failed to decode JPEG image"
 msgstr "Nije uspjelo dekodirati JPEG sliku"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -56,6 +66,9 @@ msgstr "Poslužitelj je poslao neispravne podatke."
 
 msgid "Server does not support seeking."
 msgstr "Poslužitelj ne podržava traženje."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Nema audio ulaza ili je neispravan, AVI stream će biti iskvaren."
@@ -157,60 +170,6 @@ msgstr "CoreAudio uređaj nije pronađen"
 msgid "CoreAudio device could not be opened"
 msgstr "CoreAudio uređaj nije moguće otvoriti"
 
-msgid "Record Source"
-msgstr "Izvor snimanja"
-
-msgid "Microphone"
-msgstr "Mikrofon"
-
-msgid "Line In"
-msgstr "Linijski ulaz"
-
-msgid "Internal CD"
-msgstr "Interni CD"
-
-msgid "SPDIF In"
-msgstr "SPDIF ulaz"
-
-msgid "AUX 1 In"
-msgstr "AUX 1 ulaz"
-
-msgid "AUX 2 In"
-msgstr "AUX 2 ulaz"
-
-msgid "Codec Loopback"
-msgstr "Kodek-povratna petlja"
-
-msgid "SunVTS Loopback"
-msgstr "SunVTS-povratna petlja"
-
-msgid "Volume"
-msgstr "Glasnoća"
-
-msgid "Gain"
-msgstr "Pojačanje"
-
-msgid "Monitor"
-msgstr "Nadzor"
-
-msgid "Built-in Speaker"
-msgstr "Ugrađeni zvučnik"
-
-msgid "Headphone"
-msgstr "Slušalica"
-
-msgid "Line Out"
-msgstr "Linijski izlaz"
-
-msgid "SPDIF Out"
-msgstr "SPDIF izlaz"
-
-msgid "AUX 1 Out"
-msgstr "AUX 1 izlaz"
-
-msgid "AUX 2 Out"
-msgstr "AUX 2 izlaz"
-
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr "Greška čitanja %d bajtova s uređaja ‘%s’."
@@ -234,6 +193,14 @@ msgid "The driver of device '%s' does not support any known IO method."
 msgstr ""
 "Upravljački program uređaja ‘%s’ ne podržava nijednu poznatu IO metodu."
 
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Koder na uređaju %s nema podržani ulazni format"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
 #, c-format
 msgid "Device '%s' is busy"
 msgstr "Uređaj ‘%s’ je zauzet"
@@ -248,6 +215,14 @@ msgstr "Uređaj ‘%s’ ne može snimati u specificiranom formatu."
 
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
+msgstr "Device ‘%s’ ne podržava prekinute ravnine"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Poslužitelj ne podržava traženje."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
 msgstr "Device ‘%s’ ne podržava prekinute ravnine"
 
 #, c-format
@@ -330,6 +305,10 @@ msgstr "Nije uspjelo započeti dekodiranje niti (thread)."
 
 msgid "Failed to process frame."
 msgstr "Nije uspjelo obraditi sliku (polusliku)."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Nije uspjelo započeti dekodiranje niti (thread)."
 
 #, c-format
 msgid ""
@@ -429,6 +408,60 @@ msgstr "Promjena rezolucije u tijeku rada (runtime) još nije podržana."
 
 msgid "Cannot operate without a clock"
 msgstr "Ne mogu raditi bez takta (sata)"
+
+#~ msgid "Record Source"
+#~ msgstr "Izvor snimanja"
+
+#~ msgid "Microphone"
+#~ msgstr "Mikrofon"
+
+#~ msgid "Line In"
+#~ msgstr "Linijski ulaz"
+
+#~ msgid "Internal CD"
+#~ msgstr "Interni CD"
+
+#~ msgid "SPDIF In"
+#~ msgstr "SPDIF ulaz"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "AUX 1 ulaz"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "AUX 2 ulaz"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Kodek-povratna petlja"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "SunVTS-povratna petlja"
+
+#~ msgid "Volume"
+#~ msgstr "Glasnoća"
+
+#~ msgid "Gain"
+#~ msgstr "Pojačanje"
+
+#~ msgid "Monitor"
+#~ msgstr "Nadzor"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Ugrađeni zvučnik"
+
+#~ msgid "Headphone"
+#~ msgstr "Slušalica"
+
+#~ msgid "Line Out"
+#~ msgstr "Linijski izlaz"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "SPDIF izlaz"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "AUX 1 izlaz"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "AUX 2 izlaz"
 
 #~ msgid "Internal data stream error."
 #~ msgstr "Interna greška toka (stream) podataka."

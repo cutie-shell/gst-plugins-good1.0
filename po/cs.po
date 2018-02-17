@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good-1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-12-07 19:21+0200\n"
+"POT-Creation-Date: 2018-02-15 17:06+0000\n"
 "PO-Revision-Date: 2017-09-13 15:00+0200\n"
 "Last-Translator: Marek Černocký <marek@manet.cz>\n"
 "Language-Team: Czech <translation-team-cs@lists.sourceforge.net>\n"
@@ -27,6 +27,16 @@ msgstr "Server Jack nebyl nalezen"
 
 msgid "Failed to decode JPEG image"
 msgstr "Selhalo dekódování obrázku JPEG"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -57,6 +67,9 @@ msgstr "Server odeslal chybná data."
 
 msgid "Server does not support seeking."
 msgstr "Server nepodporuje přeskakování."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Žádný nebo neplatný zvukový vstup, proud AVI bude poškozen."
@@ -154,60 +167,6 @@ msgstr "Nebylo nalezeno zařízení CoreAudio"
 msgid "CoreAudio device could not be opened"
 msgstr "Nelze otevřít zařízení CoreAudio"
 
-msgid "Record Source"
-msgstr "Zdroj nahrávání"
-
-msgid "Microphone"
-msgstr "Mikrofon"
-
-msgid "Line In"
-msgstr "Linkový vstup"
-
-msgid "Internal CD"
-msgstr "Interní CD"
-
-msgid "SPDIF In"
-msgstr "Vstup SPDIF"
-
-msgid "AUX 1 In"
-msgstr "Vstup AUX 1"
-
-msgid "AUX 2 In"
-msgstr "Vstup AUX 2"
-
-msgid "Codec Loopback"
-msgstr "Kodeková smyčka"
-
-msgid "SunVTS Loopback"
-msgstr "Smyčka SunVTS"
-
-msgid "Volume"
-msgstr "Hlasitost"
-
-msgid "Gain"
-msgstr "Zesílení"
-
-msgid "Monitor"
-msgstr "Monitor"
-
-msgid "Built-in Speaker"
-msgstr "Zabudovaný reproduktor"
-
-msgid "Headphone"
-msgstr "Sluchátko"
-
-msgid "Line Out"
-msgstr "Linkový výstup"
-
-msgid "SPDIF Out"
-msgstr "Výstup SPDIF"
-
-msgid "AUX 1 Out"
-msgstr "Výstup AUX 1"
-
-msgid "AUX 2 Out"
-msgstr "Výstup AUX 2"
-
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr "Chyba při čtení %d bajtů na zařízení „%s“."
@@ -230,6 +189,14 @@ msgstr "Ovladač zařízení „%s“ nepodporuje V/V metodu %d"
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr "Ovladač zařízení „%s“ nepodporuje žádnou známou V/V metodu."
 
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Kodér na zařízení „%s“ nepodporuje vstupní formát"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
 #, c-format
 msgid "Device '%s' is busy"
 msgstr "Zařízení „%s“ je zaneprázdněno"
@@ -244,6 +211,14 @@ msgstr "Zařízení „%s“ neumí zachytávat v tomto konkrétním formátu"
 
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
+msgstr "Zařízení „%s“ nepodporuje nesousedící složky obrazu"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Server nepodporuje přeskakování."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
 msgstr "Zařízení „%s“ nepodporuje nesousedící složky obrazu"
 
 #, c-format
@@ -325,6 +300,10 @@ msgstr "Selhalo spuštění vlákna dekodéru."
 
 msgid "Failed to process frame."
 msgstr "Selhalo zpracování snímku."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Selhalo spuštění vlákna dekodéru."
 
 #, c-format
 msgid ""
@@ -424,3 +403,57 @@ msgstr "Změna rozlišení za běhu zatím není podporována."
 
 msgid "Cannot operate without a clock"
 msgstr "Není možné fungovat bez hodin"
+
+#~ msgid "Record Source"
+#~ msgstr "Zdroj nahrávání"
+
+#~ msgid "Microphone"
+#~ msgstr "Mikrofon"
+
+#~ msgid "Line In"
+#~ msgstr "Linkový vstup"
+
+#~ msgid "Internal CD"
+#~ msgstr "Interní CD"
+
+#~ msgid "SPDIF In"
+#~ msgstr "Vstup SPDIF"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "Vstup AUX 1"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "Vstup AUX 2"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Kodeková smyčka"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "Smyčka SunVTS"
+
+#~ msgid "Volume"
+#~ msgstr "Hlasitost"
+
+#~ msgid "Gain"
+#~ msgstr "Zesílení"
+
+#~ msgid "Monitor"
+#~ msgstr "Monitor"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Zabudovaný reproduktor"
+
+#~ msgid "Headphone"
+#~ msgstr "Sluchátko"
+
+#~ msgid "Line Out"
+#~ msgstr "Linkový výstup"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "Výstup SPDIF"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "Výstup AUX 1"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "Výstup AUX 2"

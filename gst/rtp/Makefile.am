@@ -54,6 +54,8 @@ libgstrtp_la_SOURCES = \
 	gstrtpjpegpay.c \
 	gstrtpklvdepay.c \
 	gstrtpklvpay.c \
+	gstrtpL8depay.c \
+	gstrtpL8pay.c \
 	gstrtpL16depay.c \
 	gstrtpL16pay.c \
 	gstrtpL24depay.c \
@@ -107,12 +109,13 @@ libgstrtp_la_LIBADD = $(GST_PLUGINS_BASE_LIBS) \
 	$(GST_BASE_LIBS) $(GST_LIBS) \
 	$(LIBM)
 libgstrtp_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS) 
-libgstrtp_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
 
 noinst_HEADERS =			\
 	dboolhuff.h \
 	fnv1hash.h \
 	gstrtpchannels.h \
+	gstrtpL8depay.h \
+	gstrtpL8pay.h \
 	gstrtpL16depay.h \
 	gstrtpL16pay.h \
 	gstrtpL24depay.h \

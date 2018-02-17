@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good-1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-12-07 19:21+0200\n"
+"POT-Creation-Date: 2018-02-15 17:06+0000\n"
 "PO-Revision-Date: 2017-05-07 12:21+0200\n"
 "Last-Translator: Мирослав Николић <miroslavnikolic@rocketmail.com>\n"
 "Language-Team: Serbian <(nothing)>\n"
@@ -25,6 +25,16 @@ msgstr "Нисам пронашао сервер утичнице"
 
 msgid "Failed to decode JPEG image"
 msgstr "Нисам успео да декодирам ЈПЕГ слику"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -55,6 +65,9 @@ msgstr "Сервер је послао лоше податке."
 
 msgid "Server does not support seeking."
 msgstr "Сервер не подржава позиционирање."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Улазног звука нема или је неисправан, АВИ ток ће бити оштећен."
@@ -153,60 +166,6 @@ msgstr "Нисам нашао кључни уређај звука"
 msgid "CoreAudio device could not be opened"
 msgstr "Не могу да отворим кључни уређај звука"
 
-msgid "Record Source"
-msgstr "Извор снимања"
-
-msgid "Microphone"
-msgstr "Микрофон"
-
-msgid "Line In"
-msgstr "Линијски улаз"
-
-msgid "Internal CD"
-msgstr "Унутрашњи ЦД"
-
-msgid "SPDIF In"
-msgstr "СПДИФ улаз"
-
-msgid "AUX 1 In"
-msgstr "АУХ 1 улаз"
-
-msgid "AUX 2 In"
-msgstr "АУХ 2 улаз"
-
-msgid "Codec Loopback"
-msgstr "Повратна петља кодека"
-
-msgid "SunVTS Loopback"
-msgstr "Повратна петља СанВТС-а"
-
-msgid "Volume"
-msgstr "Јачина звука"
-
-msgid "Gain"
-msgstr "Појачање"
-
-msgid "Monitor"
-msgstr "Праћење"
-
-msgid "Built-in Speaker"
-msgstr "Уграђени звучник"
-
-msgid "Headphone"
-msgstr "Слушалице"
-
-msgid "Line Out"
-msgstr "Линијски излаз"
-
-msgid "SPDIF Out"
-msgstr "СПДИФ излаз"
-
-msgid "AUX 1 Out"
-msgstr "АУХ 1 излаз"
-
-msgid "AUX 2 Out"
-msgstr "АУХ 2 излаз"
-
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr "Грешка приликом читања %d бајтова са уређаја „%s“."
@@ -229,6 +188,14 @@ msgstr "Управљачки програм уређаја „%s“ не под�
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr "Управљачки програм уређаја „%s“ не подржава ниједан познати УИ начин."
 
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Кодер на уређају „%s“ нема подржани улазни запис"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
 #, c-format
 msgid "Device '%s' is busy"
 msgstr "Уређај „%s“ је заузет"
@@ -244,6 +211,14 @@ msgstr "Уређај „%s“ не може да снима у наведено�
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr "Уређај „%s“ не подржава не-непрекидне равни"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Уређај „%s“ не подржава видео снимање"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Уређај „%s“ не подржава видео снимање"
 
 #, c-format
 msgid "Could not get parameters on device '%s'"
@@ -324,6 +299,10 @@ msgstr "Нисам успео да покренем нит декодирања.
 
 msgid "Failed to process frame."
 msgstr "Нисам успео да обрадим кадар."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Нисам успео да покренем нит декодирања."
 
 #, c-format
 msgid ""
@@ -424,11 +403,62 @@ msgstr "Промена резолуције приликом извршавањ�
 msgid "Cannot operate without a clock"
 msgstr "Не могу да радим без сата"
 
+#~ msgid "Record Source"
+#~ msgstr "Извор снимања"
+
+#~ msgid "Microphone"
+#~ msgstr "Микрофон"
+
+#~ msgid "Line In"
+#~ msgstr "Линијски улаз"
+
+#~ msgid "Internal CD"
+#~ msgstr "Унутрашњи ЦД"
+
+#~ msgid "SPDIF In"
+#~ msgstr "СПДИФ улаз"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "АУХ 1 улаз"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "АУХ 2 улаз"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Повратна петља кодека"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "Повратна петља СанВТС-а"
+
+#~ msgid "Volume"
+#~ msgstr "Јачина звука"
+
+#~ msgid "Gain"
+#~ msgstr "Појачање"
+
+#~ msgid "Monitor"
+#~ msgstr "Праћење"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Уграђени звучник"
+
+#~ msgid "Headphone"
+#~ msgstr "Слушалице"
+
+#~ msgid "Line Out"
+#~ msgstr "Линијски излаз"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "СПДИФ излаз"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "АУХ 1 излаз"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "АУХ 2 излаз"
+
 #~ msgid "Internal data stream error."
 #~ msgstr "Унутрашња грешка тока података."
 
 #~ msgid "Internal data flow error."
 #~ msgstr "Унутрaшња грешка протока података."
-
-#~ msgid "Device '%s' does not support video capture"
-#~ msgstr "Уређај „%s“ не подржава видео снимање"

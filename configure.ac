@@ -5,7 +5,7 @@ dnl please read gstreamer/docs/random/autotools before changing this file
 dnl initialize autoconf
 dnl releases only do -Wall, git and prerelease does -Werror too
 dnl use a three digit version number for releases, and four for git/pre
-AC_INIT([GStreamer Good Plug-ins],[1.12.4],[http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer],[gst-plugins-good])
+AC_INIT([GStreamer Good Plug-ins],[1.13.1],[http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer],[gst-plugins-good])
 
 AG_GST_INIT
 
@@ -30,6 +30,9 @@ AM_MAINTAINER_MODE([enable])
 dnl sets host_* variables
 AC_CANONICAL_HOST
 
+dnl PKG_CONFIG_SYSROOT_DIR is a valid environment variable
+m4_pattern_allow(PKG_CONFIG_SYSROOT_DIR)
+
 dnl use pretty build output with automake >= 1.11
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])],
   [AM_DEFAULT_VERBOSITY=1
@@ -43,11 +46,11 @@ AC_DEFINE_UNQUOTED(GST_API_VERSION, "$GST_API_VERSION",
   [GStreamer API Version])
 
 AG_GST_LIBTOOL_PREPARE
-AS_LIBTOOL(GST, 1204, 0, 1204)
+AS_LIBTOOL(GST, 1301, 0, 1301)
 
 dnl *** required versions of GStreamer stuff ***
-GST_REQ=1.12.0
-GSTPB_REQ=1.12.0
+GST_REQ=1.13.1
+GSTPB_REQ=1.13.1
 
 dnl *** autotools stuff ****
 
@@ -197,6 +200,7 @@ fi
 
 dnl Check for mmap (needed by electricfence plugin)
 AC_FUNC_MMAP
+AC_CHECK_SIZEOF([off_t])
 AM_CONDITIONAL(GST_HAVE_MMAP, test "x$ac_cv_func_mmap_fixed_mapped" = "xyes")
 
 dnl Check for mmap (needed by electricfence plugin)
@@ -232,6 +236,46 @@ AC_SUBST(GST_TOOLS_DIR)
 
 AC_MSG_NOTICE(Using GStreamer Core Plugins in $GST_PLUGINS_DIR)
 AC_MSG_NOTICE(Using GStreamer Base Plugins in $GSTPB_PLUGINS_DIR)
+
+AG_GST_PKG_CHECK_MODULES(GST_GL, gstreamer-gl-[$GST_API_VERSION], [$GST_REQ], no)
+
+dnl FIXME: if uninstalled setup we might not want to pick up an installed gst-gl?
+if test "x$HAVE_GST_GL" = "xyes"; then
+
+  AC_MSG_CHECKING([GStreamer OpenGL window systems ...])
+  GST_GL_WINSYS=`$PKG_CONFIG --variable=gl_winsys gstreamer-gl-1.0`
+  AC_MSG_RESULT([$GST_GL_WINSYS])
+  GST_GL_HAVE_WINDOW_X11=""
+  GST_GL_HAVE_WINDOW_WAYLAND=""
+  GST_GL_HAVE_WINDOW_ANDROID=""
+  GST_GL_HAVE_WINDOW_COCOA=""
+  GST_GL_HAVE_WINDOW_EAGL=""
+  case "$GST_GL_WINSYS" in  *x11*) GST_GL_HAVE_WINDOW_X11="1" ;; esac
+  case "$GST_GL_WINSYS" in  *wayland*) GST_GL_HAVE_WINDOW_WAYLAND="1" ;; esac
+  case "$GST_GL_WINSYS" in  *android*) GST_GL_HAVE_WINDOW_ANDROID="1" ;; esac
+  case "$GST_GL_WINSYS" in  *cocoa*) GST_GL_HAVE_WINDOW_COCOA="1" ;; esac
+  case "$GST_GL_WINSYS" in  *eagl*) GST_GL_HAVE_WINDOW_EAGL="1" ;; esac
+
+  AC_MSG_CHECKING([GStreamer OpenGL platforms ...])
+  GST_GL_PLATFORMS=`$PKG_CONFIG --variable=gl_platforms gstreamer-gl-1.0`
+  AC_MSG_RESULT([$GST_GL_PLATFORMS])
+  GST_GL_HAVE_PLATFORM_GLX=""
+  GST_GL_HAVE_PLATFORM_EGL=""
+  GST_GL_HAVE_PLATFORM_CGL=""
+  GST_GL_HAVE_PLATFORM_EAGL=""
+  case "$GST_GL_PLATFORMS" in  *glx*) GST_GL_HAVE_PLATFORM_GLX="1" ;; esac
+  case "$GST_GL_PLATFORMS" in  *egl*) GST_GL_HAVE_PLATFORM_EGL="1" ;; esac
+  case "$GST_GL_PLATFORMS" in  *cgl*) GST_GL_HAVE_PLATFORM_CGL="1" ;; esac
+  case "$GST_GL_PLATFORMS" in  *eagl*) GST_GL_HAVE_PLATFORM_EAGL="1" ;; esac
+
+  AC_MSG_CHECKING([GStreamer OpenGL apis ...])
+  GST_GL_APIS=`$PKG_CONFIG --variable=gl_apis gstreamer-gl-1.0`
+  AC_MSG_RESULT([$GST_GL_APIS])
+  GST_GL_HAVE_API_GLES2=""
+  GST_GL_HAVE_API_GL=""
+  case "$GST_GL_APIS" in  *gles2*) GST_GL_HAVE_API_GLES2="1" ;; esac
+  case "$GST_GL_APIS" in "gl"|"gl "*|*" gl"|*" gl "*) GST_GL_HAVE_API_GL="1" ;; esac
+fi
 
 AM_CONDITIONAL(HAVE_GST_CHECK, test "x$HAVE_GST_CHECK" = "xyes")
 
@@ -285,28 +329,6 @@ dnl set release date/time
 AG_GST_SET_PACKAGE_RELEASE_DATETIME_WITH_NANO([$PACKAGE_VERSION_NANO],
   ["${srcdir}/gst-plugins-good.doap"],
   [$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_MICRO])
-
-dnl build static plugins or not
-AC_MSG_CHECKING([whether to build static plugins or not])
-AC_ARG_ENABLE(
-  static-plugins,
-  AC_HELP_STRING(
-    [--enable-static-plugins],
-    [build static plugins @<:@default=no@:>@]),
-  [AS_CASE(
-    [$enableval], [no], [], [yes], [],
-    [AC_MSG_ERROR([bad value "$enableval" for --enable-static-plugins])])],
-  [enable_static_plugins=no])
-AC_MSG_RESULT([$enable_static_plugins])
-if test "x$enable_static_plugins" = xyes; then
-  AC_DEFINE(GST_PLUGIN_BUILD_STATIC, 1,
-    [Define if static plugins should be built])
-  GST_PLUGIN_LIBTOOLFLAGS=""
-else
-  GST_PLUGIN_LIBTOOLFLAGS="--tag=disable-static"
-fi
-AC_SUBST(GST_PLUGIN_LIBTOOLFLAGS)
-AM_CONDITIONAL(GST_PLUGIN_BUILD_STATIC, test "x$enable_static_plugins" = "xyes")
 
 # set by AG_GST_PARSE_SUBSYSTEM_DISABLES above
 dnl make sure it doesn't complain about unused variables if debugging is disabled
@@ -474,12 +496,6 @@ AG_GST_CHECK_FEATURE(OSS4, [Open Sound System 4], oss4, [
   AC_CHECK_HEADERS([fcntl.h sys/ioctl.h sys/stat.h sys/types.h],
       [test -z "$OSS4_MISSING_HEADER" && HAVE_OSS4="yes"],
       [OSS4_MISSING_HEADER="yes";HAVE_OSS4="no"])
-])
-
-dnl *** Sun Audio ***
-translit(dnm, m, l) AM_CONDITIONAL(USE_SUNAUDIO, true)
-AG_GST_CHECK_FEATURE(SUNAUDIO, [Sun Audio], sunaudio, [
-  AC_CHECK_HEADER(sys/audioio.h, HAVE_SUNAUDIO="yes", HAVE_SUNAUDIO="no")
 ])
 
 dnl *** OSX Audio ***
@@ -655,6 +671,42 @@ AG_GST_CHECK_FEATURE(GDK_PIXBUF, [GDK pixbuf], gdkpixbuf, [
   AG_GST_PKG_CHECK_MODULES(GDK_PIXBUF, gdk-pixbuf-2.0 >= 2.8.0)
 ])
 
+dnl *** gtk+ ***
+HAVE_GTK3_GL="no"
+translit(dnm, m, l) AM_CONDITIONAL(USE_GTK3, true)
+AG_GST_CHECK_FEATURE(GTK3, [Gtk+ elements], gtk, [
+  PKG_CHECK_MODULES(GTK3, gtk+-3.0, [
+    AC_DEFINE([HAVE_GTK3], 1, [Define if Gtk+ 3.0 is installed])
+    HAVE_GTK3="yes"
+  ], [
+    HAVE_GTK3="no"
+  ])
+  PKG_CHECK_MODULES(GTK3_GL, gtk+-3.0 >= 3.15.0, [
+    GDK_WINDOWING="no"
+    if test "x$GST_GL_HAVE_WINDOW_X11" = "x1" -a "x$GST_GL_HAVE_PLATFORM_GLX" = "x1"; then
+      PKG_CHECK_MODULES(GTK3_X11, gtk+-x11-3.0, [
+        GTK3_CFLAGS="$GTK3_CFLAGS $GTK3_X11_CFLAGS"
+        GTK3_LIBS="$GTK3_LIBS $GTK3_X11_LIBS"
+        GDK_WINDOWING="yes"
+      ], [AC_MSG_NOTICE([Could not find Gtk X11 integration])])
+    fi
+    if test "x$GST_GL_HAVE_WINDOW_WAYLAND" = "x1" -a "x$GST_GL_HAVE_PLATFORM_EGL" = "x1"; then
+      PKG_CHECK_MODULES(GTK3_WAYLAND, gtk+-wayland-3.0, [
+        GTK3_CFLAGS="$GTK3_CFLAGS $GTK3_WAYLAND_CFLAGS"
+        GTK3_LIBS="$GTK3_LIBS $GTK3_WAYLAND_LIBS"
+        GDK_WINDOWING="yes"
+      ], [AC_MSG_NOTICE([Could not find Gtk Wayland integration])])
+    fi
+    if test "x$GDK_WINDOWING" = "xyes" -a "x$HAVE_GST_GL" = "xyes"; then
+      AC_DEFINE([HAVE_GTK3_GL], 1, [Define if Gtk+ 3.0 GL is installed])
+      HAVE_GTK3_GL="yes"
+    fi
+  ], [
+      HAVE_GTK3_GL="no"
+  ])
+])
+AM_CONDITIONAL(USE_GTK3_GL, test "x$HAVE_GTK3_GL" = "xyes")
+
 dnl *** Jack ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_JACK, true)
 AG_GST_CHECK_FEATURE(JACK, Jack, jack, [
@@ -693,6 +745,26 @@ AG_GST_CHECK_FEATURE(JPEG, [jpeg library], jpeg, [
   AC_SUBST(JPEG_LIBS)
 ])
 
+dnl *** lame ***
+translit(dnm, m, l) AM_CONDITIONAL(USE_LAME, true)
+AG_GST_CHECK_FEATURE(LAME, [lame mp3 encoder library], lame, [
+  AG_GST_CHECK_LIBHEADER(LAME, mp3lame, lame_init, $LIBM, lame/lame.h,
+  [
+    HAVE_LAME="yes"
+    LAME_LIBS="-lmp3lame $LIBM"
+    dnl is lame presets available
+    LAME_CFLAGS=""
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <lame/lame.h>]], [[ int preset = MEDIUM ]])],[LAME_CFLAGS="-DGSTLAME_PRESET"],[LAME_CFLAGS=""
+    ])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <lame/lame.h>]], [[
+        void *ptr = &lame_set_VBR_quality
+      ]])],[LAME_CFLAGS="$LAME_CFLAGS -DHAVE_LAME_SET_VBR_QUALITY"],[LAME_CFLAGS="$LAME_CFLAGS"
+    ])
+  AC_SUBST(LAME_CFLAGS)
+  AC_SUBST(LAME_LIBS)
+  ])
+])
+
 dnl *** libcaca ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_LIBCACA, true)
 AG_GST_CHECK_FEATURE(LIBCACA, [libcaca coloured ASCII art], cacasink, [
@@ -709,6 +781,19 @@ dnl *** libpng ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_LIBPNG, true)
 AG_GST_CHECK_FEATURE(LIBPNG, [Portable Network Graphics library], png, [
   AG_GST_PKG_CHECK_MODULES(LIBPNG, libpng >= 1.2)
+  if test $HAVE_LIBPNG = "yes"; then
+    PKG_CHECK_MODULES(LIBPNG_1_5, libpng >= 1.5.1, [
+        AC_DEFINE(HAVE_LIBPNG_1_5, 1, [Defined if libpng version is 1.5.1 or newer])
+      ], [true])
+  fi
+])
+
+dnl *** mpg123 ***
+translit(dnm, m, l) AM_CONDITIONAL(USE_MPG123, true)
+AG_GST_CHECK_FEATURE(MPG123, [mpg123 audio decoder], mpg123, [
+  PKG_CHECK_MODULES(MPG123, libmpg123 >= 1.13, HAVE_MPG123="yes", HAVE_MPG123="no")
+  AC_SUBST(MPG123_CFLAGS)
+  AC_SUBST(MPG123_LIBS)
 ])
 
 dnl *** pulseaudio ***
@@ -772,6 +857,108 @@ AG_GST_CHECK_FEATURE(DV1394, [raw1394 and avc1394 library], 1394, [
 ])
 AM_CONDITIONAL(USE_LIBIEC61883, [ test "x${HAVE_LIBIEC61883}" = xyes ] )
 
+dnl *** Qt ***
+translit(dnm, m, l) AM_CONDITIONAL(USE_QT, true)
+AG_GST_CHECK_FEATURE(QT, [Qt elements], qt, [
+  PKG_CHECK_MODULES(QT, Qt5Core Qt5Gui Qt5Qml Qt5Quick >= 5.4.0, [
+      QT_PATH=`$PKG_CONFIG --variable=exec_prefix Qt5Core`
+      QT_HOST_PATH=`$PKG_CONFIG --variable=host_bins Qt5Core`
+      AC_ARG_WITH([moc],
+           AS_HELP_STRING([--with-moc], [Set location of qt moc tool]),
+           [MOC=$withval])
+      AC_PATH_PROGS(MOC, [moc-qt5 moc], [moc], ["${QT_HOST_PATH}" "${QT_PATH}/bin"])
+      AC_ARG_WITH([rcc],
+           AS_HELP_STRING([--with-rcc], [Set location of qt rcc tool]),
+           [RCC=$withval])
+      AC_PATH_PROGS(RCC, [rcc-qt5 rcc], [rcc], ["${QT_HOST_PATH}" "${QT_PATH}/bin"])
+      AC_ARG_WITH([uic],
+               AS_HELP_STRING([--with-uic], [Set location of qt uic tool]),
+               [UIC=$withval])
+      AC_PATH_PROGS(UIC, [uic-qt5 uic], [uic], ["${QT_HOST_PATH}" "${QT_PATH}/bin"])
+      if test "x$MOC" = "x" || test "x$UIC" = "x" || test "x$RCC" = "x"; then
+        AC_MSG_WARN([One of the required qt build programs was not found])
+        HAVE_QT="no"
+      else
+        HAVE_QT="yes"
+        HAVE_QT_WINDOWING="no"
+        QT_VERSION="`$PKG_CONFIG --define-prefix --modversion Qt5Core`"
+        QPA_INCLUDE_PATH=`$PKG_CONFIG --variable=includedir Qt5Core`/QtGui/${QT_VERSION}/QtGui
+        AS_IF([test -f "$PKG_CONFIG_SYSROOT_DIR/$QPA_INCLUDE_PATH/qpa/qplatformnativeinterface.h"], [
+          QT_CFLAGS="$QT_CFLAGS -I$PKG_CONFIG_SYSROOT_DIR/$QPA_INCLUDE_PATH"
+          HAVE_QT_QPA_HEADER="yes"
+        ], [AC_MSG_NOTICE([Cannot find QPA])])
+        if test "x$GST_GL_HAVE_WINDOW_X11" = "x1" -a "x$GST_GL_HAVE_PLATFORM_GLX" = "x1" || test "x$GST_GL_HAVE_WINDOW_X11" = "x1" -a "x$GST_GL_HAVE_PLATFORM_EGL" = "x1"; then
+          PKG_CHECK_MODULES(QT_X11, Qt5X11Extras, [
+            AC_DEFINE([HAVE_QT_X11], [], [Define if Qt X11 integration is installed])
+            QT_CFLAGS="$QT_CFLAGS $QT_X11_CFLAGS"
+            QT_LIBS="$QT_LIBS $QT_X11_LIBS"
+            HAVE_QT_WINDOWING="yes"
+          ], [AC_MSG_NOTICE([Could not find Qt X11 integration])])
+        fi
+        if test "x$GST_GL_HAVE_WINDOW_WAYLAND" = "x1" -a "x$GST_GL_HAVE_PLATFORM_EGL" = "x1" -a "x$HAVE_QT_QPA_HEADER" = "xyes"; then
+          PKG_CHECK_MODULES(QT_WAYLAND, Qt5WaylandClient, [
+            AC_DEFINE([HAVE_QT_WAYLAND], [],
+                [Define if Qt Wayland integration is installed])
+            QT_CFLAGS="$QT_CFLAGS $QT_WAYLAND_CFLAGS"
+            QT_LIBS="$QT_LIBS $QT_WAYLAND_LIBS"
+            HAVE_QT_WINDOWING="yes"
+          ], [AC_MSG_NOTICE([Could not find Qt Wayland integration])])
+        fi
+        if test "x$GST_GL_HAVE_PLATFORM_EGL" = "x1"; then
+          if test "x$GST_GL_HAVE_WINDOW_ANDROID" = "x1"; then
+            PKG_CHECK_MODULES(QT_ANDROID, Qt5AndroidExtras, [
+              # c++ on android requires a standard library and there are multiple
+              # choices.  cerbero provides a pkg-config file the describes a choice
+              # so try to use that.  Outside cerbero one has to pass these flags
+              # manually for the library one is using
+              PKG_CHECK_MODULES(GNUSTL, gnustl, [
+                QT_CFLAGS="$QT_CFLAGS $GNUSTL_CFLAGS"
+                QT_LIBS="$QT_LIBS $GNUSTL_LIBS"
+                ], [
+                AC_MSG_NOTICE([Could not find Standard C++ library])])
+              AC_DEFINE([HAVE_QT_EGLFS], [],
+                [Define if Qt eglfs integration is installed])
+              QT_CFLAGS="$QT_CFLAGS $QT_ANDROID_CFLAGS"
+              QT_LIBS="$QT_LIBS $QT_ANDROID_LIBS"
+              HAVE_QT_WINDOWING="yes"
+            ], [AC_MSG_NOTICE([Could not find Qt Android integration])])
+          else
+              AC_DEFINE([HAVE_QT_EGLFS], [],
+                [Define if Qt eglfs integration is installed])
+              HAVE_QT_WINDOWING="yes"
+          fi
+        fi
+        if test "x$GST_GL_HAVE_WINDOW_COCOA" = "x1" -a "x$GST_GL_HAVE_PLATFORM_CGL" = "x1"; then
+          PKG_CHECK_MODULES(QT_MAC, Qt5MacExtras, [
+            AC_DEFINE([HAVE_QT_MAC], [],
+                [Define if Qt Mac integration is installed])
+            QT_LIBDIR=`$PKG_CONFIG --variable=libdir Qt5Core`
+            QT_CFLAGS="$QT_CFLAGS $QT_MAC_CFLAGS -F$QT_LIBDIR -framework QtCore -framework QtGui -framework QtQuick -framework QtQml -framework QtMacExtras"
+            QT_LIBS="$QT_LIBS $QT_MAC_LIBS"
+            HAVE_QT_WINDOWING="yes"
+          ], [AC_MSG_NOTICE([Could not find Qt Mac integration])])
+        fi
+        if test "x$GST_GL_HAVE_WINDOW_EAGL" = "x1" -a "x$GST_GL_HAVE_PLATFORM_EAGL" = "x1"; then
+          if test "x$HAVE_IOS" = "xyes"; then
+            # iOS doesn't have its own extras package so if we have the core
+            # modules we are good to go
+            AC_DEFINE([HAVE_QT_IOS], [],
+                [Define if Qt iOS integration is installed])
+            HAVE_QT_WINDOWING="yes"
+          fi
+        fi
+        if test "x$HAVE_QT_WINDOWING" = "xno"; then
+          AC_MSG_WARN([Could not find any Qt Windowing integration])
+          HAVE_QT="no"
+        fi
+        AC_SUBST([QT_CFLAGS])
+        AC_SUBST([QT_LIBS])
+      fi
+  ], [
+      HAVE_QT="no"
+  ])
+])
+
 dnl *** shout2 ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_SHOUT2, true)
 AG_GST_CHECK_FEATURE(SHOUT2, [Shoutcast/Icecast client library], shout2, [
@@ -809,6 +996,18 @@ AG_GST_CHECK_FEATURE(TAGLIB, [taglib tagging library], taglib, [
     AC_SUBST(TAGLIB_CXXFLAGS)
   fi
 ])
+
+dnl *** twolame ***
+translit(dnm, m, l) AM_CONDITIONAL(USE_TWOLAME, true)
+AG_GST_CHECK_FEATURE(TWOLAME, [twolame], twolame, [
+  PKG_CHECK_MODULES(TWOLAME, twolame >= 0.3.10, [
+      HAVE_TWOLAME="yes"], [
+      HAVE_TWOLAME="no"
+  ])
+  AC_SUBST(TWOLAME_CFLAGS)
+  AC_SUBST(TWOLAME_LIBS)
+])
+
 
 dnl *** vpx ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_VPX, vpx)
@@ -896,22 +1095,27 @@ AM_CONDITIONAL(USE_DIRECTSOUND, false)
 AM_CONDITIONAL(USE_DV1394, false)
 AM_CONDITIONAL(USE_FLAC, false)
 AM_CONDITIONAL(USE_GDK_PIXBUF, false)
+AM_CONDITIONAL(USE_GTK3, false)
+AM_CONDITIONAL(USE_GTK3_GL, false)
 AM_CONDITIONAL(USE_JACK, false)
 AM_CONDITIONAL(USE_JPEG, false)
+AM_CONDITIONAL(USE_LAME, false)
 AM_CONDITIONAL(USE_LIBCACA, false)
 AM_CONDITIONAL(USE_LIBDV, false)
 AM_CONDITIONAL(USE_LIBIEC61883, false)
 AM_CONDITIONAL(USE_LIBPNG, false)
+AM_CONDITIONAL(USE_MPG123, false)
 AM_CONDITIONAL(USE_OSS, false)
 AM_CONDITIONAL(USE_OSS4, false)
 AM_CONDITIONAL(USE_OSX_AUDIO, false)
 AM_CONDITIONAL(USE_OSX_VIDEO, false)
 AM_CONDITIONAL(USE_PULSE, false)
+AM_CONDITIONAL(USE_QT, false)
 AM_CONDITIONAL(USE_SHOUT2, false)
 AM_CONDITIONAL(USE_SOUP, false)
 AM_CONDITIONAL(USE_SPEEX, false)
-AM_CONDITIONAL(USE_SUNAUDIO, false)
 AM_CONDITIONAL(USE_TAGLIB, false)
+AM_CONDITIONAL(USE_TWOLAME, false)
 AM_CONDITIONAL(USE_VPX, false)
 AM_CONDITIONAL(USE_WAVEFORM, false)
 AM_CONDITIONAL(USE_WAVPACK, false)
@@ -944,6 +1148,20 @@ else
 fi
 AC_SUBST(DEPRECATED_CFLAGS)
 
+VISIBILITY_CFLAGS=""
+AS_COMPILER_FLAG([-fvisibility=hidden], [VISIBILITY_CFLAGS="-fvisibility=hidden"])
+AC_SUBST(VISIBILITY_CFLAGS)
+
+VISIBILITY_CXXFLAGS=""
+if test "x$HAVE_CXX" = "xyes"; then
+  AS_CXX_COMPILER_FLAG([-fvisibility=hidden], [VISIBILITY_CXXFLAGS="-fvisibility=hidden"])
+fi
+AC_SUBST(VISIBILITY_CXXFLAGS)
+
+dnl disable strict aliasing
+AS_COMPILER_FLAG([-fno-strict-aliasing], [EXTRA_CFLAGS="-fno-strict-aliasing"])
+AC_SUBST(EXTRA_CFLAGS)
+
 dnl every flag in GST_OPTION_CFLAGS, GST_OPTION_CXXFLAGS and GST_OPTION_OBJCFLAGS can be overridden
 dnl at make time with e.g. make ERROR_CFLAGS=""
 GST_OPTION_CFLAGS="\$(WARNING_CFLAGS) \$(ERROR_CFLAGS) \$(DEBUG_CFLAGS) \$(PROFILE_CFLAGS) \$(GCOV_CFLAGS) \$(OPT_CFLAGS) \$(DEPRECATED_CFLAGS)"
@@ -961,9 +1179,9 @@ dnl prefer internal headers to already installed ones
 dnl also add builddir include for enumtypes and marshal
 dnl add ERROR_CFLAGS, but overridable
 GST_CFLAGS="$GST_CFLAGS -DGST_USE_UNSTABLE_API"
-GST_CXXFLAGS="-I\$(top_srcdir)/gst-libs $GST_CFLAGS $GLIB_EXTRA_CFLAGS \$(GST_OPTION_CXXFLAGS)"
-GST_OBJCFLAGS="-I\$(top_srcdir)/gst-libs $GST_CFLAGS $GLIB_EXTRA_CFLAGS \$(GST_OPTION_OBJCFLAGS)"
-GST_CFLAGS="-I\$(top_srcdir)/gst-libs $GST_CFLAGS $GLIB_EXTRA_CFLAGS \$(GST_OPTION_CFLAGS)"
+GST_CXXFLAGS="-I\$(top_srcdir)/gst-libs $GST_CFLAGS $EXTRA_CFLAGS $GLIB_EXTRA_CFLAGS \$(GST_OPTION_CXXFLAGS) \$(VISIBILITY_CXXFLAGS)"
+GST_OBJCFLAGS="-I\$(top_srcdir)/gst-libs $GST_CFLAGS $EXTRA_CFLAGS $GLIB_EXTRA_CFLAGS \$(GST_OPTION_OBJCFLAGS)"
+GST_CFLAGS="-I\$(top_srcdir)/gst-libs $GST_CFLAGS $EXTRA_CFLAGS $GLIB_EXTRA_CFLAGS \$(GST_OPTION_CFLAGS) \$(VISIBILITY_CFLAGS)"
 AC_SUBST(GST_CFLAGS)
 AC_SUBST(GST_CXXFLAGS)
 AC_SUBST(GST_OBJCFLAGS)
@@ -979,7 +1197,7 @@ AC_SUBST(GST_ALL_LDFLAGS)
 
 dnl this really should only contain flags, not libs - they get added before
 dnl whatevertarget_LIBS and -L flags here affect the rest of the linking
-GST_PLUGIN_LDFLAGS="-module -avoid-version -export-symbols-regex '^[_]*gst_plugin_.*' $GST_ALL_LDFLAGS"
+GST_PLUGIN_LDFLAGS="-module -avoid-version $GST_ALL_LDFLAGS"
 AC_SUBST(GST_PLUGIN_LDFLAGS)
 
 dnl *** output files ***
@@ -1039,16 +1257,21 @@ ext/cairo/Makefile
 ext/dv/Makefile
 ext/flac/Makefile
 ext/gdk_pixbuf/Makefile
+ext/gtk/Makefile
 ext/jack/Makefile
 ext/jpeg/Makefile
+ext/lame/Makefile
 ext/libcaca/Makefile
 ext/libpng/Makefile
+ext/mpg123/Makefile
 ext/pulse/Makefile
+ext/qt/Makefile
 ext/raw1394/Makefile
 ext/shout2/Makefile
 ext/soup/Makefile
 ext/speex/Makefile
 ext/taglib/Makefile
+ext/twolame/Makefile
 ext/vpx/Makefile
 ext/wavpack/Makefile
 sys/Makefile
@@ -1057,7 +1280,6 @@ sys/oss/Makefile
 sys/oss4/Makefile
 sys/osxaudio/Makefile
 sys/osxvideo/Makefile
-sys/sunaudio/Makefile
 sys/v4l2/Makefile
 sys/waveform/Makefile
 sys/ximage/Makefile
@@ -1068,6 +1290,7 @@ tests/examples/Makefile
 tests/examples/audiofx/Makefile
 tests/examples/cairo/Makefile
 tests/examples/equalizer/Makefile
+tests/examples/gtk/Makefile
 tests/examples/jack/Makefile
 tests/examples/level/Makefile
 tests/examples/rtp/Makefile

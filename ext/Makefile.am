@@ -22,6 +22,13 @@ else
 GDK_PIXBUF_DIR =
 endif
 
+  
+if USE_GTK3
+GTK_DIR=gtk
+else
+GTK_DIR=
+endif
+ 
 if USE_JACK
 JACK_DIR=jack
 else
@@ -32,6 +39,12 @@ if USE_JPEG
 JPEG_DIR = jpeg
 else
 JPEG_DIR =
+endif
+
+if USE_LAME
+LAME_DIR = lame
+else
+LAME_DIR =
 endif
 
 if USE_LIBCACA
@@ -52,6 +65,12 @@ else
 LIBPNG_DIR =
 endif
 
+if USE_MPG123
+MPG123_DIR = mpg123
+else
+MPG123_DIR =
+endif
+
 if USE_DV1394
 DV1394_DIR = raw1394
 else
@@ -64,6 +83,11 @@ else
 PULSE_DIR =
 endif
 
+if USE_QT
+QT_DIR=qt
+else
+QT_DIR=
+endif
 
 if USE_SHOUT2
 SHOUT2_DIR = shout2
@@ -89,6 +113,12 @@ else
 TAGLIB_DIR =
 endif
 
+if USE_TWOLAME
+TWOLAME_DIR = twolame
+else
+TWOLAME_DIR =
+endif
+
 if USE_VPX
 VPX_DIR=vpx
 else
@@ -107,17 +137,22 @@ SUBDIRS = \
 	$(DV1394_DIR) \
 	$(FLAC_DIR) \
 	$(GDK_PIXBUF_DIR) \
+	$(GTK_DIR) \
 	$(JACK_DIR) \
 	$(JPEG_DIR) \
+	$(LAME_DIR) \
 	$(LIBCACA_DIR) \
 	$(LIBDV_DIR) \
 	$(LIBMNG_DIR) \
 	$(LIBPNG_DIR) \
+	$(MPG123_DIR) \
 	$(PULSE_DIR) \
+	$(QT_DIR) \
 	$(SHOUT2_DIR) \
 	$(SOUP_DIR) \
 	$(SPEEX_DIR) \
 	$(TAGLIB_DIR) \
+	$(TWOLAME_DIR) \
 	$(VPX_DIR) \
 	$(WAVPACK_DIR)
 
@@ -127,16 +162,21 @@ DIST_SUBDIRS = \
 	dv \
 	flac \
 	gdk_pixbuf \
+	gtk \
 	jack \
 	jpeg \
+	lame \
 	libcaca \
 	libpng \
+	mpg123 \
 	pulse \
+	qt \
 	raw1394 \
 	shout2 \
 	soup \
 	speex \
 	taglib \
+	twolame \
 	vpx \
 	wavpack
 

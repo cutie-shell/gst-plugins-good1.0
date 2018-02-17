@@ -100,6 +100,9 @@ struct _GstQTPad
   gboolean sparse;
   /* bitrates */
   guint32 avg_bitrate, max_bitrate;
+  /* expected sample duration */
+  guint expected_sample_duration_n;
+  guint expected_sample_duration_d;
 
   /* for avg bitrate calculation */
   guint64 total_bytes;
@@ -108,12 +111,14 @@ struct _GstQTPad
   GstBuffer *last_buf;
   /* dts of last_buf */
   GstClockTime last_dts;
+  guint64 sample_offset;
 
   /* This is compensate for CTTS */
   GstClockTime dts_adjustment;
 
   /* store the first timestamp for comparing with other streams and
    * know if there are late streams */
+  /* subjected to dts adjustment */
   GstClockTime first_ts;
   GstClockTime first_dts;
 
@@ -146,6 +151,13 @@ struct _GstQTPad
   GstVideoTimeCode *first_tc;
   GstClockTime first_pts;
   guint64 tc_pos;
+
+  /* for keeping track in pre-fill mode */
+  GArray *samples;
+  /* current sample */
+  GstAdapter *raw_audio_adapter;
+  guint64 raw_audio_adapter_offset;
+  GstClockTime raw_audio_adapter_pts;
 };
 
 typedef enum _GstQTMuxState
@@ -161,7 +173,8 @@ typedef enum _GstQtMuxMode {
     GST_QT_MUX_MODE_FRAGMENTED,
     GST_QT_MUX_MODE_FRAGMENTED_STREAMABLE,
     GST_QT_MUX_MODE_FAST_START,
-    GST_QT_MUX_MODE_ROBUST_RECORDING
+    GST_QT_MUX_MODE_ROBUST_RECORDING,
+    GST_QT_MUX_MODE_ROBUST_RECORDING_PREFILL,
 } GstQtMuxMode;
 
 struct _GstQTMux
@@ -193,7 +206,8 @@ struct _GstQTMux
   /* keep track of the largest chunk to fine-tune brands */
   GstClockTime longest_chunk;
 
-  /* Earliest timestamp across all pads/traks */
+  /* Earliest timestamp across all pads/traks
+   * (unadjusted incoming PTS) */
   GstClockTime first_ts;
   /* Last DTS across all pads (= duration) */
   GstClockTime last_dts;
@@ -254,6 +268,8 @@ struct _GstQTMux
   GstClockTime interleave_time;
   gboolean interleave_bytes_set, interleave_time_set;
 
+  GstClockTime max_raw_audio_drift;
+
   /* Reserved minimum MOOV size in bytes
    * This is converted from reserved_max_duration
    * using the bytes/trak/sec estimate */
@@ -270,6 +286,8 @@ struct _GstQTMux
   GstClockTime last_moov_update;
   GstClockTime reserved_moov_update_period;
   GstClockTime muxed_since_last_update;
+
+  gboolean reserved_prefill;
 
   /* for request pad naming */
   guint video_pads, audio_pads, subtitle_pads;

@@ -118,6 +118,7 @@ struct _GstSplitMuxSink
   gboolean send_keyframe_requests;
   gchar *threshold_timecode_str;
   GstClockTime next_max_tc_time;
+  GstClockTime alignment_threshold;
 
   GstElement *muxer;
   GstElement *sink;
@@ -164,11 +165,19 @@ struct _GstSplitMuxSink
 
   gboolean need_async_start;
   gboolean async_pending;
+
+  gboolean use_robust_muxing;
+  gboolean muxer_has_reserved_props;
+
+  gboolean split_now;
 };
 
 struct _GstSplitMuxSinkClass
 {
   GstBinClass parent_class;
+
+  /* actions */
+  void     (*split_now)   (GstSplitMuxSink * splitmux);
 };
 
 G_END_DECLS

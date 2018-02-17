@@ -125,6 +125,18 @@ DebianPackage:  libdv4-dev
 Plugins:        dv (dvdec)
 URL:            http://libdv.sourceforge.net/
 
+Package:	liblame
+Version:	>= 3.98
+DebianPackage:	libmp3lame-dev
+Plugins:	lame (lamemp3enc)
+URL:		http://www.mp3dev.org/mp3/
+
+Package:	libmpg123
+Version:        >= 1.3
+DebianPackage:  libpng12-dev
+Plugins:        mpg123 (mpg123audiodec)
+URL:		https://www.mpg123.de/api/
+
 Package:        Libpng
 Version:        >= 1.2
 DebianPackage:  libpng12-dev
@@ -151,6 +163,12 @@ Version:        >= 1.5
 DebianPackage:  libtag1-dev
 Plugins:        taglib (id3v2mux)
 URL:            http://taglib.github.io/
+
+Package:	twolame
+Version:	>= 0.3.13
+DebianPackage:	libtwolame-dev
+Plugins:	twolame (twolamemp2enc)
+URL:		http://www.twolame.org
 
 Package:        zlib
 DebianPackage:  zlib1g-dev

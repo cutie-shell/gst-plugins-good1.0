@@ -57,7 +57,7 @@
  * off proprietary header, for example.
  *
  * The udpsrc is always a live source. It does however not provide a #GstClock,
- * this is left for upstream elements such as an RTP session manager or demuxer
+ * this is left for downstream elements such as an RTP session manager or demuxer
  * (such as an MPEG demuxer). As with all live sources, the captured buffers
  * will have their timestamp set to the current running time of the pipeline.
  *
@@ -1567,7 +1567,7 @@ bind_error:
 membership:
   {
     GST_ELEMENT_ERROR (src, RESOURCE, SETTINGS, (NULL),
-        ("could add membership: %s", err->message));
+        ("could not add membership: %s", err->message));
     g_clear_error (&err);
     gst_udpsrc_close (src);
     return FALSE;

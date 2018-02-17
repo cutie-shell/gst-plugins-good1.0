@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-12-07 19:21+0200\n"
+"POT-Creation-Date: 2018-02-15 17:06+0000\n"
 "PO-Revision-Date: 2017-05-23 23:04+0200\n"
 "Last-Translator: Johnny A. Solbu <johnny@solbu.net>\n"
 "Language-Team: Norwegian Bokmaal <i18n-nb@lister.ping.uio.no>\n"
@@ -24,6 +24,16 @@ msgstr "Jack-server ikke funnet"
 
 msgid "Failed to decode JPEG image"
 msgstr "Klarte ikke å dekode JPEG-bilde"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -54,6 +64,9 @@ msgstr "Tjener sendte ugyldige data."
 
 msgid "Server does not support seeking."
 msgstr "Tjener støtter ikke søking."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Ingen eller ugyldig inndatalyd, AVI-strømmen vil bli skadet."
@@ -151,60 +164,6 @@ msgstr "CoreAudio-enhet ikke funnet"
 msgid "CoreAudio device could not be opened"
 msgstr "CoreAudio-enhet kune ikke åpnes"
 
-msgid "Record Source"
-msgstr "Opptakskilde"
-
-msgid "Microphone"
-msgstr "Mikrofon"
-
-msgid "Line In"
-msgstr "Linje inn"
-
-msgid "Internal CD"
-msgstr "Intern CD"
-
-msgid "SPDIF In"
-msgstr "SPDIF Inn"
-
-msgid "AUX 1 In"
-msgstr "AUX 1 inn"
-
-msgid "AUX 2 In"
-msgstr "AUX 2 inn"
-
-msgid "Codec Loopback"
-msgstr "Kodek-Loopback"
-
-msgid "SunVTS Loopback"
-msgstr "SunVTS-Loopback"
-
-msgid "Volume"
-msgstr "Volum"
-
-msgid "Gain"
-msgstr "Styrke"
-
-msgid "Monitor"
-msgstr "Monitor"
-
-msgid "Built-in Speaker"
-msgstr "Innebygget høyttaler"
-
-msgid "Headphone"
-msgstr "Hodetelefon"
-
-msgid "Line Out"
-msgstr "Linje ut"
-
-msgid "SPDIF Out"
-msgstr "SPDIF ut"
-
-msgid "AUX 1 Out"
-msgstr "AUX 1 ut"
-
-msgid "AUX 2 Out"
-msgstr "AUX 2 ut"
-
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr "Feil ved lesing av% d bytes fra enheten '% s»."
@@ -225,6 +184,14 @@ msgstr "Driveren av enheten «%s» støtter ikke IO metoden %d"
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr "Driveren av enheten «%s» støtter ikke noen kjente IO-metoder."
 
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Enkoder på enhet «%s» har ingen støttede inndataformat"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
 #, c-format
 msgid "Device '%s' is busy"
 msgstr "Enheten «%s» er opptatt"
@@ -240,6 +207,14 @@ msgstr "Enhet «%s» kan ikke fange i det angitte formatet"
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr "Enhet «%s» støtter ikke ikke-sammenhengende plan"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Enhet «%s» støtter ikke videoopptak"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Enhet «%s» støtter ikke videoopptak"
 
 #, c-format
 msgid "Could not get parameters on device '%s'"
@@ -320,6 +295,10 @@ msgstr "Klarte ikke å starte dekoding av tråden."
 
 msgid "Failed to process frame."
 msgstr "Kunne ikke behandle ramme."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Klarte ikke å starte dekoding av tråden."
 
 #, c-format
 msgid ""
@@ -419,14 +398,65 @@ msgstr "Endring av oppløsning under kjøring støttes ikke enda."
 msgid "Cannot operate without a clock"
 msgstr "Kan ikke operere uten en klokke"
 
+#~ msgid "Record Source"
+#~ msgstr "Opptakskilde"
+
+#~ msgid "Microphone"
+#~ msgstr "Mikrofon"
+
+#~ msgid "Line In"
+#~ msgstr "Linje inn"
+
+#~ msgid "Internal CD"
+#~ msgstr "Intern CD"
+
+#~ msgid "SPDIF In"
+#~ msgstr "SPDIF Inn"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "AUX 1 inn"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "AUX 2 inn"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Kodek-Loopback"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "SunVTS-Loopback"
+
+#~ msgid "Volume"
+#~ msgstr "Volum"
+
+#~ msgid "Gain"
+#~ msgstr "Styrke"
+
+#~ msgid "Monitor"
+#~ msgstr "Monitor"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Innebygget høyttaler"
+
+#~ msgid "Headphone"
+#~ msgstr "Hodetelefon"
+
+#~ msgid "Line Out"
+#~ msgstr "Linje ut"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "SPDIF ut"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "AUX 1 ut"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "AUX 2 ut"
+
 #~ msgid "Internal data stream error."
 #~ msgstr "Intern feil i datastrøm."
 
 #~ msgid "Internal data flow error."
 #~ msgstr "Intern dataflytfeil."
-
-#~ msgid "Device '%s' does not support video capture"
-#~ msgstr "Enhet «%s» støtter ikke videoopptak"
 
 #~ msgid "Could not establish connection to sound server"
 #~ msgstr "Kunne ikke etablere tilkobling til lydtjener"

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-12-07 19:21+0200\n"
+"POT-Creation-Date: 2018-02-15 17:06+0000\n"
 "PO-Revision-Date: 2017-10-23 23:59+0100\n"
 "Last-Translator: Freek de Kruijf <f.de.kruijf@gmail.com>\n"
 "Language-Team: Dutch <vertaling@vrijschrift.org>\n"
@@ -23,6 +23,16 @@ msgstr "Jack-server niet gevonden"
 
 msgid "Failed to decode JPEG image"
 msgstr "Kan de JPEG-afbeelding niet decoderen"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -55,6 +65,9 @@ msgstr "De server stuurde onjuiste gegevens."
 
 msgid "Server does not support seeking."
 msgstr "Zoeken wordt door de server niet ondersteund."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Geen of ongeldig invoergeluid, AVI-stroom zal slecht zijn."
@@ -153,60 +166,6 @@ msgstr "CoreAudio apparaat niet gevonden"
 msgid "CoreAudio device could not be opened"
 msgstr "CoreAudio apparaat kon niet geopend worden"
 
-msgid "Record Source"
-msgstr "Opnamebron"
-
-msgid "Microphone"
-msgstr "Microfoon"
-
-msgid "Line In"
-msgstr "Lijn-in"
-
-msgid "Internal CD"
-msgstr "Interne cd"
-
-msgid "SPDIF In"
-msgstr "SPDIF-in"
-
-msgid "AUX 1 In"
-msgstr "AUX 1-in"
-
-msgid "AUX 2 In"
-msgstr "AUX 2-in"
-
-msgid "Codec Loopback"
-msgstr "Codec-loopback"
-
-msgid "SunVTS Loopback"
-msgstr "SunVTS-loopback"
-
-msgid "Volume"
-msgstr "Volume"
-
-msgid "Gain"
-msgstr "Versterking"
-
-msgid "Monitor"
-msgstr "Monitor"
-
-msgid "Built-in Speaker"
-msgstr "Ingebouwde luidspreker"
-
-msgid "Headphone"
-msgstr "Hoofdtelefoon"
-
-msgid "Line Out"
-msgstr "Line-out"
-
-msgid "SPDIF Out"
-msgstr "SPDIF-out"
-
-msgid "AUX 1 Out"
-msgstr "AUX 1-out"
-
-msgid "AUX 2 Out"
-msgstr "AUX 2-out"
-
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr "Fout bij het lezen van %d bytes van apparaat '%s'."
@@ -228,6 +187,14 @@ msgid "The driver of device '%s' does not support any known IO method."
 msgstr ""
 "Het stuurprogramma van apparaat '%s' ondersteunt geen bekende IO-methode."
 
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Codeerder op apparaat %s heeft geen ondersteund invoerformaat"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
 #, c-format
 msgid "Device '%s' is busy"
 msgstr "Apparaat '%s' is bezet"
@@ -243,6 +210,14 @@ msgstr "Apparaat '%s' kan geen opname maken in het gespecificeerde formaat"
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr "Apparaat '%s' ondersteunt niet-continue vlakken"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Apparaat '%s' ondersteunt het opnemen van video niet"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Apparaat '%s' ondersteunt het opnemen van video niet"
 
 #, c-format
 msgid "Could not get parameters on device '%s'"
@@ -324,6 +299,10 @@ msgstr "Beginnen met decoderen van thread is mislukt."
 
 msgid "Failed to process frame."
 msgstr "Bewerken van frame is mislukt."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Beginnen met decoderen van thread is mislukt."
 
 #, c-format
 msgid ""
@@ -425,14 +404,65 @@ msgstr "Tijdens het draaien kan de resolutie nog niet gewijzigd worden."
 msgid "Cannot operate without a clock"
 msgstr "Kan niet werken zonder een klok."
 
+#~ msgid "Record Source"
+#~ msgstr "Opnamebron"
+
+#~ msgid "Microphone"
+#~ msgstr "Microfoon"
+
+#~ msgid "Line In"
+#~ msgstr "Lijn-in"
+
+#~ msgid "Internal CD"
+#~ msgstr "Interne cd"
+
+#~ msgid "SPDIF In"
+#~ msgstr "SPDIF-in"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "AUX 1-in"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "AUX 2-in"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Codec-loopback"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "SunVTS-loopback"
+
+#~ msgid "Volume"
+#~ msgstr "Volume"
+
+#~ msgid "Gain"
+#~ msgstr "Versterking"
+
+#~ msgid "Monitor"
+#~ msgstr "Monitor"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Ingebouwde luidspreker"
+
+#~ msgid "Headphone"
+#~ msgstr "Hoofdtelefoon"
+
+#~ msgid "Line Out"
+#~ msgstr "Line-out"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "SPDIF-out"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "AUX 1-out"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "AUX 2-out"
+
 #~ msgid "Internal data stream error."
 #~ msgstr "Interne fout in gegevensstroom."
 
 #~ msgid "Internal data flow error."
 #~ msgstr "Interne fout in de gegevensdoorvoer."
-
-#~ msgid "Device '%s' does not support video capture"
-#~ msgstr "Apparaat '%s' ondersteunt het opnemen van video niet"
 
 #~ msgid "Could not establish connection to sound server"
 #~ msgstr "Kan geen verbinding maken met de geluidsserver"

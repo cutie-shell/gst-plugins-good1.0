@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-12-07 19:21+0200\n"
+"POT-Creation-Date: 2018-02-15 17:06+0000\n"
 "PO-Revision-Date: 2017-05-05 22:27+0200\n"
 "Last-Translator: Stéphane Aulery <lkppo@free.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -25,6 +25,16 @@ msgstr "serveur Jack introuvable"
 
 msgid "Failed to decode JPEG image"
 msgstr "Échec de décodage de l’image JPEG"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -57,6 +67,9 @@ msgstr "Le serveur a envoyé de mauvaises données."
 
 msgid "Server does not support seeking."
 msgstr "Le serveur ne gère pas la recherche."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Entrée audio absente ou non valide, le flux AVI sera corrompu."
@@ -156,60 +169,6 @@ msgstr "Périphèrique CoreAudio introuvable"
 msgid "CoreAudio device could not be opened"
 msgstr "Le périphèrique CoreAudio n’a pas pu être ouvert"
 
-msgid "Record Source"
-msgstr "Source d’enregistrement"
-
-msgid "Microphone"
-msgstr "Micro"
-
-msgid "Line In"
-msgstr "Entrée ligne"
-
-msgid "Internal CD"
-msgstr "CD interne"
-
-msgid "SPDIF In"
-msgstr "Entrée SPDIF"
-
-msgid "AUX 1 In"
-msgstr "Entrée AUX 1"
-
-msgid "AUX 2 In"
-msgstr "Entrée AUX 2"
-
-msgid "Codec Loopback"
-msgstr "Codec boucle interne"
-
-msgid "SunVTS Loopback"
-msgstr "SunVTS boucle interne"
-
-msgid "Volume"
-msgstr "Volume"
-
-msgid "Gain"
-msgstr "Gain"
-
-msgid "Monitor"
-msgstr "Moniteur"
-
-msgid "Built-in Speaker"
-msgstr "Haut-parleur interne"
-
-msgid "Headphone"
-msgstr "Écouteurs"
-
-msgid "Line Out"
-msgstr "Sortie ligne"
-
-msgid "SPDIF Out"
-msgstr "Sortie SPDIF"
-
-msgid "AUX 1 Out"
-msgstr "Sortie AUX 1"
-
-msgid "AUX 2 Out"
-msgstr "Sortie AUX 2"
-
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr "Erreur de lecture de %d octets sur le périphérique « %s »."
@@ -236,6 +195,15 @@ msgstr ""
 "Le pilote du périphérique « %s » ne prend en charge aucune méthode d’entrée-"
 "sortie connue."
 
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr ""
+"L’encodeur du périphérique « %s » ne prend en charge aucun format d’entrée"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
 #, c-format
 msgid "Device '%s' is busy"
 msgstr "Périphérique « %s » occupé"
@@ -251,6 +219,14 @@ msgstr "Le périphérique « %s » ne peut pas capturer dans le format spécif
 
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
+msgstr "Le périphérique « %s » ne prend pas en charge les plans non contiguës"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Le serveur ne gère pas la recherche."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
 msgstr "Le périphérique « %s » ne prend pas en charge les plans non contiguës"
 
 #, c-format
@@ -343,6 +319,10 @@ msgstr "Échec de démarrage du processus de décodage."
 
 msgid "Failed to process frame."
 msgstr "Échec du traitement de frame."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Échec de démarrage du processus de décodage."
 
 #, c-format
 msgid ""
@@ -454,6 +434,60 @@ msgstr ""
 
 msgid "Cannot operate without a clock"
 msgstr "Impossible de fonctionner sans horloge"
+
+#~ msgid "Record Source"
+#~ msgstr "Source d’enregistrement"
+
+#~ msgid "Microphone"
+#~ msgstr "Micro"
+
+#~ msgid "Line In"
+#~ msgstr "Entrée ligne"
+
+#~ msgid "Internal CD"
+#~ msgstr "CD interne"
+
+#~ msgid "SPDIF In"
+#~ msgstr "Entrée SPDIF"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "Entrée AUX 1"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "Entrée AUX 2"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Codec boucle interne"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "SunVTS boucle interne"
+
+#~ msgid "Volume"
+#~ msgstr "Volume"
+
+#~ msgid "Gain"
+#~ msgstr "Gain"
+
+#~ msgid "Monitor"
+#~ msgstr "Moniteur"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Haut-parleur interne"
+
+#~ msgid "Headphone"
+#~ msgstr "Écouteurs"
+
+#~ msgid "Line Out"
+#~ msgstr "Sortie ligne"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "Sortie SPDIF"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "Sortie AUX 1"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "Sortie AUX 2"
 
 #~ msgid "Internal data stream error."
 #~ msgstr "Erreur du flux de données interne."

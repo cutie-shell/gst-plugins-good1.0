@@ -8,7 +8,7 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-rtpxqtdepay.html" title="rtpxqtdepay">
 <link rel="next" href="gst-plugins-good-plugins-sbcparse.html" title="sbcparse">
-<meta name="generator" content="GTK-Doc V1.26 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.27 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -236,6 +236,21 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--rfc7273-sync" title="The “rfc7273-sync” property">rfc7273-sync</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0/gst-plugins-base-libs-GstRtspdefs.html#GstRTSPVersion"><span class="type">GstRTSPVersion</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--default-rtsp-version" title="The “default-rtsp-version” property">default-rtsp-version</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint64"><span class="type">gint64</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--max-ts-offset" title="The “max-ts-offset” property">max-ts-offset</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--max-ts-offset-adjustment" title="The “max-ts-offset-adjustment” property">max-ts-offset-adjustment</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -273,6 +288,16 @@
 <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstCaps.html#GstCaps-struct"><span class="returnvalue">GstCaps</span></a>*</td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-request-rtcp-key" title="The “request-rtcp-key” signal">request-rtcp-key</a></td>
 <td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a></td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-accept-certificate" title="The “accept-certificate” signal">accept-certificate</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a></td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-before-send" title="The “before-send” signal">before-send</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-FIRST:CAPS">Run First</a></td>
 </tr>
 </tbody>
 </table></div>
@@ -327,7 +352,7 @@ This feature is implemented using the gstrtpbin element.</p>
 <p>rtspsrc acts like a live source and will therefore only generate data in the
 PLAYING state.</p>
 <div class="refsect2">
-<a name="id-1.2.225.9.7"></a><h3>Example launch line</h3>
+<a name="id-1.2.233.9.7"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -344,7 +369,7 @@ fakesink.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.225.9.8.1"></a><h3>Element Information</h3>
+<a name="id-1.2.233.9.8.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -370,7 +395,7 @@ fakesink.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.225.9.8.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.233.9.8.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -418,7 +443,7 @@ fakesink.
 <div class="refsect2">
 <a name="GstRTSPSrc--debug"></a><h3>The <code class="literal">“debug”</code> property</h3>
 <pre class="programlisting">  “debug”                    <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
-<p>Dump request and response messages to stdout.</p>
+<p>Dump request and response messages to stdout(DEPRECATED: Printed all RTSP message to gstreamer log as 'log' level).</p>
 <p>Flags: Read / Write</p>
 <p>Default value: FALSE</p>
 </div>
@@ -693,7 +718,7 @@ keep alive and then this property needs to be set to FALSE.</p>
 <pre class="programlisting">  “user-agent”               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
 <p>The User-Agent string to send to the server.</p>
 <p>Flags: Read / Write</p>
-<p>Default value: "GStreamer/1.12.4"</p>
+<p>Default value: "GStreamer/1.13.1"</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -711,6 +736,35 @@ keep alive and then this property needs to be set to FALSE.</p>
 <p>Synchronize received streams to the RFC7273 clock (requires clock and offset to be provided).</p>
 <p>Flags: Read / Write</p>
 <p>Default value: FALSE</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc--default-rtsp-version"></a><h3>The <code class="literal">“default-rtsp-version”</code> property</h3>
+<pre class="programlisting">  “default-rtsp-version”     <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0/gst-plugins-base-libs-GstRtspdefs.html#GstRTSPVersion"><span class="type">GstRTSPVersion</span></a></pre>
+<p>The preferred RTSP version to use while negotiating the version with the server.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: GST_RTSP_VERSION_1_0</p>
+<p class="since">Since: 1.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc--max-ts-offset"></a><h3>The <code class="literal">“max-ts-offset”</code> property</h3>
+<pre class="programlisting">  “max-ts-offset”            <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint64"><span class="type">gint64</span></a></pre>
+<p>The maximum absolute value of the time offset in (nanoseconds). Note, if the ntp-sync parameter is set the default value is changed to 0 (no limit).</p>
+<p>Flags: Read / Write</p>
+<p>Allowed values: &gt;= 0</p>
+<p>Default value: 3000000000</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc--max-ts-offset-adjustment"></a><h3>The <code class="literal">“max-ts-offset-adjustment”</code> property</h3>
+<pre class="programlisting">  “max-ts-offset-adjustment” <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
+<p>Syncing time stamps to NTP time adds a time offset. This parameter
+specifies the maximum number of nanoseconds per frame that this time offset
+may be adjusted with. This is used to avoid sudden large changes to time
+stamps.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 0</p>
 </div>
 </div>
 <div class="refsect1">
@@ -941,9 +995,73 @@ and authentication, and return them wrapped in a GstCaps.</p>
 <p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
 <p class="since">Since: 1.4</p>
 </div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc-accept-certificate"></a><h3>The <code class="literal">“accept-certificate”</code> signal</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a>          *rtspsrc,
+               <a href="/usr/share/gtk-doc/html/gio/GTlsConnection.html#GTlsConnection-struct"><span class="type">GTlsConnection</span></a>      *peer_cert,
+               <a href="/usr/share/gtk-doc/html/gio/GTlsCertificate.html#GTlsCertificate-struct"><span class="type">GTlsCertificate</span></a>     *errors,
+               <a href="/usr/share/gtk-doc/html/gio/gio-TLS-Overview.html#GTlsCertificateFlags"><span class="type">GTlsCertificateFlags</span></a> user_data,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>             user_data)</pre>
+<p>This will directly map to <a href="/usr/share/gtk-doc/html/gio/GTlsConnection.html#GTlsConnection-struct"><span class="type">GTlsConnection</span></a> 's "accept-certificate"
+signal and be performed after the default checks of <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0/gst-plugins-base-libs-GstRTSPConnection.html#GstRTSPConnection"><span class="type">GstRTSPConnection</span></a>
+(checking against the <a href="/usr/share/gtk-doc/html/gio/GTlsDatabase.html#GTlsDatabase-struct"><span class="type">GTlsDatabase</span></a> with the given <a href="/usr/share/gtk-doc/html/gio/gio-TLS-Overview.html#GTlsCertificateFlags"><span class="type">GTlsCertificateFlags</span></a>)
+have failed. If no <a href="/usr/share/gtk-doc/html/gio/GTlsDatabase.html#GTlsDatabase-struct"><span class="type">GTlsDatabase</span></a> is set on this connection, only this
+signal will be emitted.</p>
+<div class="refsect3">
+<a name="GstRTSPSrc-accept-certificate.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>rtspsrc</p></td>
+<td class="parameter_description"><p>a <a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>peer_cert</p></td>
+<td class="parameter_description"><p>the peer's <a href="/usr/share/gtk-doc/html/gio/GTlsCertificate.html#GTlsCertificate-struct"><span class="type">GTlsCertificate</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>errors</p></td>
+<td class="parameter_description"><p>the problems with <em class="parameter"><code>peer_cert</code></em>
+</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+<p class="since">Since: 1.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc-before-send"></a><h3>The <code class="literal">“before-send”</code> signal</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a>     *gstrtspsrc,
+               <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0/gst-plugins-base-libs-GstRTSPMessage.html#GstRTSPMessage"><span class="type">GstRTSPMessage</span></a> *arg1,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>        user_data)</pre>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-FIRST:CAPS">Run First</a></p>
+</div>
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.26</div>
+<hr>Generated by GTK-Doc V1.27</div>
 </body>
 </html>

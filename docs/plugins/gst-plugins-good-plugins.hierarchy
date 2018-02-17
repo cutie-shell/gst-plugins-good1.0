@@ -21,19 +21,24 @@ GObject
         GstV4l2DeviceProvider
       GstElement
         Gst3GPPMux
+        GstAggregator
+          GstFlvMux
         GstAsteriskh263
         GstAuParse
         GstAudioDecoder
           GstALawDec
           GstFlacDec
+          GstMpg123AudioDec
           GstMuLawDec
           GstSpeexDec
           GstWavpackDec
         GstAudioEncoder
           GstALawEnc
           GstFlacEnc
+          GstLameMP3Enc
           GstMuLawEnc
           GstSpeexEnc
+          GstTwoLame
           GstWavpackEnc
         GstAudioVisualizer
           GstGoom
@@ -63,11 +68,16 @@ GObject
           GstMultiFileSink
           GstMultiUDPSink
             GstUDPSink
+          GstShout2send
           GstSoupHttpClientSink
           GstTest
           GstVideoSink
             GstAASink
             GstGdkPixbufSink
+            GstGtkBaseSink
+              GstGtkGLSink
+              GstGtkSink
+            GstQtSink
             GstV4l2Sink
         GstBaseSrc
           GstDTMFSrc
@@ -81,6 +91,7 @@ GObject
             GstDV1394Src
             GstHDV1394Src
             GstMultiFileSrc
+            GstQtSrc
             GstSoupHTTPSrc
             GstUDPSrc
             GstV4l2Src
@@ -165,7 +176,6 @@ GObject
         GstDeinterleave
         GstFlacTag
         GstFlvDemux
-        GstFlvMux
         GstFlxDec
         GstGdkPixbufDec
         GstICYDemux
@@ -208,6 +218,7 @@ GObject
           GstRtpKlvDepay
           GstRtpL16Depay
           GstRtpL24Depay
+          GstRtpL8Depay
           GstRtpMP1SDepay
           GstRtpMP2TDepay
           GstRtpMP4ADepay
@@ -238,6 +249,7 @@ GObject
             GstRtpG726Pay
             GstRtpL16Pay
             GstRtpL24Pay
+            GstRtpL8Pay
             GstRtpPcmaPay
             GstRtpPcmuPay
           GstRTPDVPay
@@ -308,7 +320,10 @@ GObject
         GstWavEnc
         GstWavParse
       GstPad
+        GstAggregatorPad
+          GstFlvMuxPad
         GstInterleavePad
+        GstQTMuxPad
         GstVideoMixer2Pad
       GstPadTemplate
       GstPlugin
@@ -321,6 +336,7 @@ GObject
       GstRegistry
       GstTask
       GstTaskPool
+    GtkWidget
   GResolver
   GSocket
   GSocketAddress
@@ -342,6 +358,7 @@ GObject
   RTPSession
   SoupSession
 GInterface
+  AtkImplementorIface
   GDatagramBased
   GIcon
   GInitable
@@ -351,6 +368,7 @@ GInterface
   GTypePlugin
   GstChildProxy
   GstColorBalance
+  GstNavigation
   GstPreset
   GstStreamVolume
   GstTagSetter
@@ -360,3 +378,4 @@ GInterface
   GstURIHandler
   GstVideoDirection
   GstVideoOrientation
+  GtkBuildable

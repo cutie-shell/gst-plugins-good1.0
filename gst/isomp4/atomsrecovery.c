@@ -88,6 +88,8 @@
 
 #include "atomsrecovery.h"
 
+#define MAX_CHUNK_SIZE (1024 * 1024)    /* 1MB */
+
 #define ATOMS_RECOV_OUTPUT_WRITE_ERROR(err) \
     g_set_error (err, ATOMS_RECOV_QUARK, ATOMS_RECOV_ERR_FILE, \
         "Failed to write to output file: %s", g_strerror (errno))
@@ -110,7 +112,9 @@ atoms_recov_write_ftyp_info (FILE * f, AtomFTYP * ftyp, GstBuffer * prefix)
   if (prefix) {
     GstMapInfo map;
 
-    gst_buffer_map (prefix, &map, GST_MAP_READ);
+    if (!gst_buffer_map (prefix, &map, GST_MAP_READ)) {
+      return FALSE;
+    }
     if (fwrite (map.data, 1, map.size, f) != map.size) {
       gst_buffer_unmap (prefix, &map);
       return FALSE;
@@ -956,7 +960,7 @@ fail:
 
 gboolean
 moov_recov_write_file (MoovRecovFile * moovrf, MdatRecovFile * mdatrf,
-    FILE * outf, GError ** err)
+    FILE * outf, GError ** err, GError ** warn)
 {
   guint8 auxdata[16];
   guint8 *data = NULL;
@@ -969,6 +973,7 @@ moov_recov_write_file (MoovRecovFile * moovrf, MdatRecovFile * mdatrf,
   guint8 *stbl_children = NULL;
   guint32 longest_duration = 0;
   guint16 version;
+  guint remaining;
 
   /* check the version */
   if (fseek (moovrf->file, 0, SEEK_SET) != 0) {
@@ -1030,8 +1035,8 @@ moov_recov_write_file (MoovRecovFile * moovrf, MdatRecovFile * mdatrf,
   /* add chunks offsets */
   for (i = 0; i < moovrf->num_traks; i++) {
     TrakRecovData *trak = &(moovrf->traks_rd[i]);
-    /* 16 for the mdat header */
-    gint64 offset = moov_size + ftell (outf) + 16;
+    /* 8 or 16 for the mdat header */
+    gint64 offset = moov_size + ftell (outf) + mdatrf->mdat_header_size;
     atom_stco64_chunks_set_offset (&trak->stbl.stco64, offset);
   }
 
@@ -1135,10 +1140,21 @@ moov_recov_write_file (MoovRecovFile * moovrf, MdatRecovFile * mdatrf,
 
   /* write the mdat */
   /* write the header first */
-  GST_WRITE_UINT32_BE (auxdata, 1);
-  GST_WRITE_UINT32_LE (auxdata + 4, FOURCC_mdat);
-  GST_WRITE_UINT64_BE (auxdata + 8, mdatrf->mdat_size);
-  if (fwrite (auxdata, 1, 16, outf) != 16) {
+  if (mdatrf->mdat_header_size == 16) {
+    GST_WRITE_UINT32_BE (auxdata, 1);
+    GST_WRITE_UINT32_LE (auxdata + 4, FOURCC_mdat);
+    GST_WRITE_UINT64_BE (auxdata + 8, mdatrf->mdat_size);
+  } else if (mdatrf->mdat_header_size == 8) {
+    GST_WRITE_UINT32_BE (auxdata, mdatrf->mdat_size);
+    GST_WRITE_UINT32_LE (auxdata + 4, FOURCC_mdat);
+  } else {
+    GST_ERROR ("Unexpected atom size: %u", mdatrf->mdat_header_size);
+    g_assert_not_reached ();
+    goto fail;
+  }
+
+  if (fwrite (auxdata, 1, mdatrf->mdat_header_size,
+          outf) != mdatrf->mdat_header_size) {
     ATOMS_RECOV_OUTPUT_WRITE_ERROR (err);
     goto fail;
   }
@@ -1148,12 +1164,16 @@ moov_recov_write_file (MoovRecovFile * moovrf, MdatRecovFile * mdatrf,
           (mdatrf->rawfile ? 0 : mdatrf->mdat_header_size), SEEK_SET) != 0)
     goto fail;
 
-  data = g_malloc (4096);
-  while (!feof (mdatrf->file)) {
-    gint read, write;
+  remaining = mdatrf->mdat_size - mdatrf->mdat_header_size;
+  data = g_malloc (MAX_CHUNK_SIZE);
+  while (!feof (mdatrf->file) && remaining > 0) {
+    gint read, write, readsize;
 
-    read = fread (data, 1, 4096, mdatrf->file);
+    readsize = MIN (MAX_CHUNK_SIZE, remaining);
+
+    read = fread (data, 1, readsize, mdatrf->file);
     write = fwrite (data, 1, read, outf);
+    remaining -= read;
 
     if (write != read) {
       g_set_error (err, ATOMS_RECOV_QUARK, ATOMS_RECOV_ERR_FILE,
@@ -1162,6 +1182,17 @@ moov_recov_write_file (MoovRecovFile * moovrf, MdatRecovFile * mdatrf,
     }
   }
   g_free (data);
+
+  if (remaining) {
+    g_set_error (warn, ATOMS_RECOV_QUARK, ATOMS_RECOV_ERR_FILE,
+        "Samples in recovery file were not present on headers."
+        " Bytes lost: %u", remaining);
+  } else if (!feof (mdatrf->file)) {
+    g_set_error (warn, ATOMS_RECOV_QUARK, ATOMS_RECOV_ERR_FILE,
+        "Samples in headers were not found in data file.");
+    GST_FIXME ("Rewrite mdat size if we reach this to make the file"
+        " fully correct");
+  }
 
   return TRUE;
 

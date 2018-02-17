@@ -1,16 +1,20 @@
-# subdir('aalib')
+subdir('aalib')
 subdir('cairo')
 subdir('flac')
 subdir('gdk_pixbuf')
+subdir('gtk')
 subdir('jack')
 subdir('jpeg')
-# subdir('libcaca')
+subdir('lame')
+subdir('libcaca')
 # FIXME: dv plugin fails to link with msvc, wants pthread.lib
 if cc.get_id() != 'msvc'
   subdir('dv')
 endif
 subdir('libpng')
-# subdir('raw1394')
+subdir('mpg123')
+subdir('raw1394')
+# FIXME: subdir('qt')
 subdir('pulse')
 subdir('shout2')
 subdir('soup')
@@ -21,5 +25,6 @@ if cc.get_id() == 'msvc'
 else
   subdir('taglib')
 endif
+subdir('twolame')
 subdir('vpx')
 subdir('wavpack')

@@ -61,9 +61,6 @@
 /* GStreamer package release date/time for plugins as YYYY-MM-DD */
 #undef GST_PACKAGE_RELEASE_DATETIME
 
-/* Define if static plugins should be built */
-#undef GST_PLUGIN_BUILD_STATIC
-
 /* Define if Video4Linux probe shall be run at plugin load */
 #undef GST_V4L2_ENABLE_PROBE
 
@@ -194,6 +191,12 @@
 /* Define to enable Video 4 Linux 2 (used by video4linux2). */
 #undef HAVE_GST_V4L2
 
+/* Define to enable Gtk+ elements (used by gtk). */
+#undef HAVE_GTK3
+
+/* Define if Gtk+ 3.0 GL is installed */
+#undef HAVE_GTK3_GL
+
 /* Whether gudev is available for device detection */
 #undef HAVE_GUDEV
 
@@ -224,6 +227,9 @@
 /* Define to enable jpeg library (used by jpeg). */
 #undef HAVE_JPEG
 
+/* Define to enable lame mp3 encoder library (used by lame). */
+#undef HAVE_LAME
+
 /* Define to enable libcaca coloured ASCII art (used by cacasink). */
 #undef HAVE_LIBCACA
 
@@ -233,6 +239,9 @@
 /* Define to enable Portable Network Graphics library (used by png). */
 #undef HAVE_LIBPNG
 
+/* Defined if libpng version is 1.5.1 or newer */
+#undef HAVE_LIBPNG_1_5
+
 /* Whether libv4l2 is available for video buffer conversion */
 #undef HAVE_LIBV4L2
 
@@ -241,6 +250,9 @@
 
 /* Define to 1 if you have a working `mmap' system call. */
 #undef HAVE_MMAP
+
+/* Define to enable mpg123 audio decoder (used by mpg123). */
+#undef HAVE_MPG123
 
 /* Use Orc */
 #undef HAVE_ORC
@@ -278,6 +290,24 @@
 /* Define to enable pulseaudio plug-in (used by pulseaudio). */
 #undef HAVE_PULSE
 
+/* Define to enable Qt elements (used by qt). */
+#undef HAVE_QT
+
+/* Define if Qt eglfs integration is installed */
+#undef HAVE_QT_EGLFS
+
+/* Define if Qt iOS integration is installed */
+#undef HAVE_QT_IOS
+
+/* Define if Qt Mac integration is installed */
+#undef HAVE_QT_MAC
+
+/* Define if Qt Wayland integration is installed */
+#undef HAVE_QT_WAYLAND
+
+/* Define if Qt X11 integration is installed */
+#undef HAVE_QT_X11
+
 /* Define if RDTSC is available */
 #undef HAVE_RDTSC
 
@@ -308,9 +338,6 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define to enable Sun Audio (used by sunaudio). */
-#undef HAVE_SUNAUDIO
-
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #undef HAVE_SYS_IOCTL_H
 
@@ -331,6 +358,9 @@
 
 /* Define to enable taglib tagging library (used by taglib). */
 #undef HAVE_TAGLIB
+
+/* Define to enable twolame (used by twolame). */
+#undef HAVE_TWOLAME
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
@@ -422,6 +452,9 @@
 
 /* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
+
+/* The size of `off_t', as computed by sizeof. */
+#undef SIZEOF_OFF_T
 
 /* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT

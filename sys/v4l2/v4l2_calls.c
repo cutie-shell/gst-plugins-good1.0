@@ -38,11 +38,8 @@
 #include <stropts.h>
 #include <sys/ioccom.h>
 #endif
-#include "v4l2_calls.h"
+#include "gstv4l2object.h"
 #include "gstv4l2tuner.h"
-#if 0
-#include "gstv4l2xoverlay.h"
-#endif
 #include "gstv4l2colorbalance.h"
 
 #include "gstv4l2src.h"
@@ -59,7 +56,7 @@ GST_DEBUG_CATEGORY_EXTERN (v4l2_debug);
  *   get the device's capturing capabilities
  * return value: TRUE on success, FALSE on error
  ******************************************************/
-gboolean
+static gboolean
 gst_v4l2_get_capabilities (GstV4l2Object * v4l2object)
 {
   GstElement *e;
@@ -71,7 +68,8 @@ gst_v4l2_get_capabilities (GstV4l2Object * v4l2object)
   if (!GST_V4L2_IS_OPEN (v4l2object))
     return FALSE;
 
-  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_QUERYCAP, &v4l2object->vcap) < 0)
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_QUERYCAP,
+          &v4l2object->vcap) < 0)
     goto cap_failed;
 
   if (v4l2object->vcap.capabilities & V4L2_CAP_DEVICE_CAPS)
@@ -150,7 +148,7 @@ gst_v4l2_fill_lists (GstV4l2Object * v4l2object)
     memset (&input, 0, sizeof (input));
 
     input.index = n;
-    if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_ENUMINPUT, &input) < 0) {
+    if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_ENUMINPUT, &input) < 0) {
       if (errno == EINVAL || errno == ENOTTY)
         break;                  /* end of enumeration */
       else {
@@ -184,7 +182,7 @@ gst_v4l2_fill_lists (GstV4l2Object * v4l2object)
       channel->flags |= GST_TUNER_CHANNEL_FREQUENCY;
 
       vtun.index = input.tuner;
-      if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_G_TUNER, &vtun) < 0) {
+      if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_G_TUNER, &vtun) < 0) {
         GST_ELEMENT_ERROR (e, RESOURCE, SETTINGS,
             (_("Failed to get setting of tuner %d on device '%s'."),
                 input.tuner, v4l2object->videodev), GST_ERROR_SYSTEM);
@@ -225,7 +223,7 @@ gst_v4l2_fill_lists (GstV4l2Object * v4l2object)
     standard.frameperiod.denominator = 0;
     standard.index = n;
 
-    if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_ENUMSTD, &standard) < 0) {
+    if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_ENUMSTD, &standard) < 0) {
       if (errno == EINVAL || errno == ENOTTY)
         break;                  /* end of enumeration */
 #ifdef ENODATA
@@ -253,7 +251,7 @@ gst_v4l2_fill_lists (GstV4l2Object * v4l2object)
         standard.frameperiod.denominator, standard.frameperiod.numerator);
     v4l2norm->index = standard.id;
 
-    GST_DEBUG_OBJECT (v4l2object->element, "index=%08x, label=%s",
+    GST_DEBUG_OBJECT (v4l2object->dbg_obj, "index=%08x, label=%s",
         (unsigned int) v4l2norm->index, norm->label);
 
     v4l2object->norms = g_list_prepend (v4l2object->norms, (gpointer) norm);
@@ -283,7 +281,8 @@ gst_v4l2_fill_lists (GstV4l2Object * v4l2object)
     GST_DEBUG_OBJECT (e, "checking control %08x", n);
 
     control.id = n | next;
-    if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_QUERYCTRL, &control) < 0) {
+    if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_QUERYCTRL,
+            &control) < 0) {
       if (next) {
         if (n > 0) {
           GST_DEBUG_OBJECT (e, "controls finished");
@@ -408,7 +407,8 @@ gst_v4l2_fill_lists (GstV4l2Object * v4l2object)
       menu.id = n;
       for (i = 0;; i++) {
         menu.index = i;
-        if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_QUERYMENU, &menu) < 0) {
+        if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_QUERYMENU,
+                &menu) < 0) {
           if (errno == EINVAL)
             break;              /* end of enumeration */
           else {
@@ -461,7 +461,7 @@ gst_v4l2_fill_lists (GstV4l2Object * v4l2object)
 static void
 gst_v4l2_empty_lists (GstV4l2Object * v4l2object)
 {
-  GST_DEBUG_OBJECT (v4l2object->element, "deleting enumerations");
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "deleting enumerations");
 
   g_list_foreach (v4l2object->channels, (GFunc) g_object_unref, NULL);
   g_list_free (v4l2object->channels);
@@ -518,9 +518,9 @@ gboolean
 gst_v4l2_open (GstV4l2Object * v4l2object)
 {
   struct stat st;
-  int libv4l2_fd;
+  int libv4l2_fd = -1;
 
-  GST_DEBUG_OBJECT (v4l2object->element, "Trying to open device %s",
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "Trying to open device %s",
       v4l2object->videodev);
 
   GST_V4L2_CHECK_NOT_OPEN (v4l2object);
@@ -544,8 +544,12 @@ gst_v4l2_open (GstV4l2Object * v4l2object)
   if (!GST_V4L2_IS_OPEN (v4l2object))
     goto not_open;
 
-  libv4l2_fd = v4l2_fd_open (v4l2object->video_fd,
-      V4L2_ENABLE_ENUM_FMT_EMULATION);
+#ifdef HAVE_LIBV4L2
+  if (v4l2object->fd_open)
+    libv4l2_fd = v4l2object->fd_open (v4l2object->video_fd,
+        V4L2_ENABLE_ENUM_FMT_EMULATION);
+#endif
+
   /* Note the v4l2_xxx functions are designed so that if they get passed an
      unknown fd, the will behave exactly as their regular xxx counterparts, so
      if v4l2_fd_open fails, we continue as normal (missing the libv4l2 custom
@@ -587,7 +591,7 @@ gst_v4l2_open (GstV4l2Object * v4l2object)
   if (!gst_v4l2_fill_lists (v4l2object))
     goto error;
 
-  GST_INFO_OBJECT (v4l2object->element,
+  GST_INFO_OBJECT (v4l2object->dbg_obj,
       "Opened device '%s' (%s) successfully",
       v4l2object->vcap.card, v4l2object->videodev);
 
@@ -654,7 +658,7 @@ error:
   {
     if (GST_V4L2_IS_OPEN (v4l2object)) {
       /* close device */
-      v4l2_close (v4l2object->video_fd);
+      v4l2object->close (v4l2object->video_fd);
       v4l2object->video_fd = -1;
     }
     /* empty lists */
@@ -667,7 +671,7 @@ error:
 gboolean
 gst_v4l2_dup (GstV4l2Object * v4l2object, GstV4l2Object * other)
 {
-  GST_DEBUG_OBJECT (v4l2object->element, "Trying to dup device %s",
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "Trying to dup device %s",
       other->videodev);
 
   GST_V4L2_CHECK_OPEN (other);
@@ -679,14 +683,14 @@ gst_v4l2_dup (GstV4l2Object * v4l2object, GstV4l2Object * other)
   v4l2object->device_caps = other->device_caps;
   gst_v4l2_adjust_buf_type (v4l2object);
 
-  v4l2object->video_fd = v4l2_dup (other->video_fd);
+  v4l2object->video_fd = v4l2object->dup (other->video_fd);
   if (!GST_V4L2_IS_OPEN (v4l2object))
     goto not_open;
 
   g_free (v4l2object->videodev);
   v4l2object->videodev = g_strdup (other->videodev);
 
-  GST_INFO_OBJECT (v4l2object->element,
+  GST_INFO_OBJECT (v4l2object->dbg_obj,
       "Cloned device '%s' (%s) successfully",
       v4l2object->vcap.card, v4l2object->videodev);
 
@@ -713,14 +717,14 @@ not_open:
 gboolean
 gst_v4l2_close (GstV4l2Object * v4l2object)
 {
-  GST_DEBUG_OBJECT (v4l2object->element, "Trying to close %s",
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "Trying to close %s",
       v4l2object->videodev);
 
   GST_V4L2_CHECK_OPEN (v4l2object);
   GST_V4L2_CHECK_NOT_ACTIVE (v4l2object);
 
   /* close device */
-  v4l2_close (v4l2object->video_fd);
+  v4l2object->close (v4l2object->video_fd);
   v4l2object->video_fd = -1;
 
   /* empty lists */
@@ -738,12 +742,12 @@ gst_v4l2_close (GstV4l2Object * v4l2object)
 gboolean
 gst_v4l2_get_norm (GstV4l2Object * v4l2object, v4l2_std_id * norm)
 {
-  GST_DEBUG_OBJECT (v4l2object->element, "getting norm");
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "getting norm");
 
   if (!GST_V4L2_IS_OPEN (v4l2object))
     return FALSE;
 
-  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_G_STD, norm) < 0)
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_G_STD, norm) < 0)
     goto std_failed;
 
   return TRUE;
@@ -766,13 +770,13 @@ std_failed:
 gboolean
 gst_v4l2_set_norm (GstV4l2Object * v4l2object, v4l2_std_id norm)
 {
-  GST_DEBUG_OBJECT (v4l2object->element, "trying to set norm to "
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "trying to set norm to "
       "%" G_GINT64_MODIFIER "x", (guint64) norm);
 
   if (!GST_V4L2_IS_OPEN (v4l2object))
     return FALSE;
 
-  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_S_STD, &norm) < 0)
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_S_STD, &norm) < 0)
     goto std_failed;
 
   return TRUE;
@@ -800,7 +804,7 @@ gst_v4l2_get_frequency (GstV4l2Object * v4l2object,
 
   GstTunerChannel *channel;
 
-  GST_DEBUG_OBJECT (v4l2object->element, "getting current tuner frequency");
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "getting current tuner frequency");
 
   if (!GST_V4L2_IS_OPEN (v4l2object))
     return FALSE;
@@ -808,7 +812,7 @@ gst_v4l2_get_frequency (GstV4l2Object * v4l2object,
   channel = gst_tuner_get_channel (GST_TUNER (v4l2object->element));
 
   freq.tuner = tunernum;
-  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_G_FREQUENCY, &freq) < 0)
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_G_FREQUENCY, &freq) < 0)
     goto freq_failed;
 
   *frequency = freq.frequency * channel->freq_multiplicator;
@@ -839,7 +843,7 @@ gst_v4l2_set_frequency (GstV4l2Object * v4l2object,
 
   GstTunerChannel *channel;
 
-  GST_DEBUG_OBJECT (v4l2object->element,
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj,
       "setting current tuner frequency to %lu", frequency);
 
   if (!GST_V4L2_IS_OPEN (v4l2object))
@@ -849,10 +853,10 @@ gst_v4l2_set_frequency (GstV4l2Object * v4l2object,
 
   freq.tuner = tunernum;
   /* fill in type - ignore error */
-  (void) v4l2_ioctl (v4l2object->video_fd, VIDIOC_G_FREQUENCY, &freq);
+  (void) v4l2object->ioctl (v4l2object->video_fd, VIDIOC_G_FREQUENCY, &freq);
   freq.frequency = frequency / channel->freq_multiplicator;
 
-  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_S_FREQUENCY, &freq) < 0)
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_S_FREQUENCY, &freq) < 0)
     goto freq_failed;
 
   return TRUE;
@@ -878,13 +882,13 @@ gst_v4l2_signal_strength (GstV4l2Object * v4l2object,
 {
   struct v4l2_tuner tuner = { 0, };
 
-  GST_DEBUG_OBJECT (v4l2object->element, "trying to get signal strength");
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "trying to get signal strength");
 
   if (!GST_V4L2_IS_OPEN (v4l2object))
     return FALSE;
 
   tuner.index = tunernum;
-  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_G_TUNER, &tuner) < 0)
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_G_TUNER, &tuner) < 0)
     goto tuner_failed;
 
   *signal_strength = tuner.signal;
@@ -912,7 +916,7 @@ gst_v4l2_get_attribute (GstV4l2Object * v4l2object,
 {
   struct v4l2_control control = { 0, };
 
-  GST_DEBUG_OBJECT (v4l2object->element, "getting value of attribute %d",
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "getting value of attribute %d",
       attribute_num);
 
   if (!GST_V4L2_IS_OPEN (v4l2object))
@@ -920,7 +924,7 @@ gst_v4l2_get_attribute (GstV4l2Object * v4l2object,
 
   control.id = attribute_num;
 
-  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_G_CTRL, &control) < 0)
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_G_CTRL, &control) < 0)
     goto ctrl_failed;
 
   *value = control.value;
@@ -949,7 +953,7 @@ gst_v4l2_set_attribute (GstV4l2Object * v4l2object,
 {
   struct v4l2_control control = { 0, };
 
-  GST_DEBUG_OBJECT (v4l2object->element, "setting value of attribute %d to %d",
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "setting value of attribute %d to %d",
       attribute_num, value);
 
   if (!GST_V4L2_IS_OPEN (v4l2object))
@@ -957,7 +961,7 @@ gst_v4l2_set_attribute (GstV4l2Object * v4l2object,
 
   control.id = attribute_num;
   control.value = value;
-  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_S_CTRL, &control) < 0)
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_S_CTRL, &control) < 0)
     goto ctrl_failed;
 
   return TRUE;
@@ -1025,17 +1029,17 @@ gst_v4l2_get_input (GstV4l2Object * v4l2object, gint * input)
 {
   gint n;
 
-  GST_DEBUG_OBJECT (v4l2object->element, "trying to get input");
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "trying to get input");
 
   if (!GST_V4L2_IS_OPEN (v4l2object))
     return FALSE;
 
-  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_G_INPUT, &n) < 0)
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_G_INPUT, &n) < 0)
     goto input_failed;
 
   *input = n;
 
-  GST_DEBUG_OBJECT (v4l2object->element, "input: %d", n);
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "input: %d", n);
 
   return TRUE;
 
@@ -1054,12 +1058,12 @@ input_failed:
 gboolean
 gst_v4l2_set_input (GstV4l2Object * v4l2object, gint input)
 {
-  GST_DEBUG_OBJECT (v4l2object->element, "trying to set input to %d", input);
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "trying to set input to %d", input);
 
   if (!GST_V4L2_IS_OPEN (v4l2object))
     return FALSE;
 
-  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_S_INPUT, &input) < 0)
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_S_INPUT, &input) < 0)
     goto input_failed;
 
   return TRUE;
@@ -1082,17 +1086,17 @@ gst_v4l2_get_output (GstV4l2Object * v4l2object, gint * output)
 {
   gint n;
 
-  GST_DEBUG_OBJECT (v4l2object->element, "trying to get output");
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "trying to get output");
 
   if (!GST_V4L2_IS_OPEN (v4l2object))
     return FALSE;
 
-  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_G_OUTPUT, &n) < 0)
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_G_OUTPUT, &n) < 0)
     goto output_failed;
 
   *output = n;
 
-  GST_DEBUG_OBJECT (v4l2object->element, "output: %d", n);
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "output: %d", n);
 
   return TRUE;
 
@@ -1111,12 +1115,12 @@ output_failed:
 gboolean
 gst_v4l2_set_output (GstV4l2Object * v4l2object, gint output)
 {
-  GST_DEBUG_OBJECT (v4l2object->element, "trying to set output to %d", output);
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "trying to set output to %d", output);
 
   if (!GST_V4L2_IS_OPEN (v4l2object))
     return FALSE;
 
-  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_S_OUTPUT, &output) < 0)
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_S_OUTPUT, &output) < 0)
     goto output_failed;
 
   return TRUE;

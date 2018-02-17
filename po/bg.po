@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-12-07 19:21+0200\n"
+"POT-Creation-Date: 2018-02-15 17:06+0000\n"
 "PO-Revision-Date: 2017-05-07 22:46+0200\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@ludost.net>\n"
@@ -25,6 +25,16 @@ msgstr "Сървърът Jack не е открит."
 
 msgid "Failed to decode JPEG image"
 msgstr "Неуспешно декодиране на изображение, формат JPEG."
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -55,6 +65,9 @@ msgstr "Сървърът изпрати лоши данни."
 
 msgid "Server does not support seeking."
 msgstr "Сървърът не поддържа търсене."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Аудио входът липсва или е грешен. Потокът с AVI ще бъде повреден."
@@ -150,60 +163,6 @@ msgstr "Устройството CoreAudio не е открито"
 msgid "CoreAudio device could not be opened"
 msgstr "Устройството CoreAudio не може да се отвори"
 
-msgid "Record Source"
-msgstr "Източник за запис"
-
-msgid "Microphone"
-msgstr "Микрофон"
-
-msgid "Line In"
-msgstr "Вход"
-
-msgid "Internal CD"
-msgstr "Вътрешно CD"
-
-msgid "SPDIF In"
-msgstr "Вход SPDIF"
-
-msgid "AUX 1 In"
-msgstr "Вход AUX 1"
-
-msgid "AUX 2 In"
-msgstr "Вход AUX 2"
-
-msgid "Codec Loopback"
-msgstr "Обратна връзка на кодека"
-
-msgid "SunVTS Loopback"
-msgstr "Обратна връзка на SunVTS"
-
-msgid "Volume"
-msgstr "Сила на звука"
-
-msgid "Gain"
-msgstr "Усилване"
-
-msgid "Monitor"
-msgstr "Монитор"
-
-msgid "Built-in Speaker"
-msgstr "Вграден високоговорител"
-
-msgid "Headphone"
-msgstr "Слушалки"
-
-msgid "Line Out"
-msgstr "Изход"
-
-msgid "SPDIF Out"
-msgstr "Изход SPDIF"
-
-msgid "AUX 1 Out"
-msgstr "Изход AUX 1"
-
-msgid "AUX 2 Out"
-msgstr "Изход AUX 2"
-
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr "Грешка при прочитане на %d байта от устройство „%s“."
@@ -225,6 +184,14 @@ msgstr "Драйверът за устройството „%s“ не подд�
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr "Драйверът за устройството „%s“ не поддържа познат метод за В/И."
 
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Кодерът устройството „%s“ не поддържа познати метод за вход."
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
 #, c-format
 msgid "Device '%s' is busy"
 msgstr "Устройството „%s“ е заето"
@@ -239,6 +206,14 @@ msgstr "Устройството „%s“ не може да записва в �
 
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
+msgstr "Устройството „%s“ не поддържа несъседни равнини"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Сървърът не поддържа търсене."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
 msgstr "Устройството „%s“ не поддържа несъседни равнини"
 
 #, c-format
@@ -321,6 +296,10 @@ msgstr "Неуспешно стартиране на нишката за дек�
 
 msgid "Failed to process frame."
 msgstr "Неуспешна обработка на кадър."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Неуспешно стартиране на нишката за декодиране."
 
 #, c-format
 msgid ""
@@ -423,3 +402,57 @@ msgstr ""
 
 msgid "Cannot operate without a clock"
 msgstr "Работата без часовник е невъзможна."
+
+#~ msgid "Record Source"
+#~ msgstr "Източник за запис"
+
+#~ msgid "Microphone"
+#~ msgstr "Микрофон"
+
+#~ msgid "Line In"
+#~ msgstr "Вход"
+
+#~ msgid "Internal CD"
+#~ msgstr "Вътрешно CD"
+
+#~ msgid "SPDIF In"
+#~ msgstr "Вход SPDIF"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "Вход AUX 1"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "Вход AUX 2"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Обратна връзка на кодека"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "Обратна връзка на SunVTS"
+
+#~ msgid "Volume"
+#~ msgstr "Сила на звука"
+
+#~ msgid "Gain"
+#~ msgstr "Усилване"
+
+#~ msgid "Monitor"
+#~ msgstr "Монитор"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Вграден високоговорител"
+
+#~ msgid "Headphone"
+#~ msgstr "Слушалки"
+
+#~ msgid "Line Out"
+#~ msgstr "Изход"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "Изход SPDIF"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "Изход AUX 1"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "Изход AUX 2"

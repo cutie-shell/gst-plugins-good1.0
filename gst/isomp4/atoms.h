@@ -563,6 +563,14 @@ typedef struct _AtomCTTS
   gboolean do_pts;
 } AtomCTTS;
 
+typedef struct _AtomSVMI
+{
+  AtomFull header;
+
+  guint8 stereoscopic_composition_type;
+  gboolean is_left_first;
+} AtomSVMI;
+
 typedef struct _AtomSTBL
 {
   Atom header;
@@ -574,6 +582,8 @@ typedef struct _AtomSTBL
   AtomSTSZ stsz;
   /* NULL if not present */
   AtomCTTS *ctts;
+  /* NULL if not present */
+  AtomSVMI *svmi;
 
   AtomSTCO64 stco64;
 } AtomSTBL;
@@ -923,10 +933,13 @@ void       atom_trak_set_elst_entry    (AtomTRAK * trak, gint index, guint32 dur
 void       atom_trak_edts_clear        (AtomTRAK * trak);
 guint32    atom_trak_get_timescale     (AtomTRAK *trak);
 guint32    atom_trak_get_id            (AtomTRAK * trak);
+void       atom_trak_set_constant_size_samples (AtomTRAK * trak, guint32 sample_size);
 void       atom_stbl_add_samples       (AtomSTBL * stbl, guint32 nsamples,
                                         guint32 delta, guint32 size,
                                         guint64 chunk_offset, gboolean sync,
                                         gint64 pts_offset);
+void       atom_stsc_add_new_entry     (AtomSTSC * stsc,
+                                        guint32 first_chunk, guint32 nsamples);
 
 AtomMOOV*  atom_moov_new               (AtomsContext *context);
 void       atom_moov_free              (AtomMOOV *moov);
@@ -957,6 +970,9 @@ guint64    atom_stsz_copy_data         (AtomSTSZ *atom, guint8 **buffer,
                                         guint64 *size, guint64* offset);
 guint64    atom_ctts_copy_data         (AtomCTTS *atom, guint8 **buffer,
                                         guint64 *size, guint64* offset);
+guint64    atom_svmi_copy_data         (AtomSVMI *atom, guint8 **buffer,
+                                        guint64 *size, guint64* offset);
+AtomSVMI * atom_svmi_new (guint8 stereoscopic_composition_type, gboolean is_left_first);
 guint64    atom_stco64_copy_data       (AtomSTCO64 *atom, guint8 **buffer,
                                         guint64 *size, guint64* offset);
 AtomMOOF*  atom_moof_new               (AtomsContext *context, guint32 sequence_number);
@@ -1036,7 +1052,7 @@ SampleTableEntryTX3G * atom_trak_set_subtitle_type (AtomTRAK * trak, AtomsContex
                                SubtitleSampleEntry * entry);
 
 SampleTableEntryTMCD *
-atom_trak_set_timecode_type (AtomTRAK * trak, AtomsContext * context, GstVideoTimeCode * tc);
+atom_trak_set_timecode_type (AtomTRAK * trak, AtomsContext * context, guint trak_timescale, GstVideoTimeCode * tc);
 
 void atom_trak_update_bitrates (AtomTRAK * trak, guint32 avg_bitrate,
                                 guint32 max_bitrate);

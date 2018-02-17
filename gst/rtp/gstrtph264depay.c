@@ -137,7 +137,7 @@ gst_rtp_h264_depay_init (GstRtpH264Depay * rtph264depay)
 }
 
 static void
-gst_rtp_h264_depay_reset (GstRtpH264Depay * rtph264depay)
+gst_rtp_h264_depay_reset (GstRtpH264Depay * rtph264depay, gboolean hard)
 {
   gst_adapter_clear (rtph264depay->adapter);
   rtph264depay->wait_start = TRUE;
@@ -149,6 +149,14 @@ gst_rtp_h264_depay_reset (GstRtpH264Depay * rtph264depay)
   rtph264depay->new_codec_data = FALSE;
   g_ptr_array_set_size (rtph264depay->sps, 0);
   g_ptr_array_set_size (rtph264depay->pps, 0);
+
+  if (hard) {
+    if (rtph264depay->allocator != NULL) {
+      gst_object_unref (rtph264depay->allocator);
+      rtph264depay->allocator = NULL;
+    }
+    gst_allocation_params_init (&rtph264depay->params);
+  }
 }
 
 static void
@@ -261,13 +269,52 @@ parse_pps (GstMapInfo * map, guint32 * sps_id, guint32 * pps_id)
   return TRUE;
 }
 
+static gboolean
+gst_rtp_h264_depay_set_output_caps (GstRtpH264Depay * rtph264depay,
+    GstCaps * caps)
+{
+  GstAllocationParams params;
+  GstAllocator *allocator = NULL;
+  GstPad *srcpad;
+  gboolean res;
+
+  gst_allocation_params_init (&params);
+
+  srcpad = GST_RTP_BASE_DEPAYLOAD_SRCPAD (rtph264depay);
+
+  res = gst_pad_set_caps (srcpad, caps);
+
+  if (res) {
+    GstQuery *query;
+
+    query = gst_query_new_allocation (caps, TRUE);
+    if (!gst_pad_peer_query (srcpad, query)) {
+      GST_DEBUG_OBJECT (rtph264depay, "downstream ALLOCATION query failed");
+    }
+
+    if (gst_query_get_n_allocation_params (query) > 0) {
+      gst_query_parse_nth_allocation_param (query, 0, &allocator, &params);
+    }
+
+    gst_query_unref (query);
+  }
+
+  if (rtph264depay->allocator)
+    gst_object_unref (rtph264depay->allocator);
+
+  rtph264depay->allocator = allocator;
+  rtph264depay->params = params;
+
+  return res;
+}
 
 static gboolean
 gst_rtp_h264_set_src_caps (GstRtpH264Depay * rtph264depay)
 {
-  gboolean res;
+  gboolean res = TRUE;
   GstCaps *srccaps;
   GstCaps *old_caps;
+  GstPad *srcpad;
 
   if (!rtph264depay->byte_stream &&
       (!rtph264depay->new_codec_data ||
@@ -396,46 +443,12 @@ gst_rtp_h264_set_src_caps (GstRtpH264Depay * rtph264depay)
     }
   }
 
+  srcpad = GST_RTP_BASE_DEPAYLOAD_SRCPAD (rtph264depay);
 
-  old_caps =
-      gst_pad_get_current_caps (GST_RTP_BASE_DEPAYLOAD_SRCPAD (rtph264depay));
+  old_caps = gst_pad_get_current_caps (srcpad);
 
-  if (old_caps != NULL) {
-    /* Only update the caps if they are not equal. For
-     * AVC we don't update caps if only the codec_data
-     * changes. This is the same behaviour as in h264parse
-     */
-    if (rtph264depay->byte_stream) {
-      if (!gst_caps_is_equal (srccaps, old_caps))
-        res =
-            gst_pad_set_caps (GST_RTP_BASE_DEPAYLOAD_SRCPAD (rtph264depay),
-            srccaps);
-      else
-        res = TRUE;
-    } else {
-      GstCaps *tmp_caps = gst_caps_copy (srccaps);
-      GstStructure *old_s, *tmp_s;
-
-      old_s = gst_caps_get_structure (old_caps, 0);
-      tmp_s = gst_caps_get_structure (tmp_caps, 0);
-      if (gst_structure_has_field (old_s, "codec_data"))
-        gst_structure_set_value (tmp_s, "codec_data",
-            gst_structure_get_value (old_s, "codec_data"));
-
-      if (!gst_caps_is_equal (old_caps, tmp_caps))
-        res =
-            gst_pad_set_caps (GST_RTP_BASE_DEPAYLOAD_SRCPAD (rtph264depay),
-            srccaps);
-      else
-        res = TRUE;
-
-      gst_caps_unref (tmp_caps);
-    }
-    gst_caps_unref (old_caps);
-  } else {
-    res =
-        gst_pad_set_caps (GST_RTP_BASE_DEPAYLOAD_SRCPAD (rtph264depay),
-        srccaps);
+  if (old_caps == NULL || !gst_caps_is_equal (srccaps, old_caps)) {
+    res = gst_rtp_h264_depay_set_output_caps (rtph264depay, srccaps);
   }
 
   gst_caps_unref (srccaps);
@@ -734,16 +747,70 @@ incomplete_caps:
 }
 
 static GstBuffer *
+gst_rtp_h264_depay_allocate_output_buffer (GstRtpH264Depay * depay, gsize size)
+{
+  GstBuffer *buffer = NULL;
+
+  g_return_val_if_fail (size > 0, NULL);
+
+  GST_LOG_OBJECT (depay, "want output buffer of %u bytes", (guint) size);
+
+  buffer = gst_buffer_new_allocate (depay->allocator, size, &depay->params);
+  if (buffer == NULL) {
+    GST_INFO_OBJECT (depay, "couldn't allocate output buffer");
+    buffer = gst_buffer_new_allocate (NULL, size, NULL);
+  }
+
+  return buffer;
+}
+
+static GstBuffer *
 gst_rtp_h264_complete_au (GstRtpH264Depay * rtph264depay,
     GstClockTime * out_timestamp, gboolean * out_keyframe)
 {
-  guint outsize;
+  GstBufferList *list;
+  GstMapInfo outmap;
   GstBuffer *outbuf;
+  guint outsize, offset = 0;
+  gint b, n_bufs, m, n_mem;
 
   /* we had a picture in the adapter and we completed it */
   GST_DEBUG_OBJECT (rtph264depay, "taking completed AU");
   outsize = gst_adapter_available (rtph264depay->picture_adapter);
-  outbuf = gst_adapter_take_buffer (rtph264depay->picture_adapter, outsize);
+
+  outbuf = gst_rtp_h264_depay_allocate_output_buffer (rtph264depay, outsize);
+
+  if (outbuf == NULL)
+    return NULL;
+
+  if (!gst_buffer_map (outbuf, &outmap, GST_MAP_WRITE))
+    return NULL;
+
+  list = gst_adapter_take_buffer_list (rtph264depay->picture_adapter, outsize);
+
+  n_bufs = gst_buffer_list_length (list);
+  for (b = 0; b < n_bufs; ++b) {
+    GstBuffer *buf = gst_buffer_list_get (list, b);
+
+    n_mem = gst_buffer_n_memory (buf);
+    for (m = 0; m < n_mem; ++m) {
+      GstMemory *mem = gst_buffer_peek_memory (buf, m);
+      gsize mem_size = gst_memory_get_sizes (mem, NULL, NULL);
+      GstMapInfo mem_map;
+
+      if (gst_memory_map (mem, &mem_map, GST_MAP_READ)) {
+        memcpy (outmap.data + offset, mem_map.data, mem_size);
+        gst_memory_unmap (mem, &mem_map);
+      } else {
+        memset (outmap.data + offset, 0, mem_size);
+      }
+      offset += mem_size;
+    }
+
+    gst_rtp_copy_video_meta (rtph264depay, outbuf, buf);
+  }
+  gst_buffer_list_unref (list);
+  gst_buffer_unmap (outbuf, &outmap);
 
   *out_timestamp = rtph264depay->last_ts;
   *out_keyframe = rtph264depay->last_keyframe;
@@ -758,7 +825,7 @@ gst_rtp_h264_complete_au (GstRtpH264Depay * rtph264depay,
  * so downstream waiting for keyframe can pick up at SPS/PPS/IDR */
 #define NAL_TYPE_IS_KEY(nt) (((nt) == 5) || ((nt) == 7) || ((nt) == 8))
 
-static GstBuffer *
+static void
 gst_rtp_h264_depay_handle_nal (GstRtpH264Depay * rtph264depay, GstBuffer * nal,
     GstClockTime in_timestamp, gboolean marker)
 {
@@ -788,7 +855,7 @@ gst_rtp_h264_depay_handle_nal (GstRtpH264Depay * rtph264depay, GstBuffer * nal,
               4, gst_buffer_get_size (nal) - 4));
       gst_buffer_unmap (nal, &map);
       gst_buffer_unref (nal);
-      return NULL;
+      return;
     } else if (rtph264depay->sps->len == 0 || rtph264depay->pps->len == 0) {
       /* Down push down any buffer in non-bytestream mode if the SPS/PPS haven't
        * go through yet
@@ -799,7 +866,7 @@ gst_rtp_h264_depay_handle_nal (GstRtpH264Depay * rtph264depay, GstBuffer * nal,
                   "all-headers", G_TYPE_BOOLEAN, TRUE, NULL)));
       gst_buffer_unmap (nal, &map);
       gst_buffer_unref (nal);
-      return NULL;
+      return;
     }
 
     if (rtph264depay->new_codec_data &&
@@ -863,17 +930,14 @@ gst_rtp_h264_depay_handle_nal (GstRtpH264Depay * rtph264depay, GstBuffer * nal,
     /* prepend codec_data */
     if (rtph264depay->codec_data) {
       GST_DEBUG_OBJECT (depayload, "prepending codec_data");
-      gst_rtp_copy_meta (GST_ELEMENT_CAST (rtph264depay),
-          rtph264depay->codec_data, outbuf,
-          g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
+      gst_rtp_copy_video_meta (rtph264depay, rtph264depay->codec_data, outbuf);
       outbuf = gst_buffer_append (rtph264depay->codec_data, outbuf);
       rtph264depay->codec_data = NULL;
       out_keyframe = TRUE;
     }
     outbuf = gst_buffer_make_writable (outbuf);
 
-    gst_rtp_drop_meta (GST_ELEMENT_CAST (rtph264depay), outbuf,
-        g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
+    gst_rtp_drop_non_video_meta (rtph264depay, outbuf);
 
     GST_BUFFER_PTS (outbuf) = out_timestamp;
 
@@ -881,9 +945,11 @@ gst_rtp_h264_depay_handle_nal (GstRtpH264Depay * rtph264depay, GstBuffer * nal,
       GST_BUFFER_FLAG_UNSET (outbuf, GST_BUFFER_FLAG_DELTA_UNIT);
     else
       GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_DELTA_UNIT);
+
+    gst_rtp_base_depayload_push (depayload, outbuf);
   }
 
-  return outbuf;
+  return;
 
   /* ERRORS */
 short_nal:
@@ -891,13 +957,12 @@ short_nal:
     GST_WARNING_OBJECT (depayload, "dropping short NAL");
     gst_buffer_unmap (nal, &map);
     gst_buffer_unref (nal);
-    return NULL;
+    return;
   }
 }
 
-static GstBuffer *
-gst_rtp_h264_push_fragmentation_unit (GstRtpH264Depay * rtph264depay,
-    gboolean send)
+static void
+gst_rtp_h264_finish_fragmentation_unit (GstRtpH264Depay * rtph264depay)
 {
   guint outsize;
   GstMapInfo map;
@@ -922,14 +987,8 @@ gst_rtp_h264_push_fragmentation_unit (GstRtpH264Depay * rtph264depay,
 
   rtph264depay->current_fu_type = 0;
 
-  outbuf = gst_rtp_h264_depay_handle_nal (rtph264depay, outbuf,
+  gst_rtp_h264_depay_handle_nal (rtph264depay, outbuf,
       rtph264depay->fu_timestamp, rtph264depay->fu_marker);
-
-  if (send && outbuf) {
-    gst_rtp_base_depayload_push (GST_RTP_BASE_DEPAYLOAD (rtph264depay), outbuf);
-    outbuf = NULL;
-  }
-  return outbuf;
 }
 
 static GstBuffer *
@@ -991,7 +1050,7 @@ gst_rtp_h264_depay_process (GstRTPBaseDepayload * depayload, GstRTPBuffer * rtp)
      * when the FU ended) and send out what we gathered thusfar */
     if (G_UNLIKELY (rtph264depay->current_fu_type != 0 &&
             nal_unit_type != rtph264depay->current_fu_type))
-      gst_rtp_h264_push_fragmentation_unit (rtph264depay, TRUE);
+      gst_rtp_h264_finish_fragmentation_unit (rtph264depay);
 
     switch (nal_unit_type) {
       case 0:
@@ -1046,22 +1105,14 @@ gst_rtp_h264_depay_process (GstRTPBaseDepayload * depayload, GstRTPBuffer * rtp)
           memcpy (map.data + sizeof (sync_bytes), payload, nalu_size);
           gst_buffer_unmap (outbuf, &map);
 
-          gst_rtp_copy_meta (GST_ELEMENT_CAST (rtph264depay), outbuf,
-              rtp->buffer, g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
+          gst_rtp_copy_video_meta (rtph264depay, outbuf, rtp->buffer);
 
-          outbuf =
-              gst_rtp_h264_depay_handle_nal (rtph264depay, outbuf, timestamp,
+          gst_rtp_h264_depay_handle_nal (rtph264depay, outbuf, timestamp,
               marker);
-          if (outbuf)
-            gst_adapter_push (rtph264depay->adapter, outbuf);
 
           payload += nalu_size;
           payload_len -= nalu_size;
         }
-
-        outsize = gst_adapter_available (rtph264depay->adapter);
-        if (outsize > 0)
-          outbuf = gst_adapter_take_buffer (rtph264depay->adapter, outsize);
         break;
       }
       case 26:
@@ -1104,7 +1155,7 @@ gst_rtp_h264_depay_process (GstRTPBaseDepayload * depayload, GstRTPBuffer * rtp)
            * Assume that the remote payloader is buggy (doesn't set the end
            * bit) and send out what we've gathered thusfar */
           if (G_UNLIKELY (rtph264depay->current_fu_type != 0))
-            gst_rtp_h264_push_fragmentation_unit (rtph264depay, TRUE);
+            gst_rtp_h264_finish_fragmentation_unit (rtph264depay);
 
           rtph264depay->current_fu_type = nal_unit_type;
           rtph264depay->fu_timestamp = timestamp;
@@ -1128,8 +1179,7 @@ gst_rtp_h264_depay_process (GstRTPBaseDepayload * depayload, GstRTPBuffer * rtp)
           map.data[sizeof (sync_bytes)] = nal_header;
           gst_buffer_unmap (outbuf, &map);
 
-          gst_rtp_copy_meta (GST_ELEMENT_CAST (rtph264depay), outbuf,
-              rtp->buffer, g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
+          gst_rtp_copy_video_meta (rtph264depay, outbuf, rtp->buffer);
 
           GST_DEBUG_OBJECT (rtph264depay, "queueing %d bytes", outsize);
 
@@ -1144,8 +1194,7 @@ gst_rtp_h264_depay_process (GstRTPBaseDepayload * depayload, GstRTPBuffer * rtp)
           outbuf = gst_buffer_new_and_alloc (outsize);
           gst_buffer_fill (outbuf, 0, payload, outsize);
 
-          gst_rtp_copy_meta (GST_ELEMENT_CAST (rtph264depay), outbuf,
-              rtp->buffer, g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
+          gst_rtp_copy_video_meta (rtph264depay, outbuf, rtp->buffer);
 
           GST_DEBUG_OBJECT (rtph264depay, "queueing %d bytes", outsize);
 
@@ -1158,7 +1207,7 @@ gst_rtp_h264_depay_process (GstRTPBaseDepayload * depayload, GstRTPBuffer * rtp)
 
         /* if NAL unit ends, flush the adapter */
         if (E)
-          outbuf = gst_rtp_h264_push_fragmentation_unit (rtph264depay, FALSE);
+          gst_rtp_h264_finish_fragmentation_unit (rtph264depay);
         break;
       }
       default:
@@ -1182,17 +1231,15 @@ gst_rtp_h264_depay_process (GstRTPBaseDepayload * depayload, GstRTPBuffer * rtp)
         memcpy (map.data + sizeof (sync_bytes), payload, nalu_size);
         gst_buffer_unmap (outbuf, &map);
 
-        gst_rtp_copy_meta (GST_ELEMENT_CAST (rtph264depay), outbuf,
-            rtp->buffer, g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
+        gst_rtp_copy_video_meta (rtph264depay, outbuf, rtp->buffer);
 
-        outbuf = gst_rtp_h264_depay_handle_nal (rtph264depay, outbuf, timestamp,
-            marker);
+        gst_rtp_h264_depay_handle_nal (rtph264depay, outbuf, timestamp, marker);
         break;
       }
     }
   }
 
-  return outbuf;
+  return NULL;
 
   /* ERRORS */
 empty_packet:
@@ -1228,7 +1275,7 @@ gst_rtp_h264_depay_handle_event (GstRTPBaseDepayload * depay, GstEvent * event)
 
   switch (GST_EVENT_TYPE (event)) {
     case GST_EVENT_FLUSH_STOP:
-      gst_rtp_h264_depay_reset (rtph264depay);
+      gst_rtp_h264_depay_reset (rtph264depay, FALSE);
       break;
     default:
       break;
@@ -1251,7 +1298,7 @@ gst_rtp_h264_depay_change_state (GstElement * element,
     case GST_STATE_CHANGE_NULL_TO_READY:
       break;
     case GST_STATE_CHANGE_READY_TO_PAUSED:
-      gst_rtp_h264_depay_reset (rtph264depay);
+      gst_rtp_h264_depay_reset (rtph264depay, TRUE);
       break;
     default:
       break;
@@ -1260,6 +1307,9 @@ gst_rtp_h264_depay_change_state (GstElement * element,
   ret = GST_ELEMENT_CLASS (parent_class)->change_state (element, transition);
 
   switch (transition) {
+    case GST_STATE_CHANGE_PAUSED_TO_READY:
+      gst_rtp_h264_depay_reset (rtph264depay, TRUE);
+      break;
     case GST_STATE_CHANGE_READY_TO_NULL:
       break;
     default:

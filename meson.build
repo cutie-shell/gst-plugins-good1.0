@@ -1,16 +1,16 @@
-project('gst-plugins-good', 'c', 'cpp',
-  version : '1.12.4',
+project('gst-plugins-good', 'c',
+  version : '1.13.1',
   meson_version : '>= 0.36.0',
   default_options : [ 'warning_level=1',
                       'buildtype=debugoptimized' ])
 
 gst_version = meson.project_version()
 version_arr = gst_version.split('.')
-gst_version_major = version_arr[0]
-gst_version_minor = version_arr[1]
-gst_version_micro = version_arr[2]
-if version_arr.length() == 4
-  gst_version_nano = version_arr[3]
+gst_version_major = version_arr[0].to_int()
+gst_version_minor = version_arr[1].to_int()
+gst_version_micro = version_arr[2].to_int()
+ if version_arr.length() == 4
+  gst_version_nano = version_arr[3].to_int()
 else
   gst_version_nano = 0
 endif
@@ -40,6 +40,16 @@ if cc.get_id() == 'msvc'
   noseh_link_args = ['/SAFESEH:NO']
 else
   noseh_link_args = []
+endif
+
+# Symbol visibility
+if cc.has_argument('-fvisibility=hidden')
+  add_project_arguments('-fvisibility=hidden', language: 'c')
+endif
+
+# Disable strict aliasing
+if cc.has_argument('-fno-strict-aliasing')
+  add_project_arguments('-fno-strict-aliasing', language: 'c')
 endif
 
 cdata = configuration_data()
@@ -100,16 +110,11 @@ check_functions = [
   ['HAVE_ISINF', 'isinf', '#include<math.h>'],
 # check token HAVE_LIBV4L2
   ['HAVE_MMAP', 'mmap', '#include<sys/mman.h>'],
-# check token HAVE_OSS
-# check token HAVE_OSS4
-# check token HAVE_OSS_INCLUDE_IN_MACHINE
-# check token HAVE_OSS_INCLUDE_IN_ROOT
-# check token HAVE_OSS_INCLUDE_IN_SYS
+  ['HAVE_MMAP64', 'mmap64', '#include<sys/mman.h>'],
 # check token HAVE_OSX_AUDIO
 # check token HAVE_OSX_VIDEO
 # check token HAVE_RDTSC
   ['HAVE_SINH', 'sinh', '#include<math.h>'],
-# check token HAVE_SUNAUDIO
 # check token HAVE_WAVEFORM
 ]
 
@@ -126,6 +131,7 @@ cdata.set('SIZEOF_INT', cc.sizeof('int'))
 cdata.set('SIZEOF_LONG', cc.sizeof('long'))
 cdata.set('SIZEOF_SHORT', cc.sizeof('short'))
 cdata.set('SIZEOF_VOIDP', cc.sizeof('void*'))
+cdata.set('SIZEOF_OFF_T', cc.sizeof('off_t'))
 
 # Here be fixmes.
 # FIXME: check if this is correct
@@ -136,9 +142,20 @@ cdata.set('PACKAGE_VERSION', '"@0@"'.format(gst_version))
 cdata.set('GST_LICENSE', '"LGPL"')
 cdata.set('PACKAGE', '"gst-plugins-good"')
 cdata.set('GETTEXT_PACKAGE', '"gst-plugins-good-1.0"')
-cdata.set('PACKAGE_NAME', '"GStreamer Good Plug-ins"')
-cdata.set('GST_PACKAGE_NAME', '"GStreamer Good Plug-ins"')
-cdata.set('GST_PACKAGE_ORIGIN', '"Unknown package origin"') # FIXME: make configurable
+
+# GStreamer package name and origin url
+gst_package_name = get_option('with-package-name')
+if gst_package_name == ''
+  if gst_version_nano == 0
+    gst_package_name = 'GStreamer Good Plug-ins source release'
+  elif gst_version_nano == 1
+    gst_package_name = 'GStreamer Good Plug-ins git'
+  else
+    gst_package_name = 'GStreamer Good Plug-ins prerelease'
+  endif
+endif
+cdata.set_quoted('GST_PACKAGE_NAME', gst_package_name)
+cdata.set_quoted('GST_PACKAGE_ORIGIN', get_option('with-package-origin'))
 
 # Mandatory GST deps
 gst_dep = dependency('gstreamer-1.0', version : gst_req,
@@ -177,16 +194,49 @@ gsttag_dep = dependency('gstreamer-tag-1.0', version : gst_req,
 gstvideo_dep = dependency('gstreamer-video-1.0', version : gst_req,
     fallback : ['gst-plugins-base', 'video_dep'])
 
-zlib_dep = dependency('zlib')
-bz2lib = cc.find_library('bz2', required : false)
-gio_dep = dependency('gio-2.0', version : glib_req)
-glib_deps = [dependency('glib-2.0', version : glib_req),
-	     dependency('gobject-2.0', version : glib_req)]
+# GStreamer OpenGL
+gstgl_dep = dependency('gstreamer-gl-1.0', version : gst_req,
+    fallback : ['gst-plugins-base', 'gstgl_dep'], required: false)
 
-cdata.set('HAVE_ZLIB', 1)
-if bz2lib.found()
-  cdata.set('HAVE_BZ2', 1)
+build_gstgl = gstgl_dep.found() # FIXME: add option?
+
+if build_gstgl
+  if gstgl_dep.type_name() == 'pkgconfig'
+    gst_gl_apis = gstgl_dep.get_pkgconfig_variable('gl_apis').split()
+    gst_gl_winsys = gstgl_dep.get_pkgconfig_variable('gl_winsys').split()
+    gst_gl_platforms = gstgl_dep.get_pkgconfig_variable('gl_platforms').split()
+  else
+    gstbase = subproject('gst-plugins-base')
+    gst_gl_apis = gstbase.get_variable('enabled_gl_apis')
+    gst_gl_winsys = gstbase.get_variable('enabled_gl_winsys')
+    gst_gl_platforms = gstbase.get_variable('enabled_gl_platforms')
+  endif
+
+  message('GStreamer OpenGL window systems: @0@'.format(' '.join(gst_gl_winsys)))
+  message('GStreamer OpenGL platforms: @0@'.format(' '.join(gst_gl_platforms)))
+  message('GStreamer OpenGL apis: @0@'.format(' '.join(gst_gl_apis)))
+
+  foreach ws : ['x11', 'wayland', 'android', 'cocoa', 'eagl', 'win32', 'dispmanx', 'viv_fb']
+    set_variable('gst_gl_have_window_@0@'.format(ws), gst_gl_winsys.contains(ws))
+  endforeach
+
+  foreach p : ['glx', 'egl', 'cgl', 'eagl', 'wgl']
+    set_variable('gst_gl_have_platform_@0@'.format(p), gst_gl_platforms.contains(p))
+  endforeach
+
+  foreach api : ['opengl', 'gles2']
+    set_variable('gst_gl_have_api_@0@'.format(api), gst_gl_apis.contains(api))
+  endforeach
 endif
+
+zlib_dep = dependency('zlib', required : false)
+bz2lib = cc.find_library('bz2', required : false)
+glib_deps = [dependency('glib-2.0', version : glib_req, fallback: ['glib', 'libglib_dep']),
+             dependency('gobject-2.0', fallback: ['glib', 'libgobject_dep'])]
+gio_dep = dependency('gio-2.0', fallback: ['glib', 'libgio_dep'])
+
+cdata.set('HAVE_ZLIB', zlib_dep.found())
+cdata.set('HAVE_BZ2', bz2lib.found())
 
 # Check all of the things.
 # TODO: None of these are actually used yet because
@@ -268,12 +318,14 @@ subdir('gst')
 subdir('sys')
 subdir('ext')
 subdir('tests')
-subdir('po')
 subdir('pkgconfig')
 
-configure_file(input : 'config.h.meson',
-  output : 'config.h',
-  configuration : cdata)
+# xgettext is optional (on Windows for instance)
+if find_program('xgettext', required : false).found()
+  subdir('po')
+endif
 
-python3 = find_program('python3')
+configure_file(output : 'config.h', configuration : cdata)
+
+python3 = import('python3').find_python()
 run_command(python3, '-c', 'import shutil; shutil.copy("hooks/pre-commit.hook", ".git/hooks/pre-commit")')

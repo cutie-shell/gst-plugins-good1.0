@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-12-07 19:21+0200\n"
+"POT-Creation-Date: 2018-02-15 17:06+0000\n"
 "PO-Revision-Date: 2017-05-05 06:52+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
@@ -27,6 +27,16 @@ msgstr "Không tìm thấy máy phục vụ Jack"
 
 msgid "Failed to decode JPEG image"
 msgstr "Gặp lỗi khi giải mã ảnh JPEG"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -57,6 +67,9 @@ msgstr "Máy chủ gửi dữ liệu sai."
 
 msgid "Server does not support seeking."
 msgstr "Máy phục vụ không hỗ trợ di chuyển vị trí đọc."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr ""
@@ -154,60 +167,6 @@ msgstr "Không tìm thấy thiết bị CoreAudio"
 msgid "CoreAudio device could not be opened"
 msgstr "Không thể mở thiết bị CoreAudio"
 
-msgid "Record Source"
-msgstr "Ghi lưu nguồn"
-
-msgid "Microphone"
-msgstr "Micrô"
-
-msgid "Line In"
-msgstr "Đầu vào"
-
-msgid "Internal CD"
-msgstr "CD ở trong"
-
-msgid "SPDIF In"
-msgstr "SPDIF Vào"
-
-msgid "AUX 1 In"
-msgstr "AUX 1 Vào"
-
-msgid "AUX 2 In"
-msgstr "AUX 2 Vào"
-
-msgid "Codec Loopback"
-msgstr "Vòng ngược Codec"
-
-msgid "SunVTS Loopback"
-msgstr "Vòng ngược SunVTS"
-
-msgid "Volume"
-msgstr "Âm lượng"
-
-msgid "Gain"
-msgstr "Khuếch đại"
-
-msgid "Monitor"
-msgstr "Màn hình"
-
-msgid "Built-in Speaker"
-msgstr "Loa tích hợp"
-
-msgid "Headphone"
-msgstr "Tai nghe"
-
-msgid "Line Out"
-msgstr "Đầu ra"
-
-msgid "SPDIF Out"
-msgstr "SPDIF Ra"
-
-msgid "AUX 1 Out"
-msgstr "AUX 1 Ra"
-
-msgid "AUX 2 Out"
-msgstr "AUX 2 Ra"
-
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr "Gặp lỗi khi đọc %d byte từ thiết bị “%s”."
@@ -231,6 +190,14 @@ msgid "The driver of device '%s' does not support any known IO method."
 msgstr ""
 "Trình điều khiển của thiết bị “%s” không hỗ trợ phương pháp VR đã biết nào."
 
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Bộ mã hóa trên thiết bị “%s” không hỗ trợ định dạng đầu vào"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
 #, c-format
 msgid "Device '%s' is busy"
 msgstr "Thiết bị “%s” đang bận"
@@ -246,6 +213,14 @@ msgstr "Thiết bị “%s” không thể chụp ở định dạng đã cho"
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr "Thiết bị “%s” không hỗ trợ chức năng “non-contiguous planes”"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Thiết bị “%s” không hỗ trợ chức năng quay video"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Thiết bị “%s” không hỗ trợ chức năng quay video"
 
 #, c-format
 msgid "Could not get parameters on device '%s'"
@@ -328,6 +303,10 @@ msgstr "Gặp lỗi khi bắt đầu tiến trình giải mã."
 
 msgid "Failed to process frame."
 msgstr "Gặp lỗi khi xử lý khung."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Gặp lỗi khi bắt đầu tiến trình giải mã."
 
 #, c-format
 msgid ""
@@ -434,14 +413,65 @@ msgstr "Chưa hỗ trợ khả năng thay đổi độ phân giải trong khi ch
 msgid "Cannot operate without a clock"
 msgstr "Không thể thao tác khi không có đồng hồ"
 
+#~ msgid "Record Source"
+#~ msgstr "Ghi lưu nguồn"
+
+#~ msgid "Microphone"
+#~ msgstr "Micrô"
+
+#~ msgid "Line In"
+#~ msgstr "Đầu vào"
+
+#~ msgid "Internal CD"
+#~ msgstr "CD ở trong"
+
+#~ msgid "SPDIF In"
+#~ msgstr "SPDIF Vào"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "AUX 1 Vào"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "AUX 2 Vào"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Vòng ngược Codec"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "Vòng ngược SunVTS"
+
+#~ msgid "Volume"
+#~ msgstr "Âm lượng"
+
+#~ msgid "Gain"
+#~ msgstr "Khuếch đại"
+
+#~ msgid "Monitor"
+#~ msgstr "Màn hình"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Loa tích hợp"
+
+#~ msgid "Headphone"
+#~ msgstr "Tai nghe"
+
+#~ msgid "Line Out"
+#~ msgstr "Đầu ra"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "SPDIF Ra"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "AUX 1 Ra"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "AUX 2 Ra"
+
 #~ msgid "Internal data stream error."
 #~ msgstr "Lỗi luồng dữ liệu nội bộ."
 
 #~ msgid "Internal data flow error."
 #~ msgstr "Lỗi luồng dữ liệu nội bộ."
-
-#~ msgid "Device '%s' does not support video capture"
-#~ msgstr "Thiết bị “%s” không hỗ trợ chức năng quay video"
 
 #~ msgid "Could not establish connection to sound server"
 #~ msgstr "Không thể thiết lập sự kết nối tới máy phục vụ âm thanh"

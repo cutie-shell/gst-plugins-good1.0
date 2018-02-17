@@ -8,7 +8,7 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-splitfilesrc.html" title="splitfilesrc">
 <link rel="next" href="gst-plugins-good-plugins-splitmuxsrc.html" title="splitmuxsrc">
-<meta name="generator" content="GTK-Doc V1.26 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.27 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -93,6 +93,16 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--max-size-timecode" title="The “max-size-timecode” property">max-size-timecode</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--alignment-threshold" title="The “alignment-threshold” property">alignment-threshold</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--use-robust-muxing" title="The “use-robust-muxing” property">use-robust-muxing</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -115,6 +125,11 @@
 <td class="signal_type">
 <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="returnvalue">gchar</span></a>*</td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink-format-location-full" title="The “format-location-full” signal">format-location-full</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type"><span class="returnvalue">void</span></td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink-split-now" title="The “split-now” signal">split-now</a></td>
 <td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
 </tr>
 </tbody>
@@ -165,7 +180,7 @@ stream contents, and the video stream must contain closed GOPs for the output
 file parts to be played individually correctly. In the absence of a video
 stream, the first available stream is used as reference for synchronization.</p>
 <div class="refsect2">
-<a name="id-1.2.240.9.6"></a><h3>Example pipelines</h3>
+<a name="id-1.2.248.9.6"></a><h3>Example pipelines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -184,7 +199,7 @@ and 1MB maximum size.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.240.9.7.1"></a><h3>Element Information</h3>
+<a name="id-1.2.248.9.7.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -210,7 +225,7 @@ and 1MB maximum size.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.240.9.7.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.248.9.7.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -369,6 +384,22 @@ and 1MB maximum size.
 <p>Flags: Read / Write</p>
 <p>Default value: NULL</p>
 </div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink--alignment-threshold"></a><h3>The <code class="literal">“alignment-threshold”</code> property</h3>
+<pre class="programlisting">  “alignment-threshold”      <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
+<p>Allow non-reference streams to be that many ns before the reference stream.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink--use-robust-muxing"></a><h3>The <code class="literal">“use-robust-muxing”</code> property</h3>
+<pre class="programlisting">  “use-robust-muxing”        <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<p>Check if muxers support robust muxing via the reserved-max-duration and reserved-duration-remaining properties and use them if so. (Only present on qtmux and mp4mux for now). splitmuxsink may then also  create new fragments if the reserved header space is about to overflow. Note this does not set reserved-moov-update-period - apps should do that manually.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: FALSE</p>
+</div>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-splitmuxsink.signal-details"></a><h2>Signal Details</h2>
@@ -458,9 +489,41 @@ from the reference stream in the new file</p></td>
 </div>
 <p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
 </div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink-split-now"></a><h3>The <code class="literal">“split-now”</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+user_function (<a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink"><span class="type">GstSplitMuxSink</span></a> *splitmux,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
+<p>When called by the user, this action signal splits the video file (and begins a new one) immediately.</p>
+<div class="refsect3">
+<a name="GstSplitMuxSink-split-now.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>splitmux</p></td>
+<td class="parameter_description"><p>the <a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink"><span class="type">GstSplitMuxSink</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+<p class="since">Since: 1.14</p>
+</div>
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.26</div>
+<hr>Generated by GTK-Doc V1.27</div>
 </body>
 </html>

@@ -184,8 +184,8 @@ am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 libgstmultifile_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
-	$(CCLD) $(libgstmultifile_la_CFLAGS) $(CFLAGS) \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(libgstmultifile_la_CFLAGS) $(CFLAGS) \
 	$(libgstmultifile_la_LDFLAGS) $(LDFLAGS) -o $@
 PROGRAMS = $(noinst_PROGRAMS)
 am_test_splitmux_part_reader_OBJECTS =  \
@@ -321,6 +321,7 @@ ERROR_CFLAGS = @ERROR_CFLAGS@
 ERROR_CXXFLAGS = @ERROR_CXXFLAGS@
 ERROR_OBJCFLAGS = @ERROR_OBJCFLAGS@
 EXEEXT = @EXEEXT@
+EXTRA_CFLAGS = @EXTRA_CFLAGS@
 FFLAGS = @FFLAGS@
 FGREP = @FGREP@
 FLAC_CFLAGS = @FLAC_CFLAGS@
@@ -344,6 +345,8 @@ GLIB_PREFIX = @GLIB_PREFIX@
 GLIB_REQ = @GLIB_REQ@
 GMSGFMT = @GMSGFMT@
 GMSGFMT_015 = @GMSGFMT_015@
+GNUSTL_CFLAGS = @GNUSTL_CFLAGS@
+GNUSTL_LIBS = @GNUSTL_LIBS@
 GREP = @GREP@
 GSTPB_PLUGINS_DIR = @GSTPB_PLUGINS_DIR@
 GSTPB_PREFIX = @GSTPB_PREFIX@
@@ -359,6 +362,8 @@ GST_CONTROLLER_CFLAGS = @GST_CONTROLLER_CFLAGS@
 GST_CONTROLLER_LIBS = @GST_CONTROLLER_LIBS@
 GST_CURRENT = @GST_CURRENT@
 GST_CXXFLAGS = @GST_CXXFLAGS@
+GST_GL_CFLAGS = @GST_GL_CFLAGS@
+GST_GL_LIBS = @GST_GL_LIBS@
 GST_LEVEL_DEFAULT = @GST_LEVEL_DEFAULT@
 GST_LIBS = @GST_LIBS@
 GST_LIBVERSION = @GST_LIBVERSION@
@@ -381,10 +386,17 @@ GST_PLUGINS_DIR = @GST_PLUGINS_DIR@
 GST_PLUGINS_NONPORTED = @GST_PLUGINS_NONPORTED@
 GST_PLUGINS_SELECTED = @GST_PLUGINS_SELECTED@
 GST_PLUGIN_LDFLAGS = @GST_PLUGIN_LDFLAGS@
-GST_PLUGIN_LIBTOOLFLAGS = @GST_PLUGIN_LIBTOOLFLAGS@
 GST_PREFIX = @GST_PREFIX@
 GST_REVISION = @GST_REVISION@
 GST_TOOLS_DIR = @GST_TOOLS_DIR@
+GTK3_CFLAGS = @GTK3_CFLAGS@
+GTK3_GL_CFLAGS = @GTK3_GL_CFLAGS@
+GTK3_GL_LIBS = @GTK3_GL_LIBS@
+GTK3_LIBS = @GTK3_LIBS@
+GTK3_WAYLAND_CFLAGS = @GTK3_WAYLAND_CFLAGS@
+GTK3_WAYLAND_LIBS = @GTK3_WAYLAND_LIBS@
+GTK3_X11_CFLAGS = @GTK3_X11_CFLAGS@
+GTK3_X11_LIBS = @GTK3_X11_LIBS@
 GTKDOC_CHECK = @GTKDOC_CHECK@
 GTKDOC_DEPS_CFLAGS = @GTKDOC_DEPS_CFLAGS@
 GTKDOC_DEPS_LIBS = @GTKDOC_DEPS_LIBS@
@@ -399,6 +411,7 @@ GUDEV_LIBS = @GUDEV_LIBS@
 HAVE_AVC1394 = @HAVE_AVC1394@
 HAVE_CXX = @HAVE_CXX@
 HAVE_DIRECTSOUND = @HAVE_DIRECTSOUND@
+HAVE_LAME = @HAVE_LAME@
 HAVE_ROM1394 = @HAVE_ROM1394@
 HAVE_ZLIB = @HAVE_ZLIB@
 HTML_DIR = @HTML_DIR@
@@ -416,6 +429,8 @@ JACK_1_9_7_LIBS = @JACK_1_9_7_LIBS@
 JACK_CFLAGS = @JACK_CFLAGS@
 JACK_LIBS = @JACK_LIBS@
 JPEG_LIBS = @JPEG_LIBS@
+LAME_CFLAGS = @LAME_CFLAGS@
+LAME_LIBS = @LAME_LIBS@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBCACA_CFLAGS = @LIBCACA_CFLAGS@
@@ -428,6 +443,8 @@ LIBIEC61883_LIBS = @LIBIEC61883_LIBS@
 LIBINTL = @LIBINTL@
 LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
+LIBPNG_1_5_CFLAGS = @LIBPNG_1_5_CFLAGS@
+LIBPNG_1_5_LIBS = @LIBPNG_1_5_LIBS@
 LIBPNG_CFLAGS = @LIBPNG_CFLAGS@
 LIBPNG_LIBS = @LIBPNG_LIBS@
 LIBRT = @LIBRT@
@@ -446,6 +463,9 @@ MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
+MOC = @MOC@
+MPG123_CFLAGS = @MPG123_CFLAGS@
+MPG123_LIBS = @MPG123_LIBS@
 MSGFMT = @MSGFMT@
 MSGFMT_015 = @MSGFMT_015@
 MSGMERGE = @MSGMERGE@
@@ -489,9 +509,20 @@ PYTHON_EXEC_PREFIX = @PYTHON_EXEC_PREFIX@
 PYTHON_PLATFORM = @PYTHON_PLATFORM@
 PYTHON_PREFIX = @PYTHON_PREFIX@
 PYTHON_VERSION = @PYTHON_VERSION@
+QT_ANDROID_CFLAGS = @QT_ANDROID_CFLAGS@
+QT_ANDROID_LIBS = @QT_ANDROID_LIBS@
+QT_CFLAGS = @QT_CFLAGS@
+QT_LIBS = @QT_LIBS@
+QT_MAC_CFLAGS = @QT_MAC_CFLAGS@
+QT_MAC_LIBS = @QT_MAC_LIBS@
+QT_WAYLAND_CFLAGS = @QT_WAYLAND_CFLAGS@
+QT_WAYLAND_LIBS = @QT_WAYLAND_LIBS@
+QT_X11_CFLAGS = @QT_X11_CFLAGS@
+QT_X11_LIBS = @QT_X11_LIBS@
 RANLIB = @RANLIB@
 RAW1394_CFLAGS = @RAW1394_CFLAGS@
 RAW1394_LIBS = @RAW1394_LIBS@
+RCC = @RCC@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -505,11 +536,16 @@ STRIP = @STRIP@
 TAGLIB_CFLAGS = @TAGLIB_CFLAGS@
 TAGLIB_CXXFLAGS = @TAGLIB_CXXFLAGS@
 TAGLIB_LIBS = @TAGLIB_LIBS@
+TWOLAME_CFLAGS = @TWOLAME_CFLAGS@
+TWOLAME_LIBS = @TWOLAME_LIBS@
+UIC = @UIC@
 USE_NLS = @USE_NLS@
 VALGRIND_CFLAGS = @VALGRIND_CFLAGS@
 VALGRIND_LIBS = @VALGRIND_LIBS@
 VALGRIND_PATH = @VALGRIND_PATH@
 VERSION = @VERSION@
+VISIBILITY_CFLAGS = @VISIBILITY_CFLAGS@
+VISIBILITY_CXXFLAGS = @VISIBILITY_CXXFLAGS@
 VPX_130_CFLAGS = @VPX_130_CFLAGS@
 VPX_130_LIBS = @VPX_130_LIBS@
 VPX_140_CFLAGS = @VPX_140_CFLAGS@
@@ -615,7 +651,6 @@ libgstmultifile_la_SOURCES = \
 libgstmultifile_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(GST_CFLAGS) $(GIO_CFLAGS)
 libgstmultifile_la_LIBADD = $(GST_PLUGINS_BASE_LIBS) -lgstvideo-@GST_API_VERSION@ $(GST_BASE_LIBS) $(GST_LIBS) $(GIO_LIBS)
 libgstmultifile_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
-libgstmultifile_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
 noinst_HEADERS = gstmultifilesrc.h gstmultifilesink.h gstsplitfilesrc.h gstsplitmuxsink.h \
 	gstsplitmuxsrc.h gstsplitmuxpartreader.h gstsplitutils.h patternspec.h
 
@@ -760,67 +795,67 @@ distclean-compile:
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
 libgstmultifile_la-gstmultifilesink.lo: gstmultifilesink.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstmultifilesink.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstmultifilesink.Tpo -c -o libgstmultifile_la-gstmultifilesink.lo `test -f 'gstmultifilesink.c' || echo '$(srcdir)/'`gstmultifilesink.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstmultifilesink.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstmultifilesink.Tpo -c -o libgstmultifile_la-gstmultifilesink.lo `test -f 'gstmultifilesink.c' || echo '$(srcdir)/'`gstmultifilesink.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstmultifile_la-gstmultifilesink.Tpo $(DEPDIR)/libgstmultifile_la-gstmultifilesink.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstmultifilesink.c' object='libgstmultifile_la-gstmultifilesink.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstmultifilesink.lo `test -f 'gstmultifilesink.c' || echo '$(srcdir)/'`gstmultifilesink.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstmultifilesink.lo `test -f 'gstmultifilesink.c' || echo '$(srcdir)/'`gstmultifilesink.c
 
 libgstmultifile_la-gstmultifilesrc.lo: gstmultifilesrc.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstmultifilesrc.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstmultifilesrc.Tpo -c -o libgstmultifile_la-gstmultifilesrc.lo `test -f 'gstmultifilesrc.c' || echo '$(srcdir)/'`gstmultifilesrc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstmultifilesrc.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstmultifilesrc.Tpo -c -o libgstmultifile_la-gstmultifilesrc.lo `test -f 'gstmultifilesrc.c' || echo '$(srcdir)/'`gstmultifilesrc.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstmultifile_la-gstmultifilesrc.Tpo $(DEPDIR)/libgstmultifile_la-gstmultifilesrc.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstmultifilesrc.c' object='libgstmultifile_la-gstmultifilesrc.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstmultifilesrc.lo `test -f 'gstmultifilesrc.c' || echo '$(srcdir)/'`gstmultifilesrc.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstmultifilesrc.lo `test -f 'gstmultifilesrc.c' || echo '$(srcdir)/'`gstmultifilesrc.c
 
 libgstmultifile_la-gstmultifile.lo: gstmultifile.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstmultifile.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstmultifile.Tpo -c -o libgstmultifile_la-gstmultifile.lo `test -f 'gstmultifile.c' || echo '$(srcdir)/'`gstmultifile.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstmultifile.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstmultifile.Tpo -c -o libgstmultifile_la-gstmultifile.lo `test -f 'gstmultifile.c' || echo '$(srcdir)/'`gstmultifile.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstmultifile_la-gstmultifile.Tpo $(DEPDIR)/libgstmultifile_la-gstmultifile.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstmultifile.c' object='libgstmultifile_la-gstmultifile.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstmultifile.lo `test -f 'gstmultifile.c' || echo '$(srcdir)/'`gstmultifile.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstmultifile.lo `test -f 'gstmultifile.c' || echo '$(srcdir)/'`gstmultifile.c
 
 libgstmultifile_la-gstsplitfilesrc.lo: gstsplitfilesrc.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstsplitfilesrc.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstsplitfilesrc.Tpo -c -o libgstmultifile_la-gstsplitfilesrc.lo `test -f 'gstsplitfilesrc.c' || echo '$(srcdir)/'`gstsplitfilesrc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstsplitfilesrc.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstsplitfilesrc.Tpo -c -o libgstmultifile_la-gstsplitfilesrc.lo `test -f 'gstsplitfilesrc.c' || echo '$(srcdir)/'`gstsplitfilesrc.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstmultifile_la-gstsplitfilesrc.Tpo $(DEPDIR)/libgstmultifile_la-gstsplitfilesrc.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstsplitfilesrc.c' object='libgstmultifile_la-gstsplitfilesrc.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstsplitfilesrc.lo `test -f 'gstsplitfilesrc.c' || echo '$(srcdir)/'`gstsplitfilesrc.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstsplitfilesrc.lo `test -f 'gstsplitfilesrc.c' || echo '$(srcdir)/'`gstsplitfilesrc.c
 
 libgstmultifile_la-gstsplitmuxsink.lo: gstsplitmuxsink.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstsplitmuxsink.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstsplitmuxsink.Tpo -c -o libgstmultifile_la-gstsplitmuxsink.lo `test -f 'gstsplitmuxsink.c' || echo '$(srcdir)/'`gstsplitmuxsink.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstsplitmuxsink.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstsplitmuxsink.Tpo -c -o libgstmultifile_la-gstsplitmuxsink.lo `test -f 'gstsplitmuxsink.c' || echo '$(srcdir)/'`gstsplitmuxsink.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstmultifile_la-gstsplitmuxsink.Tpo $(DEPDIR)/libgstmultifile_la-gstsplitmuxsink.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstsplitmuxsink.c' object='libgstmultifile_la-gstsplitmuxsink.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstsplitmuxsink.lo `test -f 'gstsplitmuxsink.c' || echo '$(srcdir)/'`gstsplitmuxsink.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstsplitmuxsink.lo `test -f 'gstsplitmuxsink.c' || echo '$(srcdir)/'`gstsplitmuxsink.c
 
 libgstmultifile_la-gstsplitmuxpartreader.lo: gstsplitmuxpartreader.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstsplitmuxpartreader.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstsplitmuxpartreader.Tpo -c -o libgstmultifile_la-gstsplitmuxpartreader.lo `test -f 'gstsplitmuxpartreader.c' || echo '$(srcdir)/'`gstsplitmuxpartreader.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstsplitmuxpartreader.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstsplitmuxpartreader.Tpo -c -o libgstmultifile_la-gstsplitmuxpartreader.lo `test -f 'gstsplitmuxpartreader.c' || echo '$(srcdir)/'`gstsplitmuxpartreader.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstmultifile_la-gstsplitmuxpartreader.Tpo $(DEPDIR)/libgstmultifile_la-gstsplitmuxpartreader.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstsplitmuxpartreader.c' object='libgstmultifile_la-gstsplitmuxpartreader.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstsplitmuxpartreader.lo `test -f 'gstsplitmuxpartreader.c' || echo '$(srcdir)/'`gstsplitmuxpartreader.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstsplitmuxpartreader.lo `test -f 'gstsplitmuxpartreader.c' || echo '$(srcdir)/'`gstsplitmuxpartreader.c
 
 libgstmultifile_la-gstsplitmuxsrc.lo: gstsplitmuxsrc.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstsplitmuxsrc.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstsplitmuxsrc.Tpo -c -o libgstmultifile_la-gstsplitmuxsrc.lo `test -f 'gstsplitmuxsrc.c' || echo '$(srcdir)/'`gstsplitmuxsrc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstsplitmuxsrc.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstsplitmuxsrc.Tpo -c -o libgstmultifile_la-gstsplitmuxsrc.lo `test -f 'gstsplitmuxsrc.c' || echo '$(srcdir)/'`gstsplitmuxsrc.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstmultifile_la-gstsplitmuxsrc.Tpo $(DEPDIR)/libgstmultifile_la-gstsplitmuxsrc.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstsplitmuxsrc.c' object='libgstmultifile_la-gstsplitmuxsrc.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstsplitmuxsrc.lo `test -f 'gstsplitmuxsrc.c' || echo '$(srcdir)/'`gstsplitmuxsrc.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstsplitmuxsrc.lo `test -f 'gstsplitmuxsrc.c' || echo '$(srcdir)/'`gstsplitmuxsrc.c
 
 libgstmultifile_la-gstsplitutils.lo: gstsplitutils.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstsplitutils.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstsplitutils.Tpo -c -o libgstmultifile_la-gstsplitutils.lo `test -f 'gstsplitutils.c' || echo '$(srcdir)/'`gstsplitutils.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstsplitutils.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstsplitutils.Tpo -c -o libgstmultifile_la-gstsplitutils.lo `test -f 'gstsplitutils.c' || echo '$(srcdir)/'`gstsplitutils.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstmultifile_la-gstsplitutils.Tpo $(DEPDIR)/libgstmultifile_la-gstsplitutils.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstsplitutils.c' object='libgstmultifile_la-gstsplitutils.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstsplitutils.lo `test -f 'gstsplitutils.c' || echo '$(srcdir)/'`gstsplitutils.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstsplitutils.lo `test -f 'gstsplitutils.c' || echo '$(srcdir)/'`gstsplitutils.c
 
 libgstmultifile_la-patternspec.lo: patternspec.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-patternspec.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-patternspec.Tpo -c -o libgstmultifile_la-patternspec.lo `test -f 'patternspec.c' || echo '$(srcdir)/'`patternspec.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-patternspec.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-patternspec.Tpo -c -o libgstmultifile_la-patternspec.lo `test -f 'patternspec.c' || echo '$(srcdir)/'`patternspec.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstmultifile_la-patternspec.Tpo $(DEPDIR)/libgstmultifile_la-patternspec.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='patternspec.c' object='libgstmultifile_la-patternspec.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-patternspec.lo `test -f 'patternspec.c' || echo '$(srcdir)/'`patternspec.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-patternspec.lo `test -f 'patternspec.c' || echo '$(srcdir)/'`patternspec.c
 
 test_splitmux_part_reader-test-splitmuxpartreader.o: test-splitmuxpartreader.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -MT test_splitmux_part_reader-test-splitmuxpartreader.o -MD -MP -MF $(DEPDIR)/test_splitmux_part_reader-test-splitmuxpartreader.Tpo -c -o test_splitmux_part_reader-test-splitmuxpartreader.o `test -f 'test-splitmuxpartreader.c' || echo '$(srcdir)/'`test-splitmuxpartreader.c

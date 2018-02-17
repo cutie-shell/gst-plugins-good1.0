@@ -86,6 +86,8 @@
     <xi:include href="xml/element-gdkpixbufsink.xml" />
     <xi:include href="xml/element-goom2k1.xml" />
     <xi:include href="xml/element-goom.xml" />
+    <xi:include href="xml/element-gtkglsink.xml" />
+    <xi:include href="xml/element-gtksink.xml" />
     <xi:include href="xml/element-hdv1394src.xml" />
     <xi:include href="xml/element-icydemux.xml" />
     <xi:include href="xml/element-id3demux.xml" />
@@ -99,6 +101,7 @@
     <xi:include href="xml/element-jackaudiosrc.xml" />
     <xi:include href="xml/element-jpegdec.xml" />
     <xi:include href="xml/element-jpegenc.xml" />
+    <xi:include href="xml/element-lamemp3enc.xml" />
     <xi:include href="xml/element-level-example.xml" />
     <xi:include href="xml/element-level.xml" />
     <xi:include href="xml/element-matroskademux.xml" />
@@ -108,6 +111,7 @@
     <xi:include href="xml/element-monoscope.xml" />
     <xi:include href="xml/element-mp4mux.xml" />
     <xi:include href="xml/element-mpegaudioparse.xml" />
+    <xi:include href="xml/element-mpg123audiodec.xml" />
     <xi:include href="xml/element-mulawdec.xml" />
     <xi:include href="xml/element-mulawenc.xml" />
     <xi:include href="xml/element-multifilesink.xml" />
@@ -131,6 +135,8 @@
     <xi:include href="xml/element-pulsesink.xml" />
     <xi:include href="xml/element-pulsesrc.xml" />
     <xi:include href="xml/element-pushfilesrc.xml" />
+    <xi:include href="xml/element-qmlglsink.xml" />
+    <xi:include href="xml/element-qmlglsrc.xml" />
     <xi:include href="xml/element-qtdemux.xml" />
     <xi:include href="xml/element-qtmoovrecover.xml" />
     <xi:include href="xml/element-qtmux.xml" />
@@ -188,6 +194,8 @@
     <xi:include href="xml/element-rtpjpegpay.xml" />
     <xi:include href="xml/element-rtpklvdepay.xml" />
     <xi:include href="xml/element-rtpklvpay.xml" />
+    <xi:include href="xml/element-rtpL8depay.xml" />
+    <xi:include href="xml/element-rtpL8pay.xml" />
     <xi:include href="xml/element-rtpL16depay.xml" />
     <xi:include href="xml/element-rtpL16pay.xml" />
     <xi:include href="xml/element-rtpL24depay.xml" />
@@ -261,6 +269,7 @@
     <xi:include href="xml/element-streaktv.xml" />
     <xi:include href="xml/element-taginject.xml" />
     <xi:include href="xml/element-testsink.xml" />
+    <xi:include href="xml/element-twolamemp2enc.xml" />
     <xi:include href="xml/element-udpsink.xml" />
     <xi:include href="xml/element-udpsrc.xml" />
     <xi:include href="xml/element-v4l2radio.xml" />
@@ -318,6 +327,7 @@
     <xi:include href="xml/plugin-gdkpixbuf.xml" />
     <xi:include href="xml/plugin-goom2k1.xml" />
     <xi:include href="xml/plugin-goom.xml" />
+    <xi:include href="xml/plugin-gtk.xml" />
     <xi:include href="xml/plugin-icydemux.xml" />
     <xi:include href="xml/plugin-id3demux.xml" />
     <xi:include href="xml/plugin-imagefreeze.xml" />
@@ -325,9 +335,11 @@
     <xi:include href="xml/plugin-isomp4.xml" />
     <xi:include href="xml/plugin-jack.xml" />
     <xi:include href="xml/plugin-jpeg.xml" />
+    <xi:include href="xml/plugin-lame.xml" />
     <xi:include href="xml/plugin-level.xml" />
     <xi:include href="xml/plugin-matroska.xml" />
     <xi:include href="xml/plugin-monoscope.xml" />
+    <xi:include href="xml/plugin-mpg123.xml" />
     <xi:include href="xml/plugin-mulaw.xml" />
     <xi:include href="xml/plugin-multifile.xml" />
     <xi:include href="xml/plugin-multipart.xml" />
@@ -338,6 +350,7 @@
     <xi:include href="xml/plugin-osxvideo.xml" />
     <xi:include href="xml/plugin-png.xml" />
     <xi:include href="xml/plugin-pulseaudio.xml" />
+    <xi:include href="xml/plugin-qmlgl.xml" />
     <xi:include href="xml/plugin-replaygain.xml" />
     <xi:include href="xml/plugin-rtpmanager.xml" />
     <xi:include href="xml/plugin-rtp.xml" />
@@ -349,6 +362,7 @@
     <xi:include href="xml/plugin-spectrum.xml" />
     <xi:include href="xml/plugin-speex.xml" />
     <xi:include href="xml/plugin-taglib.xml" />
+    <xi:include href="xml/plugin-twolame.xml" />
     <xi:include href="xml/plugin-udp.xml" />
     <xi:include href="xml/plugin-video4linux2.xml" />
     <xi:include href="xml/plugin-videobox.xml" />

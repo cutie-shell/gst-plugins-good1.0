@@ -60,6 +60,7 @@ good_tests = [
   [ 'elements/matroskademux' ],
   [ 'elements/matroskamux' ],
   [ 'elements/matroskaparse' ],
+  [ 'elements/mpg123audiodec', not mpg123_dep.found(),  [gstfft_dep]],
   [ 'elements/multifile' ],
   [ 'elements/splitmux' ],
   [ 'elements/rganalysis' ],
@@ -80,7 +81,6 @@ good_tests = [
   [ 'elements/rtpsession' ],
   [ 'elements/souphttpsrc', not libsoup_dep.found(), [libsoup_dep] ],
   [ 'elements/spectrum' ],
-#  [ 'elements/sunaudio' ],
   [ 'elements/shapewipe' ],
   [ 'elements/id3v2mux', not taglib_dep.found() ],
   [ 'elements/apev2mux', not taglib_dep.found() ],
@@ -94,6 +94,7 @@ good_tests = [
   [ 'elements/vp8enc', not vpx_dep.found() or not have_vp8_encoder ],
   [ 'elements/vp8dec', not vpx_dep.found() or not have_vp8_decoder ],
   [ 'elements/vp9enc', not vpx_dep.found() or not have_vp9_encoder ],
+  [ 'pipelines/lame', not lame_dep.found() ],
   [ 'pipelines/wavenc' ],
   [ 'elements/wavpackdec', not wavpack_dep.found() ],
   [ 'elements/wavpackenc', not wavpack_dep.found() ],
@@ -157,7 +158,8 @@ test_deps = [gst_dep, gstbase_dep, gstnet_dep, gstcheck_dep, gstaudio_dep,
 
 # FIXME: add valgrind suppression common/gst.supp gst-plugins-good.supp
 foreach t : good_tests
-  test_name = t.get(0)
+  fname = '@0@.c'.format(t.get(0))
+  test_name = t.get(0).underscorify()
   extra_deps = [ ]
   if t.length() == 3
     extra_deps = t.get(2)
@@ -178,7 +180,7 @@ foreach t : good_tests
     env.set('GSETTINGS_BACKEND', 'memory')
 
     env.set('GST_REGISTRY', '@0@/@1@.registry'.format(meson.current_build_dir(), test_name))
-    exe = executable(test_name, '@0@.c'.format(test_name),
+    exe = executable(test_name, fname,
       include_directories : [configinc],
       c_args : ['-DHAVE_CONFIG_H=1' ] + test_defines,
       dependencies : [libm] + test_deps + extra_deps,

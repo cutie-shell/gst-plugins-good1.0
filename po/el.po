@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 0.10.28.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-12-07 19:21+0200\n"
+"POT-Creation-Date: 2018-02-15 17:06+0000\n"
 "PO-Revision-Date: 2012-05-05 19:05+0100\n"
 "Last-Translator: Savvas Radevic <vicedar@gmail.com>\n"
 "Language-Team: Greek <team@lists.gnome.gr>\n"
@@ -25,6 +25,16 @@ msgstr ""
 
 msgid "Failed to decode JPEG image"
 msgstr "Αποτυχία αποκωδικοποίησης της εικόνας JPEG"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -57,6 +67,9 @@ msgstr "Ο διακομιστής έστειλε λάθος δεδομένα."
 
 msgid "Server does not support seeking."
 msgstr "Ο διακομιστής δεν υποστηρίζει αναζήτηση."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Καμία ή άκυρη εισαγωγή ήχου, η AVI ροή θα καταρρεύσει."
@@ -154,62 +167,6 @@ msgstr ""
 msgid "CoreAudio device could not be opened"
 msgstr ""
 
-msgid "Record Source"
-msgstr "Πηγή εγγραφής"
-
-msgid "Microphone"
-msgstr "Μικρόφωνο"
-
-msgid "Line In"
-msgstr "Είσοδος γραμμής"
-
-msgid "Internal CD"
-msgstr "Εσωτερικό CD"
-
-msgid "SPDIF In"
-msgstr "Είσδος SPDIF"
-
-msgid "AUX 1 In"
-msgstr "Είσοδις AUX 1"
-
-msgid "AUX 2 In"
-msgstr "Είσοδος AUX 2"
-
-#, fuzzy
-msgid "Codec Loopback"
-msgstr "Ανατροφοδότηση"
-
-#, fuzzy
-msgid "SunVTS Loopback"
-msgstr "Ανατροφοδότηση"
-
-msgid "Volume"
-msgstr "Ένταση"
-
-msgid "Gain"
-msgstr "Κέρδος"
-
-msgid "Monitor"
-msgstr "Οθόνη"
-
-msgid "Built-in Speaker"
-msgstr "Ενσωματωμένο μεγάφωνο"
-
-msgid "Headphone"
-msgstr "Ακουστικό"
-
-msgid "Line Out"
-msgstr "Γραμμή εξόδου"
-
-msgid "SPDIF Out"
-msgstr "SPDIF Out"
-
-msgid "AUX 1 Out"
-msgstr "AUX 1 Out"
-
-msgid "AUX 2 Out"
-msgstr "AUX 2 Out"
-
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr "Σφάλμα κατά την ανάγνωση %d bytes απο την συσκευή '%s'."
@@ -230,6 +187,14 @@ msgstr "Ο οδηγός της συσκευής '%s' δεν υποστηρίζε
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr "Ο οδηγός της συσκευής '%s' δεν υποστηρίζει κάποια γνωστή μέθοδο λήψης."
 
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Η συσκευή '%s' δεν είναι συσκευή εξόδου."
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
 #, c-format
 msgid "Device '%s' is busy"
 msgstr ""
@@ -245,6 +210,14 @@ msgstr "Η συσκευή '%s' δεν είναι μια συσκευή λήψη�
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr ""
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Ο διακομιστής δεν υποστηρίζει αναζήτηση."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Η συσκευή '%s' δεν είναι συσκευή εξόδου."
 
 #, c-format
 msgid "Could not get parameters on device '%s'"
@@ -329,6 +302,9 @@ msgid "Failed to start decoding thread."
 msgstr "Αποτυχία αποκωδικοποίησης της εικόνας JPEG"
 
 msgid "Failed to process frame."
+msgstr ""
+
+msgid "Failed to start encoding thread."
 msgstr ""
 
 #, c-format
@@ -448,6 +424,9 @@ msgstr "Δεν είναι δυνατή η λειτουργία χωρίς ρολ
 #~ msgid "Internal data flow error."
 #~ msgstr "Εσωτερικό σφάλμα ροής δεδομένων."
 
+#~ msgid "Volume"
+#~ msgstr "Ένταση"
+
 #~ msgid "Bass"
 #~ msgstr "Μπάσα"
 
@@ -465,6 +444,9 @@ msgstr "Δεν είναι δυνατή η λειτουργία χωρίς ρολ
 
 #~ msgid "Line-in"
 #~ msgstr "Γραμμή-εισόδου"
+
+#~ msgid "Microphone"
+#~ msgstr "Μικρόφωνο"
 
 #~ msgid "CD"
 #~ msgstr "CD"
@@ -514,6 +496,9 @@ msgstr "Δεν είναι δυνατή η λειτουργία χωρίς ρολ
 #~ msgid "Radio"
 #~ msgstr "Ράδιο"
 
+#~ msgid "Monitor"
+#~ msgstr "Οθόνη"
+
 #~ msgid "Could not open audio device for mixer control handling."
 #~ msgstr ""
 #~ "Δεν ήταν δυνατό το άνοιγμα της συσκευής ήχου για χειρισμό του ελέγχου του "
@@ -551,6 +536,15 @@ msgstr "Δεν είναι δυνατή η λειτουργία χωρίς ρολ
 #~ msgid "Side"
 #~ msgstr "Πλευρικό"
 
+#~ msgid "Built-in Speaker"
+#~ msgstr "Ενσωματωμένο μεγάφωνο"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "AUX 1 Out"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "AUX 2 Out"
+
 #~ msgid "AUX Out"
 #~ msgstr "Έξοδος AUX"
 
@@ -566,8 +560,23 @@ msgstr "Δεν είναι δυνατή η λειτουργία χωρίς ρολ
 #~ msgid "Telephone"
 #~ msgstr "Τηλέφωνο"
 
+#~ msgid "Line Out"
+#~ msgstr "Γραμμή εξόδου"
+
+#~ msgid "Line In"
+#~ msgstr "Είσοδος γραμμής"
+
+#~ msgid "Internal CD"
+#~ msgstr "Εσωτερικό CD"
+
 #~ msgid "Video In"
 #~ msgstr "Είσοδος βίντεο"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "Είσοδις AUX 1"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "Είσοδος AUX 2"
 
 #~ msgid "AUX In"
 #~ msgstr "Είσοδος AUX"
@@ -581,6 +590,9 @@ msgstr "Δεν είναι δυνατή η λειτουργία χωρίς ρολ
 #~ msgid "Microphone Boost"
 #~ msgstr "Ενίσχυση μικροφώνου"
 
+#~ msgid "Loopback"
+#~ msgstr "Ανατροφοδότηση"
+
 #~ msgid "Diagnostic"
 #~ msgstr "Διαγνωστικό"
 
@@ -592,6 +604,9 @@ msgstr "Δεν είναι δυνατή η λειτουργία χωρίς ρολ
 
 #~ msgid "Input"
 #~ msgstr "Είσοδος"
+
+#~ msgid "Record Source"
+#~ msgstr "Πηγή εγγραφής"
 
 #~ msgid "Monitor Source"
 #~ msgstr "Παρακολούθηση πηγής"
@@ -631,6 +646,12 @@ msgstr "Δεν είναι δυνατή η λειτουργία χωρίς ρολ
 
 #~ msgid "Input Mix"
 #~ msgstr "Μίξη εισόδου"
+
+#~ msgid "SPDIF In"
+#~ msgstr "Είσδος SPDIF"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "SPDIF Out"
 
 #~ msgid "Microphone 1"
 #~ msgstr "Μικρόφωνο 1"
@@ -775,6 +796,12 @@ msgstr "Δεν είναι δυνατή η λειτουργία χωρίς ρολ
 
 #~ msgid "%s Function"
 #~ msgstr "Λειτουργία %s"
+
+#~ msgid "Gain"
+#~ msgstr "Κέρδος"
+
+#~ msgid "Headphone"
+#~ msgstr "Ακουστικό"
 
 #~ msgid "Got unexpected frame size of %u instead of %u."
 #~ msgstr "Απροσδόκητο μέγεθος πλαισίου από %u αντί του %u"

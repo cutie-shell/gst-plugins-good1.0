@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-12-07 19:21+0200\n"
+"POT-Creation-Date: 2018-02-15 17:06+0000\n"
 "PO-Revision-Date: 2017-05-04 19:05+0200\n"
 "Last-Translator: Jakub Bogusz <qboosh@pld-linux.org>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
@@ -21,6 +21,16 @@ msgstr "Nie znaleziono serwera Jack"
 
 msgid "Failed to decode JPEG image"
 msgstr "Nie udało się zdekodować obrazu JPEG"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -51,6 +61,9 @@ msgstr "Serwer przysłał błędne dane."
 
 msgid "Server does not support seeking."
 msgstr "Serwer nie obsługuje przewijania."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Brak lub niepoprawne wejście dźwięku, strumień AVI będzie uszkodzony."
@@ -149,60 +162,6 @@ msgstr "Nie znaleziono urządzenia CoreAudio"
 msgid "CoreAudio device could not be opened"
 msgstr "Nie udało się otworzyć urządzenia CoreAudio"
 
-msgid "Record Source"
-msgstr "Źródło nagrywania"
-
-msgid "Microphone"
-msgstr "Mikrofon"
-
-msgid "Line In"
-msgstr "Wejście linii"
-
-msgid "Internal CD"
-msgstr "Wewnętrzny CD"
-
-msgid "SPDIF In"
-msgstr "Wejście SPDIF"
-
-msgid "AUX 1 In"
-msgstr "Wejście AUX 1"
-
-msgid "AUX 2 In"
-msgstr "Wejście AUX 2"
-
-msgid "Codec Loopback"
-msgstr "Pętla zwrotna kodeka"
-
-msgid "SunVTS Loopback"
-msgstr "Pętla zwrotna SunVTS"
-
-msgid "Volume"
-msgstr "Głośność"
-
-msgid "Gain"
-msgstr "Wzmocnienie"
-
-msgid "Monitor"
-msgstr "Monitor"
-
-msgid "Built-in Speaker"
-msgstr "Wbudowany głośniczek"
-
-msgid "Headphone"
-msgstr "Słuchawki"
-
-msgid "Line Out"
-msgstr "Wyjście linii"
-
-msgid "SPDIF Out"
-msgstr "Wyjście SPDIF"
-
-msgid "AUX 1 Out"
-msgstr "Wyjście AUX 1"
-
-msgid "AUX 2 Out"
-msgstr "Wyjście AUX 2"
-
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr "Błąd odczytu %d bajtów z urządzenia '%s'."
@@ -225,6 +184,14 @@ msgstr "Sterownik urządzenia '%s' nie obsługuje metody we/wy %d"
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr "Sterownik urządzenia '%s' nie obsługuje żadnej znanej metody we/wy."
 
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Koder urządzenia %s nie ma obsługiwanego formatu wejściowego"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
 #, c-format
 msgid "Device '%s' is busy"
 msgstr "Urządzenie '%s' jest zajęte"
@@ -239,6 +206,14 @@ msgstr "Urządzenie '%s' nie potrafi przechwytywać obrazu w podanym formacie"
 
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
+msgstr "Urządzenie '%s' obsługuje nieciągłe powierzchnie"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Serwer nie obsługuje przewijania."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
 msgstr "Urządzenie '%s' obsługuje nieciągłe powierzchnie"
 
 #, c-format
@@ -321,6 +296,10 @@ msgstr "Nie udało się uruchomić wątku dekodującego."
 
 msgid "Failed to process frame."
 msgstr "Nie udało się przetworzyć ramki."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Nie udało się uruchomić wątku dekodującego."
 
 #, c-format
 msgid ""
@@ -421,3 +400,57 @@ msgstr "Zmiana rozdzielczości w czasie działania nie jest jeszcze obsługiwana
 
 msgid "Cannot operate without a clock"
 msgstr "Nie można pracować bez zegara"
+
+#~ msgid "Record Source"
+#~ msgstr "Źródło nagrywania"
+
+#~ msgid "Microphone"
+#~ msgstr "Mikrofon"
+
+#~ msgid "Line In"
+#~ msgstr "Wejście linii"
+
+#~ msgid "Internal CD"
+#~ msgstr "Wewnętrzny CD"
+
+#~ msgid "SPDIF In"
+#~ msgstr "Wejście SPDIF"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "Wejście AUX 1"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "Wejście AUX 2"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Pętla zwrotna kodeka"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "Pętla zwrotna SunVTS"
+
+#~ msgid "Volume"
+#~ msgstr "Głośność"
+
+#~ msgid "Gain"
+#~ msgstr "Wzmocnienie"
+
+#~ msgid "Monitor"
+#~ msgstr "Monitor"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Wbudowany głośniczek"
+
+#~ msgid "Headphone"
+#~ msgstr "Słuchawki"
+
+#~ msgid "Line Out"
+#~ msgstr "Wyjście linii"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "Wyjście SPDIF"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "Wyjście AUX 1"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "Wyjście AUX 2"

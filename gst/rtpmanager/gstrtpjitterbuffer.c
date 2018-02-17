@@ -131,6 +131,7 @@ enum
 #define DEFAULT_LATENCY_MS          200
 #define DEFAULT_DROP_ON_LATENCY     FALSE
 #define DEFAULT_TS_OFFSET           0
+#define DEFAULT_MAX_TS_OFFSET_ADJUSTMENT 0
 #define DEFAULT_DO_LOST             FALSE
 #define DEFAULT_MODE                RTP_JITTER_BUFFER_MODE_SLAVE
 #define DEFAULT_PERCENT             0
@@ -149,6 +150,7 @@ enum
 #define DEFAULT_MAX_DROPOUT_TIME    60000
 #define DEFAULT_MAX_MISORDER_TIME   2000
 #define DEFAULT_RFC7273_SYNC        FALSE
+#define DEFAULT_FASTSTART_MIN_PACKETS 0
 
 #define DEFAULT_AUTO_RTX_DELAY (20 * GST_MSECOND)
 #define DEFAULT_AUTO_RTX_TIMEOUT (40 * GST_MSECOND)
@@ -159,6 +161,7 @@ enum
   PROP_LATENCY,
   PROP_DROP_ON_LATENCY,
   PROP_TS_OFFSET,
+  PROP_MAX_TS_OFFSET_ADJUSTMENT,
   PROP_DO_LOST,
   PROP_MODE,
   PROP_PERCENT,
@@ -177,7 +180,8 @@ enum
   PROP_MAX_RTCP_RTP_TIME_DIFF,
   PROP_MAX_DROPOUT_TIME,
   PROP_MAX_MISORDER_TIME,
-  PROP_RFC7273_SYNC
+  PROP_RFC7273_SYNC,
+  PROP_FASTSTART_MIN_PACKETS
 };
 
 #define JBUF_LOCK(priv)   G_STMT_START {			\
@@ -279,6 +283,7 @@ struct _GstRtpJitterBufferPrivate
   guint64 latency_ns;
   gboolean drop_on_latency;
   gint64 ts_offset;
+  guint64 max_ts_offset_adjustment;
   gboolean do_lost;
   gboolean do_retransmission;
   gboolean rtx_next_seqnum;
@@ -294,6 +299,7 @@ struct _GstRtpJitterBufferPrivate
   gint max_rtcp_rtp_time_diff;
   guint32 max_dropout_time;
   guint32 max_misorder_time;
+  guint faststart_min_packets;
 
   /* the last seqnum we pushed out */
   guint32 last_popped_seqnum;
@@ -334,7 +340,7 @@ struct _GstRtpJitterBufferPrivate
   gint last_pt;
   gint32 clock_rate;
   gint64 clock_base;
-  gint64 prev_ts_offset;
+  gint64 ts_offset_remainder;
 
   /* when we are shutting down */
   GstFlowReturn srcresult;
@@ -365,6 +371,7 @@ struct _GstRtpJitterBufferPrivate
 
   /* for the jitter */
   GstClockTime last_dts;
+  GstClockTime last_pts;
   guint64 last_rtptime;
   GstClockTime avg_jitter;
 };
@@ -459,6 +466,8 @@ static gboolean gst_rtp_jitter_buffer_sink_event (GstPad * pad,
     GstObject * parent, GstEvent * event);
 static GstFlowReturn gst_rtp_jitter_buffer_chain (GstPad * pad,
     GstObject * parent, GstBuffer * buffer);
+static GstFlowReturn gst_rtp_jitter_buffer_chain_list (GstPad * pad,
+    GstObject * parent, GstBufferList * buffer_list);
 
 static gboolean gst_rtp_jitter_buffer_sink_rtcp_event (GstPad * pad,
     GstObject * parent, GstEvent * event);
@@ -545,6 +554,20 @@ gst_rtp_jitter_buffer_class_init (GstRtpJitterBufferClass * klass)
           "Adjust buffer timestamps with offset in nanoseconds", G_MININT64,
           G_MAXINT64, DEFAULT_TS_OFFSET,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GstRtpJitterBuffer:max-ts-offset-adjustment:
+   *
+   * The maximum number of nanoseconds per frame that time offset may be
+   * adjusted with. This is used to avoid sudden large changes to time stamps.
+   */
+  g_object_class_install_property (gobject_class, PROP_MAX_TS_OFFSET_ADJUSTMENT,
+      g_param_spec_uint64 ("max-ts-offset-adjustment",
+          "Max Timestamp Offset Adjustment",
+          "The maximum number of nanoseconds per frame that time stamp "
+          "offsets may be adjusted (0 = no limit).", 0, G_MAXUINT64,
+          DEFAULT_MAX_TS_OFFSET_ADJUSTMENT, G_PARAM_READWRITE |
+          G_PARAM_STATIC_STRINGS));
 
   /**
    * GstRtpJitterBuffer:do-lost:
@@ -852,6 +875,23 @@ gst_rtp_jitter_buffer_class_init (GstRtpJitterBufferClass * klass)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
+   * GstRtpJitterBuffer:faststart-min-packets
+   *
+   * The number of consecutive packets needed to start (set to 0 to
+   * disable faststart. The jitterbuffer will by default start after the
+   * latency has elapsed)
+   *
+   * Since: 1.14
+   */
+  g_object_class_install_property (gobject_class, PROP_FASTSTART_MIN_PACKETS,
+      g_param_spec_uint ("faststart-min-packets", "Faststart minimum packets",
+          "The number of consecutive packets needed to start (set to 0 to "
+          "disable faststart. The jitterbuffer will by default start after "
+          "the latency has elapsed)",
+          0, G_MAXUINT, DEFAULT_FASTSTART_MIN_PACKETS,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  /**
    * GstRtpJitterBuffer::request-pt-map:
    * @buffer: the object which received the signal
    * @pt: the pt
@@ -960,6 +1000,8 @@ gst_rtp_jitter_buffer_init (GstRtpJitterBuffer * jitterbuffer)
   priv->latency_ms = DEFAULT_LATENCY_MS;
   priv->latency_ns = priv->latency_ms * GST_MSECOND;
   priv->drop_on_latency = DEFAULT_DROP_ON_LATENCY;
+  priv->ts_offset = DEFAULT_TS_OFFSET;
+  priv->max_ts_offset_adjustment = DEFAULT_MAX_TS_OFFSET_ADJUSTMENT;
   priv->do_lost = DEFAULT_DO_LOST;
   priv->do_retransmission = DEFAULT_DO_RETRANSMISSION;
   priv->rtx_next_seqnum = DEFAULT_RTX_NEXT_SEQNUM;
@@ -975,8 +1017,11 @@ gst_rtp_jitter_buffer_init (GstRtpJitterBuffer * jitterbuffer)
   priv->max_rtcp_rtp_time_diff = DEFAULT_MAX_RTCP_RTP_TIME_DIFF;
   priv->max_dropout_time = DEFAULT_MAX_DROPOUT_TIME;
   priv->max_misorder_time = DEFAULT_MAX_MISORDER_TIME;
+  priv->faststart_min_packets = DEFAULT_FASTSTART_MIN_PACKETS;
 
+  priv->ts_offset_remainder = 0;
   priv->last_dts = -1;
+  priv->last_pts = -1;
   priv->last_rtptime = -1;
   priv->avg_jitter = 0;
   priv->timers = g_array_new (FALSE, TRUE, sizeof (TimerData));
@@ -1012,6 +1057,8 @@ gst_rtp_jitter_buffer_init (GstRtpJitterBuffer * jitterbuffer)
 
   gst_pad_set_chain_function (priv->sinkpad,
       GST_DEBUG_FUNCPTR (gst_rtp_jitter_buffer_chain));
+  gst_pad_set_chain_list_function (priv->sinkpad,
+      GST_DEBUG_FUNCPTR (gst_rtp_jitter_buffer_chain_list));
   gst_pad_set_event_function (priv->sinkpad,
       GST_DEBUG_FUNCPTR (gst_rtp_jitter_buffer_sink_event));
   gst_pad_set_query_function (priv->sinkpad,
@@ -1369,7 +1416,7 @@ gst_jitter_buffer_sink_parse_caps (GstRtpJitterBuffer * jitterbuffer,
   if (gst_structure_get_int (caps_struct, "payload", &payload) && pt != -1
       && payload != pt) {
     GST_ERROR_OBJECT (jitterbuffer,
-        "Got caps with wrong payload type (got %d, expected %d)", payload, pt);
+        "Got caps with wrong payload type (got %d, expected %d)", pt, payload);
     return FALSE;
   }
 
@@ -1550,7 +1597,7 @@ gst_rtp_jitter_buffer_flush_stop (GstRtpJitterBuffer * jitterbuffer)
   priv->srcresult = GST_FLOW_OK;
   gst_segment_init (&priv->segment, GST_FORMAT_TIME);
   priv->last_popped_seqnum = -1;
-  priv->last_out_time = -1;
+  priv->last_out_time = GST_CLOCK_TIME_NONE;
   priv->next_seqnum = -1;
   priv->seqnum_base = -1;
   priv->ips_rtptime = -1;
@@ -1967,6 +2014,32 @@ check_buffering_percent (GstRtpJitterBuffer * jitterbuffer, gint percent)
   }
 
   return message;
+}
+
+static void
+update_offset (GstRtpJitterBuffer * jitterbuffer)
+{
+  GstRtpJitterBufferPrivate *priv;
+
+  priv = jitterbuffer->priv;
+
+  if (priv->ts_offset_remainder != 0) {
+    GST_DEBUG ("adjustment %" G_GUINT64_FORMAT " remain %" G_GINT64_FORMAT
+        " off %" G_GINT64_FORMAT, priv->max_ts_offset_adjustment,
+        priv->ts_offset_remainder, priv->ts_offset);
+    if (ABS (priv->ts_offset_remainder) > priv->max_ts_offset_adjustment) {
+      if (priv->ts_offset_remainder > 0) {
+        priv->ts_offset += priv->max_ts_offset_adjustment;
+        priv->ts_offset_remainder -= priv->max_ts_offset_adjustment;
+      } else {
+        priv->ts_offset -= priv->max_ts_offset_adjustment;
+        priv->ts_offset_remainder += priv->max_ts_offset_adjustment;
+      }
+    } else {
+      priv->ts_offset += priv->ts_offset_remainder;
+      priv->ts_offset_remainder = 0;
+    }
+  }
 }
 
 static GstClockTime
@@ -2784,6 +2857,37 @@ gst_rtp_jitter_buffer_reset (GstRtpJitterBuffer * jitterbuffer,
   return ret;
 }
 
+static gboolean
+gst_rtp_jitter_buffer_fast_start (GstRtpJitterBuffer * jitterbuffer)
+{
+  GstRtpJitterBufferPrivate *priv;
+  RTPJitterBufferItem *item;
+  TimerData *timer;
+
+  priv = jitterbuffer->priv;
+
+  if (priv->faststart_min_packets == 0)
+    return FALSE;
+
+  item = rtp_jitter_buffer_peek (priv->jbuf);
+  if (!item)
+    return FALSE;
+
+  timer = find_timer (jitterbuffer, item->seqnum);
+  if (!timer || timer->type != TIMER_TYPE_DEADLINE)
+    return FALSE;
+
+  if (rtp_jitter_buffer_can_fast_start (priv->jbuf,
+          priv->faststart_min_packets)) {
+    GST_INFO_OBJECT (jitterbuffer, "We found %i consecutive packet, start now",
+        priv->faststart_min_packets);
+    timer->timeout = -1;
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
 static GstFlowReturn
 gst_rtp_jitter_buffer_chain (GstPad * pad, GstObject * parent,
     GstBuffer * buffer)
@@ -3096,6 +3200,10 @@ gst_rtp_jitter_buffer_chain (GstPad * pad, GstObject * parent,
     goto duplicate;
   }
 
+  /* Trigger fast start if needed */
+  if (gst_rtp_jitter_buffer_fast_start (jitterbuffer))
+    head = TRUE;
+
   /* update timers */
   update_timers (jitterbuffer, seqnum, dts, pts, do_next_seqnum,
       GST_BUFFER_IS_RETRANSMISSION (buffer), timer);
@@ -3193,6 +3301,31 @@ rtx_duplicate:
     gst_buffer_unref (buffer);
     goto finished;
   }
+}
+
+/* FIXME: hopefully we can do something more efficient here, especially when
+ * all packets are in order and/or outside of the currently cached range.
+ * Still worthwhile to have it, avoids taking/releasing object lock and pad
+ * stream lock for every single buffer in the default chain_list fallback. */
+static GstFlowReturn
+gst_rtp_jitter_buffer_chain_list (GstPad * pad, GstObject * parent,
+    GstBufferList * buffer_list)
+{
+  GstFlowReturn flow_ret = GST_FLOW_OK;
+  guint i, n;
+
+  n = gst_buffer_list_length (buffer_list);
+  for (i = 0; i < n; ++i) {
+    GstBuffer *buf = gst_buffer_list_get (buffer_list, i);
+
+    flow_ret = gst_rtp_jitter_buffer_chain (pad, parent, gst_buffer_ref (buf));
+
+    if (flow_ret != GST_FLOW_OK)
+      break;
+  }
+  gst_buffer_list_unref (buffer_list);
+
+  return flow_ret;
 }
 
 static GstClockTime
@@ -3332,6 +3465,11 @@ pop_and_push_next (GstRtpJitterBuffer * jitterbuffer, guint seqnum)
           gst_segment_position_from_running_time (&priv->segment,
           GST_FORMAT_TIME, item->pts);
 
+      /* if this is a new frame, check if ts_offset needs to be updated */
+      if (pts != priv->last_pts) {
+        update_offset (jitterbuffer);
+      }
+
       /* apply timestamp with offset to buffer now */
       GST_BUFFER_DTS (outbuf) = apply_offset (jitterbuffer, dts);
       GST_BUFFER_PTS (outbuf) = apply_offset (jitterbuffer, pts);
@@ -3339,6 +3477,7 @@ pop_and_push_next (GstRtpJitterBuffer * jitterbuffer, guint seqnum)
       /* update the elapsed time when we need to check against the npt stop time. */
       update_estimated_eos (jitterbuffer, item);
 
+      priv->last_pts = pts;
       priv->last_out_time = GST_BUFFER_PTS (outbuf);
       break;
     case ITEM_TYPE_LOST:
@@ -4424,8 +4563,24 @@ gst_rtp_jitter_buffer_set_property (GObject * object,
       break;
     case PROP_TS_OFFSET:
       JBUF_LOCK (priv);
-      priv->ts_offset = g_value_get_int64 (value);
+      if (priv->max_ts_offset_adjustment != 0) {
+        gint64 new_offset = g_value_get_int64 (value);
+
+        if (new_offset > priv->ts_offset) {
+          priv->ts_offset_remainder = new_offset - priv->ts_offset;
+        } else {
+          priv->ts_offset_remainder = -(priv->ts_offset - new_offset);
+        }
+      } else {
+        priv->ts_offset = g_value_get_int64 (value);
+        priv->ts_offset_remainder = 0;
+      }
       priv->ts_discont = TRUE;
+      JBUF_UNLOCK (priv);
+      break;
+    case PROP_MAX_TS_OFFSET_ADJUSTMENT:
+      JBUF_LOCK (priv);
+      priv->max_ts_offset_adjustment = g_value_get_uint64 (value);
       JBUF_UNLOCK (priv);
       break;
     case PROP_DO_LOST:
@@ -4514,6 +4669,11 @@ gst_rtp_jitter_buffer_set_property (GObject * object,
           g_value_get_boolean (value));
       JBUF_UNLOCK (priv);
       break;
+    case PROP_FASTSTART_MIN_PACKETS:
+      JBUF_LOCK (priv);
+      priv->faststart_min_packets = g_value_get_uint (value);
+      JBUF_UNLOCK (priv);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -4544,6 +4704,11 @@ gst_rtp_jitter_buffer_get_property (GObject * object,
     case PROP_TS_OFFSET:
       JBUF_LOCK (priv);
       g_value_set_int64 (value, priv->ts_offset);
+      JBUF_UNLOCK (priv);
+      break;
+    case PROP_MAX_TS_OFFSET_ADJUSTMENT:
+      JBUF_LOCK (priv);
+      g_value_set_uint64 (value, priv->max_ts_offset_adjustment);
       JBUF_UNLOCK (priv);
       break;
     case PROP_DO_LOST:
@@ -4648,6 +4813,11 @@ gst_rtp_jitter_buffer_get_property (GObject * object,
       JBUF_LOCK (priv);
       g_value_set_boolean (value,
           rtp_jitter_buffer_get_rfc7273_sync (priv->jbuf));
+      JBUF_UNLOCK (priv);
+      break;
+    case PROP_FASTSTART_MIN_PACKETS:
+      JBUF_LOCK (priv);
+      g_value_set_uint (value, priv->faststart_min_packets);
       JBUF_UNLOCK (priv);
       break;
     default:

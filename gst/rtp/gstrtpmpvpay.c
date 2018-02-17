@@ -183,6 +183,10 @@ gst_rtp_mpv_pay_flush (GstRTPMPVPay * rtpmpvpay)
 
   ret = GST_FLOW_OK;
 
+  GST_DEBUG_OBJECT (rtpmpvpay, "available %u", avail);
+  if (avail == 0)
+    return GST_FLOW_OK;
+
   list =
       gst_buffer_list_new_sized (avail / (GST_RTP_BASE_PAYLOAD_MTU (rtpmpvpay) -
           RTP_HEADER_LEN) + 1);
@@ -228,9 +232,10 @@ gst_rtp_mpv_pay_flush (GstRTPMPVPay * rtpmpvpay)
     gst_rtp_buffer_unmap (&rtp);
 
     paybuf = gst_adapter_take_buffer_fast (rtpmpvpay->adapter, payload_len);
-    gst_rtp_copy_meta (GST_ELEMENT_CAST (rtpmpvpay), outbuf, paybuf,
-        g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
+    gst_rtp_copy_video_meta (rtpmpvpay, outbuf, paybuf);
     outbuf = gst_buffer_append (outbuf, paybuf);
+
+    GST_DEBUG_OBJECT (rtpmpvpay, "Adding buffer");
 
     GST_BUFFER_PTS (outbuf) = rtpmpvpay->first_ts;
     gst_buffer_list_add (list, outbuf);

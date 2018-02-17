@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2017-12-07 19:21+0200\n"
+"POT-Creation-Date: 2018-02-15 17:06+0000\n"
 "PO-Revision-Date: 2017-05-05 22:54+0800\n"
 "Last-Translator: Tianze Wang <zwpwjwtz@126.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -23,6 +23,16 @@ msgstr "未找到插口设备"
 
 msgid "Failed to decode JPEG image"
 msgstr "解码 JPEG 图像出错"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -53,6 +63,9 @@ msgstr "服务器发送了错误的数据。"
 
 msgid "Server does not support seeking."
 msgstr "设备不支持定位。"
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "没有或无效的输入音频，AVI 流将损坏。"
@@ -141,60 +154,6 @@ msgstr "未找到 CoreAudio 设备"
 msgid "CoreAudio device could not be opened"
 msgstr "无法打开 CoreAudio 设备"
 
-msgid "Record Source"
-msgstr "录音源"
-
-msgid "Microphone"
-msgstr "话筒"
-
-msgid "Line In"
-msgstr "线路输入"
-
-msgid "Internal CD"
-msgstr "内部 CD"
-
-msgid "SPDIF In"
-msgstr "SPDIF输入"
-
-msgid "AUX 1 In"
-msgstr "辅助输入 1"
-
-msgid "AUX 2 In"
-msgstr "辅助输出 2"
-
-msgid "Codec Loopback"
-msgstr "编码器回环"
-
-msgid "SunVTS Loopback"
-msgstr "SunVTS回环"
-
-msgid "Volume"
-msgstr "音量"
-
-msgid "Gain"
-msgstr "增益"
-
-msgid "Monitor"
-msgstr "监控器"
-
-msgid "Built-in Speaker"
-msgstr "内建扬声器"
-
-msgid "Headphone"
-msgstr "头戴式耳机"
-
-msgid "Line Out"
-msgstr "线路输出"
-
-msgid "SPDIF Out"
-msgstr "SPDIF输出"
-
-msgid "AUX 1 Out"
-msgstr "辅助输出 1"
-
-msgid "AUX 2 Out"
-msgstr "辅助输出 2"
-
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr "从设备“%2$s”中读取 %1$d 个字节时出错。"
@@ -215,6 +174,14 @@ msgstr "设备“%s”的驱动不支持I/O方式 %d。"
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr "设备“%s”的驱动不支持任何已知的I/O方式。"
 
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "设备 %s 上的编码器没有支持的输入格式"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
 #, c-format
 msgid "Device '%s' is busy"
 msgstr "设备“%s”正忙"
@@ -230,6 +197,14 @@ msgstr "设备“%s”无法以指定格式捕获"
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr "设备“%s”不支持非连续平面"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "设备“%s”不支持视频捕捉"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "设备“%s”不支持视频捕捉"
 
 #, c-format
 msgid "Could not get parameters on device '%s'"
@@ -310,6 +285,10 @@ msgstr "启动解码线程失败。"
 
 msgid "Failed to process frame."
 msgstr "处理帧失败。"
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "启动解码线程失败。"
 
 #, c-format
 msgid ""
@@ -403,6 +382,60 @@ msgstr "尚不支持在运行时更改分辨率。"
 
 msgid "Cannot operate without a clock"
 msgstr "没有时钟的话无法操作"
+
+#~ msgid "Record Source"
+#~ msgstr "录音源"
+
+#~ msgid "Microphone"
+#~ msgstr "话筒"
+
+#~ msgid "Line In"
+#~ msgstr "线路输入"
+
+#~ msgid "Internal CD"
+#~ msgstr "内部 CD"
+
+#~ msgid "SPDIF In"
+#~ msgstr "SPDIF输入"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "辅助输入 1"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "辅助输出 2"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "编码器回环"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "SunVTS回环"
+
+#~ msgid "Volume"
+#~ msgstr "音量"
+
+#~ msgid "Gain"
+#~ msgstr "增益"
+
+#~ msgid "Monitor"
+#~ msgstr "监控器"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "内建扬声器"
+
+#~ msgid "Headphone"
+#~ msgstr "头戴式耳机"
+
+#~ msgid "Line Out"
+#~ msgstr "线路输出"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "SPDIF输出"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "辅助输出 1"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "辅助输出 2"
 
 #~ msgid "Internal data stream error."
 #~ msgstr "内部数据流错误。"
@@ -529,9 +562,6 @@ msgstr "没有时钟的话无法操作"
 
 #~ msgid "This file is encrypted and cannot be played."
 #~ msgstr "此文件已加密，无法播放。"
-
-#~ msgid "Device '%s' does not support video capture"
-#~ msgstr "设备“%s”不支持视频捕捉"
 
 #~ msgid "Line-in"
 #~ msgstr "线路输入"

@@ -701,6 +701,10 @@ gst_rtp_h264_pay_decode_nal (GstRtpH264Pay * payloader,
   if (SPS_TYPE_ID == type || PPS_TYPE_ID == type) {
     GstBuffer *nal;
 
+    /* trailing 0x0 are not part of the SPS/PPS */
+    while (size > 0 && data[size - 1] == 0x0)
+      size--;
+
     /* encode the entire SPS NAL in base64 */
     GST_DEBUG ("Found %s %x %x %x Len=%u", type == SPS_TYPE_ID ? "SPS" : "PPS",
         (header >> 7), (header >> 5) & 3, type, size);
@@ -891,8 +895,7 @@ gst_rtp_h264_pay_payload_nal (GstRTPBasePayload * basepayload,
     gst_rtp_buffer_unmap (&rtp);
 
     /* insert payload memory block */
-    gst_rtp_copy_meta (GST_ELEMENT_CAST (rtph264pay), outbuf, paybuf,
-        g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
+    gst_rtp_copy_video_meta (rtph264pay, outbuf, paybuf);
     outbuf = gst_buffer_append (outbuf, paybuf);
 
     /* push the buffer to the next element */
@@ -952,8 +955,7 @@ gst_rtp_h264_pay_payload_nal (GstRTPBasePayload * basepayload,
       gst_rtp_buffer_unmap (&rtp);
 
       /* insert payload memory block */
-      gst_rtp_copy_meta (GST_ELEMENT_CAST (rtph264pay), outbuf, paybuf,
-          g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
+      gst_rtp_copy_video_meta (rtph264pay, outbuf, paybuf);
       gst_buffer_copy_into (outbuf, paybuf, GST_BUFFER_COPY_MEMORY, pos,
           limitedSize);
 

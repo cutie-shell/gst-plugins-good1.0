@@ -53,6 +53,56 @@ Description: GStreamer plugin for PulseAudio
  This package contains the GStreamer plugin for PulseAudio, a sound server
  for POSIX and WIN32 systems.
 
+Package: @GST_PKGNAME@-qt5
+Architecture: any
+Multi-Arch: same
+Section: graphics
+Depends: ${misc:Depends},
+         ${shlibs:Depends}
+XB-GStreamer-Version: ${gstreamer:Version}
+XB-GStreamer-Elements: ${gstreamer:Elements}
+XB-GStreamer-URI-Sources: ${gstreamer:URISources}
+XB-GStreamer-URI-Sinks: ${gstreamer:URISinks}
+XB-GStreamer-Encoders: ${gstreamer:Encoders}
+XB-GStreamer-Decoders: ${gstreamer:Decoders}
+Provides: ${gstreamer:Provides}
+Replaces: gstreamer1.0-plugins-bad (<< 1.13.1)
+Breaks: gstreamer1.0-plugins-bad (<< 1.13.1)
+Description: GStreamer plugin for Qt5
+ GStreamer is a streaming media framework, based on graphs of filters
+ which operate on media data.  Applications using this library can do
+ anything from real-time sound processing to playing videos, and just
+ about anything else media-related.  Its plugin-based architecture means
+ that new data types or processing capabilities can be added simply by
+ installing new plug-ins.
+ .
+ This package contains the GStreamer plugin for Qt5.
+
+Package: @GST_PKGNAME@-gtk3
+Architecture: any
+Multi-Arch: same
+Section: graphics
+Depends: ${misc:Depends},
+         ${shlibs:Depends}
+XB-GStreamer-Version: ${gstreamer:Version}
+XB-GStreamer-Elements: ${gstreamer:Elements}
+XB-GStreamer-URI-Sources: ${gstreamer:URISources}
+XB-GStreamer-URI-Sinks: ${gstreamer:URISinks}
+XB-GStreamer-Encoders: ${gstreamer:Encoders}
+XB-GStreamer-Decoders: ${gstreamer:Decoders}
+Provides: ${gstreamer:Provides}
+Replaces: gstreamer1.0-plugins-bad (<< 1.13.1)
+Breaks: gstreamer1.0-plugins-bad (<< 1.13.1)
+Description: GStreamer plugin for GTK+3
+ GStreamer is a streaming media framework, based on graphs of filters
+ which operate on media data.  Applications using this library can do
+ anything from real-time sound processing to playing videos, and just
+ about anything else media-related.  Its plugin-based architecture means
+ that new data types or processing capabilities can be added simply by
+ installing new plug-ins.
+ .
+ This package contains the GStreamer plugin for GTK+3.
+
 Package: @GST_PKGNAME@-plugins-good
 Architecture: any
 Multi-Arch: same
@@ -62,8 +112,8 @@ Depends: ${misc:Depends},
          @GST_PKGNAME@-pulseaudio | @GST_PKGNAME@-audiosink,
          gstreamer@GST_ABI@-plugins-base,
 Recommends: @GST_PKGNAME@-x
-Replaces: gstreamer1.0-plugins-bad (<< 1.1.2)
-Breaks: gstreamer1.0-plugins-bad (<< 1.7.90)
+Replaces: gstreamer1.0-plugins-bad (<< 1.13.1)
+Breaks: gstreamer1.0-plugins-bad (<< 1.13.1)
 XB-GStreamer-Version: ${gstreamer:Version}
 XB-GStreamer-Elements: ${gstreamer:Elements}
 XB-GStreamer-URI-Sources: ${gstreamer:URISources}
@@ -89,9 +139,11 @@ Section: debug
 Priority: extra
 Depends: @GST_PKGNAME@-plugins-good (= ${binary:Version}),
          @GST_PKGNAME@-pulseaudio (= ${binary:Version}),
+         @GST_PKGNAME@-qt5 (= ${binary:Version}),
+         @GST_PKGNAME@-gtk3 (= ${binary:Version}),
          ${misc:Depends}
-Replaces: gstreamer1.0-plugins-bad (<< 1.1.2)
-Breaks: gstreamer1.0-plugins-bad (<< 1.7.90)
+Replaces: gstreamer1.0-plugins-bad (<< 1.13.1)
+Breaks: gstreamer1.0-plugins-bad (<< 1.13.1)
 Description: GStreamer plugins from the "good" set
  GStreamer is a streaming media framework, based on graphs of filters
  which operate on media data.  Applications using this library can do

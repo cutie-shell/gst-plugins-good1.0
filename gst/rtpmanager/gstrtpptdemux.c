@@ -114,6 +114,12 @@ enum
   LAST_SIGNAL
 };
 
+enum
+{
+  PROP_0,
+  PROP_IGNORED_PTS,
+};
+
 #define gst_rtp_pt_demux_parent_class parent_class
 G_DEFINE_TYPE (GstRtpPtDemux, gst_rtp_pt_demux, GST_TYPE_ELEMENT);
 
@@ -137,6 +143,38 @@ static gboolean gst_rtp_pt_demux_src_event (GstPad * pad, GstObject * parent,
 
 
 static guint gst_rtp_pt_demux_signals[LAST_SIGNAL] = { 0 };
+
+static void
+gst_rtp_pt_demux_set_property (GObject * object, guint prop_id,
+    const GValue * value, GParamSpec * pspec)
+{
+  GstRtpPtDemux *rtpptdemux = GST_RTP_PT_DEMUX (object);
+
+  switch (prop_id) {
+    case PROP_IGNORED_PTS:
+      g_value_copy (value, &rtpptdemux->ignored_pts);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+  }
+}
+
+static void
+gst_rtp_pt_demux_get_property (GObject * object, guint prop_id,
+    GValue * value, GParamSpec * pspec)
+{
+  GstRtpPtDemux *rtpptdemux = GST_RTP_PT_DEMUX (object);
+
+  switch (prop_id) {
+    case PROP_IGNORED_PTS:
+      g_value_copy (&rtpptdemux->ignored_pts, value);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+  }
+}
 
 static void
 gst_rtp_pt_demux_class_init (GstRtpPtDemuxClass * klass)
@@ -199,6 +237,31 @@ gst_rtp_pt_demux_class_init (GstRtpPtDemuxClass * klass)
           clear_pt_map), NULL, NULL, g_cclosure_marshal_VOID__VOID,
       G_TYPE_NONE, 0, G_TYPE_NONE);
 
+  gobject_klass->set_property = gst_rtp_pt_demux_set_property;
+  gobject_klass->get_property = gst_rtp_pt_demux_get_property;
+
+  /**
+   * GstRtpPtDemux:ignored-payload-types:
+   *
+   * If specified, packets with an ignored payload type will be dropped,
+   * instead of causing a new pad to be exposed for these to be pushed on.
+   *
+   * This is for example useful to drop FEC protection packets, as they
+   * need to go through the #GstRtpJitterBuffer, but cease to be useful
+   * past that point, #GstRtpBin will make use of this property for that
+   * purpose.
+   *
+   * Since: 1.14
+   */
+  g_object_class_install_property (gobject_klass, PROP_IGNORED_PTS,
+      gst_param_spec_array ("ignored-payload-types",
+          "Ignored payload types",
+          "Packets with these payload types will be dropped",
+          g_param_spec_int ("payload-types", "payload-types", "Payload types",
+              0, G_MAXINT, 0,
+              G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS),
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
   gobject_klass->finalize = gst_rtp_pt_demux_finalize;
 
   gstelement_klass->change_state =
@@ -234,12 +297,16 @@ gst_rtp_pt_demux_init (GstRtpPtDemux * ptdemux)
   gst_pad_set_event_function (ptdemux->sink, gst_rtp_pt_demux_sink_event);
 
   gst_element_add_pad (GST_ELEMENT (ptdemux), ptdemux->sink);
+
+  g_value_init (&ptdemux->ignored_pts, GST_TYPE_ARRAY);
 }
 
 static void
 gst_rtp_pt_demux_finalize (GObject * object)
 {
   gst_rtp_pt_demux_release (GST_RTP_PT_DEMUX (object));
+
+  g_value_unset (&GST_RTP_PT_DEMUX (object)->ignored_pts);
 
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -250,6 +317,7 @@ gst_rtp_pt_demux_get_caps (GstRtpPtDemux * rtpdemux, guint pt)
   GstCaps *caps;
   GValue ret = { 0 };
   GValue args[2] = { {0}, {0} };
+  GstCaps *sink_caps;
 
   /* figure out the caps */
   g_value_init (&args[0], GST_TYPE_ELEMENT);
@@ -267,8 +335,26 @@ gst_rtp_pt_demux_get_caps (GstRtpPtDemux * rtpdemux, guint pt)
   g_value_unset (&args[1]);
   caps = g_value_dup_boxed (&ret);
   g_value_unset (&ret);
-  if (caps == NULL) {
-    caps = gst_pad_get_current_caps (rtpdemux->sink);
+
+  sink_caps = gst_pad_get_current_caps (rtpdemux->sink);
+
+  if (sink_caps) {
+    if (caps == NULL) {
+      caps = gst_caps_ref (sink_caps);
+    } else {
+      GstStructure *s1;
+      GstStructure *s2;
+      guint ssrc;
+
+      caps = gst_caps_make_writable (caps);
+      s1 = gst_caps_get_structure (sink_caps, 0);
+      s2 = gst_caps_get_structure (caps, 0);
+
+      gst_structure_get_uint (s1, "ssrc", &ssrc);
+      gst_structure_set (s2, "ssrc", G_TYPE_UINT, ssrc, NULL);
+    }
+
+    gst_caps_unref (sink_caps);
   }
 
   GST_DEBUG ("pt %d, got caps %" GST_PTR_FORMAT, pt, caps);
@@ -340,6 +426,24 @@ forward_sticky_events (GstPad * pad, GstEvent ** event, gpointer user_data)
   return TRUE;
 }
 
+static gboolean
+gst_rtp_pt_demux_pt_is_ignored (GstRtpPtDemux * ptdemux, guint8 pt)
+{
+  gboolean ret = FALSE;
+  guint i;
+
+  for (i = 0; i < gst_value_array_get_size (&ptdemux->ignored_pts); i++) {
+    const GValue *tmp = gst_value_array_get_value (&ptdemux->ignored_pts, i);
+
+    if (g_value_get_int (tmp) == pt) {
+      ret = TRUE;
+      break;
+    }
+  }
+
+  return ret;
+}
+
 static GstFlowReturn
 gst_rtp_pt_demux_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
 {
@@ -358,6 +462,9 @@ gst_rtp_pt_demux_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
   pt = gst_rtp_buffer_get_payload_type (&rtp);
   gst_rtp_buffer_unmap (&rtp);
 
+  if (gst_rtp_pt_demux_pt_is_ignored (rtpdemux, pt))
+    goto ignored;
+
   GST_DEBUG_OBJECT (rtpdemux, "received buffer for pt %d", pt);
 
   srcpad = find_pad_for_pt (rtpdemux, pt);
@@ -371,6 +478,9 @@ gst_rtp_pt_demux_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
     caps = gst_rtp_pt_demux_get_caps (rtpdemux, pt);
     if (!caps)
       goto no_caps;
+
+    if (gst_rtp_pt_demux_pt_is_ignored (rtpdemux, pt))
+      goto ignored;
 
     klass = GST_ELEMENT_GET_CLASS (rtpdemux);
     templ = gst_element_class_get_pad_template (klass, "src_%u");
@@ -444,6 +554,13 @@ gst_rtp_pt_demux_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
   gst_object_unref (srcpad);
 
   return ret;
+
+ignored:
+  {
+    GST_DEBUG_OBJECT (rtpdemux, "Dropped buffer for pt %d", pt);
+    gst_buffer_unref (buf);
+    return GST_FLOW_OK;
+  }
 
   /* ERRORS */
 invalid_buffer:

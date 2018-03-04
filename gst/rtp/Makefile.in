@@ -218,7 +218,13 @@ am_libgstrtp_la_OBJECTS = libgstrtp_la-dboolhuff.lo \
 	libgstrtp_la-gstrtpvp8pay.lo libgstrtp_la-gstrtpvp9depay.lo \
 	libgstrtp_la-gstrtpvp9pay.lo libgstrtp_la-gstrtpvrawdepay.lo \
 	libgstrtp_la-gstrtpvrawpay.lo libgstrtp_la-gstrtpstreampay.lo \
-	libgstrtp_la-gstrtpstreamdepay.lo libgstrtp_la-gstrtputils.lo
+	libgstrtp_la-gstrtpstreamdepay.lo libgstrtp_la-gstrtputils.lo \
+	libgstrtp_la-rtpulpfeccommon.lo \
+	libgstrtp_la-gstrtpulpfecdec.lo \
+	libgstrtp_la-gstrtpulpfecenc.lo libgstrtp_la-rtpredcommon.lo \
+	libgstrtp_la-gstrtpredenc.lo libgstrtp_la-gstrtpreddec.lo \
+	libgstrtp_la-rtpstorage.lo libgstrtp_la-rtpstoragestream.lo \
+	libgstrtp_la-gstrtpstorage.lo
 libgstrtp_la_OBJECTS = $(am_libgstrtp_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -753,7 +759,16 @@ libgstrtp_la_SOURCES = \
 	gstrtpvrawpay.c \
 	gstrtpstreampay.c \
 	gstrtpstreamdepay.c \
-	gstrtputils.c
+	gstrtputils.c \
+	rtpulpfeccommon.c \
+	gstrtpulpfecdec.c \
+	gstrtpulpfecenc.c \
+	rtpredcommon.c \
+	gstrtpredenc.c \
+	gstrtpreddec.c \
+	rtpstorage.c \
+	rtpstoragestream.c \
+	gstrtpstorage.c
 
 libgstrtp_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) \
 	$(GST_CFLAGS) -Dvp8_norm=gst_rtpvp8_vp8_norm \
@@ -845,15 +860,20 @@ noinst_HEADERS = \
 	gstasteriskh263.h \
 	gstrtpqcelpdepay.h \
 	gstrtpqdmdepay.h \
+	gstrtpreddec.h \
+	gstrtpredenc.h \
 	gstrtpsbcdepay.h \
 	gstrtpsbcpay.h \
 	gstrtpsirenpay.h \
 	gstrtpsirendepay.h \
 	gstrtpspeexdepay.h \
 	gstrtpspeexpay.h \
+	gstrtpstorage.h \
 	gstrtpsv3vdepay.h \
 	gstrtptheoradepay.h \
 	gstrtptheorapay.h \
+	gstrtpulpfecdec.h \
+	gstrtpulpfecenc.h \
 	gstrtpvorbisdepay.h \
 	gstrtpvorbispay.h \
 	gstrtpvp8depay.h \
@@ -864,7 +884,11 @@ noinst_HEADERS = \
 	gstrtpvrawpay.h \
 	gstrtpstreampay.h \
 	gstrtpstreamdepay.h \
-	gstrtputils.h
+	gstrtputils.h \
+	rtpredcommon.h \
+	rtpstorage.h \
+	rtpstoragestream.h \
+	rtpulpfeccommon.h
 
 EXTRA_DIST = dboolhuff.LICENSE
 all: all-am
@@ -1018,17 +1042,22 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtppcmupay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpqcelpdepay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpqdmdepay.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpreddec.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpredenc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpsbcdepay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpsbcpay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpsirendepay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpsirenpay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpspeexdepay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpspeexpay.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpstorage.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpstreamdepay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpstreampay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpsv3vdepay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtptheoradepay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtptheorapay.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpulpfecdec.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpulpfecenc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtputils.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpvorbisdepay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpvorbispay.Plo@am__quote@
@@ -1038,6 +1067,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpvp9pay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpvrawdepay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-gstrtpvrawpay.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-rtpredcommon.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-rtpstorage.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-rtpstoragestream.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtp_la-rtpulpfeccommon.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -1713,6 +1746,69 @@ libgstrtp_la-gstrtputils.lo: gstrtputils.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstrtputils.c' object='libgstrtp_la-gstrtputils.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -c -o libgstrtp_la-gstrtputils.lo `test -f 'gstrtputils.c' || echo '$(srcdir)/'`gstrtputils.c
+
+libgstrtp_la-rtpulpfeccommon.lo: rtpulpfeccommon.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -MT libgstrtp_la-rtpulpfeccommon.lo -MD -MP -MF $(DEPDIR)/libgstrtp_la-rtpulpfeccommon.Tpo -c -o libgstrtp_la-rtpulpfeccommon.lo `test -f 'rtpulpfeccommon.c' || echo '$(srcdir)/'`rtpulpfeccommon.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstrtp_la-rtpulpfeccommon.Tpo $(DEPDIR)/libgstrtp_la-rtpulpfeccommon.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='rtpulpfeccommon.c' object='libgstrtp_la-rtpulpfeccommon.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -c -o libgstrtp_la-rtpulpfeccommon.lo `test -f 'rtpulpfeccommon.c' || echo '$(srcdir)/'`rtpulpfeccommon.c
+
+libgstrtp_la-gstrtpulpfecdec.lo: gstrtpulpfecdec.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -MT libgstrtp_la-gstrtpulpfecdec.lo -MD -MP -MF $(DEPDIR)/libgstrtp_la-gstrtpulpfecdec.Tpo -c -o libgstrtp_la-gstrtpulpfecdec.lo `test -f 'gstrtpulpfecdec.c' || echo '$(srcdir)/'`gstrtpulpfecdec.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstrtp_la-gstrtpulpfecdec.Tpo $(DEPDIR)/libgstrtp_la-gstrtpulpfecdec.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstrtpulpfecdec.c' object='libgstrtp_la-gstrtpulpfecdec.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -c -o libgstrtp_la-gstrtpulpfecdec.lo `test -f 'gstrtpulpfecdec.c' || echo '$(srcdir)/'`gstrtpulpfecdec.c
+
+libgstrtp_la-gstrtpulpfecenc.lo: gstrtpulpfecenc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -MT libgstrtp_la-gstrtpulpfecenc.lo -MD -MP -MF $(DEPDIR)/libgstrtp_la-gstrtpulpfecenc.Tpo -c -o libgstrtp_la-gstrtpulpfecenc.lo `test -f 'gstrtpulpfecenc.c' || echo '$(srcdir)/'`gstrtpulpfecenc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstrtp_la-gstrtpulpfecenc.Tpo $(DEPDIR)/libgstrtp_la-gstrtpulpfecenc.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstrtpulpfecenc.c' object='libgstrtp_la-gstrtpulpfecenc.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -c -o libgstrtp_la-gstrtpulpfecenc.lo `test -f 'gstrtpulpfecenc.c' || echo '$(srcdir)/'`gstrtpulpfecenc.c
+
+libgstrtp_la-rtpredcommon.lo: rtpredcommon.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -MT libgstrtp_la-rtpredcommon.lo -MD -MP -MF $(DEPDIR)/libgstrtp_la-rtpredcommon.Tpo -c -o libgstrtp_la-rtpredcommon.lo `test -f 'rtpredcommon.c' || echo '$(srcdir)/'`rtpredcommon.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstrtp_la-rtpredcommon.Tpo $(DEPDIR)/libgstrtp_la-rtpredcommon.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='rtpredcommon.c' object='libgstrtp_la-rtpredcommon.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -c -o libgstrtp_la-rtpredcommon.lo `test -f 'rtpredcommon.c' || echo '$(srcdir)/'`rtpredcommon.c
+
+libgstrtp_la-gstrtpredenc.lo: gstrtpredenc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -MT libgstrtp_la-gstrtpredenc.lo -MD -MP -MF $(DEPDIR)/libgstrtp_la-gstrtpredenc.Tpo -c -o libgstrtp_la-gstrtpredenc.lo `test -f 'gstrtpredenc.c' || echo '$(srcdir)/'`gstrtpredenc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstrtp_la-gstrtpredenc.Tpo $(DEPDIR)/libgstrtp_la-gstrtpredenc.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstrtpredenc.c' object='libgstrtp_la-gstrtpredenc.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -c -o libgstrtp_la-gstrtpredenc.lo `test -f 'gstrtpredenc.c' || echo '$(srcdir)/'`gstrtpredenc.c
+
+libgstrtp_la-gstrtpreddec.lo: gstrtpreddec.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -MT libgstrtp_la-gstrtpreddec.lo -MD -MP -MF $(DEPDIR)/libgstrtp_la-gstrtpreddec.Tpo -c -o libgstrtp_la-gstrtpreddec.lo `test -f 'gstrtpreddec.c' || echo '$(srcdir)/'`gstrtpreddec.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstrtp_la-gstrtpreddec.Tpo $(DEPDIR)/libgstrtp_la-gstrtpreddec.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstrtpreddec.c' object='libgstrtp_la-gstrtpreddec.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -c -o libgstrtp_la-gstrtpreddec.lo `test -f 'gstrtpreddec.c' || echo '$(srcdir)/'`gstrtpreddec.c
+
+libgstrtp_la-rtpstorage.lo: rtpstorage.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -MT libgstrtp_la-rtpstorage.lo -MD -MP -MF $(DEPDIR)/libgstrtp_la-rtpstorage.Tpo -c -o libgstrtp_la-rtpstorage.lo `test -f 'rtpstorage.c' || echo '$(srcdir)/'`rtpstorage.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstrtp_la-rtpstorage.Tpo $(DEPDIR)/libgstrtp_la-rtpstorage.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='rtpstorage.c' object='libgstrtp_la-rtpstorage.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -c -o libgstrtp_la-rtpstorage.lo `test -f 'rtpstorage.c' || echo '$(srcdir)/'`rtpstorage.c
+
+libgstrtp_la-rtpstoragestream.lo: rtpstoragestream.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -MT libgstrtp_la-rtpstoragestream.lo -MD -MP -MF $(DEPDIR)/libgstrtp_la-rtpstoragestream.Tpo -c -o libgstrtp_la-rtpstoragestream.lo `test -f 'rtpstoragestream.c' || echo '$(srcdir)/'`rtpstoragestream.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstrtp_la-rtpstoragestream.Tpo $(DEPDIR)/libgstrtp_la-rtpstoragestream.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='rtpstoragestream.c' object='libgstrtp_la-rtpstoragestream.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -c -o libgstrtp_la-rtpstoragestream.lo `test -f 'rtpstoragestream.c' || echo '$(srcdir)/'`rtpstoragestream.c
+
+libgstrtp_la-gstrtpstorage.lo: gstrtpstorage.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -MT libgstrtp_la-gstrtpstorage.lo -MD -MP -MF $(DEPDIR)/libgstrtp_la-gstrtpstorage.Tpo -c -o libgstrtp_la-gstrtpstorage.lo `test -f 'gstrtpstorage.c' || echo '$(srcdir)/'`gstrtpstorage.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstrtp_la-gstrtpstorage.Tpo $(DEPDIR)/libgstrtp_la-gstrtpstorage.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstrtpstorage.c' object='libgstrtp_la-gstrtpstorage.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtp_la_CFLAGS) $(CFLAGS) -c -o libgstrtp_la-gstrtpstorage.lo `test -f 'gstrtpstorage.c' || echo '$(srcdir)/'`gstrtpstorage.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

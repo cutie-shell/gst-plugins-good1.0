@@ -168,6 +168,7 @@ curve of the audio signal like on an oscilloscope.</p>
   GstBufferPool *pool;
 
   GstSegment   segment;
+  gboolean     segment_pending;
 
   /* QoS stuff *//* with LOCK */
   gdouble      proportion;

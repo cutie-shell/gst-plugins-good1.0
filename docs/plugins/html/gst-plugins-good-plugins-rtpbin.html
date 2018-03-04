@@ -311,6 +311,29 @@
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-on-bundled-ssrc" title="The “on-bundled-ssrc” signal">on-bundled-ssrc</a></td>
 <td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
 </tr>
+<tr>
+<td class="signal_type">
+<a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct"><span class="returnvalue">GObject</span></a>*</td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-get-internal-storage" title="The “get-internal-storage” signal">get-internal-storage</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></td>
+</tr>
+<tr>
+<td class="signal_type"><span class="returnvalue">void</span></td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-new-storage" title="The “new-storage” signal">new-storage</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type">
+<a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct"><span class="returnvalue">GstElement</span></a>*</td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-request-fec-decoder" title="The “request-fec-decoder” signal">request-fec-decoder</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type">
+<a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct"><span class="returnvalue">GstElement</span></a>*</td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-request-fec-encoder" title="The “request-fec-encoder” signal">request-fec-encoder</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -1996,6 +2019,175 @@ session for which they handle retransmission.</p>
 </div>
 <p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
 <p class="since">Since: 1.12</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpBin-get-internal-storage"></a><h3>The <code class="literal">“get-internal-storage”</code> signal</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct"><span class="returnvalue">GObject</span></a>*
+user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a> *rtpbin,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a>      id,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>   user_data)</pre>
+<p>Request the internal RTPStorage object as <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct"><span class="type">GObject</span></a> in session <em class="parameter"><code>id</code></em>
+.</p>
+<div class="refsect3">
+<a name="GstRtpBin-get-internal-storage.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>rtpbin</p></td>
+<td class="parameter_description"><p>the object which received the signal</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>id</p></td>
+<td class="parameter_description"><p>the session id</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></p>
+<p class="since">Since: 1.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpBin-new-storage"></a><h3>The <code class="literal">“new-storage”</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a>  *rtpbin,
+               <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct"><span class="type">GstElement</span></a> *storage,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a>       session,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>    user_data)</pre>
+<p>Notify that a new <em class="parameter"><code>storage</code></em>
+ was created for <em class="parameter"><code>session</code></em>
+.
+This signal can, for example, be used to configure <em class="parameter"><code>storage</code></em>
+.</p>
+<div class="refsect3">
+<a name="GstRtpBin-new-storage.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>rtpbin</p></td>
+<td class="parameter_description"><p>the object which received the signal</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>storage</p></td>
+<td class="parameter_description"><p>the new storage</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>session</p></td>
+<td class="parameter_description"><p>the session</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+<p class="since">Since: 1.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpBin-request-fec-decoder"></a><h3>The <code class="literal">“request-fec-decoder”</code> signal</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct"><span class="returnvalue">GstElement</span></a>*
+user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a> *rtpbin,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a>      session,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>   user_data)</pre>
+<p>Request a FEC decoder element for the given <em class="parameter"><code>session</code></em>
+. The element
+will be added to the bin after the pt demuxer.</p>
+<p>If no handler is connected, no FEC decoder will be used.</p>
+<div class="refsect3">
+<a name="GstRtpBin-request-fec-decoder.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>rtpbin</p></td>
+<td class="parameter_description"><p>the object which received the signal</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>session</p></td>
+<td class="parameter_description"><p>the session index</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+<p class="since">Since: 1.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpBin-request-fec-encoder"></a><h3>The <code class="literal">“request-fec-encoder”</code> signal</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct"><span class="returnvalue">GstElement</span></a>*
+user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a> *rtpbin,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a>      session,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>   user_data)</pre>
+<p>Request a FEC encoder element for the given <em class="parameter"><code>session</code></em>
+. The element
+will be added to the bin after the RTPSession.</p>
+<p>If no handler is connected, no FEC encoder will be used.</p>
+<div class="refsect3">
+<a name="GstRtpBin-request-fec-encoder.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>rtpbin</p></td>
+<td class="parameter_description"><p>the object which received the signal</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>session</p></td>
+<td class="parameter_description"><p>the session index</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+<p class="since">Since: 1.14</p>
 </div>
 </div>
 <div class="refsect1">

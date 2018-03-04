@@ -1,5 +1,5 @@
 project('gst-plugins-good', 'c',
-  version : '1.13.1',
+  version : '1.13.90',
   meson_version : '>= 0.36.0',
   default_options : [ 'warning_level=1',
                       'buildtype=debugoptimized' ])
@@ -14,6 +14,8 @@ gst_version_micro = version_arr[2].to_int()
 else
   gst_version_nano = 0
 endif
+
+have_cxx = add_languages('cpp', required : false)
 
 glib_req = '>= 2.40.0'
 gst_req = '>= @0@.@1@.0'.format(gst_version_major, gst_version_minor)
@@ -142,6 +144,43 @@ cdata.set('PACKAGE_VERSION', '"@0@"'.format(gst_version))
 cdata.set('GST_LICENSE', '"LGPL"')
 cdata.set('PACKAGE', '"gst-plugins-good"')
 cdata.set('GETTEXT_PACKAGE', '"gst-plugins-good-1.0"')
+
+warning_flags = [
+  '-Wmissing-declarations',
+  '-Wredundant-decls',
+  '-Wwrite-strings',
+  '-Winit-self',
+  '-Wmissing-include-dirs',
+  '-Wno-multichar',
+  '-Wvla',
+  '-Wpointer-arith',
+]
+
+warning_c_flags = [
+  '-Wmissing-prototypes',
+  '-Wdeclaration-after-statement',
+  '-Wold-style-definition',
+  '-Waggregate-return',
+]
+
+if have_cxx
+  cxx = meson.get_compiler('cpp')
+endif
+
+foreach extra_arg : warning_flags
+  if cc.has_argument (extra_arg)
+    add_project_arguments([extra_arg], language: 'c')
+  endif
+  if have_cxx and cxx.has_argument (extra_arg)
+    add_project_arguments([extra_arg], language: 'cpp')
+  endif
+endforeach
+
+foreach extra_arg : warning_c_flags
+  if cc.has_argument (extra_arg)
+    add_project_arguments([extra_arg], language: 'c')
+  endif
+endforeach
 
 # GStreamer package name and origin url
 gst_package_name = get_option('with-package-name')

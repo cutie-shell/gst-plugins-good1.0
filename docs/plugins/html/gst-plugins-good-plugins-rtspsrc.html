@@ -251,6 +251,11 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--max-ts-offset-adjustment" title="The “max-ts-offset-adjustment” property">max-ts-offset-adjustment</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><span class="type">GstRTSPBackchannel</span></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--backchannel" title="The “backchannel” property">backchannel</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -298,6 +303,11 @@
 <td class="signal_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a></td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-before-send" title="The “before-send” signal">before-send</a></td>
 <td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-FIRST:CAPS">Run First</a></td>
+</tr>
+<tr>
+<td class="signal_type"><a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstPad.html#GstFlowReturn"><span class="returnvalue">GstFlowReturn</span></a></td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-push-backchannel-buffer" title="The “push-backchannel-buffer” signal">push-backchannel-buffer</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></td>
 </tr>
 </tbody>
 </table></div>
@@ -352,7 +362,7 @@ This feature is implemented using the gstrtpbin element.</p>
 <p>rtspsrc acts like a live source and will therefore only generate data in the
 PLAYING state.</p>
 <div class="refsect2">
-<a name="id-1.2.233.9.7"></a><h3>Example launch line</h3>
+<a name="id-1.2.238.9.7"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -369,7 +379,7 @@ fakesink.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.233.9.8.1"></a><h3>Element Information</h3>
+<a name="id-1.2.238.9.8.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -395,7 +405,7 @@ fakesink.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.233.9.8.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.238.9.8.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -718,7 +728,7 @@ keep alive and then this property needs to be set to FALSE.</p>
 <pre class="programlisting">  “user-agent”               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
 <p>The User-Agent string to send to the server.</p>
 <p>Flags: Read / Write</p>
-<p>Default value: "GStreamer/1.13.1"</p>
+<p>Default value: "GStreamer/1.13.90"</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -765,6 +775,14 @@ may be adjusted with. This is used to avoid sudden large changes to time
 stamps.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc--backchannel"></a><h3>The <code class="literal">“backchannel”</code> property</h3>
+<pre class="programlisting">  “backchannel”              <span class="type">GstRTSPBackchannel</span></pre>
+<p>The type of backchannel to setup. Default is 'none'.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: No backchannel</p>
 </div>
 </div>
 <div class="refsect1">
@@ -1058,6 +1076,43 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRT
                <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0/gst-plugins-base-libs-GstRTSPMessage.html#GstRTSPMessage"><span class="type">GstRTSPMessage</span></a> *arg1,
                <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>        user_data)</pre>
 <p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-FIRST:CAPS">Run First</a></p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc-push-backchannel-buffer"></a><h3>The <code class="literal">“push-backchannel-buffer”</code> signal</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstPad.html#GstFlowReturn"><span class="returnvalue">GstFlowReturn</span></a>
+user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a> *rtspsrc,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a>       buffer,
+               <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstBuffer.html#GstBuffer-struct"><span class="type">GstBuffer</span></a>  *arg2,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>    user_data)</pre>
+<div class="refsect3">
+<a name="GstRTSPSrc-push-backchannel-buffer.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>rtspsrc</p></td>
+<td class="parameter_description"><p>a <a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>buffer</p></td>
+<td class="parameter_description"><p>RTP buffer to send back</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></p>
 </div>
 </div>
 </div>

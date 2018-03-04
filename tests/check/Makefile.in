@@ -239,7 +239,10 @@ libparser_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpjitterbuffer$(EXEEXT) \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpmux$(EXEEXT) \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtprtx$(EXEEXT) \
-@USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpsession$(EXEEXT)
+@USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpsession$(EXEEXT) \
+@USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpstorage$(EXEEXT) \
+@USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpred$(EXEEXT) \
+@USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpulpfec$(EXEEXT)
 @USE_PLUGIN_SHAPEWIPE_TRUE@am__EXEEXT_29 =  \
 @USE_PLUGIN_SHAPEWIPE_TRUE@	elements/shapewipe$(EXEEXT)
 @USE_SOUP_TRUE@am__EXEEXT_30 = elements/souphttpsrc$(EXEEXT)
@@ -734,6 +737,15 @@ elements_rtpmux_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_rtpmux_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
+elements_rtpred_SOURCES = elements/rtpred.c
+elements_rtpred_OBJECTS = elements/elements_rtpred-rtpred.$(OBJEXT)
+elements_rtpred_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
+elements_rtpred_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(elements_rtpred_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
+	-o $@
 elements_rtprtx_SOURCES = elements/rtprtx.c
 elements_rtprtx_OBJECTS = elements/elements_rtprtx-rtprtx.$(OBJEXT)
 elements_rtprtx_DEPENDENCIES = $(am__DEPENDENCIES_1) \
@@ -751,6 +763,26 @@ elements_rtpsession_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 elements_rtpsession_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_rtpsession_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+elements_rtpstorage_SOURCES = elements/rtpstorage.c
+elements_rtpstorage_OBJECTS =  \
+	elements/elements_rtpstorage-rtpstorage.$(OBJEXT)
+elements_rtpstorage_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
+elements_rtpstorage_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(elements_rtpstorage_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+elements_rtpulpfec_SOURCES = elements/rtpulpfec.c
+elements_rtpulpfec_OBJECTS =  \
+	elements/elements_rtpulpfec-rtpulpfec.$(OBJEXT)
+elements_rtpulpfec_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
+elements_rtpulpfec_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(elements_rtpulpfec_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 elements_rtpvp9_SOURCES = elements/rtpvp9.c
 elements_rtpvp9_OBJECTS = elements/rtpvp9.$(OBJEXT)
@@ -1008,15 +1040,16 @@ SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpbundle.c \
 	elements/rtpcollision.c elements/rtph261.c elements/rtph263.c \
 	elements/rtph264.c elements/rtpjitterbuffer.c \
-	elements/rtpmux.c elements/rtprtx.c elements/rtpsession.c \
-	elements/rtpvp9.c elements/shapewipe.c elements/souphttpsrc.c \
-	elements/spectrum.c elements/splitmux.c elements/udpsink.c \
-	elements/udpsrc.c elements/videobox.c elements/videocrop.c \
-	elements/videofilter.c elements/videomixer.c elements/vp8dec.c \
-	elements/vp8enc.c elements/vp9enc.c elements/wavpackdec.c \
-	elements/wavpackenc.c elements/wavpackparse.c \
-	elements/wavparse.c elements/y4menc.c generic/states.c \
-	$(nodist_orc_deinterlace_SOURCES) \
+	elements/rtpmux.c elements/rtpred.c elements/rtprtx.c \
+	elements/rtpsession.c elements/rtpstorage.c \
+	elements/rtpulpfec.c elements/rtpvp9.c elements/shapewipe.c \
+	elements/souphttpsrc.c elements/spectrum.c elements/splitmux.c \
+	elements/udpsink.c elements/udpsrc.c elements/videobox.c \
+	elements/videocrop.c elements/videofilter.c \
+	elements/videomixer.c elements/vp8dec.c elements/vp8enc.c \
+	elements/vp9enc.c elements/wavpackdec.c elements/wavpackenc.c \
+	elements/wavpackparse.c elements/wavparse.c elements/y4menc.c \
+	generic/states.c $(nodist_orc_deinterlace_SOURCES) \
 	$(nodist_orc_videobox_SOURCES) \
 	$(nodist_orc_videomixer_SOURCES) pipelines/effectv.c \
 	pipelines/flacdec.c pipelines/lame.c \
@@ -1049,17 +1082,19 @@ DIST_SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpbundle.c \
 	elements/rtpcollision.c elements/rtph261.c elements/rtph263.c \
 	elements/rtph264.c elements/rtpjitterbuffer.c \
-	elements/rtpmux.c elements/rtprtx.c elements/rtpsession.c \
-	elements/rtpvp9.c elements/shapewipe.c elements/souphttpsrc.c \
-	elements/spectrum.c elements/splitmux.c elements/udpsink.c \
-	elements/udpsrc.c elements/videobox.c elements/videocrop.c \
-	elements/videofilter.c elements/videomixer.c elements/vp8dec.c \
-	elements/vp8enc.c elements/vp9enc.c elements/wavpackdec.c \
-	elements/wavpackenc.c elements/wavpackparse.c \
-	elements/wavparse.c elements/y4menc.c generic/states.c \
-	pipelines/effectv.c pipelines/flacdec.c pipelines/lame.c \
-	pipelines/simple-launch-lines.c pipelines/tagschecking.c \
-	pipelines/twolame.c pipelines/wavenc.c pipelines/wavpack.c
+	elements/rtpmux.c elements/rtpred.c elements/rtprtx.c \
+	elements/rtpsession.c elements/rtpstorage.c \
+	elements/rtpulpfec.c elements/rtpvp9.c elements/shapewipe.c \
+	elements/souphttpsrc.c elements/spectrum.c elements/splitmux.c \
+	elements/udpsink.c elements/udpsrc.c elements/videobox.c \
+	elements/videocrop.c elements/videofilter.c \
+	elements/videomixer.c elements/vp8dec.c elements/vp8enc.c \
+	elements/vp9enc.c elements/wavpackdec.c elements/wavpackenc.c \
+	elements/wavpackparse.c elements/wavparse.c elements/y4menc.c \
+	generic/states.c pipelines/effectv.c pipelines/flacdec.c \
+	pipelines/lame.c pipelines/simple-launch-lines.c \
+	pipelines/tagschecking.c pipelines/twolame.c \
+	pipelines/wavenc.c pipelines/wavpack.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -1811,7 +1846,10 @@ CLEANFILES = core.* test-registry.*
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpjitterbuffer \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpmux \
 @USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtprtx \
-@USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpsession
+@USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpsession \
+@USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpstorage \
+@USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpred \
+@USE_PLUGIN_RTPMANAGER_TRUE@	elements/rtpulpfec
 
 @USE_SOUP_FALSE@check_soup = 
 @USE_SOUP_TRUE@check_soup = elements/souphttpsrc
@@ -2014,6 +2052,12 @@ elements_rtpaux_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rtpaux_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(LDADD)
 elements_rtpbundle_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rtpbundle_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(LDADD)
+elements_rtpstorage_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
+elements_rtpstorage_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_NET_LIBS) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)
+elements_rtpred_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
+elements_rtpred_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_NET_LIBS) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)
+elements_rtpulpfec_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
+elements_rtpulpfec_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_NET_LIBS) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)
 
 # FIXME: configure should check for gdk-pixbuf not gtk
 # only need video.h header, not the lib
@@ -2044,6 +2088,7 @@ orc_videobox_LDADD = $(ORC_LIBS) -lorc-test-0.4
 nodist_orc_videobox_SOURCES = orc/videobox.c
 EXTRA_DIST = \
 	gst-plugins-good.supp	\
+	elements/packets.h \
 	elements/qtdemux.h
 
 all: all-am
@@ -2489,6 +2534,12 @@ elements/elements_rtpmux-rtpmux.$(OBJEXT): elements/$(am__dirstamp) \
 elements/rtpmux$(EXEEXT): $(elements_rtpmux_OBJECTS) $(elements_rtpmux_DEPENDENCIES) $(EXTRA_elements_rtpmux_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/rtpmux$(EXEEXT)
 	$(AM_V_CCLD)$(elements_rtpmux_LINK) $(elements_rtpmux_OBJECTS) $(elements_rtpmux_LDADD) $(LIBS)
+elements/elements_rtpred-rtpred.$(OBJEXT): elements/$(am__dirstamp) \
+	elements/$(DEPDIR)/$(am__dirstamp)
+
+elements/rtpred$(EXEEXT): $(elements_rtpred_OBJECTS) $(elements_rtpred_DEPENDENCIES) $(EXTRA_elements_rtpred_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/rtpred$(EXEEXT)
+	$(AM_V_CCLD)$(elements_rtpred_LINK) $(elements_rtpred_OBJECTS) $(elements_rtpred_LDADD) $(LIBS)
 elements/elements_rtprtx-rtprtx.$(OBJEXT): elements/$(am__dirstamp) \
 	elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2501,6 +2552,18 @@ elements/elements_rtpsession-rtpsession.$(OBJEXT):  \
 elements/rtpsession$(EXEEXT): $(elements_rtpsession_OBJECTS) $(elements_rtpsession_DEPENDENCIES) $(EXTRA_elements_rtpsession_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/rtpsession$(EXEEXT)
 	$(AM_V_CCLD)$(elements_rtpsession_LINK) $(elements_rtpsession_OBJECTS) $(elements_rtpsession_LDADD) $(LIBS)
+elements/elements_rtpstorage-rtpstorage.$(OBJEXT):  \
+	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
+
+elements/rtpstorage$(EXEEXT): $(elements_rtpstorage_OBJECTS) $(elements_rtpstorage_DEPENDENCIES) $(EXTRA_elements_rtpstorage_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/rtpstorage$(EXEEXT)
+	$(AM_V_CCLD)$(elements_rtpstorage_LINK) $(elements_rtpstorage_OBJECTS) $(elements_rtpstorage_LDADD) $(LIBS)
+elements/elements_rtpulpfec-rtpulpfec.$(OBJEXT):  \
+	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
+
+elements/rtpulpfec$(EXEEXT): $(elements_rtpulpfec_OBJECTS) $(elements_rtpulpfec_DEPENDENCIES) $(EXTRA_elements_rtpulpfec_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/rtpulpfec$(EXEEXT)
+	$(AM_V_CCLD)$(elements_rtpulpfec_LINK) $(elements_rtpulpfec_OBJECTS) $(elements_rtpulpfec_LDADD) $(LIBS)
 elements/rtpvp9.$(OBJEXT): elements/$(am__dirstamp) \
 	elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2769,8 +2832,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtph264-rtph264.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpjitterbuffer-rtpjitterbuffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpmux-rtpmux.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpred-rtpred.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtprtx-rtprtx.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpsession-rtpsession.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpstorage-rtpstorage.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rtpulpfec-rtpulpfec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_souphttpsrc-souphttpsrc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_spectrum-spectrum.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_splitmux-splitmux.Po@am__quote@
@@ -3448,6 +3514,20 @@ elements/elements_rtpmux-rtpmux.obj: elements/rtpmux.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpmux_CFLAGS) $(CFLAGS) -c -o elements/elements_rtpmux-rtpmux.obj `if test -f 'elements/rtpmux.c'; then $(CYGPATH_W) 'elements/rtpmux.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpmux.c'; fi`
 
+elements/elements_rtpred-rtpred.o: elements/rtpred.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpred_CFLAGS) $(CFLAGS) -MT elements/elements_rtpred-rtpred.o -MD -MP -MF elements/$(DEPDIR)/elements_rtpred-rtpred.Tpo -c -o elements/elements_rtpred-rtpred.o `test -f 'elements/rtpred.c' || echo '$(srcdir)/'`elements/rtpred.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtpred-rtpred.Tpo elements/$(DEPDIR)/elements_rtpred-rtpred.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtpred.c' object='elements/elements_rtpred-rtpred.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpred_CFLAGS) $(CFLAGS) -c -o elements/elements_rtpred-rtpred.o `test -f 'elements/rtpred.c' || echo '$(srcdir)/'`elements/rtpred.c
+
+elements/elements_rtpred-rtpred.obj: elements/rtpred.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpred_CFLAGS) $(CFLAGS) -MT elements/elements_rtpred-rtpred.obj -MD -MP -MF elements/$(DEPDIR)/elements_rtpred-rtpred.Tpo -c -o elements/elements_rtpred-rtpred.obj `if test -f 'elements/rtpred.c'; then $(CYGPATH_W) 'elements/rtpred.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpred.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtpred-rtpred.Tpo elements/$(DEPDIR)/elements_rtpred-rtpred.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtpred.c' object='elements/elements_rtpred-rtpred.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpred_CFLAGS) $(CFLAGS) -c -o elements/elements_rtpred-rtpred.obj `if test -f 'elements/rtpred.c'; then $(CYGPATH_W) 'elements/rtpred.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpred.c'; fi`
+
 elements/elements_rtprtx-rtprtx.o: elements/rtprtx.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtprtx_CFLAGS) $(CFLAGS) -MT elements/elements_rtprtx-rtprtx.o -MD -MP -MF elements/$(DEPDIR)/elements_rtprtx-rtprtx.Tpo -c -o elements/elements_rtprtx-rtprtx.o `test -f 'elements/rtprtx.c' || echo '$(srcdir)/'`elements/rtprtx.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtprtx-rtprtx.Tpo elements/$(DEPDIR)/elements_rtprtx-rtprtx.Po
@@ -3475,6 +3555,34 @@ elements/elements_rtpsession-rtpsession.obj: elements/rtpsession.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtpsession.c' object='elements/elements_rtpsession-rtpsession.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpsession_CFLAGS) $(CFLAGS) -c -o elements/elements_rtpsession-rtpsession.obj `if test -f 'elements/rtpsession.c'; then $(CYGPATH_W) 'elements/rtpsession.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpsession.c'; fi`
+
+elements/elements_rtpstorage-rtpstorage.o: elements/rtpstorage.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -MT elements/elements_rtpstorage-rtpstorage.o -MD -MP -MF elements/$(DEPDIR)/elements_rtpstorage-rtpstorage.Tpo -c -o elements/elements_rtpstorage-rtpstorage.o `test -f 'elements/rtpstorage.c' || echo '$(srcdir)/'`elements/rtpstorage.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtpstorage-rtpstorage.Tpo elements/$(DEPDIR)/elements_rtpstorage-rtpstorage.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtpstorage.c' object='elements/elements_rtpstorage-rtpstorage.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -c -o elements/elements_rtpstorage-rtpstorage.o `test -f 'elements/rtpstorage.c' || echo '$(srcdir)/'`elements/rtpstorage.c
+
+elements/elements_rtpstorage-rtpstorage.obj: elements/rtpstorage.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -MT elements/elements_rtpstorage-rtpstorage.obj -MD -MP -MF elements/$(DEPDIR)/elements_rtpstorage-rtpstorage.Tpo -c -o elements/elements_rtpstorage-rtpstorage.obj `if test -f 'elements/rtpstorage.c'; then $(CYGPATH_W) 'elements/rtpstorage.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpstorage.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtpstorage-rtpstorage.Tpo elements/$(DEPDIR)/elements_rtpstorage-rtpstorage.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtpstorage.c' object='elements/elements_rtpstorage-rtpstorage.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -c -o elements/elements_rtpstorage-rtpstorage.obj `if test -f 'elements/rtpstorage.c'; then $(CYGPATH_W) 'elements/rtpstorage.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpstorage.c'; fi`
+
+elements/elements_rtpulpfec-rtpulpfec.o: elements/rtpulpfec.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpulpfec_CFLAGS) $(CFLAGS) -MT elements/elements_rtpulpfec-rtpulpfec.o -MD -MP -MF elements/$(DEPDIR)/elements_rtpulpfec-rtpulpfec.Tpo -c -o elements/elements_rtpulpfec-rtpulpfec.o `test -f 'elements/rtpulpfec.c' || echo '$(srcdir)/'`elements/rtpulpfec.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtpulpfec-rtpulpfec.Tpo elements/$(DEPDIR)/elements_rtpulpfec-rtpulpfec.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtpulpfec.c' object='elements/elements_rtpulpfec-rtpulpfec.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpulpfec_CFLAGS) $(CFLAGS) -c -o elements/elements_rtpulpfec-rtpulpfec.o `test -f 'elements/rtpulpfec.c' || echo '$(srcdir)/'`elements/rtpulpfec.c
+
+elements/elements_rtpulpfec-rtpulpfec.obj: elements/rtpulpfec.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpulpfec_CFLAGS) $(CFLAGS) -MT elements/elements_rtpulpfec-rtpulpfec.obj -MD -MP -MF elements/$(DEPDIR)/elements_rtpulpfec-rtpulpfec.Tpo -c -o elements/elements_rtpulpfec-rtpulpfec.obj `if test -f 'elements/rtpulpfec.c'; then $(CYGPATH_W) 'elements/rtpulpfec.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpulpfec.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_rtpulpfec-rtpulpfec.Tpo elements/$(DEPDIR)/elements_rtpulpfec-rtpulpfec.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtpulpfec.c' object='elements/elements_rtpulpfec-rtpulpfec.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpulpfec_CFLAGS) $(CFLAGS) -c -o elements/elements_rtpulpfec-rtpulpfec.obj `if test -f 'elements/rtpulpfec.c'; then $(CYGPATH_W) 'elements/rtpulpfec.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpulpfec.c'; fi`
 
 elements/elements_souphttpsrc-souphttpsrc.o: elements/souphttpsrc.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_souphttpsrc_CFLAGS) $(CFLAGS) -MT elements/elements_souphttpsrc-souphttpsrc.o -MD -MP -MF elements/$(DEPDIR)/elements_souphttpsrc-souphttpsrc.Tpo -c -o elements/elements_souphttpsrc-souphttpsrc.o `test -f 'elements/souphttpsrc.c' || echo '$(srcdir)/'`elements/souphttpsrc.c
@@ -4382,6 +4490,27 @@ elements/rtprtx.log: elements/rtprtx$(EXEEXT)
 elements/rtpsession.log: elements/rtpsession$(EXEEXT)
 	@p='elements/rtpsession$(EXEEXT)'; \
 	b='elements/rtpsession'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+elements/rtpstorage.log: elements/rtpstorage$(EXEEXT)
+	@p='elements/rtpstorage$(EXEEXT)'; \
+	b='elements/rtpstorage'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+elements/rtpred.log: elements/rtpred$(EXEEXT)
+	@p='elements/rtpred$(EXEEXT)'; \
+	b='elements/rtpred'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+elements/rtpulpfec.log: elements/rtpulpfec$(EXEEXT)
+	@p='elements/rtpulpfec$(EXEEXT)'; \
+	b='elements/rtpulpfec'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

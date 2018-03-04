@@ -16,7 +16,8 @@
 <td width="100%" align="left" class="shortcuts">
 <a href="#" class="shortcut">Top</a><span id="nav_description">  <span class="dim">|</span> 
                   <a href="#gst-plugins-good-plugins-rtpptdemux.description" class="shortcut">Description</a></span><span id="nav_hierarchy">  <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-rtpptdemux.object-hierarchy" class="shortcut">Object Hierarchy</a></span><span id="nav_signals">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-rtpptdemux.object-hierarchy" class="shortcut">Object Hierarchy</a></span><span id="nav_properties">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-rtpptdemux.properties" class="shortcut">Properties</a></span><span id="nav_signals">  <span class="dim">|</span> 
                   <a href="#gst-plugins-good-plugins-rtpptdemux.signals" class="shortcut">Signals</a></span>
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
@@ -33,6 +34,21 @@
 </td>
 <td class="gallery_image" valign="top" align="right"></td>
 </tr></table></div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-rtpptdemux.properties"></a><h2>Properties</h2>
+<div class="informaltable"><table class="informaltable" border="0">
+<colgroup>
+<col width="150px" class="properties_type">
+<col width="300px" class="properties_name">
+<col width="200px" class="properties_flags">
+</colgroup>
+<tbody><tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstControlSource.html#GstValueArray"><span class="type">GstValueArray</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpptdemux.html#GstRtpPtDemux--ignored-payload-types" title="The “ignored-payload-types” property">ignored-payload-types</a></td>
+<td class="property_flags">Read / Write</td>
+</tr></tbody>
+</table></div>
+</div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpptdemux.signals"></a><h2>Signals</h2>
 <div class="informaltable"><table class="informaltable" border="0">
@@ -101,7 +117,7 @@ emitted.</p>
 on the output pads based on the result of the <a class="link" href="gst-plugins-good-plugins-rtpptdemux.html#GstRtpPtDemux-request-pt-map" title="The “request-pt-map” signal"><span class="type">“request-pt-map”</span></a>
 signal.</p>
 <div class="refsect2">
-<a name="id-1.2.205.7.5"></a><h3>Example pipelines</h3>
+<a name="id-1.2.205.8.5"></a><h3>Example pipelines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -118,7 +134,7 @@ payload type to fakesink, discarding the other payload types.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.205.7.6.1"></a><h3>Element Information</h3>
+<a name="id-1.2.205.8.6.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -144,7 +160,7 @@ payload type to fakesink, discarding the other payload types.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.205.7.6.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.205.8.6.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -205,6 +221,21 @@ payload type to fakesink, discarding the other payload types.
 <div class="refsect2">
 <a name="GstRtpPtDemux-struct"></a><h3>struct GstRtpPtDemux</h3>
 <pre class="programlisting">struct GstRtpPtDemux;</pre>
+</div>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-rtpptdemux.property-details"></a><h2>Property Details</h2>
+<div class="refsect2">
+<a name="GstRtpPtDemux--ignored-payload-types"></a><h3>The <code class="literal">“ignored-payload-types”</code> property</h3>
+<pre class="programlisting">  “ignored-payload-types”    <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstControlSource.html#GstValueArray"><span class="type">GstValueArray</span></a></pre>
+<p>If specified, packets with an ignored payload type will be dropped,
+instead of causing a new pad to be exposed for these to be pushed on.</p>
+<p>This is for example useful to drop FEC protection packets, as they
+need to go through the <a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer"><span class="type">GstRtpJitterBuffer</span></a>, but cease to be useful
+past that point, <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a> will make use of this property for that
+purpose.</p>
+<p>Flags: Read / Write</p>
+<p class="since">Since: 1.14</p>
 </div>
 </div>
 <div class="refsect1">

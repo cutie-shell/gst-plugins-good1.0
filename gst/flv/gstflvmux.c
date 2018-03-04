@@ -244,7 +244,8 @@ gst_flv_mux_class_init (GstFlvMuxClass * klass)
       &videosink_templ, GST_TYPE_FLV_MUX_PAD);
   gst_element_class_add_static_pad_template_with_gtype (gstelement_class,
       &audiosink_templ, GST_TYPE_FLV_MUX_PAD);
-  gst_element_class_add_static_pad_template (gstelement_class, &src_templ);
+  gst_element_class_add_static_pad_template_with_gtype (gstelement_class,
+      &src_templ, GST_TYPE_AGGREGATOR_PAD);
   gst_element_class_set_static_metadata (gstelement_class, "FLV muxer",
       "Codec/Muxer",
       "Muxes video/audio streams into a FLV stream",
@@ -1170,7 +1171,14 @@ gst_flv_mux_buffer_to_tag_internal (GstFlvMux * mux, GstBuffer * buffer,
     /* if we are streamable we copy over timestamps and offsets,
        if not just copy the offsets */
     if (mux->streamable) {
-      gst_buffer_copy_into (tag, buffer, GST_BUFFER_COPY_TIMESTAMPS, 0, -1);
+      GstClockTime timestamp = GST_CLOCK_TIME_NONE;
+
+      if (gst_segment_to_running_time_full (&GST_AGGREGATOR_PAD (pad)->segment,
+              GST_FORMAT_TIME, GST_BUFFER_DTS_OR_PTS (buffer),
+              &timestamp) == 1) {
+        GST_BUFFER_PTS (tag) = timestamp;
+        GST_BUFFER_DURATION (tag) = GST_BUFFER_DURATION (buffer);
+      }
       GST_BUFFER_OFFSET (tag) = GST_BUFFER_OFFSET_NONE;
       GST_BUFFER_OFFSET_END (tag) = GST_BUFFER_OFFSET_NONE;
     } else {
@@ -1804,5 +1812,5 @@ static GstClockTime
 gst_flv_mux_get_next_time (GstAggregator * aggregator)
 {
   return gst_flv_mux_get_next_time_for_segment (aggregator,
-      &aggregator->segment);
+      &GST_AGGREGATOR_PAD (aggregator->srcpad)->segment);
 }

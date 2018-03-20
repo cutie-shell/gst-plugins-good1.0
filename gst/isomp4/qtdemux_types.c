@@ -17,9 +17,12 @@
  * Boston, MA 02110-1301, USA.
  */
 
+#include "qtdemux_debug.h"
 #include "qtdemux_types.h"
 #include "qtdemux_dump.h"
 #include "fourcc.h"
+
+#define GST_CAT_DEFAULT qtdemux_debug
 
 static const QtNodeType qt_node_types[] = {
   {FOURCC_moov, "movie", QT_FLAG_CONTAINER,},
@@ -51,8 +54,8 @@ static const QtNodeType qt_node_types[] = {
   {FOURCC_vmhd, "video media information", 0,
       qtdemux_dump_vmhd},
   {FOURCC_smhd, "sound media information", 0},
-  {FOURCC_gmhd, "base media information header", 0},
-  {FOURCC_gmin, "base media info", 0},
+  {FOURCC_gmhd, "base media information header", QT_FLAG_CONTAINER},
+  {FOURCC_gmin, "base media info", 0, qtdemux_dump_gmin},
   {FOURCC_dinf, "data information", QT_FLAG_CONTAINER},
   {FOURCC_dref, "data reference", 0,
       qtdemux_dump_dref},
@@ -143,9 +146,11 @@ static const QtNodeType qt_node_types[] = {
   {FOURCC_keyw, "Keywords", QT_FLAG_CONTAINER,},
   {FOURCC_kywd, "Keywords", QT_FLAG_CONTAINER,},
   {FOURCC__too, "Encoder", QT_FLAG_CONTAINER,},
+  {FOURCC__swr, "Application Name", QT_FLAG_CONTAINER,},
   {FOURCC_____, "----", QT_FLAG_CONTAINER,},
   {FOURCC_data, "data", 0, qtdemux_dump_unknown},
   {FOURCC_free, "free", 0,},
+  {FOURCC_skip, "skip", 0,},
   {FOURCC_SVQ3, "SVQ3", 0,},
   {FOURCC_rmra, "rmra", QT_FLAG_CONTAINER,},
   {FOURCC_rmda, "rmda", QT_FLAG_CONTAINER,},

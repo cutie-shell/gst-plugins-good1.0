@@ -18,7 +18,7 @@ EXTRA_DIST = \
 	AUTHORS COPYING NEWS README RELEASE REQUIREMENTS \
 	ChangeLog gst-plugins-good.doap autogen.sh \
 	$(shell find "$(top_srcdir)" -type f -name meson.build ! -path "$(top_srcdir)/$(PACKAGE_TARNAME)-*" ) \
-	meson_options.txt config.h.meson
+	meson_options.txt
 
 DISTCLEANFILES = _stdint.h
 
@@ -65,7 +65,9 @@ CRUFT_FILES = \
 	$(top_builddir)/gst/videofilter/.libs/*videoflip.{so,dll,DLL,dylib} \
 	$(top_builddir)/gst/videofilter/.libs/*videobalance.{so,dll,DLL,dylib} \
 	$(top_builddir)/gst/videofilter/.libs/*gamma.{so,dll,DLL,dylib} \
-	$(top_builddir)/sys/oss4/.libs/libgstoss4audio.so
+	$(top_builddir)/sys/directsound/.libs/libgstdirectsoundsink.{dll,DLL} \
+	$(top_builddir)/sys/oss4/.libs/libgstoss4audio.so \
+	$(top_builddir)/sys/waveform/.libs/libgstwaveformsink.{dll,DLL}
 
 CRUFT_DIRS = \
 	$(top_srcdir)/docs/plugins/tmpl \

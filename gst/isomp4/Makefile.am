@@ -16,7 +16,6 @@ libgstisomp4_la_SOURCES = isomp4-plugin.c gstrtpxqtdepay.c \
 	qtdemux.c qtdemux_types.c qtdemux_dump.c qtdemux_lang.c \
 	gstqtmux.c gstqtmoovrecover.c atoms.c atomsrecovery.c descriptors.c \
 	properties.c gstqtmuxmap.c gstisoff.c
-libgstisomp4_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
 
 presetdir = $(datadir)/gstreamer-$(GST_API_VERSION)/presets
 preset_DATA = GstQTMux.prs
@@ -25,6 +24,7 @@ noinst_HEADERS = \
 	qtatomparser.h   \
 	qtdemux.h        \
 	qtdemux_types.h  \
+	qtdemux_debug.h  \
 	qtdemux_dump.h   \
 	qtdemux_lang.h   \
 	qtpalette.h      \

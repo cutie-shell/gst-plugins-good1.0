@@ -139,6 +139,13 @@
 /* semi-draft */
 #define GST_MATROSKA_ID_VIDEOGAMMAVALUE            0x2FB523
 
+#define GST_MATROSKA_ID_VIDEOCOLOUR                0x55B0
+/* IDs in the Colour master*/
+#define GST_MATROSKA_ID_VIDEOMATRIXCOEFFICIENTS    0x55B1
+#define GST_MATROSKA_ID_VIDEORANGE                 0x55B9
+#define GST_MATROSKA_ID_VIDEOTRANSFERCHARACTERISTICS  0x55BA
+#define GST_MATROSKA_ID_VIDEOPRIMARIES             0x55BB
+
 /* IDs in the TrackAudio master */
 #define GST_MATROSKA_ID_AUDIOSAMPLINGFREQ          0xB5
 #define GST_MATROSKA_ID_AUDIOBITDEPTH              0x6264
@@ -297,6 +304,7 @@
 
 /* IDs in the ChapterAtom master */
 #define GST_MATROSKA_ID_CHAPTERUID                 0x73C4
+#define GST_MATROSKA_ID_CHAPTERSTRINGUID           0x5654
 #define GST_MATROSKA_ID_CHAPTERTIMESTART           0x91
 #define GST_MATROSKA_ID_CHAPTERTIMESTOP            0x92
 #define GST_MATROSKA_ID_CHAPTERFLAGHIDDEN          0x98
@@ -350,6 +358,7 @@
 #define GST_MATROSKA_CODEC_ID_VIDEO_DIRAC        "V_DIRAC"
 #define GST_MATROSKA_CODEC_ID_VIDEO_VP8          "V_VP8"
 #define GST_MATROSKA_CODEC_ID_VIDEO_VP9          "V_VP9"
+#define GST_MATROSKA_CODEC_ID_VIDEO_AV1          "V_AV1"
 #define GST_MATROSKA_CODEC_ID_VIDEO_MPEGH_HEVC   "V_MPEGH/ISO/HEVC"
 #define GST_MATROSKA_CODEC_ID_VIDEO_PRORES       "V_PRORES"
 
@@ -594,6 +603,7 @@ typedef struct _GstMatroskaTrackVideoContext {
   GstClockTime  earliest_time;
 
   GstBuffer     *dirac_unit;
+  GstVideoColorimetry colorimetry;
 } GstMatroskaTrackVideoContext;
 
 typedef struct _GstMatroskaTrackAudioContext {
@@ -616,9 +626,9 @@ typedef struct _GstMatroskaTrackSubtitleContext {
 
 typedef struct _GstMatroskaIndex {
   guint64        pos;      /* of the corresponding *cluster*! */
-  guint16        track;    /* reference to 'num' */
   GstClockTime   time;     /* in nanoseconds */
   guint32        block;    /* number of the block in the cluster */
+  guint16        track;    /* reference to 'num' */
 } GstMatroskaIndex;
 
 typedef struct _Wavpack4Header {

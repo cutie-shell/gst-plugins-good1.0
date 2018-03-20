@@ -29,8 +29,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "gstv4l2object.h"
 #include "gstv4l2transform.h"
-#include "v4l2_calls.h"
 
 #include <string.h>
 #include <gst/gst-i18n-plugin.h>
@@ -989,6 +989,8 @@ gst_v4l2_transform_sink_event (GstBaseTransform * trans, GstEvent * event)
       GST_DEBUG_OBJECT (self, "flush stop");
       gst_v4l2_object_unlock_stop (self->v4l2capture);
       gst_v4l2_object_unlock_stop (self->v4l2output);
+      gst_v4l2_buffer_pool_flush (self->v4l2output->pool);
+      gst_v4l2_buffer_pool_flush (self->v4l2capture->pool);
       break;
     default:
       break;
@@ -1067,12 +1069,14 @@ gst_v4l2_transform_subinstance_init (GTypeInstance * instance, gpointer g_class)
   GstV4l2Transform *self = GST_V4L2_TRANSFORM (instance);
 
   self->v4l2output = gst_v4l2_object_new (GST_ELEMENT (self),
+      GST_OBJECT (GST_BASE_TRANSFORM_SINK_PAD (self)),
       V4L2_BUF_TYPE_VIDEO_OUTPUT, klass->default_device,
       gst_v4l2_get_output, gst_v4l2_set_output, NULL);
   self->v4l2output->no_initial_format = TRUE;
   self->v4l2output->keep_aspect = FALSE;
 
   self->v4l2capture = gst_v4l2_object_new (GST_ELEMENT (self),
+      GST_OBJECT (GST_BASE_TRANSFORM_SRC_PAD (self)),
       V4L2_BUF_TYPE_VIDEO_CAPTURE, klass->default_device,
       gst_v4l2_get_input, gst_v4l2_set_input, NULL);
   self->v4l2capture->no_initial_format = TRUE;
@@ -1166,7 +1170,7 @@ gst_v4l2_is_transform (GstCaps * sink_caps, GstCaps * src_caps)
   return ret;
 }
 
-gboolean
+void
 gst_v4l2_transform_register (GstPlugin * plugin, const gchar * basename,
     const gchar * device_path, GstCaps * sink_caps, GstCaps * src_caps)
 {
@@ -1193,9 +1197,8 @@ gst_v4l2_transform_register (GstPlugin * plugin, const gchar * basename,
   type_name = g_strdup_printf ("v4l2%sconvert", basename);
   subtype = g_type_register_static (type, type_name, &type_info, 0);
 
-  gst_element_register (plugin, type_name, GST_RANK_NONE, subtype);
+  if (!gst_element_register (plugin, type_name, GST_RANK_NONE, subtype))
+    GST_WARNING ("Failed to register plugin '%s'", type_name);
 
   g_free (type_name);
-
-  return TRUE;
 }

@@ -22,7 +22,6 @@
 # include "config.h"
 #endif
 
-#define _GNU_SOURCE             /* for memmem */
 #include <string.h>
 
 #include <gst/gst.h>
@@ -31,6 +30,29 @@
 #include <gst/app/app.h>
 
 #define SAMPLE_FREQ 44100
+
+static const guint8 *
+_memmem (const guint8 * haystack, gsize hlen, const guint8 * needle, gsize nlen)
+{
+  const guint8 *p = haystack;
+  int needle_first;
+  gsize plen = hlen;
+
+  if (!nlen)
+    return NULL;
+
+  needle_first = *(unsigned char *) needle;
+
+  while (plen >= nlen && (p = memchr (p, needle_first, plen - nlen + 1))) {
+    if (!memcmp (p, needle, nlen))
+      return (guint8 *) p;
+
+    p++;
+    plen = hlen - (p - haystack);
+  }
+
+  return NULL;
+}
 
 static GstClockTime
 sample_to_nanotime (guint sample)
@@ -209,7 +231,9 @@ test_seek_FORMAT_TIME_by_sample (const gchar * fn, GList * seek_positions)
 
     buf = gst_sample_get_buffer (sample);
     gst_buffer_map (buf, &map, GST_MAP_READ);
-    found = memmem (answer, answer_size, map.data, map.size);
+    GST_MEMDUMP ("answer", answer, answer_size);
+    GST_MEMDUMP ("buffer", map.data, map.size);
+    found = _memmem (answer, answer_size, map.data, map.size);
     gst_buffer_unmap (buf, &map);
 
     g_assert (found != NULL);

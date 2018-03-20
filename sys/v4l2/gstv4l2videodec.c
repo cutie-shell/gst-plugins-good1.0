@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2014 Collabora Ltd.
- *     Author: Nicolas Dufresne <nicolas.dufresne@collabora.co.uk>
+ *     Author: Nicolas Dufresne <nicolas.dufresne@collabora.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -29,8 +29,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "gstv4l2object.h"
 #include "gstv4l2videodec.h"
-#include "v4l2_calls.h"
 
 #include <string.h>
 #include <gst/gst-i18n-plugin.h>
@@ -38,13 +38,13 @@
 GST_DEBUG_CATEGORY_STATIC (gst_v4l2_video_dec_debug);
 #define GST_CAT_DEFAULT gst_v4l2_video_dec_debug
 
-static gboolean gst_v4l2_video_dec_flush (GstVideoDecoder * decoder);
-
 typedef struct
 {
   gchar *device;
   GstCaps *sink_caps;
   GstCaps *src_caps;
+  const gchar *longname;
+  const gchar *description;
 } GstV4l2VideoDecCData;
 
 enum
@@ -57,6 +57,8 @@ enum
 G_DEFINE_ABSTRACT_TYPE (GstV4l2VideoDec, gst_v4l2_video_dec,
     GST_TYPE_VIDEO_DECODER);
 
+static GstFlowReturn gst_v4l2_video_dec_finish (GstVideoDecoder * decoder);
+
 static void
 gst_v4l2_video_dec_set_property (GObject * object,
     guint prop_id, const GValue * value, GParamSpec * pspec)
@@ -64,13 +66,11 @@ gst_v4l2_video_dec_set_property (GObject * object,
   GstV4l2VideoDec *self = GST_V4L2_VIDEO_DEC (object);
 
   switch (prop_id) {
-    case PROP_OUTPUT_IO_MODE:
-      gst_v4l2_object_set_property_helper (self->v4l2output, prop_id, value,
-          pspec);
-      break;
     case PROP_CAPTURE_IO_MODE:
-      gst_v4l2_object_set_property_helper (self->v4l2capture, prop_id, value,
-          pspec);
+      if (!gst_v4l2_object_set_property_helper (self->v4l2capture,
+              prop_id, value, pspec)) {
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      }
       break;
 
       /* By default, only set on output */
@@ -90,13 +90,11 @@ gst_v4l2_video_dec_get_property (GObject * object,
   GstV4l2VideoDec *self = GST_V4L2_VIDEO_DEC (object);
 
   switch (prop_id) {
-    case PROP_OUTPUT_IO_MODE:
-      gst_v4l2_object_get_property_helper (self->v4l2output, prop_id, value,
-          pspec);
-      break;
     case PROP_CAPTURE_IO_MODE:
-      gst_v4l2_object_get_property_helper (self->v4l2capture, prop_id, value,
-          pspec);
+      if (!gst_v4l2_object_get_property_helper (self->v4l2capture,
+              prop_id, value, pspec)) {
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      }
       break;
 
       /* By default read from output */
@@ -113,6 +111,7 @@ static gboolean
 gst_v4l2_video_dec_open (GstVideoDecoder * decoder)
 {
   GstV4l2VideoDec *self = GST_V4L2_VIDEO_DEC (decoder);
+  GstCaps *codec_caps;
 
   GST_DEBUG_OBJECT (self, "Opening");
 
@@ -122,13 +121,15 @@ gst_v4l2_video_dec_open (GstVideoDecoder * decoder)
   if (!gst_v4l2_object_open_shared (self->v4l2capture, self->v4l2output))
     goto failure;
 
-  self->probed_sinkcaps = gst_v4l2_object_get_caps (self->v4l2output,
-      gst_v4l2_object_get_codec_caps ());
+  codec_caps = gst_pad_get_pad_template_caps (decoder->sinkpad);
+  self->probed_sinkcaps = gst_v4l2_object_probe_caps (self->v4l2output,
+      codec_caps);
+  gst_caps_unref (codec_caps);
 
   if (gst_caps_is_empty (self->probed_sinkcaps))
     goto no_encoded_format;
 
-  self->probed_srccaps = gst_v4l2_object_get_caps (self->v4l2capture,
+  self->probed_srccaps = gst_v4l2_object_probe_caps (self->v4l2capture,
       gst_v4l2_object_get_raw_caps ());
 
   if (gst_caps_is_empty (self->probed_srccaps))
@@ -242,7 +243,31 @@ gst_v4l2_video_dec_set_format (GstVideoDecoder * decoder,
     gst_video_codec_state_unref (self->input_state);
     self->input_state = NULL;
 
-    /* FIXME we probably need to do more work if pools are active */
+    gst_v4l2_video_dec_finish (decoder);
+    gst_v4l2_object_stop (self->v4l2output);
+
+    /* The renegotiation flow don't blend with the base class flow. To
+     * properly stop the capture pool we need to reclaim our buffers, which
+     * will happend through the allocation query. The allocation query is
+     * triggered by gst_video_decoder_negotiate() which requires the output
+     * caps to be set, but we can't know this information as we rely on the
+     * decoder, which requires the capture queue to be stopped.
+     *
+     * To workaround this issue, we simply run an allocation query with the
+     * old negotiated caps in order to drain/reclaim our buffers. That breaks
+     * the complexity and should not have much impact in performance since the
+     * following allocation query will happen on a drained pipeline and won't
+     * block. */
+    {
+      GstCaps *caps = gst_pad_get_current_caps (decoder->srcpad);
+      GstQuery *query = gst_query_new_allocation (caps, FALSE);
+      gst_pad_peer_query (decoder->srcpad, query);
+      gst_query_unref (query);
+      gst_caps_unref (caps);
+    }
+
+    gst_v4l2_object_stop (self->v4l2capture);
+    self->output_flow = GST_FLOW_OK;
   }
 
   ret = gst_v4l2_object_set_format (self->v4l2output, state->caps, &error);
@@ -276,6 +301,12 @@ gst_v4l2_video_dec_flush (GstVideoDecoder * decoder)
 
   self->output_flow = GST_FLOW_OK;
 
+  if (self->v4l2output->pool)
+    gst_v4l2_buffer_pool_flush (self->v4l2output->pool);
+
+  if (self->v4l2capture->pool)
+    gst_v4l2_buffer_pool_flush (self->v4l2capture->pool);
+
   gst_v4l2_object_unlock_stop (self->v4l2output);
   gst_v4l2_object_unlock_stop (self->v4l2capture);
 
@@ -308,7 +339,7 @@ gst_v4l2_decoder_cmd (GstV4l2Object * v4l2object, guint cmd, guint flags)
 
   dcmd.cmd = cmd;
   dcmd.flags = flags;
-  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_DECODER_CMD, &dcmd) < 0)
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_DECODER_CMD, &dcmd) < 0)
     goto dcmd_failed;
 
   return TRUE;
@@ -373,8 +404,22 @@ gst_v4l2_video_dec_finish (GstVideoDecoder * decoder)
 
   GST_DEBUG_OBJECT (decoder, "Done draining buffers");
 
+  /* TODO Shall we cleanup any reffed frame to workaround broken decoders ? */
+
 done:
   return ret;
+}
+
+static gboolean
+gst_v4l2_video_dec_drain (GstVideoDecoder * decoder)
+{
+  GstV4l2VideoDec *self = GST_V4L2_VIDEO_DEC (decoder);
+
+  GST_DEBUG_OBJECT (self, "Draining...");
+  gst_v4l2_video_dec_finish (decoder);
+  gst_v4l2_video_dec_flush (decoder);
+
+  return TRUE;
 }
 
 static GstVideoCodecFrame *
@@ -489,13 +534,20 @@ gst_v4l2_video_remove_padding (GstCapsFeatures * features,
     return TRUE;
 
   if (align->padding_left != 0 || align->padding_top != 0 ||
-      width != info->width + align->padding_right ||
       height != info->height + align->padding_bottom)
     return TRUE;
 
-  gst_structure_set (structure,
-      "width", G_TYPE_INT, width - align->padding_right,
-      "height", G_TYPE_INT, height - align->padding_bottom, NULL);
+  if (height == info->height + align->padding_bottom) {
+    /* Some drivers may round up width to the padded with */
+    if (width == info->width + align->padding_right)
+      gst_structure_set (structure,
+          "width", G_TYPE_INT, width - align->padding_right,
+          "height", G_TYPE_INT, height - align->padding_bottom, NULL);
+    /* Some drivers may keep visible width and only round up bytesperline */
+    else if (width == info->width)
+      gst_structure_set (structure,
+          "height", G_TYPE_INT, height - align->padding_bottom, NULL);
+  }
 
   return TRUE;
 }
@@ -509,6 +561,7 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
   GstFlowReturn ret = GST_FLOW_OK;
   gboolean processed = FALSE;
   GstBuffer *tmp;
+  GstTaskState task_state;
 
   GST_DEBUG_OBJECT (self, "Handling frame %d", frame->system_frame_number);
 
@@ -577,12 +630,14 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
 
     /* Create caps from the acquired format, remove the format field */
     acquired_caps = gst_video_info_to_caps (&info);
+    GST_DEBUG_OBJECT (self, "Acquired caps: %" GST_PTR_FORMAT, acquired_caps);
     st = gst_caps_get_structure (acquired_caps, 0);
     gst_structure_remove_field (st, "format");
 
     /* Probe currently available pixel formats */
     available_caps = gst_v4l2_object_probe_caps (self->v4l2capture, NULL);
     available_caps = gst_caps_make_writable (available_caps);
+    GST_DEBUG_OBJECT (self, "Available caps: %" GST_PTR_FORMAT, available_caps);
 
     /* Replace coded size with visible size, we want to negotiate visible size
      * with downstream, not coded size. */
@@ -590,6 +645,7 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
 
     filter = gst_caps_intersect_full (available_caps, acquired_caps,
         GST_CAPS_INTERSECT_FIRST);
+    GST_DEBUG_OBJECT (self, "Filtered caps: %" GST_PTR_FORMAT, filter);
     gst_caps_unref (acquired_caps);
     gst_caps_unref (available_caps);
     caps = gst_pad_peer_query_caps (decoder->srcpad, filter);
@@ -633,8 +689,8 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
       goto activate_failed;
   }
 
-  if (gst_pad_get_task_state (GST_VIDEO_DECODER_SRC_PAD (self)) ==
-      GST_TASK_STOPPED) {
+  task_state = gst_pad_get_task_state (GST_VIDEO_DECODER_SRC_PAD (self));
+  if (task_state == GST_TASK_STOPPED || task_state == GST_TASK_PAUSED) {
     /* It's possible that the processing thread stopped due to an error */
     if (self->output_flow != GST_FLOW_OK &&
         self->output_flow != GST_FLOW_FLUSHING) {
@@ -890,12 +946,14 @@ gst_v4l2_video_dec_subinstance_init (GTypeInstance * instance, gpointer g_class)
   gst_video_decoder_set_packetized (decoder, TRUE);
 
   self->v4l2output = gst_v4l2_object_new (GST_ELEMENT (self),
+      GST_OBJECT (GST_VIDEO_DECODER_SINK_PAD (self)),
       V4L2_BUF_TYPE_VIDEO_OUTPUT, klass->default_device,
       gst_v4l2_get_output, gst_v4l2_set_output, NULL);
   self->v4l2output->no_initial_format = TRUE;
   self->v4l2output->keep_aspect = FALSE;
 
   self->v4l2capture = gst_v4l2_object_new (GST_ELEMENT (self),
+      GST_OBJECT (GST_VIDEO_DECODER_SRC_PAD (self)),
       V4L2_BUF_TYPE_VIDEO_CAPTURE, klass->default_device,
       gst_v4l2_get_input, gst_v4l2_set_input, NULL);
   self->v4l2capture->no_initial_format = TRUE;
@@ -918,12 +976,6 @@ gst_v4l2_video_dec_class_init (GstV4l2VideoDecClass * klass)
   GST_DEBUG_CATEGORY_INIT (gst_v4l2_video_dec_debug, "v4l2videodec", 0,
       "V4L2 Video Decoder");
 
-  gst_element_class_set_static_metadata (element_class,
-      "V4L2 Video Decoder",
-      "Codec/Decoder/Video",
-      "Decode video streams via V4L2 API",
-      "Nicolas Dufresne <nicolas.dufresne@collabora.co.uk>");
-
   gobject_class->dispose = GST_DEBUG_FUNCPTR (gst_v4l2_video_dec_dispose);
   gobject_class->finalize = GST_DEBUG_FUNCPTR (gst_v4l2_video_dec_finalize);
   gobject_class->set_property =
@@ -937,6 +989,7 @@ gst_v4l2_video_dec_class_init (GstV4l2VideoDecClass * klass)
   video_decoder_class->stop = GST_DEBUG_FUNCPTR (gst_v4l2_video_dec_stop);
   video_decoder_class->finish = GST_DEBUG_FUNCPTR (gst_v4l2_video_dec_finish);
   video_decoder_class->flush = GST_DEBUG_FUNCPTR (gst_v4l2_video_dec_flush);
+  video_decoder_class->drain = GST_DEBUG_FUNCPTR (gst_v4l2_video_dec_drain);
   video_decoder_class->set_format =
       GST_DEBUG_FUNCPTR (gst_v4l2_video_dec_set_format);
   video_decoder_class->negotiate =
@@ -976,6 +1029,12 @@ gst_v4l2_video_dec_subclass_init (gpointer g_class, gpointer data)
       gst_pad_template_new ("src", GST_PAD_SRC, GST_PAD_ALWAYS,
           cdata->src_caps));
 
+  gst_element_class_set_static_metadata (element_class, cdata->longname,
+      "Codec/Decoder/Video", cdata->description,
+      "Nicolas Dufresne <nicolas.dufresne@collabora.com>");
+
+  gst_caps_unref (cdata->sink_caps);
+  gst_caps_unref (cdata->src_caps);
   g_free (cdata);
 }
 
@@ -992,36 +1051,116 @@ gst_v4l2_is_video_dec (GstCaps * sink_caps, GstCaps * src_caps)
   return ret;
 }
 
-gboolean
+static gchar *
+gst_v4l2_video_dec_set_metadata (GstStructure * s, GstV4l2VideoDecCData * cdata,
+    const gchar * basename)
+{
+  gchar *codec_name = NULL;
+  gchar *type_name = NULL;
+
+#define SET_META(codec) \
+G_STMT_START { \
+  cdata->longname = "V4L2 " codec " Decoder"; \
+  cdata->description = "Decodes " codec " streams via V4L2 API"; \
+  codec_name = g_ascii_strdown (codec, -1); \
+} G_STMT_END
+
+  if (gst_structure_has_name (s, "image/jpeg")) {
+    SET_META ("JPEG");
+  } else if (gst_structure_has_name (s, "video/mpeg")) {
+    gint mpegversion = 0;
+    gst_structure_get_int (s, "mpegversion", &mpegversion);
+
+    if (mpegversion == 2) {
+      SET_META ("MPEG2");
+    } else {
+      SET_META ("MPEG4");
+    }
+  } else if (gst_structure_has_name (s, "video/x-h263")) {
+    SET_META ("H263");
+  } else if (gst_structure_has_name (s, "video/x-h264")) {
+    SET_META ("H264");
+  } else if (gst_structure_has_name (s, "video/x-wmv")) {
+    SET_META ("VC1");
+  } else if (gst_structure_has_name (s, "video/x-vp8")) {
+    SET_META ("VP8");
+  } else if (gst_structure_has_name (s, "video/x-vp9")) {
+    SET_META ("VP9");
+  } else if (gst_structure_has_name (s, "video/x-bayer")) {
+    SET_META ("BAYER");
+  } else if (gst_structure_has_name (s, "video/x-sonix")) {
+    SET_META ("SONIX");
+  } else if (gst_structure_has_name (s, "video/x-pwc1")) {
+    SET_META ("PWC1");
+  } else if (gst_structure_has_name (s, "video/x-pwc2")) {
+    SET_META ("PWC2");
+  } else {
+    /* This code should be kept on sync with the exposed CODEC type of format
+     * from gstv4l2object.c. This warning will only occure in case we forget
+     * to also add a format here. */
+    gchar *s_str = gst_structure_to_string (s);
+    g_warning ("Missing fixed name mapping for caps '%s', this is a GStreamer "
+        "bug, please report at https://bugs.gnome.org", s_str);
+    g_free (s_str);
+  }
+
+  if (codec_name) {
+    type_name = g_strdup_printf ("v4l2%sdec", codec_name);
+    if (g_type_from_name (type_name) != 0) {
+      g_free (type_name);
+      type_name = g_strdup_printf ("v4l2%s%sdec", basename, codec_name);
+    }
+
+    g_free (codec_name);
+  }
+
+  return type_name;
+#undef SET_META
+}
+
+void
 gst_v4l2_video_dec_register (GstPlugin * plugin, const gchar * basename,
     const gchar * device_path, GstCaps * sink_caps, GstCaps * src_caps)
 {
-  GTypeQuery type_query;
-  GTypeInfo type_info = { 0, };
-  GType type, subtype;
-  gchar *type_name;
-  GstV4l2VideoDecCData *cdata;
+  gint i;
 
-  cdata = g_new0 (GstV4l2VideoDecCData, 1);
-  cdata->device = g_strdup (device_path);
-  cdata->sink_caps = gst_caps_ref (sink_caps);
-  cdata->src_caps = gst_caps_ref (src_caps);
+  for (i = 0; i < gst_caps_get_size (sink_caps); i++) {
+    GstV4l2VideoDecCData *cdata;
+    GstStructure *s;
+    GTypeQuery type_query;
+    GTypeInfo type_info = { 0, };
+    GType type, subtype;
+    gchar *type_name;
 
-  type = gst_v4l2_video_dec_get_type ();
-  g_type_query (type, &type_query);
-  memset (&type_info, 0, sizeof (type_info));
-  type_info.class_size = type_query.class_size;
-  type_info.instance_size = type_query.instance_size;
-  type_info.class_init = gst_v4l2_video_dec_subclass_init;
-  type_info.class_data = cdata;
-  type_info.instance_init = gst_v4l2_video_dec_subinstance_init;
+    s = gst_caps_get_structure (sink_caps, i);
 
-  type_name = g_strdup_printf ("v4l2%sdec", basename);
-  subtype = g_type_register_static (type, type_name, &type_info, 0);
+    cdata = g_new0 (GstV4l2VideoDecCData, 1);
+    cdata->device = g_strdup (device_path);
+    cdata->sink_caps = gst_caps_new_empty ();
+    gst_caps_append_structure (cdata->sink_caps, gst_structure_copy (s));
+    cdata->src_caps = gst_caps_ref (src_caps);
+    type_name = gst_v4l2_video_dec_set_metadata (s, cdata, basename);
 
-  gst_element_register (plugin, type_name, GST_RANK_PRIMARY + 1, subtype);
+    /* Skip over if we hit an unmapped type */
+    if (!type_name) {
+      g_free (cdata);
+      continue;
+    }
 
-  g_free (type_name);
+    type = gst_v4l2_video_dec_get_type ();
+    g_type_query (type, &type_query);
+    memset (&type_info, 0, sizeof (type_info));
+    type_info.class_size = type_query.class_size;
+    type_info.instance_size = type_query.instance_size;
+    type_info.class_init = gst_v4l2_video_dec_subclass_init;
+    type_info.class_data = cdata;
+    type_info.instance_init = gst_v4l2_video_dec_subinstance_init;
 
-  return TRUE;
+    subtype = g_type_register_static (type, type_name, &type_info, 0);
+    if (!gst_element_register (plugin, type_name, GST_RANK_PRIMARY + 1,
+            subtype))
+      GST_WARNING ("Failed to register plugin '%s'", type_name);
+
+    g_free (type_name);
+  }
 }

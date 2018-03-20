@@ -1,3 +1,30 @@
+gst-plugins-good1.0 (1.13.91-1) experimental; urgency=medium
+
+  * New upstream release candidate.
+
+ -- Sebastian Dröge <slomo@debian.org>  Wed, 14 Mar 2018 11:04:44 +0200
+
+gst-plugins-good1.0 (1.13.90-1) experimental; urgency=medium
+
+  * New upstream release candidate.
+
+ -- Sebastian Dröge <slomo@debian.org>  Sun, 04 Mar 2018 11:41:59 +0200
+
+gst-plugins-good1.0 (1.13.1-1) experimental; urgency=medium
+
+  * New upstream development release.
+  * debian/build-deps.in,
+    debian/control.in:
+    + Build-depend on GTK and Qt for the QML and GTK plugins and put them into
+      their own binary package.
+  * debian/build-deps.in,
+    debian/control.in,
+    debian/gstreamer-plugins-good.install:
+    + Build-depend on LAME, mpg123 and twolame and add Conflicts/Replaces as
+      needed for gst-plugins-ugly from where the plugins moved.
+
+ -- Sebastian Dröge <slomo@debian.org>  Sat, 17 Feb 2018 21:00:50 +0200
+
 gst-plugins-good1.0 (1.12.4-1) unstable; urgency=medium
 
   * New upstream bugfix release

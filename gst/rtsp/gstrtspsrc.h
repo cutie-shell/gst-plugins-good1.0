@@ -107,6 +107,7 @@ struct _GstRTSPStream {
   gboolean      eos;
   gboolean      discont;
   gboolean      need_caps;
+  gboolean      waiting_setup_response;
 
   /* for interleaved mode */
   guint8        channel[2];
@@ -122,8 +123,8 @@ struct _GstRTSPStream {
   GstElement   *udpsink[2];
   GstPad       *rtcppad;
 
-  /* fakesrc for sending dummy data */
-  GstElement   *fakesrc;
+  /* fakesrc for sending dummy data or appsrc for sending backchannel data */
+  GstElement   *rtpsrc;
 
   /* state */
   guint         port;
@@ -160,6 +161,10 @@ struct _GstRTSPStream {
   gchar        *destination;
   gboolean      is_multicast;
   guint         ttl;
+  gboolean      is_backchannel;
+
+  /* A unique and stable id we will use for the stream start event */
+  gchar *stream_id;
 
   GstStructure     *rtx_pt_map;
 };
@@ -247,6 +252,10 @@ struct _GstRTSPSrc {
   gchar            *user_agent;
   GstClockTime      max_rtcp_rtp_time_diff;
   gboolean          rfc7273_sync;
+  guint64           max_ts_offset_adjustment;
+  gint64            max_ts_offset;
+  gboolean          max_ts_offset_is_set;
+  gint              backchannel;
 
   /* state */
   GstRTSPState       state;
@@ -263,7 +272,15 @@ struct _GstRTSPSrc {
   /* supported methods */
   gint               methods;
 
-  gboolean           seekable;
+  /* seekability
+   * -1.0 : Stream is not seekable
+   *  0.0 : seekable only to the beginning
+   * G_MAXFLOAT : Any value is possible
+   *
+   * Any other positive value indicates the longest duration
+   * between any two random access points
+   *  */
+  gfloat             seekable;
   GstClockTime       last_pos;
 
   /* session management */
@@ -276,10 +293,15 @@ struct _GstRTSPSrc {
 
   /* a list of RTSP extensions as GstElement */
   GstRTSPExtensionList  *extensions;
+
+  GstRTSPVersion default_version;
+  GstRTSPVersion version;
 };
 
 struct _GstRTSPSrcClass {
   GstBinClass parent_class;
+
+  GstFlowReturn (*push_backchannel_buffer) (GstRTSPSrc *src, guint id, GstSample *sample);
 };
 
 GType gst_rtspsrc_get_type(void);

@@ -23,6 +23,8 @@
 
 #include <gst/tag/tag.h>
 
+#include "gstrtputils.h"
+
 #include "gstrtpac3depay.h"
 #include "gstrtpac3pay.h"
 #include "gstrtpbvdepay.h"
@@ -74,6 +76,8 @@
 #include "gstrtpjpegpay.h"
 #include "gstrtpklvdepay.h"
 #include "gstrtpklvpay.h"
+#include "gstrtpL8depay.h"
+#include "gstrtpL8pay.h"
 #include "gstrtpL16depay.h"
 #include "gstrtpL16pay.h"
 #include "gstrtpL24depay.h"
@@ -109,11 +113,23 @@
 #include "gstrtpvrawpay.h"
 #include "gstrtpstreampay.h"
 #include "gstrtpstreamdepay.h"
+#include "gstrtpredenc.h"
+#include "gstrtpreddec.h"
+#include "gstrtpulpfecdec.h"
+#include "gstrtpulpfecenc.h"
+#include "gstrtpreddec.h"
+#include "gstrtpredenc.h"
+#include "gstrtpstorage.h"
 
 static gboolean
 plugin_init (GstPlugin * plugin)
 {
   gst_tag_image_type_get_type ();
+
+  rtp_quark_meta_tag_video =
+      g_quark_from_static_string (GST_META_TAG_VIDEO_STR);
+  rtp_quark_meta_tag_audio =
+      g_quark_from_static_string (GST_META_TAG_AUDIO_STR);
 
   if (!gst_rtp_ac3_depay_plugin_init (plugin))
     return FALSE;
@@ -268,6 +284,12 @@ plugin_init (GstPlugin * plugin)
   if (!gst_rtp_klv_pay_plugin_init (plugin))
     return FALSE;
 
+  if (!gst_rtp_L8_pay_plugin_init (plugin))
+    return FALSE;
+
+  if (!gst_rtp_L8_depay_plugin_init (plugin))
+    return FALSE;
+
   if (!gst_rtp_L16_pay_plugin_init (plugin))
     return FALSE;
 
@@ -371,6 +393,34 @@ plugin_init (GstPlugin * plugin)
     return FALSE;
 
   if (!gst_rtp_stream_depay_plugin_init (plugin))
+    return FALSE;
+
+  if (!gst_element_register (plugin, "rtpredenc", GST_RANK_NONE,
+          GST_TYPE_RTP_RED_ENC))
+    return FALSE;
+
+  if (!gst_element_register (plugin, "rtpreddec", GST_RANK_NONE,
+          GST_TYPE_RTP_RED_DEC))
+    return FALSE;
+
+  if (!gst_element_register (plugin, "rtpulpfecdec", GST_RANK_NONE,
+          GST_TYPE_RTP_ULPFEC_DEC))
+    return FALSE;
+
+  if (!gst_element_register (plugin, "rtpulpfecenc", GST_RANK_NONE,
+          GST_TYPE_RTP_ULPFEC_ENC))
+    return FALSE;
+
+  if (!gst_element_register (plugin, "rtpreddec", GST_RANK_NONE,
+          GST_TYPE_RTP_RED_DEC))
+    return FALSE;
+
+  if (!gst_element_register (plugin, "rtpredenc", GST_RANK_NONE,
+          GST_TYPE_RTP_RED_ENC))
+    return FALSE;
+
+  if (!gst_element_register (plugin, "rtpstorage", GST_RANK_NONE,
+          GST_TYPE_RTP_STORAGE))
     return FALSE;
 
   return TRUE;

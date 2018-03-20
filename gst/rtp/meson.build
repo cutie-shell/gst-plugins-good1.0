@@ -54,6 +54,8 @@ rtp_sources = [
   'gstrtpj2kpay.c',
   'gstrtpjpegdepay.c',
   'gstrtpjpegpay.c',
+  'gstrtpL8depay.c',
+  'gstrtpL8pay.c',
   'gstrtpL16depay.c',
   'gstrtpL16pay.c',
   'gstrtpL24depay.c',
@@ -90,6 +92,15 @@ rtp_sources = [
   'gstrtpstreampay.c',
   'gstrtpstreamdepay.c',
   'gstrtputils.c',
+  'rtpulpfeccommon.c',
+  'gstrtpulpfecdec.c',
+  'gstrtpulpfecenc.c',
+  'rtpredcommon.c',
+  'gstrtpredenc.c',
+  'gstrtpreddec.c',
+  'rtpstorage.c',
+  'rtpstoragestream.c',
+  'gstrtpstorage.c',
 ]
 
 rtp_args = [

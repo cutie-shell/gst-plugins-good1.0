@@ -64,6 +64,7 @@ EXTRA_HFILES = \
 	$(top_srcdir)/ext/jack/gstjackaudiosink.h \
 	$(top_srcdir)/ext/jpeg/gstjpegdec.h \
 	$(top_srcdir)/ext/jpeg/gstjpegenc.h \
+	$(top_srcdir)/ext/lame/gstlamemp3enc.h \
 	$(top_srcdir)/ext/libcaca/gstcacasink.h \
 	$(top_srcdir)/ext/libpng/gstpngdec.h \
 	$(top_srcdir)/ext/libpng/gstpngenc.h \
@@ -73,6 +74,7 @@ EXTRA_HFILES = \
 	$(top_srcdir)/ext/soup/gstsouphttpsrc.h \
 	$(top_srcdir)/ext/taglib/gstapev2mux.h \
 	$(top_srcdir)/ext/taglib/gstid3v2mux.h \
+	$(top_srcdir)/ext/twolame/gsttwolamemp2enc.h \
 	$(top_srcdir)/ext/pulse/pulsesink.h \
 	$(top_srcdir)/ext/pulse/pulsesrc.h \
 	$(top_srcdir)/ext/speex/gstspeexenc.h \

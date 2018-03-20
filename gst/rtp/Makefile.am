@@ -54,6 +54,8 @@ libgstrtp_la_SOURCES = \
 	gstrtpjpegpay.c \
 	gstrtpklvdepay.c \
 	gstrtpklvpay.c \
+	gstrtpL8depay.c \
+	gstrtpL8pay.c \
 	gstrtpL16depay.c \
 	gstrtpL16pay.c \
 	gstrtpL24depay.c \
@@ -91,7 +93,16 @@ libgstrtp_la_SOURCES = \
 	gstrtpvrawpay.c \
 	gstrtpstreampay.c \
 	gstrtpstreamdepay.c \
-	gstrtputils.c
+	gstrtputils.c \
+	rtpulpfeccommon.c \
+	gstrtpulpfecdec.c \
+	gstrtpulpfecenc.c \
+	rtpredcommon.c \
+	gstrtpredenc.c \
+	gstrtpreddec.c \
+	rtpstorage.c \
+	rtpstoragestream.c \
+	gstrtpstorage.c
 
 libgstrtp_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) \
 	$(GST_CFLAGS) -Dvp8_norm=gst_rtpvp8_vp8_norm \
@@ -107,12 +118,13 @@ libgstrtp_la_LIBADD = $(GST_PLUGINS_BASE_LIBS) \
 	$(GST_BASE_LIBS) $(GST_LIBS) \
 	$(LIBM)
 libgstrtp_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS) 
-libgstrtp_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
 
 noinst_HEADERS =			\
 	dboolhuff.h \
 	fnv1hash.h \
 	gstrtpchannels.h \
+	gstrtpL8depay.h \
+	gstrtpL8pay.h \
 	gstrtpL16depay.h \
 	gstrtpL16pay.h \
 	gstrtpL24depay.h \
@@ -182,15 +194,20 @@ noinst_HEADERS =			\
 	gstasteriskh263.h \
 	gstrtpqcelpdepay.h \
 	gstrtpqdmdepay.h \
+	gstrtpreddec.h \
+	gstrtpredenc.h \
 	gstrtpsbcdepay.h \
 	gstrtpsbcpay.h \
 	gstrtpsirenpay.h \
 	gstrtpsirendepay.h \
 	gstrtpspeexdepay.h \
 	gstrtpspeexpay.h \
+	gstrtpstorage.h \
 	gstrtpsv3vdepay.h \
 	gstrtptheoradepay.h \
 	gstrtptheorapay.h \
+	gstrtpulpfecdec.h \
+	gstrtpulpfecenc.h \
 	gstrtpvorbisdepay.h \
 	gstrtpvorbispay.h \
 	gstrtpvp8depay.h \
@@ -201,6 +218,11 @@ noinst_HEADERS =			\
 	gstrtpvrawpay.h \
 	gstrtpstreampay.h \
 	gstrtpstreamdepay.h \
-	gstrtputils.h
+	gstrtputils.h \
+	rtpredcommon.h \
+	rtpstorage.h \
+	rtpstoragestream.h \
+	rtpulpfeccommon.h
+
 
 EXTRA_DIST = dboolhuff.LICENSE

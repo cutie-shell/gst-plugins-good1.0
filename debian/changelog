@@ -1,3 +1,10 @@
+gst-plugins-good1.0 (1.14.0-3) unstable; urgency=medium
+
+  * debian/rules:
+    + Use DEB_HOST_ARCH instead of DEB_HOST_ARCH_CPU.
+
+ -- Sebastian Dröge <slomo@debian.org>  Wed, 04 Apr 2018 14:54:20 +0300
+
 gst-plugins-good1.0 (1.14.0-2) unstable; urgency=medium
 
   * debian/control.in,

@@ -96,10 +96,10 @@ endif
 
 
 # workaround for mesa headers being broken (#894076)
-ifeq ($(DEB_HOST_ARCH_CPU),armel)
+ifeq ($(DEB_HOST_ARCH),armel)
 CONFIG_ARGS += --disable-qt
 endif
-ifeq ($(DEB_HOST_ARCH_CPU),armhf)
+ifeq ($(DEB_HOST_ARCH),armhf)
 CONFIG_ARGS += --disable-qt
 endif
 

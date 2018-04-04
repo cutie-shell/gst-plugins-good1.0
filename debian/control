@@ -54,7 +54,8 @@ Description: GStreamer plugin for PulseAudio
  for POSIX and WIN32 systems.
 
 Package: gstreamer1.0-qt5
-Architecture: any
+#Architecture: any
+Architecture: any-amd64 any-arm64 any-i386 any-mips any-mips64el any-mipsel any-ppc64el any-s390x any-alpha any-hppa any-ia64 any-m68k any-powerpc any-powerpcspe any-ppc64 any-riscv64 any-sh4 any-sparc64 any-x32
 Multi-Arch: same
 Section: graphics
 Depends: ${misc:Depends},

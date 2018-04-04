@@ -1,3 +1,12 @@
+gst-plugins-good1.0 (1.14.0-2) unstable; urgency=medium
+
+  * debian/control.in,
+    debian/rules:
+    + Disable Qt5 plugin on armhf/armel due to mesa headers being broken so
+      that this package can move to testing (see #894076).
+
+ -- Sebastian Dröge <slomo@debian.org>  Wed, 04 Apr 2018 12:12:43 +0300
+
 gst-plugins-good1.0 (1.14.0-1) unstable; urgency=medium
 
   * New upstream stable release.

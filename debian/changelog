@@ -1,3 +1,10 @@
+gst-plugins-good1.0 (1.14.0-4) unstable; urgency=medium
+
+  * debian/control.in:
+    + Let the -dbg package only depend on the qt5 package on non-armel/hf.
+
+ -- Sebastian Dröge <slomo@debian.org>  Thu, 05 Apr 2018 10:26:46 +0300
+
 gst-plugins-good1.0 (1.14.0-3) unstable; urgency=medium
 
   * debian/rules:

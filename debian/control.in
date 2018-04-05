@@ -142,7 +142,7 @@ Section: debug
 Priority: extra
 Depends: @GST_PKGNAME@-plugins-good (= ${binary:Version}),
          @GST_PKGNAME@-pulseaudio (= ${binary:Version}),
-         @GST_PKGNAME@-qt5 (= ${binary:Version}),
+         @GST_PKGNAME@-qt5 (= ${binary:Version}) [any-amd64 any-arm64 any-i386 any-mips any-mips64el any-mipsel any-ppc64el any-s390x any-alpha any-hppa any-ia64 any-m68k any-powerpc any-powerpcspe any-ppc64 any-riscv64 any-sh4 any-sparc64 any-x32],
          @GST_PKGNAME@-gtk3 (= ${binary:Version}),
          ${misc:Depends}
 Replaces: gstreamer1.0-plugins-bad (<< 1.13.1)

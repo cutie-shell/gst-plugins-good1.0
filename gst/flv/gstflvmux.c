@@ -656,6 +656,12 @@ gst_flv_mux_release_pad (GstElement * element, GstPad * pad)
 static GstFlowReturn
 gst_flv_mux_push (GstFlvMux * mux, GstBuffer * buffer)
 {
+  GstAggregator *agg = GST_AGGREGATOR (mux);
+  GstAggregatorPad *srcpad = GST_AGGREGATOR_PAD (agg->srcpad);
+
+  if (GST_BUFFER_PTS_IS_VALID (buffer))
+    srcpad->segment.position = GST_BUFFER_PTS (buffer);
+
   /* pushing the buffer that rewrites the header will make it no longer be the
    * total output size in bytes, but it doesn't matter at that point */
   mux->byte_count += gst_buffer_get_size (buffer);
@@ -1639,6 +1645,7 @@ gst_flv_mux_find_best_pad (GstAggregator * aggregator, GstClockTime * ts)
         best_ts = t;
       }
     }
+    gst_buffer_unref (buffer);
   }
   GST_DEBUG_OBJECT (aggregator,
       "Best pad found with %" GST_TIME_FORMAT ": %" GST_PTR_FORMAT,
@@ -1729,7 +1736,7 @@ gst_flv_mux_aggregate (GstAggregator * aggregator, gboolean timeout)
     if (gst_flv_mux_are_all_pads_eos (mux)) {
       gst_flv_mux_write_eos (mux);
       gst_flv_mux_rewrite_header (mux);
-      gst_pad_push_event (mux->srcpad, gst_event_new_eos ());
+      return GST_FLOW_EOS;
     }
     return GST_FLOW_OK;
   }
@@ -1811,6 +1818,25 @@ gst_flv_mux_get_next_time_for_segment (GstAggregator * aggregator,
 static GstClockTime
 gst_flv_mux_get_next_time (GstAggregator * aggregator)
 {
+  GstFlvMux *mux = GST_FLV_MUX (aggregator);
+  GstAggregatorPad *agg_audio_pad = GST_AGGREGATOR_PAD_CAST (mux->audio_pad);
+  GstAggregatorPad *agg_video_pad = GST_AGGREGATOR_PAD_CAST (mux->video_pad);
+
+  GST_OBJECT_LOCK (aggregator);
+  if (mux->state == GST_FLV_MUX_STATE_HEADER &&
+      ((mux->audio_pad && mux->audio_pad->codec == G_MAXUINT) ||
+          (mux->video_pad && mux->video_pad->codec == G_MAXUINT)))
+    goto wait_for_data;
+
+  if (!((agg_audio_pad && gst_aggregator_pad_has_buffer (agg_audio_pad)) ||
+          (agg_video_pad && gst_aggregator_pad_has_buffer (agg_video_pad))))
+    goto wait_for_data;
+  GST_OBJECT_UNLOCK (aggregator);
+
   return gst_flv_mux_get_next_time_for_segment (aggregator,
       &GST_AGGREGATOR_PAD (aggregator->srcpad)->segment);
+
+wait_for_data:
+  GST_OBJECT_UNLOCK (aggregator);
+  return GST_CLOCK_TIME_NONE;
 }

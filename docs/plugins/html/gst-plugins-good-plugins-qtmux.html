@@ -204,8 +204,18 @@ for some reason the default is not large enough and the initial reserved
 space for headers is too small. Applications can monitor the
 <span class="type">“reserved-duration-remaining”</span> property to see how close to full
 the reserved space is becoming.</p>
+<p>Applications that wish to be able to use/edit a file while it is being
+written to by live content, can use the "Robust Prefill Muxing" mode. That
+mode is a variant of the "Robust Muxing" mode in that it will pre-allocate a
+completely valid header from the start for all tracks (i.e. it appears as
+though the file is "reserved-max-duration" long with all samples
+present). This mode can be enabled by setting the
+<span class="type">“reserved-moov-update-period”</span> and <span class="type">“reserved-prefill”</span>
+properties. Note that this mode is only possible with input streams that have
+a fixed sample size (such as raw audio and Prores Video) and that don't
+have reordered samples.</p>
 <div class="refsect2">
-<a name="id-1.2.123.8.9"></a><h3>Example pipelines</h3>
+<a name="id-1.2.123.8.10"></a><h3>Example pipelines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -222,7 +232,7 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.123.8.10.1"></a><h3>Element Information</h3>
+<a name="id-1.2.123.8.11.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -248,7 +258,7 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.123.8.10.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.123.8.11.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">

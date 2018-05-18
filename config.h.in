@@ -302,6 +302,9 @@
 /* Define if Qt Mac integration is installed */
 #undef HAVE_QT_MAC
 
+/* Define if the Qt QPA header is installed */
+#undef HAVE_QT_QPA_HEADER
+
 /* Define if Qt Wayland integration is installed */
 #undef HAVE_QT_WAYLAND
 

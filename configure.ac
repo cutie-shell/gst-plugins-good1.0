@@ -5,7 +5,7 @@ dnl please read gstreamer/docs/random/autotools before changing this file
 dnl initialize autoconf
 dnl releases only do -Wall, git and prerelease does -Werror too
 dnl use a three digit version number for releases, and four for git/pre
-AC_INIT([GStreamer Good Plug-ins],[1.14.0],[http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer],[gst-plugins-good])
+AC_INIT([GStreamer Good Plug-ins],[1.14.1],[http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer],[gst-plugins-good])
 
 AG_GST_INIT
 
@@ -46,11 +46,11 @@ AC_DEFINE_UNQUOTED(GST_API_VERSION, "$GST_API_VERSION",
   [GStreamer API Version])
 
 AG_GST_LIBTOOL_PREPARE
-AS_LIBTOOL(GST, 1400, 0, 1400)
+AS_LIBTOOL(GST, 1401, 0, 1401)
 
 dnl *** required versions of GStreamer stuff ***
-GST_REQ=1.14.0
-GSTPB_REQ=1.14.0
+GST_REQ=1.14.1
+GSTPB_REQ=1.14.1
 
 dnl *** autotools stuff ****
 
@@ -598,18 +598,20 @@ if test x$HAVE_GST_V4L2 = xyes; then
 fi
 
 dnl Allow enabling v4l2 device probing
+default_v4l2_probe=no
 AS_CASE([$host],
     [*-*linux*],
       [AS_CASE([$host_cpu],
         [arm*], [
-          enable_v4l2_probe="yes"],
+          default_v4l2_probe=yes],
         [aarch64*], [
-          enable_v4l2_probe="yes"])])
+          default_v4l2_probe=yes])])
 AC_ARG_ENABLE(
   v4l2-probe,
   AC_HELP_STRING(
     [--enable-v4l2-probe],
-    [enable V4L2 plugin to probe devices @<:@default=no@:>@]))
+    [enable V4L2 plugin to probe devices]),
+  [], [enable_v4l2_probe=$default_v4l2_probe])
 if test "x$enable_v4l2_probe" = "xyes"; then
   AC_DEFINE(GST_V4L2_ENABLE_PROBE, 1,
     [Define if Video4Linux probe shall be run at plugin load])
@@ -892,6 +894,7 @@ AG_GST_CHECK_FEATURE(QT, [Qt elements], qt, [
         AS_IF([test -f "$PKG_CONFIG_SYSROOT_DIR/$QPA_INCLUDE_PATH/qpa/qplatformnativeinterface.h"], [
           QT_CFLAGS="$QT_CFLAGS -I$PKG_CONFIG_SYSROOT_DIR/$QPA_INCLUDE_PATH"
           HAVE_QT_QPA_HEADER="yes"
+          AC_DEFINE([HAVE_QT_QPA_HEADER], [], [Define if the Qt QPA header is installed])
         ], [AC_MSG_NOTICE([Cannot find QPA])])
         if test "x$GST_GL_HAVE_WINDOW_X11" = "x1" -a "x$GST_GL_HAVE_PLATFORM_GLX" = "x1" || test "x$GST_GL_HAVE_WINDOW_X11" = "x1" -a "x$GST_GL_HAVE_PLATFORM_EGL" = "x1"; then
           PKG_CHECK_MODULES(QT_X11, Qt5X11Extras, [

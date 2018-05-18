@@ -2731,6 +2731,9 @@ rtp_session_process_feedback (RTPSession * sess, GstRTCPPacket * packet,
   if (sess->scheduled_bye && src && RTP_SOURCE_IS_MARKED_BYE (src))
     return;
 
+  if (src)
+    g_object_ref (src);
+
   fci_data = gst_rtcp_packet_fb_get_fci (packet);
   fci_length = gst_rtcp_packet_fb_get_fci_length (packet) * sizeof (guint32);
 
@@ -2798,6 +2801,9 @@ rtp_session_process_feedback (RTPSession * sess, GstRTCPPacket * packet,
         break;
     }
   }
+
+  if (src)
+    g_object_unref (src);
 }
 
 /**
@@ -3973,11 +3979,15 @@ rtp_session_are_all_sources_bye (RTPSession * sess)
   GHashTableIter iter;
   RTPSource *src;
 
+  RTP_SESSION_LOCK (sess);
   g_hash_table_iter_init (&iter, sess->ssrcs[sess->mask_idx]);
   while (g_hash_table_iter_next (&iter, NULL, (gpointer *) & src)) {
-    if (src->internal && !src->sent_bye)
+    if (src->internal && !src->sent_bye) {
+      RTP_SESSION_UNLOCK (sess);
       return FALSE;
+    }
   }
+  RTP_SESSION_UNLOCK (sess);
 
   return TRUE;
 }

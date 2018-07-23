@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2017-05-07 22:46+0200\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@ludost.net>\n"
@@ -283,12 +283,12 @@ msgstr "Конверторът на устройството „%s“ не по�
 msgid "Converter on device %s has no supported output format"
 msgstr "Конверторът на устройството „%s“ не поддържа познати метод за изход."
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr "Кодерът устройството „%s“ не поддържа познати метод за вход."
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr "Кодерът на устройството „%s“ не поддържа познати метод за изход."
 
 msgid "Failed to start decoding thread."
@@ -296,6 +296,14 @@ msgstr "Неуспешно стартиране на нишката за дек�
 
 msgid "Failed to process frame."
 msgstr "Неуспешна обработка на кадър."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Кодерът на устройството „%s“ не поддържа познати метод за изход."
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Кодерът устройството „%s“ не поддържа познати метод за вход."
 
 #, fuzzy
 msgid "Failed to start encoding thread."

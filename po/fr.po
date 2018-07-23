@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2017-05-05 22:27+0200\n"
 "Last-Translator: Stéphane Aulery <lkppo@free.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -304,13 +304,13 @@ msgstr ""
 "Le convertisseur du périphérique « %s » ne prend en charge aucun format de "
 "sortie"
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr ""
 "L’encodeur du périphérique « %s » ne prend en charge aucun format d’entrée"
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr ""
 "L’encodeur du périphérique « %s » ne prend en charge aucun format de sortie"
 
@@ -319,6 +319,16 @@ msgstr "Échec de démarrage du processus de décodage."
 
 msgid "Failed to process frame."
 msgstr "Échec du traitement de frame."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr ""
+"L’encodeur du périphérique « %s » ne prend en charge aucun format de sortie"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr ""
+"L’encodeur du périphérique « %s » ne prend en charge aucun format d’entrée"
 
 #, fuzzy
 msgid "Failed to start encoding thread."

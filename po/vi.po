@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2017-05-05 06:52+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
@@ -290,12 +290,12 @@ msgstr "Bộ chuyển đổi trên thiết bị %s không có định dạng đ�
 msgid "Converter on device %s has no supported output format"
 msgstr "Bộ chuyển đổi trên thiết bị %s không có định dạng xuất được hỗ trợ"
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr "Bộ mã hóa trên thiết bị “%s” không hỗ trợ định dạng đầu vào"
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr "Bộ giải mã trên thiết bị “%s” không hỗ trợ định dạng đầu ra"
 
 msgid "Failed to start decoding thread."
@@ -303,6 +303,14 @@ msgstr "Gặp lỗi khi bắt đầu tiến trình giải mã."
 
 msgid "Failed to process frame."
 msgstr "Gặp lỗi khi xử lý khung."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Bộ giải mã trên thiết bị “%s” không hỗ trợ định dạng đầu ra"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Bộ mã hóa trên thiết bị “%s” không hỗ trợ định dạng đầu vào"
 
 #, fuzzy
 msgid "Failed to start encoding thread."

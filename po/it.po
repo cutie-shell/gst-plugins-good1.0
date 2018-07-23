@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 0.10.25.3\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2010-10-25 10:11+0200\n"
 "Last-Translator: Luca Ferretti <elle.uca@infinito.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
@@ -297,12 +297,12 @@ msgstr ""
 "Il device di ingresso video non accetta la nuova impostazione sul frame rate."
 
 #, fuzzy, c-format
-msgid "Encoder on device %s has no supported input format"
+msgid "Decoder on device %s has no supported input format"
 msgstr ""
 "Il device di ingresso video non accetta la nuova impostazione sul frame rate."
 
 #, fuzzy, c-format
-msgid "Encoder on device %s has no supported output format"
+msgid "Decoder on device %s has no supported output format"
 msgstr ""
 "Il device di ingresso video non accetta la nuova impostazione sul frame rate."
 
@@ -312,6 +312,16 @@ msgstr "Decodifica dell'immagine JPEG non riuscita"
 
 msgid "Failed to process frame."
 msgstr ""
+
+#, fuzzy, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr ""
+"Il device di ingresso video non accetta la nuova impostazione sul frame rate."
+
+#, fuzzy, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr ""
+"Il device di ingresso video non accetta la nuova impostazione sul frame rate."
 
 #, fuzzy
 msgid "Failed to start encoding thread."

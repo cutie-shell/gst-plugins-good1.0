@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2017-05-04 22:20+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <translation-team-uk@lists.sourceforge.net>\n"
@@ -303,14 +303,14 @@ msgstr ""
 "Засіб перетворення на пристрої %s не може виводити дані у підтримуваному "
 "форматі"
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr ""
 "Засіб кодування на пристрої %s не може отримувати дані у підтримуваному "
 "форматі"
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr ""
 "Засіб кодування на пристрої %s не може виводити дані у підтримуваному форматі"
 
@@ -319,6 +319,17 @@ msgstr "Не вдалося започаткувати потік декодув
 
 msgid "Failed to process frame."
 msgstr "Не вдалося обробити кадр."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr ""
+"Засіб кодування на пристрої %s не може виводити дані у підтримуваному форматі"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr ""
+"Засіб кодування на пристрої %s не може отримувати дані у підтримуваному "
+"форматі"
 
 #, fuzzy
 msgid "Failed to start encoding thread."

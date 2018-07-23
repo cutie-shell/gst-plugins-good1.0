@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.10.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2017-02-17 10:54+0100\n"
 "Last-Translator: Fabio Tomat <f.t.public@gmail.com>\n"
 "Language-Team: Friulian <f.t.public@gmail.com>\n"
@@ -291,12 +291,12 @@ msgstr "Il convertidôr sul dispositîf %s nol à formâts di jentrade supuartâ
 msgid "Converter on device %s has no supported output format"
 msgstr "Il convertidôr sul dispositîf %s nol à formâts di jessude supuartâts"
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr "Il codificadôr sul dispositîf %s nol à formâts di jentrade supuartâts"
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr "Il codificadôr sul dispositîf %s nol à formâts di jessude supuartâts"
 
 msgid "Failed to start decoding thread."
@@ -304,6 +304,14 @@ msgstr ""
 
 msgid "Failed to process frame."
 msgstr "Impussibil processâ fotogram."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Il codificadôr sul dispositîf %s nol à formâts di jessude supuartâts"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Il codificadôr sul dispositîf %s nol à formâts di jentrade supuartâts"
 
 msgid "Failed to start encoding thread."
 msgstr ""

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.10.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2016-11-10 22:06+0700\n"
 "Last-Translator: Andhika Padmawan <andhika.padmawan@gmail.com>\n"
 "Language-Team: Indonesian <translation-team-id@lists.sourceforge.net>\n"
@@ -287,12 +287,12 @@ msgstr "Konverter di divais %s tidak mempunyai format masukan yang didukung"
 msgid "Converter on device %s has no supported output format"
 msgstr "Konverter di divais %s tidak mempunyai format keluaran yang didukung"
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr "Penyandi di divais %s tidak mempunyai format masukan yang didukung"
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr "Penyandi di divais %s tidak mempunyai format keluaran yang didukung"
 
 msgid "Failed to start decoding thread."
@@ -300,6 +300,14 @@ msgstr "Gagal untuk menjalankan tali awasandi."
 
 msgid "Failed to process frame."
 msgstr "Gagal memproses bingkai."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Penyandi di divais %s tidak mempunyai format keluaran yang didukung"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Penyandi di divais %s tidak mempunyai format masukan yang didukung"
 
 #, fuzzy
 msgid "Failed to start encoding thread."

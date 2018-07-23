@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 0.10.25.3\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2010-11-17 23:03+0200\n"
 "Last-Translator: Tommi Vainikainen <Tommi.Vainikainen@iki.fi>\n"
 "Language-Team: Finnish <translation-team-fi@lists.sourceforge.net>\n"
@@ -293,11 +293,11 @@ msgid "Converter on device %s has no supported output format"
 msgstr "Videosyötelaite ei hyväksy uutta kehysnopeusasetusta."
 
 #, fuzzy, c-format
-msgid "Encoder on device %s has no supported input format"
+msgid "Decoder on device %s has no supported input format"
 msgstr "Videosyötelaite ei hyväksy uutta kehysnopeusasetusta."
 
 #, fuzzy, c-format
-msgid "Encoder on device %s has no supported output format"
+msgid "Decoder on device %s has no supported output format"
 msgstr "Videosyötelaite ei hyväksy uutta kehysnopeusasetusta."
 
 #, fuzzy
@@ -306,6 +306,14 @@ msgstr "JPEG-kuvan purku epäonnistui"
 
 msgid "Failed to process frame."
 msgstr ""
+
+#, fuzzy, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Videosyötelaite ei hyväksy uutta kehysnopeusasetusta."
+
+#, fuzzy, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Videosyötelaite ei hyväksy uutta kehysnopeusasetusta."
 
 #, fuzzy
 msgid "Failed to start encoding thread."

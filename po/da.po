@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good-1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2017-05-21 23:54+0200\n"
 "Last-Translator: Joe Hansen <joedalton2@yahoo.dk>\n"
 "Language-Team: Danish <dansk@dansk-gruppen.dk>\n"
@@ -291,12 +291,12 @@ msgstr ""
 msgid "Converter on device %s has no supported output format"
 msgstr "Konverteringsprogram på enhed %s har ikke et understøttet uddataformat"
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr "Koder på enhed %s har ikke et understøttet inddataformat"
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr "Koder på enhed %s har ikke et understøttet uddataformat"
 
 msgid "Failed to start decoding thread."
@@ -304,6 +304,14 @@ msgstr "Kunne ikke starte afkodning af tråd."
 
 msgid "Failed to process frame."
 msgstr "Kunne ikke behandle billed."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Koder på enhed %s har ikke et understøttet uddataformat"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Koder på enhed %s har ikke et understøttet inddataformat"
 
 #, fuzzy
 msgid "Failed to start encoding thread."

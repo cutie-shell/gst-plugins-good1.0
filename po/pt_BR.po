@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good-1.7.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2016-05-06 17:49-0300\n"
 "Last-Translator: Fabrício Godoy <skarllot@gmail.com>\n"
 "Language-Team: Brazilian Portuguese <ldpbr-translation@lists.sourceforge."
@@ -300,13 +300,13 @@ msgstr ""
 msgid "Converter on device %s has no supported output format"
 msgstr "O conversor no dispositivo %s não tem um formato de saída com suporte"
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr ""
 "O codificador no dispositivo %s não tem um formato de entrada com suporte"
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr ""
 "O codificador no dispositivo %s não tem um formato de saída com suporte"
 
@@ -315,6 +315,16 @@ msgstr "Falha ao iniciar o segmento de decodificação."
 
 msgid "Failed to process frame."
 msgstr "Falha ao processar quadro."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr ""
+"O codificador no dispositivo %s não tem um formato de saída com suporte"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr ""
+"O codificador no dispositivo %s não tem um formato de entrada com suporte"
 
 #, fuzzy
 msgid "Failed to start encoding thread."

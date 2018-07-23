@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2017-05-26 19:59+0200\n"
 "Last-Translator: Christian Kirbach <christian.kirbach@gmail.com>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -303,12 +303,12 @@ msgstr "Der Umwandler auf Gerät %s hat kein unterstütztes Eingabeformat"
 msgid "Converter on device %s has no supported output format"
 msgstr "Der Umwandler auf Gerät %s hat kein unterstütztes Ausgabeformat"
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr "Der Kodierer auf Gerät %s hat kein unterstütztes Eingabeformat"
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr "Der Kodierer auf Gerät %s hat kein unterstütztes Ausgabeformat"
 
 msgid "Failed to start decoding thread."
@@ -316,6 +316,14 @@ msgstr "Beginn der Dekodierung des JPEG-Bildes schlug fehl"
 
 msgid "Failed to process frame."
 msgstr "Verarbeiten des Einzelbilds schlug fehl."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Der Kodierer auf Gerät %s hat kein unterstütztes Ausgabeformat"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Der Kodierer auf Gerät %s hat kein unterstütztes Eingabeformat"
 
 #, fuzzy
 msgid "Failed to start encoding thread."

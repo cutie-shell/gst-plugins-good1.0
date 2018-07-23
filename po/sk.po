@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.7.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2016-05-20 12:31+0100\n"
 "Last-Translator: Peter Tuhársky <tuharsky@misbb.sk>\n"
 "Language-Team: Slovak <sk-i18n@lists.linux.sk>\n"
@@ -285,12 +285,12 @@ msgstr "Konvertor na zariadení %s nepodporuje žiadny vstupný formát"
 msgid "Converter on device %s has no supported output format"
 msgstr "Konvertor na zariadení %s nepodporuje žiadny výstupný formát"
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr "Enkodér na zariadení %s nepodporuje žiadny vstupný formát"
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr "Enkodér na zariadení %s nepodporuje žiadny výstupný formát"
 
 msgid "Failed to start decoding thread."
@@ -298,6 +298,14 @@ msgstr "Nepodarilo sa spustiť dekódovacie vlákno."
 
 msgid "Failed to process frame."
 msgstr "Nepodarilo sa spracovať snímok."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Enkodér na zariadení %s nepodporuje žiadny výstupný formát"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Enkodér na zariadení %s nepodporuje žiadny vstupný formát"
 
 #, fuzzy
 msgid "Failed to start encoding thread."

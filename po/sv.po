@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2017-05-21 19:00+0800\n"
 "Last-Translator: Sebastian Rasmussen <sebras@gmail.com>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -288,12 +288,12 @@ msgstr "Konvertorn på enheten %s har inget ingångsformat som stöds"
 msgid "Converter on device %s has no supported output format"
 msgstr "Konvertorn på enheten %s har inget utgångsformat som stöds"
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr "Kodaren på enheten %s har inget ingångsformat som stöds"
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr "Kodaren på enheten %s har inget utgångsformat som stöds"
 
 msgid "Failed to start decoding thread."
@@ -301,6 +301,14 @@ msgstr "Misslyckades med att starta avkodningstråd."
 
 msgid "Failed to process frame."
 msgstr "Misslyckades att behandla ram."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Kodaren på enheten %s har inget utgångsformat som stöds"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Kodaren på enheten %s har inget ingångsformat som stöds"
 
 #, fuzzy
 msgid "Failed to start encoding thread."

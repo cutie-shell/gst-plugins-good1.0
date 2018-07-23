@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2017-05-04 19:05+0200\n"
 "Last-Translator: Jakub Bogusz <qboosh@pld-linux.org>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
@@ -283,12 +283,12 @@ msgstr "Konwerter urządzenia %s nie ma obsługiwanego formatu wejściowego"
 msgid "Converter on device %s has no supported output format"
 msgstr "Konwerter urządzenia %s nie ma obsługiwanego formatu wyjściowego"
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr "Koder urządzenia %s nie ma obsługiwanego formatu wejściowego"
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr "Koder urządzenia %s nie ma obsługiwanego formatu wyjściowego"
 
 msgid "Failed to start decoding thread."
@@ -296,6 +296,14 @@ msgstr "Nie udało się uruchomić wątku dekodującego."
 
 msgid "Failed to process frame."
 msgstr "Nie udało się przetworzyć ramki."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Koder urządzenia %s nie ma obsługiwanego formatu wyjściowego"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Koder urządzenia %s nie ma obsługiwanego formatu wejściowego"
 
 #, fuzzy
 msgid "Failed to start encoding thread."

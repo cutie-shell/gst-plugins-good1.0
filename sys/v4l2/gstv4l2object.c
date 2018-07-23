@@ -720,15 +720,12 @@ gst_v4l2_object_get_property_helper (GstV4l2Object * v4l2object,
       break;
     case PROP_DEVICE_NAME:
     {
-      const guchar *new = NULL;
+      const guchar *name = NULL;
 
-      if (GST_V4L2_IS_OPEN (v4l2object)) {
-        new = v4l2object->vcap.card;
-      } else if (gst_v4l2_open (v4l2object)) {
-        new = v4l2object->vcap.card;
-        gst_v4l2_close (v4l2object);
-      }
-      g_value_set_string (value, (gchar *) new);
+      if (GST_V4L2_IS_OPEN (v4l2object))
+        name = v4l2object->vcap.card;
+
+      g_value_set_string (value, (gchar *) name);
       break;
     }
     case PROP_DEVICE_FD:
@@ -3452,22 +3449,20 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
   }
 #endif
 
-  if (V4L2_TYPE_IS_OUTPUT (v4l2object->type)) {
-    if (is_mplane) {
-      format.fmt.pix_mp.colorspace = colorspace;
-      format.fmt.pix_mp.quantization = range;
-      format.fmt.pix_mp.ycbcr_enc = matrix;
-      format.fmt.pix_mp.xfer_func = transfer;
-    } else {
-      format.fmt.pix.colorspace = colorspace;
-      format.fmt.pix.quantization = range;
-      format.fmt.pix.ycbcr_enc = matrix;
-      format.fmt.pix.xfer_func = transfer;
-    }
-
-    GST_DEBUG_OBJECT (v4l2object->dbg_obj, "Desired colorspace is %d:%d:%d:%d",
-        colorspace, range, matrix, transfer);
+  if (is_mplane) {
+    format.fmt.pix_mp.colorspace = colorspace;
+    format.fmt.pix_mp.quantization = range;
+    format.fmt.pix_mp.ycbcr_enc = matrix;
+    format.fmt.pix_mp.xfer_func = transfer;
+  } else {
+    format.fmt.pix.colorspace = colorspace;
+    format.fmt.pix.quantization = range;
+    format.fmt.pix.ycbcr_enc = matrix;
+    format.fmt.pix.xfer_func = transfer;
   }
+
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "Desired colorspace is %d:%d:%d:%d",
+      colorspace, range, matrix, transfer);
 
   if (try_only) {
     if (v4l2object->ioctl (fd, VIDIOC_TRY_FMT, &format) < 0)
@@ -3952,13 +3947,19 @@ unsupported_format:
 gboolean
 gst_v4l2_object_set_crop (GstV4l2Object * obj)
 {
+  struct v4l2_selection sel = { 0 };
   struct v4l2_crop crop = { 0 };
 
+  sel.type = obj->type;
+  sel.target = V4L2_SEL_TGT_CROP;
+  sel.flags = 0;
+  sel.r.left = obj->align.padding_left;
+  sel.r.top = obj->align.padding_top;
+  sel.r.width = obj->info.width;
+  sel.r.height = obj->info.height;
+
   crop.type = obj->type;
-  crop.c.left = obj->align.padding_left;
-  crop.c.top = obj->align.padding_top;
-  crop.c.width = obj->info.width;
-  crop.c.height = obj->info.height;
+  crop.c = sel.r;
 
   if (obj->align.padding_left + obj->align.padding_top +
       obj->align.padding_right + obj->align.padding_bottom == 0) {
@@ -3970,14 +3971,25 @@ gst_v4l2_object_set_crop (GstV4l2Object * obj)
       "Desired cropping left %u, top %u, size %ux%u", crop.c.left, crop.c.top,
       crop.c.width, crop.c.height);
 
-  if (obj->ioctl (obj->video_fd, VIDIOC_S_CROP, &crop) < 0) {
-    GST_WARNING_OBJECT (obj->dbg_obj, "VIDIOC_S_CROP failed");
-    return FALSE;
-  }
+  if (obj->ioctl (obj->video_fd, VIDIOC_S_SELECTION, &sel) < 0) {
+    if (errno != ENOTTY) {
+      GST_WARNING_OBJECT (obj->dbg_obj,
+          "Failed to set crop rectangle with VIDIOC_S_SELECTION: %s",
+          g_strerror (errno));
+      return FALSE;
+    } else {
+      if (obj->ioctl (obj->video_fd, VIDIOC_S_CROP, &crop) < 0) {
+        GST_WARNING_OBJECT (obj->dbg_obj, "VIDIOC_S_CROP failed");
+        return FALSE;
+      }
 
-  if (obj->ioctl (obj->video_fd, VIDIOC_G_CROP, &crop) < 0) {
-    GST_WARNING_OBJECT (obj->dbg_obj, "VIDIOC_G_CROP failed");
-    return FALSE;
+      if (obj->ioctl (obj->video_fd, VIDIOC_G_CROP, &crop) < 0) {
+        GST_WARNING_OBJECT (obj->dbg_obj, "VIDIOC_G_CROP failed");
+        return FALSE;
+      }
+
+      sel.r = crop.c;
+    }
   }
 
   GST_DEBUG_OBJECT (obj->dbg_obj,
@@ -4005,6 +4017,46 @@ gst_v4l2_object_caps_equal (GstV4l2Object * v4l2object, GstCaps * caps)
   gst_structure_free (config);
 
   return ret;
+}
+
+gboolean
+gst_v4l2_object_caps_is_subset (GstV4l2Object * v4l2object, GstCaps * caps)
+{
+  GstStructure *config;
+  GstCaps *oldcaps;
+  gboolean ret;
+
+  if (!v4l2object->pool)
+    return FALSE;
+
+  config = gst_buffer_pool_get_config (v4l2object->pool);
+  gst_buffer_pool_config_get_params (config, &oldcaps, NULL, NULL, NULL);
+
+  ret = oldcaps && gst_caps_is_subset (oldcaps, caps);
+
+  gst_structure_free (config);
+
+  return ret;
+}
+
+GstCaps *
+gst_v4l2_object_get_current_caps (GstV4l2Object * v4l2object)
+{
+  GstStructure *config;
+  GstCaps *oldcaps;
+
+  if (!v4l2object->pool)
+    return NULL;
+
+  config = gst_buffer_pool_get_config (v4l2object->pool);
+  gst_buffer_pool_config_get_params (config, &oldcaps, NULL, NULL, NULL);
+
+  if (oldcaps)
+    gst_caps_ref (oldcaps);
+
+  gst_structure_free (config);
+
+  return oldcaps;
 }
 
 gboolean

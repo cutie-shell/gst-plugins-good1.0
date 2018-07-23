@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2017-05-23 23:04+0200\n"
 "Last-Translator: Johnny A. Solbu <johnny@solbu.net>\n"
 "Language-Team: Norwegian Bokmaal <i18n-nb@lister.ping.uio.no>\n"
@@ -282,12 +282,12 @@ msgstr "Konverter på enhet «%s» har ingen støttede inndataformat"
 msgid "Converter on device %s has no supported output format"
 msgstr "Konverter på enhet «%s» har ingen støttede utdataformat"
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr "Enkoder på enhet «%s» har ingen støttede inndataformat"
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr "Enkoder på enhet «%s» har ingen støttede utdataformat"
 
 msgid "Failed to start decoding thread."
@@ -295,6 +295,14 @@ msgstr "Klarte ikke å starte dekoding av tråden."
 
 msgid "Failed to process frame."
 msgstr "Kunne ikke behandle ramme."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Enkoder på enhet «%s» har ingen støttede utdataformat"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Enkoder på enhet «%s» har ingen støttede inndataformat"
 
 #, fuzzy
 msgid "Failed to start encoding thread."

@@ -870,6 +870,9 @@ gst_v4l2_buffer_pool_start (GstBufferPool * bpool)
     goto start_failed;
 
   if (!V4L2_TYPE_IS_OUTPUT (obj->type)) {
+    if (g_atomic_int_get (&pool->num_queued) < min_buffers)
+      goto queue_failed;
+
     pool->group_released_handler =
         g_signal_connect_swapped (pool->vallocator, "group-released",
         G_CALLBACK (gst_v4l2_buffer_pool_resurect_buffer), pool);
@@ -902,6 +905,11 @@ other_pool_failed:
   {
     GST_ERROR_OBJECT (pool, "failed to active the other pool %"
         GST_PTR_FORMAT, pool->other_pool);
+    return FALSE;
+  }
+queue_failed:
+  {
+    GST_ERROR_OBJECT (pool, "failed to queue buffers into the capture queue");
     return FALSE;
   }
 }
@@ -1712,12 +1720,13 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf)
             guint num_queued;
             gsize size = gst_buffer_get_size (*buf);
 
-            if (size == 0) {
-              if (GST_BUFFER_FLAG_IS_SET (*buf, GST_BUFFER_FLAG_CORRUPTED))
-                goto buffer_corrupted;
-              else
-                goto eos;
-            }
+            /* Legacy M2M devices return empty buffer when drained */
+            if (size == 0 && GST_V4L2_IS_M2M (obj->device_caps))
+              goto eos;
+
+            if (GST_VIDEO_INFO_FORMAT (&pool->caps_info) !=
+                GST_VIDEO_FORMAT_ENCODED && size < pool->size)
+              goto buffer_truncated;
 
             num_queued = g_atomic_int_get (&pool->num_queued);
             GST_TRACE_OBJECT (pool, "Only %i buffer left in the capture queue.",
@@ -1763,14 +1772,10 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf)
 
           /* An empty buffer on capture indicates the end of stream */
           if (gst_buffer_get_size (tmp) == 0) {
-            gboolean corrupted = GST_BUFFER_FLAG_IS_SET (tmp,
-                GST_BUFFER_FLAG_CORRUPTED);
-
             gst_v4l2_buffer_pool_release_buffer (bpool, tmp);
 
-            if (corrupted)
-              goto buffer_corrupted;
-            else
+            /* Legacy M2M devices return empty buffer when drained */
+            if (GST_V4L2_IS_M2M (obj->device_caps))
               goto eos;
           }
 
@@ -1941,9 +1946,10 @@ copy_failed:
     GST_ERROR_OBJECT (pool, "failed to copy buffer");
     return ret;
   }
-buffer_corrupted:
+buffer_truncated:
   {
-    GST_WARNING_OBJECT (pool, "Dropping corrupted buffer without payload");
+    GST_WARNING_OBJECT (pool,
+        "Dropping truncated buffer, this is likely a driver bug.");
     gst_buffer_unref (*buf);
     *buf = NULL;
     return GST_V4L2_FLOW_CORRUPTED_BUFFER;

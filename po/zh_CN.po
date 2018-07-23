@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2017-05-05 22:54+0800\n"
 "Last-Translator: Tianze Wang <zwpwjwtz@126.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
@@ -272,12 +272,12 @@ msgstr "设备 %s 上的转换器没有支持的输入格式"
 msgid "Converter on device %s has no supported output format"
 msgstr "设备 %s 上的转换器没有支持的输出格式"
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr "设备 %s 上的编码器没有支持的输入格式"
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr "设备 %s 上的编码器没有支持的输出格式"
 
 msgid "Failed to start decoding thread."
@@ -285,6 +285,14 @@ msgstr "启动解码线程失败。"
 
 msgid "Failed to process frame."
 msgstr "处理帧失败。"
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "设备 %s 上的编码器没有支持的输出格式"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "设备 %s 上的编码器没有支持的输入格式"
 
 #, fuzzy
 msgid "Failed to start encoding thread."

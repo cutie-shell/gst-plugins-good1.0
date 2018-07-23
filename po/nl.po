@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2017-10-23 23:59+0100\n"
 "Last-Translator: Freek de Kruijf <f.de.kruijf@gmail.com>\n"
 "Language-Team: Dutch <vertaling@vrijschrift.org>\n"
@@ -286,12 +286,12 @@ msgstr "Converter op apparaat %s heeft geen ondersteund invoerformaat"
 msgid "Converter on device %s has no supported output format"
 msgstr "Converter op apparaat %s heeft geen ondersteund uitvoerformaat"
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr "Codeerder op apparaat %s heeft geen ondersteund invoerformaat"
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr "Codeerder op apparaat %s heeft geen ondersteund uitvoerformaat"
 
 msgid "Failed to start decoding thread."
@@ -299,6 +299,14 @@ msgstr "Beginnen met decoderen van thread is mislukt."
 
 msgid "Failed to process frame."
 msgstr "Bewerken van frame is mislukt."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Codeerder op apparaat %s heeft geen ondersteund uitvoerformaat"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Codeerder op apparaat %s heeft geen ondersteund invoerformaat"
 
 #, fuzzy
 msgid "Failed to start encoding thread."

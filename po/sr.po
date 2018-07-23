@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good-1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2017-05-07 12:21+0200\n"
 "Last-Translator: Мирослав Николић <miroslavnikolic@rocketmail.com>\n"
 "Language-Team: Serbian <(nothing)>\n"
@@ -286,12 +286,12 @@ msgstr "Претварач на уређају „%s“ нема подржан�
 msgid "Converter on device %s has no supported output format"
 msgstr "Претварач на уређају „%s“ нема подржани излазни запис"
 
-#, c-format
-msgid "Encoder on device %s has no supported input format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
 msgstr "Кодер на уређају „%s“ нема подржани улазни запис"
 
-#, c-format
-msgid "Encoder on device %s has no supported output format"
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
 msgstr "Кодер на уређају „%s“ нема подржани излазни запис"
 
 msgid "Failed to start decoding thread."
@@ -299,6 +299,14 @@ msgstr "Нисам успео да покренем нит декодирања.
 
 msgid "Failed to process frame."
 msgstr "Нисам успео да обрадим кадар."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Кодер на уређају „%s“ нема подржани излазни запис"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Кодер на уређају „%s“ нема подржани улазни запис"
 
 #, fuzzy
 msgid "Failed to start encoding thread."

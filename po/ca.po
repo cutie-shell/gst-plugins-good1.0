@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 0.10.28.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-05-17 13:25+0100\n"
+"POT-Creation-Date: 2018-07-20 00:55+0100\n"
 "PO-Revision-Date: 2012-01-01 14:19+0100\n"
 "Last-Translator: Gil Forcada <gforcada@gnome.org>\n"
 "Language-Team: Catalan <ca@dodds.net>\n"
@@ -314,13 +314,13 @@ msgstr ""
 "fotogrames per segon."
 
 #, fuzzy, c-format
-msgid "Encoder on device %s has no supported input format"
+msgid "Decoder on device %s has no supported input format"
 msgstr ""
 "El dispositiu d'entrada de vídeo no ha acceptat el paràmetre nou de "
 "fotogrames per segon."
 
 #, fuzzy, c-format
-msgid "Encoder on device %s has no supported output format"
+msgid "Decoder on device %s has no supported output format"
 msgstr ""
 "El dispositiu d'entrada de vídeo no ha acceptat el paràmetre nou de "
 "fotogrames per segon."
@@ -331,6 +331,18 @@ msgstr "Ha fallat en descodificar la imatge JPEG"
 
 msgid "Failed to process frame."
 msgstr ""
+
+#, fuzzy, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr ""
+"El dispositiu d'entrada de vídeo no ha acceptat el paràmetre nou de "
+"fotogrames per segon."
+
+#, fuzzy, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr ""
+"El dispositiu d'entrada de vídeo no ha acceptat el paràmetre nou de "
+"fotogrames per segon."
 
 #, fuzzy
 msgid "Failed to start encoding thread."

@@ -926,6 +926,11 @@ gst_v4l2_object_close (GstV4l2Object * v4l2object)
     g_free (v4l2object->par);
     v4l2object->par = NULL;
   }
+  
+  if (v4l2object->channel) {
+    g_free (v4l2object->channel);
+    v4l2object->channel = NULL;
+  }
 
   return TRUE;
 }
@@ -3193,6 +3198,32 @@ gst_v4l2_object_extrapolate_stride (const GstVideoFormatInfo * finfo,
 }
 
 static gboolean
+gst_v4l2_video_colorimetry_matches (const GstVideoColorimetry * cinfo,
+    const gchar * color)
+{
+  GstVideoColorimetry ci;
+  static const GstVideoColorimetry ci_likely_jpeg = {
+      GST_VIDEO_COLOR_RANGE_0_255, GST_VIDEO_COLOR_MATRIX_BT601,
+      GST_VIDEO_TRANSFER_UNKNOWN, GST_VIDEO_COLOR_PRIMARIES_UNKNOWN };
+  static const GstVideoColorimetry ci_jpeg = {
+      GST_VIDEO_COLOR_RANGE_0_255, GST_VIDEO_COLOR_MATRIX_BT601,
+      GST_VIDEO_TRANSFER_SRGB, GST_VIDEO_COLOR_PRIMARIES_BT709 };
+
+  if (!gst_video_colorimetry_from_string (&ci, color))
+    return FALSE;
+
+  if (gst_video_colorimetry_is_equal (&ci, cinfo))
+    return TRUE;
+
+  /* Allow 1:4:0:0 (produced by jpegdec) if the device expects 1:4:7:1 */
+  if (gst_video_colorimetry_is_equal (&ci, &ci_likely_jpeg)
+      && gst_video_colorimetry_is_equal (cinfo, &ci_jpeg))
+    return TRUE;
+
+  return FALSE;
+}
+
+static gboolean
 gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
     gboolean try_only, GstV4l2Error * error)
 {
@@ -3252,7 +3283,7 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
     field = V4L2_FIELD_NONE;
   }
 
-  /* We first pick th main colorspace from the primaries */
+  /* We first pick the main colorspace from the primaries */
   switch (info.colorimetry.primaries) {
     case GST_VIDEO_COLOR_PRIMARIES_BT709:
       /* There is two colorspaces using these primaries, use the range to
@@ -3371,11 +3402,19 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
   if (colorspace == 0) {
     /* Try to guess colorspace according to pixelformat and size */
     if (GST_VIDEO_INFO_IS_YUV (&info)) {
-      /* SD streams likely use SMPTE170M and HD streams REC709 */
-      if (width <= 720 && height <= 576)
-        colorspace = V4L2_COLORSPACE_SMPTE170M;
-      else
-        colorspace = V4L2_COLORSPACE_REC709;
+      if (range == V4L2_QUANTIZATION_FULL_RANGE
+          && matrix == V4L2_YCBCR_ENC_601 && transfer == 0) {
+        /* Full range BT.601 YCbCr encoding with unknown primaries and transfer
+         * function most likely is JPEG */
+        colorspace = V4L2_COLORSPACE_JPEG;
+        transfer = V4L2_XFER_FUNC_SRGB;
+      } else {
+        /* SD streams likely use SMPTE170M and HD streams REC709 */
+        if (width <= 720 && height <= 576)
+          colorspace = V4L2_COLORSPACE_SMPTE170M;
+        else
+          colorspace = V4L2_COLORSPACE_REC709;
+      }
     } else if (GST_VIDEO_INFO_IS_RGB (&info)) {
       colorspace = V4L2_COLORSPACE_SRGB;
       transfer = V4L2_XFER_FUNC_NONE;
@@ -3455,6 +3494,7 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
     format.fmt.pix_mp.ycbcr_enc = matrix;
     format.fmt.pix_mp.xfer_func = transfer;
   } else {
+    format.fmt.pix.priv = V4L2_PIX_FMT_PRIV_MAGIC;
     format.fmt.pix.colorspace = colorspace;
     format.fmt.pix.quantization = range;
     format.fmt.pix.ycbcr_enc = matrix;
@@ -3472,12 +3512,24 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
       goto set_fmt_failed;
   }
 
+  if (is_mplane) {
+    colorspace = format.fmt.pix_mp.colorspace;
+    range = format.fmt.pix_mp.quantization;
+    matrix = format.fmt.pix_mp.ycbcr_enc;
+    transfer = format.fmt.pix_mp.xfer_func;
+  } else {
+    colorspace = format.fmt.pix.colorspace;
+    range = format.fmt.pix.quantization;
+    matrix = format.fmt.pix.ycbcr_enc;
+    transfer = format.fmt.pix.xfer_func;
+  }
+
   GST_DEBUG_OBJECT (v4l2object->dbg_obj, "Got format of %dx%d, format "
-      "%" GST_FOURCC_FORMAT ", nb planes %d, colorspace %d",
+      "%" GST_FOURCC_FORMAT ", nb planes %d, colorspace %d:%d:%d:%d",
       format.fmt.pix.width, format.fmt.pix_mp.height,
       GST_FOURCC_ARGS (format.fmt.pix.pixelformat),
       is_mplane ? format.fmt.pix_mp.num_planes : 1,
-      is_mplane ? format.fmt.pix_mp.colorspace : format.fmt.pix.colorspace);
+      colorspace, range, matrix, transfer);
 
 #ifndef GST_DISABLE_GST_DEBUG
   if (is_mplane) {
@@ -3521,10 +3573,8 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
 
   s = gst_caps_get_structure (caps, 0);
   if (gst_structure_has_field (s, "colorimetry")) {
-    GstVideoColorimetry ci;
-    if (!gst_video_colorimetry_from_string (&ci,
-            gst_structure_get_string (s, "colorimetry"))
-        || !gst_video_colorimetry_is_equal (&ci, &info.colorimetry))
+    if (!gst_v4l2_video_colorimetry_matches (&info.colorimetry,
+            gst_structure_get_string (s, "colorimetry")))
       goto invalid_colorimetry;
   }
 
@@ -4130,7 +4180,7 @@ gst_v4l2_object_probe_caps (GstV4l2Object * v4l2object, GstCaps * filter)
         GST_WARNING_OBJECT (v4l2object->dbg_obj,
             "Failed to probe pixel aspect ratio with VIDIOC_CROPCAP: %s",
             g_strerror (errno));
-    } else {
+    } else if (cropcap.pixelaspect.numerator && cropcap.pixelaspect.denominator) {
       v4l2object->par = g_new0 (GValue, 1);
       g_value_init (v4l2object->par, GST_TYPE_FRACTION);
       gst_value_set_fraction (v4l2object->par, cropcap.pixelaspect.numerator,
@@ -4503,8 +4553,16 @@ gst_v4l2_object_propose_allocation (GstV4l2Object * obj, GstQuery * query)
   if (caps == NULL)
     goto no_caps;
 
-  if ((pool = obj->pool))
-    gst_object_ref (pool);
+  switch (obj->mode) {
+    case GST_V4L2_IO_MMAP:
+    case GST_V4L2_IO_DMABUF:
+      if ((pool = obj->pool))
+        gst_object_ref (pool);
+      break;
+    default:
+      pool = NULL;
+      break;
+  }
 
   if (pool != NULL) {
     GstCaps *pcaps;

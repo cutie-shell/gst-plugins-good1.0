@@ -1,3 +1,25 @@
+gst-plugins-good1.0 (1.15.1-1) experimental; urgency=medium
+
+  [ Sebastian Dröge ]
+  * New upstream development release
+    + debian/rules:
+      - Update GStreamer dependency.
+    + debian/control.in:
+      - Update Conflicts/Replaces/Breaks for moved files from gst-plugins-bad.
+  * debian/control.in:
+    + Remove Sebastian Bacher and Loïc Minier from Uploaders. They didn't work
+      on the packages in a very long time.
+
+      Thanks a lot for their past work!
+  * debian/rules:
+    + Only build documentation if we build the documentation package. Thanks
+      to Simon McVittie for the patch.
+
+  [ Helmut Grohne ]
+  * Export QT_SELECT to explain which moc to use. (Closes: #917951)
+
+ -- Sebastian Dröge <slomo@debian.org>  Thu, 17 Jan 2019 16:21:16 +0200
+
 gst-plugins-good1.0 (1.14.4-1) unstable; urgency=medium
 
   * New upstream bugfix release

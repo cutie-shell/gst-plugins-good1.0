@@ -2,8 +2,7 @@ Source: gst-plugins-good@GST_ABI@
 Section: libs
 Priority: optional
 Maintainer: Maintainers of GStreamer packages <gst-plugins-good1.0@packages.debian.org>
-Uploaders: Loic Minier <lool@dooz.org>,
-           Sebastian Dröge <slomo@debian.org>,
+Uploaders: Sebastian Dröge <slomo@debian.org>,
            Sjoerd Simons <sjoerd@debian.org>
 Build-Depends: BUILDDEPS
 Standards-Version: 3.9.3
@@ -113,9 +112,9 @@ Depends: ${misc:Depends},
          @GST_PKGNAME@-pulseaudio | @GST_PKGNAME@-audiosink,
          gstreamer@GST_ABI@-plugins-base,
 Recommends: @GST_PKGNAME@-x
-Replaces: gstreamer1.0-plugins-bad (<< 1.13.1),
+Replaces: gstreamer1.0-plugins-bad (<< 1.15.1),
           gstreamer1.0-plugins-ugly (<< 1.13.1)
-Breaks: gstreamer1.0-plugins-bad (<< 1.13.1),
+Breaks: gstreamer1.0-plugins-bad (<< 1.15.1),
         gstreamer1.0-plugins-ugly (<< 1.13.1)
 XB-GStreamer-Version: ${gstreamer:Version}
 XB-GStreamer-Elements: ${gstreamer:Elements}

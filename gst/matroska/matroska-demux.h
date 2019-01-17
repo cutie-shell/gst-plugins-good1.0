@@ -52,6 +52,7 @@ typedef struct _GstMatroskaDemux {
 
   /* pads */
   GstClock                *clock;
+  gboolean                 have_nonintraonly_v_streams;
   guint                    num_v_streams;
   guint                    num_a_streams;
   guint                    num_t_streams;
@@ -84,6 +85,7 @@ typedef struct _GstMatroskaDemux {
   /* some state saving */
   GstClockTime             cluster_time;
   guint64                  cluster_offset;
+  guint64                  cluster_prevsize;       /* 0 if unknown */
   guint64                  first_cluster_offset;
   guint64                  next_cluster_offset;
   GstClockTime             requested_seek_time;
@@ -98,12 +100,25 @@ typedef struct _GstMatroskaDemux {
   gboolean                 building_index;
   guint64                  index_offset;
   GstEvent                *seek_event;
+  GstEvent                *deferred_seek_event;
+  GstPad                  *deferred_seek_pad;
   gboolean                 need_segment;
   guint32                  segment_seqnum;
 
   /* reverse playback */
   GArray                  *seek_index;
   gint                     seek_entry;
+
+  gboolean                 seen_cluster_prevsize;  /* We track this because the
+                                                    * first cluster won't have
+                                                    * this set, so we can't just
+                                                    * check cluster_prevsize to
+                                                    * determine if it's there
+                                                    * or not. We assume if one
+                                                    * cluster has it, all but
+                                                    * the first will have it. */
+
+  guint                    max_backtrack_distance; /* in seconds (0 = don't backtrack) */
 
   /* gap handling */
   guint64                  max_gap_time;

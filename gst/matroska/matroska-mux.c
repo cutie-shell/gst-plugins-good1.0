@@ -139,7 +139,8 @@ static GstStaticPadTemplate videosink_templ =
         COMMON_VIDEO_CAPS "; "
         "video/x-prores, "
         COMMON_VIDEO_CAPS "; "
-        "video/x-wmv, " "wmvversion = (int) [ 1, 3 ], " COMMON_VIDEO_CAPS)
+        "video/x-wmv, " "wmvversion = (int) [ 1, 3 ], " COMMON_VIDEO_CAPS "; "
+        "video/x-av1, " COMMON_VIDEO_CAPS)
     );
 
 #define COMMON_AUDIO_CAPS \
@@ -500,9 +501,6 @@ gst_matroska_mux_init (GstMatroskaMux * mux, gpointer g_class)
   mux->num_v_streams = 0;
   mux->internal_toc = NULL;
 
-  /* create used uid list */
-  mux->used_uids = g_array_sized_new (FALSE, FALSE, sizeof (guint64), 10);
-
   /* initialize remaining variables */
   gst_matroska_mux_reset (GST_ELEMENT (mux));
 }
@@ -525,8 +523,6 @@ gst_matroska_mux_finalize (GObject * object)
   gst_object_unref (mux->ebml_write);
   g_free (mux->writing_app);
 
-  g_array_free (mux->used_uids, TRUE);
-
   if (mux->internal_toc) {
     gst_toc_unref (mux->internal_toc);
     mux->internal_toc = NULL;
@@ -540,29 +536,14 @@ gst_matroska_mux_finalize (GObject * object)
  * gst_matroska_mux_create_uid:
  * @mux: #GstMatroskaMux to generate UID for.
  *
- * Generate new unused track UID.
+ * Generate new track UID.
  *
  * Returns: New track UID.
  */
 static guint64
 gst_matroska_mux_create_uid (GstMatroskaMux * mux)
 {
-  guint64 uid = 0;
-
-  while (!uid) {
-    guint i;
-
-    uid = (((guint64) g_random_int ()) << 32) | g_random_int ();
-    for (i = 0; i < mux->used_uids->len; i++) {
-      if (g_array_index (mux->used_uids, guint64, i) == uid) {
-        uid = 0;
-        break;
-      }
-    }
-    g_array_append_val (mux->used_uids, uid);
-  }
-
-  return uid;
+  return (((guint64) g_random_int ()) << 32) | g_random_int ();
 }
 
 
@@ -711,11 +692,6 @@ gst_matroska_mux_reset (GstElement * element)
   }
 
   mux->chapters_pos = 0;
-
-  /* clear used uids */
-  if (mux->used_uids->len > 0) {
-    g_array_remove_range (mux->used_uids, 0, mux->used_uids->len);
-  }
 }
 
 /**
@@ -1004,8 +980,14 @@ gst_matroska_mux_video_pad_setcaps (GstPad * pad, GstCaps * caps)
   mimetype = gst_structure_get_name (structure);
 
   interlace_mode = gst_structure_get_string (structure, "interlace-mode");
-  if (interlace_mode != NULL && strcmp (interlace_mode, "progressive") != 0)
-    context->flags |= GST_MATROSKA_VIDEOTRACK_INTERLACED;
+  if (interlace_mode != NULL) {
+    if (strcmp (interlace_mode, "progressive") == 0)
+      videocontext->interlace_mode = GST_MATROSKA_INTERLACE_MODE_PROGRESSIVE;
+    else
+      videocontext->interlace_mode = GST_MATROSKA_INTERLACE_MODE_INTERLACED;
+  } else {
+    videocontext->interlace_mode = GST_MATROSKA_INTERLACE_MODE_UNKNOWN;
+  }
 
   if (!strcmp (mimetype, "video/x-theora")) {
     /* we'll extract the details later from the theora identification header */
@@ -1046,6 +1028,12 @@ gst_matroska_mux_video_pad_setcaps (GstPad * pad, GstCaps * caps)
   } else {
     videocontext->display_width = 0;
     videocontext->display_height = 0;
+  }
+
+  if ((s = gst_structure_get_string (structure, "colorimetry"))) {
+    if (!gst_video_colorimetry_from_string (&videocontext->colorimetry, s)) {
+      GST_WARNING_OBJECT (pad, "Could not parse colorimetry %s", s);
+    }
   }
 
   /* Collect stereoscopic info, if any */
@@ -1224,6 +1212,11 @@ skip_details:
     gst_matroska_mux_set_codec_id (context, GST_MATROSKA_CODEC_ID_VIDEO_VP9);
   } else if (!strcmp (mimetype, "video/x-av1")) {
     gst_matroska_mux_set_codec_id (context, GST_MATROSKA_CODEC_ID_VIDEO_AV1);
+    gst_matroska_mux_free_codec_priv (context);
+    /* Create av1C header */
+    if (codec_buf != NULL)
+      gst_buffer_extract_dup (codec_buf, 0, gst_buffer_get_size (codec_buf),
+          &context->codec_priv, &context->codec_priv_size);
   } else if (!strcmp (mimetype, "video/mpeg")) {
     gint mpegversion;
 
@@ -2502,6 +2495,129 @@ gst_matroska_mux_release_pad (GstElement * element, GstPad * pad)
     mux->num_streams--;
 }
 
+static void
+gst_matroska_mux_write_colour (GstMatroskaMux * mux,
+    GstMatroskaTrackVideoContext * videocontext)
+{
+  GstEbmlWrite *ebml = mux->ebml_write;
+  guint64 master;
+  guint matrix_id = 0;
+  guint range_id = 0;
+  guint transfer_id = 0;
+  guint primaries_id = 0;
+
+  master = gst_ebml_write_master_start (ebml, GST_MATROSKA_ID_VIDEOCOLOUR);
+
+  switch (videocontext->colorimetry.matrix) {
+    case GST_VIDEO_COLOR_MATRIX_RGB:
+      matrix_id = 0;
+      break;
+    case GST_VIDEO_COLOR_MATRIX_BT709:
+      matrix_id = 1;
+      break;
+    case GST_VIDEO_COLOR_MATRIX_UNKNOWN:
+      matrix_id = 2;
+      break;
+    case GST_VIDEO_COLOR_MATRIX_FCC:
+      matrix_id = 4;
+      break;
+    case GST_VIDEO_COLOR_MATRIX_BT601:
+      matrix_id = 6;
+      break;
+    case GST_VIDEO_COLOR_MATRIX_SMPTE240M:
+      matrix_id = 7;
+      break;
+    case GST_VIDEO_COLOR_MATRIX_BT2020:
+      matrix_id = 9;
+      break;
+  }
+
+  switch (videocontext->colorimetry.range) {
+    case GST_VIDEO_COLOR_RANGE_UNKNOWN:
+      range_id = 0;
+      break;
+    case GST_VIDEO_COLOR_RANGE_16_235:
+      range_id = 1;
+      break;
+    case GST_VIDEO_COLOR_RANGE_0_255:
+      range_id = 2;
+  }
+
+  switch (videocontext->colorimetry.transfer) {
+    case GST_VIDEO_TRANSFER_BT709:
+      transfer_id = 1;
+      break;
+      /* FIXME: can't tell what the code should be for these */
+    case GST_VIDEO_TRANSFER_GAMMA18:
+    case GST_VIDEO_TRANSFER_GAMMA20:
+    case GST_VIDEO_TRANSFER_ADOBERGB:
+    case GST_VIDEO_TRANSFER_UNKNOWN:
+      transfer_id = 2;
+      break;
+      /* Adobe RGB transfer is gamma 2.19921875 */
+    case GST_VIDEO_TRANSFER_GAMMA22:
+      transfer_id = 4;
+      break;
+    case GST_VIDEO_TRANSFER_GAMMA28:
+      transfer_id = 5;
+      break;
+    case GST_VIDEO_TRANSFER_SMPTE240M:
+      transfer_id = 7;
+      break;
+    case GST_VIDEO_TRANSFER_GAMMA10:
+      transfer_id = 8;
+      break;
+    case GST_VIDEO_TRANSFER_LOG100:
+      transfer_id = 9;
+      break;
+    case GST_VIDEO_TRANSFER_LOG316:
+      transfer_id = 10;
+      break;
+    case GST_VIDEO_TRANSFER_SRGB:
+      transfer_id = 13;
+      break;
+    case GST_VIDEO_TRANSFER_BT2020_12:
+      transfer_id = 15;
+      break;
+  }
+
+  switch (videocontext->colorimetry.primaries) {
+    case GST_VIDEO_COLOR_PRIMARIES_BT709:
+      primaries_id = 1;
+      break;
+      /* FIXME: can't tell what the code should be for this one */
+    case GST_VIDEO_COLOR_PRIMARIES_ADOBERGB:
+    case GST_VIDEO_COLOR_PRIMARIES_UNKNOWN:
+      primaries_id = 2;
+      break;
+    case GST_VIDEO_COLOR_PRIMARIES_BT470M:
+      primaries_id = 4;
+      break;
+    case GST_VIDEO_COLOR_PRIMARIES_BT470BG:
+      primaries_id = 5;
+      break;
+    case GST_VIDEO_COLOR_PRIMARIES_SMPTE170M:
+      primaries_id = 6;
+      break;
+    case GST_VIDEO_COLOR_PRIMARIES_SMPTE240M:
+      primaries_id = 7;
+      break;
+    case GST_VIDEO_COLOR_PRIMARIES_FILM:
+      primaries_id = 8;
+      break;
+    case GST_VIDEO_COLOR_PRIMARIES_BT2020:
+      primaries_id = 9;
+      break;
+  }
+
+  gst_ebml_write_uint (ebml, GST_MATROSKA_ID_VIDEORANGE, range_id);
+  gst_ebml_write_uint (ebml, GST_MATROSKA_ID_VIDEOMATRIXCOEFFICIENTS,
+      matrix_id);
+  gst_ebml_write_uint (ebml, GST_MATROSKA_ID_VIDEOTRANSFERCHARACTERISTICS,
+      transfer_id);
+  gst_ebml_write_uint (ebml, GST_MATROSKA_ID_VIDEOPRIMARIES, primaries_id);
+  gst_ebml_write_master_finish (ebml, master);
+}
 
 /**
  * gst_matroska_mux_track_header:
@@ -2558,14 +2674,24 @@ gst_matroska_mux_track_header (GstMatroskaMux * mux,
         gst_ebml_write_uint (ebml, GST_MATROSKA_ID_VIDEODISPLAYHEIGHT,
             videocontext->display_height);
       }
-      if (context->flags & GST_MATROSKA_VIDEOTRACK_INTERLACED)
-        gst_ebml_write_uint (ebml, GST_MATROSKA_ID_VIDEOFLAGINTERLACED, 1);
+      switch (videocontext->interlace_mode) {
+        case GST_MATROSKA_INTERLACE_MODE_INTERLACED:
+          gst_ebml_write_uint (ebml, GST_MATROSKA_ID_VIDEOFLAGINTERLACED, 1);
+          break;
+        case GST_MATROSKA_INTERLACE_MODE_PROGRESSIVE:
+          gst_ebml_write_uint (ebml, GST_MATROSKA_ID_VIDEOFLAGINTERLACED, 2);
+          break;
+        default:
+          break;
+      }
+
       if (videocontext->fourcc) {
         guint32 fcc_le = GUINT32_TO_LE (videocontext->fourcc);
 
         gst_ebml_write_binary (ebml, GST_MATROSKA_ID_VIDEOCOLOURSPACE,
             (gpointer) & fcc_le, 4);
       }
+      gst_matroska_mux_write_colour (mux, videocontext);
       if (videocontext->multiview_mode != GST_VIDEO_MULTIVIEW_MODE_NONE) {
         guint64 stereo_mode = 0;
 

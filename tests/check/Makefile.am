@@ -236,6 +236,7 @@ check_rtp = \
 	elements/rtph261 \
 	elements/rtph263 \
 	elements/rtph264 \
+	elements/rtph265 \
 	elements/rtpvp9
 else
 check_rtp =
@@ -243,10 +244,8 @@ endif
 
 if USE_PLUGIN_RTPMANAGER
 check_rtpmanager = \
-	elements/rtpaux \
 	elements/rtpbin \
 	elements/rtpbin_buffer_list \
-	elements/rtpbundle \
 	elements/rtpcollision \
 	elements/rtpjitterbuffer \
 	elements/rtpmux \
@@ -254,7 +253,9 @@ check_rtpmanager = \
 	elements/rtpsession \
 	elements/rtpstorage \
 	elements/rtpred \
-	elements/rtpulpfec
+	elements/rtpulpfec \
+	elements/rtpfunnel \
+	elements/rtpssrcdemux
 else
 check_rtpmanager =
 endif
@@ -576,7 +577,10 @@ elements_rtph263_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFL
 elements_rtph263_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
 
 elements_rtph264_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
-elements_rtph264_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstapp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
+elements_rtph264_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstapp-$(GST_API_VERSION) -lgstrtp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
+
+elements_rtph265_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
+elements_rtph265_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstapp-$(GST_API_VERSION) -lgstrtp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
 
 elements_rtpmux_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
 elements_rtpmux_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
@@ -603,16 +607,16 @@ elements_rtprtx_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rtprtx_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(LDADD)
 
 elements_rtpsession_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
-elements_rtpsession_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_NET_LIBS) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)
+elements_rtpsession_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_NET_LIBS) -lgstrtp-$(GST_API_VERSION) -lgstvideo-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)
+
+elements_rtpssrcdemux_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
+elements_rtpssrcdemux_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
+
+elements_rtpfunnel_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
+elements_rtpfunnel_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
 
 elements_rtpcollision_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rtpcollision_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_NET_LIBS) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)
-
-elements_rtpaux_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
-elements_rtpaux_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(LDADD)
-
-elements_rtpbundle_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
-elements_rtpbundle_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(LDADD)
 
 elements_rtpstorage_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rtpstorage_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_NET_LIBS) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)

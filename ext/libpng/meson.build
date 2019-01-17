@@ -4,7 +4,7 @@ png_sources = [
   'gstpngdec.c',
 ]
 
-libpng_dep = dependency('libpng', version : '>=1.2', required : false)
+libpng_dep = dependency('libpng', version : '>=1.2', required : get_option('png'))
 
 if libpng_dep.found()
   gstpng = library('gstpng',
@@ -16,4 +16,5 @@ if libpng_dep.found()
     install : true,
     install_dir : plugins_install_dir,
   )
+  pkgconfig.generate(gstpng, install_dir : plugins_pkgconfig_install_dir)
 endif

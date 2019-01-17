@@ -202,14 +202,14 @@ enum
 
 #define JBUF_WAIT_TIMER(priv)   G_STMT_START {            \
   GST_DEBUG ("waiting timer");                            \
-  (priv)->waiting_timer = TRUE;                           \
+  (priv)->waiting_timer++;                                \
   g_cond_wait (&(priv)->jbuf_timer, &(priv)->jbuf_lock);  \
-  (priv)->waiting_timer = FALSE;                          \
+  (priv)->waiting_timer--;                                \
   GST_DEBUG ("waiting timer done");                       \
 } G_STMT_END
 #define JBUF_SIGNAL_TIMER(priv) G_STMT_START {            \
   if (G_UNLIKELY ((priv)->waiting_timer)) {               \
-    GST_DEBUG ("signal timer");                           \
+    GST_DEBUG ("signal timer, %d waiters", (priv)->waiting_timer); \
     g_cond_signal (&(priv)->jbuf_timer);                  \
   }                                                       \
 } G_STMT_END
@@ -400,10 +400,6 @@ typedef struct
   guint num_rtx_received;
 } TimerData;
 
-#define GST_RTP_JITTER_BUFFER_GET_PRIVATE(o) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((o), GST_TYPE_RTP_JITTER_BUFFER, \
-                                GstRtpJitterBufferPrivate))
-
 static GstStaticPadTemplate gst_rtp_jitter_buffer_sink_template =
 GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
@@ -436,7 +432,8 @@ GST_STATIC_PAD_TEMPLATE ("src",
 static guint gst_rtp_jitter_buffer_signals[LAST_SIGNAL] = { 0 };
 
 #define gst_rtp_jitter_buffer_parent_class parent_class
-G_DEFINE_TYPE (GstRtpJitterBuffer, gst_rtp_jitter_buffer, GST_TYPE_ELEMENT);
+G_DEFINE_TYPE_WITH_PRIVATE (GstRtpJitterBuffer, gst_rtp_jitter_buffer,
+    GST_TYPE_ELEMENT);
 
 /* object overrides */
 static void gst_rtp_jitter_buffer_set_property (GObject * object,
@@ -515,8 +512,6 @@ gst_rtp_jitter_buffer_class_init (GstRtpJitterBufferClass * klass)
 
   gobject_class = (GObjectClass *) klass;
   gstelement_class = (GstElementClass *) klass;
-
-  g_type_class_add_private (klass, sizeof (GstRtpJitterBufferPrivate));
 
   gobject_class->finalize = gst_rtp_jitter_buffer_finalize;
 
@@ -994,7 +989,7 @@ gst_rtp_jitter_buffer_init (GstRtpJitterBuffer * jitterbuffer)
 {
   GstRtpJitterBufferPrivate *priv;
 
-  priv = GST_RTP_JITTER_BUFFER_GET_PRIVATE (jitterbuffer);
+  priv = gst_rtp_jitter_buffer_get_instance_private (jitterbuffer);
   jitterbuffer->priv = priv;
 
   priv->latency_ms = DEFAULT_LATENCY_MS;
@@ -1830,7 +1825,7 @@ queue_event (GstRtpJitterBuffer * jitterbuffer, GstEvent * event)
   GST_DEBUG_OBJECT (jitterbuffer, "adding event");
   item = alloc_item (event, ITEM_TYPE_EVENT, -1, -1, -1, 0, -1);
   rtp_jitter_buffer_insert (priv->jbuf, item, &head, NULL);
-  if (head)
+  if (head || priv->eos)
     JBUF_SIGNAL_EVENT (priv);
 
   return TRUE;
@@ -2307,6 +2302,8 @@ remove_timer (GstRtpJitterBuffer * jitterbuffer, TimerData * timer)
   GST_DEBUG_OBJECT (jitterbuffer, "removed index %d", idx);
   g_array_remove_index_fast (priv->timers, idx);
   timer->idx = idx;
+
+  JBUF_SIGNAL_TIMER (priv);
 }
 
 static void
@@ -2316,6 +2313,7 @@ remove_all_timers (GstRtpJitterBuffer * jitterbuffer)
   GST_DEBUG_OBJECT (jitterbuffer, "removed all timers");
   g_array_set_size (priv->timers, 0);
   unschedule_current_timer (jitterbuffer);
+  JBUF_SIGNAL_TIMER (priv);
 }
 
 /* get the extra delay to wait before sending RTX */
@@ -3500,6 +3498,17 @@ pop_and_push_next (GstRtpJitterBuffer * jitterbuffer, guint seqnum)
     priv->next_seqnum = (seqnum + item->count) & 0xffff;
   }
   msg = check_buffering_percent (jitterbuffer, percent);
+
+  if (type == ITEM_TYPE_EVENT && outevent &&
+      GST_EVENT_TYPE (outevent) == GST_EVENT_EOS) {
+    g_assert (priv->eos);
+    while (priv->timers->len > 0) {
+      /* Stopping timers */
+      unschedule_current_timer (jitterbuffer);
+      JBUF_WAIT_TIMER (priv);
+    }
+  }
+
   JBUF_UNLOCK (priv);
 
   item->data = NULL;
@@ -3630,7 +3639,13 @@ handle_next_buffer (GstRtpJitterBuffer * jitterbuffer)
       GST_DEBUG_OBJECT (jitterbuffer,
           "Sequence number GAP detected: expected %d instead of %d (%d missing)",
           next_seqnum, seqnum, gap);
-      result = GST_FLOW_WAIT;
+      /* if we have reached EOS, just keep processing */
+      if (priv->eos) {
+        result = pop_and_push_next (jitterbuffer, seqnum);
+        result = GST_FLOW_OK;
+      } else {
+        result = GST_FLOW_WAIT;
+      }
     }
   }
 
@@ -4000,7 +4015,9 @@ wait_next_timeout (GstRtpJitterBuffer * jitterbuffer)
      * otherwise always be 0
      */
     GST_OBJECT_LOCK (jitterbuffer);
-    if (GST_ELEMENT_CLOCK (jitterbuffer)) {
+    if (priv->eos) {
+      now = GST_CLOCK_TIME_NONE;
+    } else if (GST_ELEMENT_CLOCK (jitterbuffer)) {
       now =
           gst_clock_get_time (GST_ELEMENT_CLOCK (jitterbuffer)) -
           GST_ELEMENT_CAST (jitterbuffer)->base_time;
@@ -4075,7 +4092,7 @@ wait_next_timeout (GstRtpJitterBuffer * jitterbuffer)
       GstClockReturn ret;
       GstClockTimeDiff clock_jitter;
 
-      if (timer_timeout == -1 || timer_timeout <= now) {
+      if (timer_timeout == -1 || timer_timeout <= now || priv->eos) {
         /* We have normally removed all lost timers in the loop above */
         g_assert (timer->type != TIMER_TYPE_LOST);
 

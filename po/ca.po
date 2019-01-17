@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 0.10.28.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-10-02 23:03+0100\n"
+"POT-Creation-Date: 2019-01-17 01:59+0000\n"
 "PO-Revision-Date: 2012-01-01 14:19+0100\n"
 "Last-Translator: Gil Forcada <gforcada@gnome.org>\n"
 "Language-Team: Catalan <ca@dodds.net>\n"
@@ -94,11 +94,6 @@ msgstr "Aquest fitxer no està complet i no es pot reproduir."
 
 msgid "The video in this file might not play correctly."
 msgstr "El vídeo en aquest fitxer podria no reproduir-se correctament."
-
-#, c-format
-msgid "This file contains too many streams. Only playing first %d"
-msgstr ""
-"Aquest fitxer conté massa fluxos. Només s'estan reproduint els primers %d"
 
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
@@ -457,6 +452,10 @@ msgstr "Encara no es permet el canvi de la resolució en temps d'execució."
 
 msgid "Cannot operate without a clock"
 msgstr "No es pot operar sense un rellotge"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr ""
+#~ "Aquest fitxer conté massa fluxos. Només s'estan reproduint els primers %d"
 
 #~ msgid "Record Source"
 #~ msgstr "Font d'enregistrament"

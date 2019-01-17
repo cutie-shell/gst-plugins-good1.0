@@ -47,7 +47,8 @@ GST_DEBUG_CATEGORY_STATIC (gst_v4l2_transform_debug);
 enum
 {
   PROP_0,
-  V4L2_STD_OBJECT_PROPS
+  V4L2_STD_OBJECT_PROPS,
+  PROP_DISABLE_PASSTHROUGH
 };
 
 typedef struct
@@ -68,13 +69,12 @@ gst_v4l2_transform_set_property (GObject * object,
   GstV4l2Transform *self = GST_V4L2_TRANSFORM (object);
 
   switch (prop_id) {
-    case PROP_OUTPUT_IO_MODE:
-      gst_v4l2_object_set_property_helper (self->v4l2output, prop_id, value,
-          pspec);
-      break;
     case PROP_CAPTURE_IO_MODE:
       gst_v4l2_object_set_property_helper (self->v4l2capture, prop_id, value,
           pspec);
+      break;
+    case PROP_DISABLE_PASSTHROUGH:
+      self->disable_passthrough = g_value_get_boolean (value);
       break;
 
       /* By default, only set on output */
@@ -94,13 +94,12 @@ gst_v4l2_transform_get_property (GObject * object,
   GstV4l2Transform *self = GST_V4L2_TRANSFORM (object);
 
   switch (prop_id) {
-    case PROP_OUTPUT_IO_MODE:
-      gst_v4l2_object_get_property_helper (self->v4l2output, prop_id, value,
-          pspec);
-      break;
     case PROP_CAPTURE_IO_MODE:
       gst_v4l2_object_get_property_helper (self->v4l2capture, prop_id, value,
           pspec);
+      break;
+    case PROP_DISABLE_PASSTHROUGH:
+      g_value_set_boolean (value, self->disable_passthrough);
       break;
 
       /* By default read from output */
@@ -197,6 +196,9 @@ gst_v4l2_transform_set_caps (GstBaseTransform * trans, GstCaps * incaps,
 {
   GstV4l2Error error = GST_V4L2_ERROR_INIT;
   GstV4l2Transform *self = GST_V4L2_TRANSFORM (trans);
+
+  if (self->disable_passthrough)
+    gst_base_transform_set_passthrough (trans, FALSE);
 
   if (self->incaps && self->outcaps) {
     if (gst_caps_is_equal (incaps, self->incaps) &&
@@ -1133,6 +1135,11 @@ gst_v4l2_transform_class_init (GstV4l2TransformClass * klass)
       GST_DEBUG_FUNCPTR (gst_v4l2_transform_change_state);
 
   gst_v4l2_object_install_m2m_properties_helper (gobject_class);
+
+  g_object_class_install_property (gobject_class, PROP_DISABLE_PASSTHROUGH,
+      g_param_spec_boolean ("disable-passthrough", "Disable Passthrough",
+          "Forces passing buffers through the converter", FALSE,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }
 
 static void
@@ -1192,7 +1199,10 @@ gst_v4l2_transform_register (GstPlugin * plugin, const gchar * basename,
   type_info.class_data = cdata;
   type_info.instance_init = gst_v4l2_transform_subinstance_init;
 
-  type_name = g_strdup_printf ("v4l2%sconvert", basename);
+  if (g_type_from_name ("v4l2convert") != 0)
+    type_name = g_strdup_printf ("v4l2%sconvert", basename);
+  else
+    type_name = g_strdup ("v4l2convert");
   subtype = g_type_register_static (type, type_name, &type_info, 0);
 
   if (!gst_element_register (plugin, type_name, GST_RANK_NONE, subtype))

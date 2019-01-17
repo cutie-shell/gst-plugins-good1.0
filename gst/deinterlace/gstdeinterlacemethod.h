@@ -54,6 +54,8 @@ typedef struct
   GstVideoFrame *frame;
   /* see PICTURE_ flags in *.c */
   guint flags;
+  GstVideoTimeCode *tc;
+  GstVideoCaptionMeta *caption;
 } GstDeinterlaceField;
 
 /*

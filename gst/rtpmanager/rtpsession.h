@@ -297,8 +297,8 @@ struct _RTPSession {
 
 /**
  * RTPSessionClass:
- * @on_new_ssrc: emited when a new source is found
- * @on_bye_ssrc: emited when a source is gone
+ * @on_new_ssrc: emitted when a new source is found
+ * @on_bye_ssrc: emitted when a source is gone
  *
  * The session class.
  */
@@ -334,6 +334,7 @@ GType rtp_session_get_type (void);
 
 /* create and configure */
 RTPSession*     rtp_session_new           (void);
+void            rtp_session_reset                  (RTPSession *sess);
 void            rtp_session_set_callbacks          (RTPSession *sess,
 		                                    RTPSessionCallbacks *callbacks,
                                                     gpointer user_data);
@@ -383,6 +384,7 @@ GstFlowReturn   rtp_session_process_rtp            (RTPSession *sess, GstBuffer 
                                                     guint64 ntpnstime);
 GstFlowReturn   rtp_session_process_rtcp           (RTPSession *sess, GstBuffer *buffer,
                                                     GstClockTime current_time,
+                                                    GstClockTime running_time,
                                                     guint64 ntpnstime);
 
 /* processing packets for sending */

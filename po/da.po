@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good-1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-10-02 23:03+0100\n"
+"POT-Creation-Date: 2019-01-17 01:59+0000\n"
 "PO-Revision-Date: 2017-05-21 23:54+0200\n"
 "Last-Translator: Joe Hansen <joedalton2@yahoo.dk>\n"
 "Language-Team: Danish <dansk@dansk-gruppen.dk>\n"
@@ -94,13 +94,6 @@ msgstr "Denne fil er ufuldstændig og kan ikke afspilles."
 
 msgid "The video in this file might not play correctly."
 msgstr "Videoen i denne fil afspilles måske ikke korrekt."
-
-# hvad er %d i dette program? Umiddelbart ville jeg tro det skulle
-# hedde, "Afpiller kun første %d" men det kommer selvfølgelig an på 
-# sammenhængen.
-#, c-format
-msgid "This file contains too many streams. Only playing first %d"
-msgstr "Denne fil indeholder for mange strømme. Afspil først kun %d"
 
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
@@ -413,6 +406,12 @@ msgstr "Ændring af opløsning under kørsel er endnu ikke understøttet."
 
 msgid "Cannot operate without a clock"
 msgstr "Kan ikke fungere uden et ur"
+
+# hvad er %d i dette program? Umiddelbart ville jeg tro det skulle
+# hedde, "Afpiller kun første %d" men det kommer selvfølgelig an på 
+# sammenhængen.
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr "Denne fil indeholder for mange strømme. Afspil først kun %d"
 
 #~ msgid "Record Source"
 #~ msgstr "Optagelseskilde"

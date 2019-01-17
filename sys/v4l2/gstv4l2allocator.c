@@ -852,7 +852,6 @@ gst_v4l2_allocator_alloc_dmabuf (GstV4l2Allocator * allocator,
   for (i = 0; i < group->n_mem; i++) {
     GstV4l2Memory *mem;
     GstMemory *dma_mem;
-    gint dmafd;
 
     if (group->mem[i] == NULL) {
       struct v4l2_exportbuffer expbuf = { 0 };
@@ -882,11 +881,8 @@ gst_v4l2_allocator_alloc_dmabuf (GstV4l2Allocator * allocator,
     g_assert (gst_is_v4l2_memory (group->mem[i]));
     mem = (GstV4l2Memory *) group->mem[i];
 
-    if ((dmafd = dup (mem->dmafd)) < 0)
-      goto dup_failed;
-
-    dma_mem = gst_dmabuf_allocator_alloc (dmabuf_allocator, dmafd,
-        group->planes[i].length);
+    dma_mem = gst_fd_allocator_alloc (dmabuf_allocator, mem->dmafd,
+        group->planes[i].length, GST_FD_MEMORY_FLAG_DONT_CLOSE);
     gst_memory_resize (dma_mem, group->planes[i].data_offset,
         group->planes[i].length - group->planes[i].data_offset);
 
@@ -903,12 +899,6 @@ gst_v4l2_allocator_alloc_dmabuf (GstV4l2Allocator * allocator,
 expbuf_failed:
   {
     GST_ERROR_OBJECT (allocator, "Failed to export DMABUF: %s",
-        g_strerror (errno));
-    goto cleanup;
-  }
-dup_failed:
-  {
-    GST_ERROR_OBJECT (allocator, "Failed to dup DMABUF descriptor: %s",
         g_strerror (errno));
     goto cleanup;
   }
@@ -933,11 +923,8 @@ gst_v4l2_allocator_clear_dmabufin (GstV4l2Allocator * allocator,
 
     mem = (GstV4l2Memory *) group->mem[i];
 
-    GST_LOG_OBJECT (allocator, "clearing DMABUF import, fd %i plane %d",
-        mem->dmafd, i);
-
-    if (mem->dmafd >= 0)
-      close (mem->dmafd);
+    GST_LOG_OBJECT (allocator, "[%i] clearing DMABUF import, fd %i plane %d",
+        group->buffer.index, mem->dmafd, i);
 
     /* Update memory */
     mem->mem.maxsize = 0;
@@ -1004,8 +991,8 @@ gst_v4l2_allocator_clear_userptr (GstV4l2Allocator * allocator,
   for (i = 0; i < group->n_mem; i++) {
     mem = (GstV4l2Memory *) group->mem[i];
 
-    GST_LOG_OBJECT (allocator, "clearing USERPTR %p plane %d size %"
-        G_GSIZE_FORMAT, mem->data, i, mem->mem.size);
+    GST_LOG_OBJECT (allocator, "[%i] clearing USERPTR %p plane %d size %"
+        G_GSIZE_FORMAT, group->buffer.index, mem->data, i, mem->mem.size);
 
     mem->mem.maxsize = 0;
     mem->mem.size = 0;
@@ -1078,10 +1065,10 @@ gst_v4l2_allocator_import_dmabuf (GstV4l2Allocator * allocator,
 
     size = gst_memory_get_sizes (dma_mem[i], &offset, &maxsize);
 
-    if ((dmafd = dup (gst_dmabuf_memory_get_fd (dma_mem[i]))) < 0)
-      goto dup_failed;
+    dmafd = gst_dmabuf_memory_get_fd (dma_mem[i]);
 
-    GST_LOG_OBJECT (allocator, "imported DMABUF as fd %i plane %d", dmafd, i);
+    GST_LOG_OBJECT (allocator, "[%i] imported DMABUF as fd %i plane %d",
+        group->buffer.index, dmafd, i);
 
     mem = (GstV4l2Memory *) group->mem[i];
 
@@ -1123,12 +1110,6 @@ not_dmabuf:
     GST_ERROR_OBJECT (allocator, "Memory %i is not of DMABUF", i);
     return FALSE;
   }
-dup_failed:
-  {
-    GST_ERROR_OBJECT (allocator, "Failed to dup DMABUF descriptor: %s",
-        g_strerror (errno));
-    return FALSE;
-  }
 }
 
 gboolean
@@ -1157,8 +1138,8 @@ gst_v4l2_allocator_import_userptr (GstV4l2Allocator * allocator,
 
     g_assert (psize <= img_size);
 
-    GST_LOG_OBJECT (allocator, "imported USERPTR %p plane %d size %"
-        G_GSIZE_FORMAT, data[i], i, psize);
+    GST_LOG_OBJECT (allocator, "[%i] imported USERPTR %p plane %d size %"
+        G_GSIZE_FORMAT, group->buffer.index, data[i], i, psize);
 
     mem = (GstV4l2Memory *) group->mem[i];
 

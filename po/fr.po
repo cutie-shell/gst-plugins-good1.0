@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-10-02 23:03+0100\n"
+"POT-Creation-Date: 2019-01-17 01:59+0000\n"
 "PO-Revision-Date: 2017-05-05 22:27+0200\n"
 "Last-Translator: Stéphane Aulery <lkppo@free.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -96,10 +96,6 @@ msgid "The video in this file might not play correctly."
 msgstr ""
 "Il est possible que la vidéo dans ce fichier ne puisse pas être lue "
 "correctement."
-
-#, c-format
-msgid "This file contains too many streams. Only playing first %d"
-msgstr "Ce fichier contient trop de flux. Seuls les %d premiers seront lus"
 
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
@@ -444,6 +440,9 @@ msgstr ""
 
 msgid "Cannot operate without a clock"
 msgstr "Impossible de fonctionner sans horloge"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr "Ce fichier contient trop de flux. Seuls les %d premiers seront lus"
 
 #~ msgid "Record Source"
 #~ msgstr "Source d’enregistrement"

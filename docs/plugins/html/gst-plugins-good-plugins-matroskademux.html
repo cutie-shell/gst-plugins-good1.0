@@ -41,11 +41,18 @@
 <col width="300px" class="properties_name">
 <col width="200px" class="properties_flags">
 </colgroup>
-<tbody><tr>
+<tbody>
+<tr>
 <td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-matroskademux.html#GstMatroskaDemux--max-gap-time" title="The “max-gap-time” property">max-gap-time</a></td>
 <td class="property_flags">Read / Write</td>
-</tr></tbody>
+</tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-matroskademux.html#GstMatroskaDemux--max-backtrack-distance" title="The “max-backtrack-distance” property">max-backtrack-distance</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+</tbody>
 </table></div>
 </div>
 <a name="GstMatroskaDemux"></a><div class="refsect1">
@@ -279,6 +286,14 @@
 <p>The demuxer sends out segment events for skipping gaps longer than this (0 = disabled).</p>
 <p>Flags: Read / Write</p>
 <p>Default value: 2000000000</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstMatroskaDemux--max-backtrack-distance"></a><h3>The <code class="literal">“max-backtrack-distance”</code> property</h3>
+<pre class="programlisting">  “max-backtrack-distance”   <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<p>Maximum backtrack distance in seconds when seeking without and index in pull mode and search for a keyframe (0 = disable backtracking).</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 30</p>
 </div>
 </div>
 </div>

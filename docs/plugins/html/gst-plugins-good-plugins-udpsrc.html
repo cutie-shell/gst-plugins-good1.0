@@ -130,6 +130,11 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--retrieve-sender-address" title="The “retrieve-sender-address” property">retrieve-sender-address</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--mtu" title="The “mtu” property">mtu</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -445,6 +450,15 @@ above mentioned pipeline should dump data packets to the console.
 <p>Whether to retrieve the sender address and add it to buffers as meta. Disabling this might result in minor performance improvements in certain scenarios.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: TRUE</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstUDPSrc--mtu"></a><h3>The <code class="literal">“mtu”</code> property</h3>
+<pre class="programlisting">  “mtu”                      <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<p>Maximum expected packet size. This directly defines the allocationsize of the receive buffer pool.</p>
+<p>Flags: Read / Write</p>
+<p>Allowed values: &lt;= G_MAXINT</p>
+<p>Default value: 1492</p>
 </div>
 </div>
 <div class="refsect1">

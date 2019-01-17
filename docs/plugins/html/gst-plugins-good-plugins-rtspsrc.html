@@ -256,6 +256,11 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--backchannel" title="The “backchannel” property">backchannel</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--teardown-timeout" title="The “teardown-timeout” property">teardown-timeout</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -307,6 +312,21 @@
 <tr>
 <td class="signal_type"><a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstPad.html#GstFlowReturn"><span class="returnvalue">GstFlowReturn</span></a></td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-push-backchannel-buffer" title="The “push-backchannel-buffer” signal">push-backchannel-buffer</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></td>
+</tr>
+<tr>
+<td class="signal_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a></td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-get-parameter" title="The “get-parameter” signal">get-parameter</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></td>
+</tr>
+<tr>
+<td class="signal_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a></td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-get-parameters" title="The “get-parameters” signal">get-parameters</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></td>
+</tr>
+<tr>
+<td class="signal_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a></td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-set-parameter" title="The “set-parameter” signal">set-parameter</a></td>
 <td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></td>
 </tr>
 </tbody>
@@ -361,8 +381,15 @@ packet reordering along with providing a clock for the pipeline.
 This feature is implemented using the gstrtpbin element.</p>
 <p>rtspsrc acts like a live source and will therefore only generate data in the
 PLAYING state.</p>
-<div class="refsect2">
-<a name="id-1.2.238.9.7"></a><h3>Example launch line</h3>
+<p>If a RTP session times out then the rtspsrc will generate an element message
+named "GstRTSPSrcTimeout". Currently this is only supported for timeouts
+triggered by RTCP.</p>
+<p>The message's structure contains three fields:</p>
+<p>  <span class="type">GstRTSPSrcTimeoutCause</span> <code class="literal">cause</code>: the cause of the timeout.</p>
+<p>  <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"><span class="type">gint</span></a> <code class="literal">stream-number</code>: an internal identifier of the stream that timed out.</p>
+<p>  <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a> <code class="literal">ssrc</code>: the SSRC of the stream that timed out.</p>
+<div class="refsect3">
+<a name="id-1.2.238.9.12"></a><h4>Example launch line</h4>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -373,13 +400,14 @@ PLAYING state.</p>
     </tbody>
   </table>
 </div>
- Establish a connection to an RTSP server and send the raw RTP packets to a
-fakesink.
+
+<p> Establish a connection to an RTSP server and send the raw RTP packets to a
+fakesink.</p>
 </div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.238.9.8.1"></a><h3>Element Information</h3>
+<a name="id-1.2.238.9.13.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -405,7 +433,7 @@ fakesink.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.238.9.8.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.238.9.13.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -728,7 +756,7 @@ keep alive and then this property needs to be set to FALSE.</p>
 <pre class="programlisting">  “user-agent”               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
 <p>The User-Agent string to send to the server.</p>
 <p>Flags: Read / Write</p>
-<p>Default value: "GStreamer/1.14.4"</p>
+<p>Default value: "GStreamer/1.15.1"</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -760,7 +788,9 @@ keep alive and then this property needs to be set to FALSE.</p>
 <div class="refsect2">
 <a name="GstRTSPSrc--max-ts-offset"></a><h3>The <code class="literal">“max-ts-offset”</code> property</h3>
 <pre class="programlisting">  “max-ts-offset”            <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint64"><span class="type">gint64</span></a></pre>
-<p>The maximum absolute value of the time offset in (nanoseconds). Note, if the ntp-sync parameter is set the default value is changed to 0 (no limit).</p>
+<p>Used to set an upper limit of how large a time offset may be. This
+is used to protect against unrealistic values as a result of either
+client,server or clock issues.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &gt;= 0</p>
 <p>Default value: 3000000000</p>
@@ -780,9 +810,19 @@ stamps.</p>
 <div class="refsect2">
 <a name="GstRTSPSrc--backchannel"></a><h3>The <code class="literal">“backchannel”</code> property</h3>
 <pre class="programlisting">  “backchannel”              <span class="type">GstRTSPBackchannel</span></pre>
-<p>The type of backchannel to setup. Default is 'none'.</p>
+<p>Select a type of backchannel to setup with the RTSP server.
+Default value is "none". Allowed values are "none" and "onvif".</p>
 <p>Flags: Read / Write</p>
 <p>Default value: No backchannel</p>
+<p class="since">Since: 1.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc--teardown-timeout"></a><h3>The <code class="literal">“teardown-timeout”</code> property</h3>
+<pre class="programlisting">  “teardown-timeout”         <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a></pre>
+<p>When transitioning PAUSED-READY, allow up to timeout (in nanoseconds) delay in order to send teardown (0 = disabled).</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 100000000</p>
 </div>
 </div>
 <div class="refsect1">
@@ -844,7 +884,7 @@ in some other way.</p>
 user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a>    *rtspsrc,
                <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0/gst-plugins-base-libs-GstSDPMessage.html#GstSDPMessage"><span class="type">GstSDPMessage</span></a> *sdp,
                <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>       user_data)</pre>
-<p>Emited when the client has retrieved the SDP and before it configures the
+<p>Emitted when the client has retrieved the SDP and before it configures the
 streams in the SDP. <em class="parameter"><code>sdp</code></em>
  can be inspected and modified.</p>
 <p>This signal is called from the streaming thread, you should therefore not
@@ -890,7 +930,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRT
                <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a>       num,
                <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstCaps.html#GstCaps-struct"><span class="type">GstCaps</span></a>    *caps,
                <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>    user_data)</pre>
-<p>Emited before the client decides to configure the stream <em class="parameter"><code>num</code></em>
+<p>Emitted before the client decides to configure the stream <em class="parameter"><code>num</code></em>
  with
 <em class="parameter"><code>caps</code></em>
 .</p>
@@ -941,7 +981,7 @@ is to be ignored.</p>
 user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a> *rtspsrc,
                <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct"><span class="type">GstElement</span></a> *manager,
                <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>    user_data)</pre>
-<p>Emited after a new manager (like rtpbin) was created and the default
+<p>Emitted after a new manager (like rtpbin) was created and the default
 properties were configured.</p>
 <div class="refsect3">
 <a name="GstRTSPSrc-new-manager.parameters"></a><h4>Parameters</h4>
@@ -980,7 +1020,7 @@ properties were configured.</p>
 user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a> *rtspsrc,
                <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a>       num,
                <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>    user_data)</pre>
-<p>Signal emited to get the crypto parameters relevant to the RTCP
+<p>Signal emitted to get the crypto parameters relevant to the RTCP
 stream. User should provide the key and the RTCP encryption ciphers
 and authentication, and return them wrapped in a GstCaps.</p>
 <div class="refsect3">
@@ -1111,6 +1151,136 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRT
 </tr>
 </tbody>
 </table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc-get-parameter"></a><h3>The <code class="literal">“get-parameter”</code> signal</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a> *rtspsrc,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>      *parameter,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>      *Returns,
+               <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstPromise.html#GstPromise-struct"><span class="type">GstPromise</span></a> *arg3,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>    user_data)</pre>
+<p>Handle the GET_PARAMETER signal.</p>
+<div class="refsect3">
+<a name="GstRTSPSrc-get-parameter.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>rtspsrc</p></td>
+<td class="parameter_description"><p>a <a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>parameter</p></td>
+<td class="parameter_description"><p>a pointer to <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstPromise.html#GstPromise-struct"><span class="type">GstPromise</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="GstRTSPSrc-get-parameter.returns"></a><h4>Returns</h4>
+<p> <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> when the command could be issued, <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#FALSE:CAPS"><code class="literal">FALSE</code></a> otherwise</p>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc-get-parameters"></a><h3>The <code class="literal">“get-parameters”</code> signal</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a> *rtspsrc,
+               <a href="/usr/share/gtk-doc/html/glib/glib-String-Utility-Functions.html#GStrv"><span class="type">GStrv</span></a>       parameter,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>      *Returns,
+               <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstPromise.html#GstPromise-struct"><span class="type">GstPromise</span></a> *arg3,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>    user_data)</pre>
+<p>Handle the GET_PARAMETERS signal.</p>
+<div class="refsect3">
+<a name="GstRTSPSrc-get-parameters.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>rtspsrc</p></td>
+<td class="parameter_description"><p>a <a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>parameter</p></td>
+<td class="parameter_description"><p>a pointer to <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstPromise.html#GstPromise-struct"><span class="type">GstPromise</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="GstRTSPSrc-get-parameters.returns"></a><h4>Returns</h4>
+<p> <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> when the command could be issued, <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#FALSE:CAPS"><code class="literal">FALSE</code></a> otherwise</p>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc-set-parameter"></a><h3>The <code class="literal">“set-parameter”</code> signal</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
+user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a> *rtspsrc,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>      *parameter,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>      *Returns,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>      *arg3,
+               <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstPromise.html#GstPromise-struct"><span class="type">GstPromise</span></a> *arg4,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>    user_data)</pre>
+<p>Handle the SET_PARAMETER signal.</p>
+<div class="refsect3">
+<a name="GstRTSPSrc-set-parameter.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>rtspsrc</p></td>
+<td class="parameter_description"><p>a <a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>parameter</p></td>
+<td class="parameter_description"><p>a pointer to <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstPromise.html#GstPromise-struct"><span class="type">GstPromise</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<div class="refsect3">
+<a name="GstRTSPSrc-set-parameter.returns"></a><h4>Returns</h4>
+<p> <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> when the command could be issued, <a href="/usr/share/gtk-doc/html/glib/glib-Standard-Macros.html#FALSE:CAPS"><code class="literal">FALSE</code></a> otherwise</p>
 </div>
 <p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></p>
 </div>

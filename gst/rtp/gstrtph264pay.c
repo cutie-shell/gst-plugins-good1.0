@@ -77,8 +77,6 @@ enum
   PROP_CONFIG_INTERVAL
 };
 
-#define IS_ACCESS_UNIT(x) (((x) > 0x00) && ((x) < 0x06))
-
 static void gst_rtp_h264_pay_finalize (GObject * object);
 
 static void gst_rtp_h264_pay_set_property (GObject * object, guint prop_id,
@@ -716,7 +714,7 @@ gst_rtp_h264_pay_decode_nal (GstRtpH264Pay * payloader,
         payloader->sps, payloader->pps, nal);
 
     /* remember when we last saw SPS */
-    if (updated && pts != -1)
+    if (pts != -1)
       payloader->last_spspps =
           gst_segment_to_running_time (&GST_RTP_BASE_PAYLOAD_CAST
           (payloader)->segment, GST_FORMAT_TIME, pts);
@@ -806,7 +804,23 @@ gst_rtp_h264_pay_payload_nal (GstRTPBasePayload * basepayload,
   gst_buffer_extract (paybuf, 0, &nalHeader, 1);
   nalType = nalHeader & 0x1f;
 
-  GST_DEBUG_OBJECT (rtph264pay, "Processing Buffer with NAL TYPE=%d", nalType);
+  /* These payload type are reserved for STAP-A, STAP-B, MTAP16, and MTAP24
+   * as internally used NAL types */
+  switch (nalType) {
+    case 24:
+    case 25:
+    case 26:
+    case 27:
+      GST_WARNING_OBJECT (rtph264pay, "Ignoring reserved NAL TYPE=%d", nalType);
+      gst_buffer_unref (paybuf);
+      return GST_FLOW_OK;
+    default:
+      break;
+  }
+
+  GST_DEBUG_OBJECT (rtph264pay,
+      "Processing Buffer with NAL TYPE=%d %" GST_TIME_FORMAT,
+      nalType, GST_TIME_ARGS (pts));
 
   /* should set src caps before pushing stuff,
    * and if we did not see enough SPS/PPS, that may not be the case */
@@ -879,10 +893,8 @@ gst_rtp_h264_pay_payload_nal (GstRTPBasePayload * basepayload,
 
     gst_rtp_buffer_map (outbuf, GST_MAP_WRITE, &rtp);
 
-    /* only set the marker bit on packets containing access units */
-    if (IS_ACCESS_UNIT (nalType) && end_of_au) {
-      gst_rtp_buffer_set_marker (&rtp, 1);
-    }
+    /* Mark the end of a frame */
+    gst_rtp_buffer_set_marker (&rtp, end_of_au);
 
     /* timestamp the outbuffer */
     GST_BUFFER_PTS (outbuf) = pts;
@@ -950,9 +962,10 @@ gst_rtp_h264_pay_payload_nal (GstRTPBasePayload * basepayload,
         GST_DEBUG_OBJECT (basepayload, "end size=%d iteration=%d", size, ii);
         end = 1;
       }
-      if (IS_ACCESS_UNIT (nalType)) {
-        gst_rtp_buffer_set_marker (&rtp, end && end_of_au);
-      }
+
+      /* If it's the last fragment and the end of this au, mark the end of
+       * slice */
+      gst_rtp_buffer_set_marker (&rtp, end && end_of_au);
 
       /* FU indicator */
       payload[0] = (nalHeader & 0x60) | 28;
@@ -1012,6 +1025,8 @@ gst_rtp_h264_pay_handle_buffer (GstRTPBasePayload * basepayload,
   gsize skip;
   gboolean delayed_not_delta_unit = FALSE;
   gboolean delayed_discont = FALSE;
+  gboolean marker = FALSE;
+  gboolean draining = (buffer == NULL);
 
   rtph264pay = GST_RTP_H264_PAY (basepayload);
 
@@ -1020,8 +1035,8 @@ gst_rtp_h264_pay_handle_buffer (GstRTPBasePayload * basepayload,
   avc = rtph264pay->stream_format == GST_H264_STREAM_FORMAT_AVC;
 
   if (avc) {
-    /* In AVC mode, there is no adapter, so nothign to flush */
-    if (buffer == NULL)
+    /* In AVC mode, there is no adapter, so nothign to drain */
+    if (draining)
       return GST_FLOW_OK;
     gst_buffer_map (buffer, &map, GST_MAP_READ);
     data = map.data;
@@ -1031,10 +1046,9 @@ gst_rtp_h264_pay_handle_buffer (GstRTPBasePayload * basepayload,
     rtph264pay->delta_unit = GST_BUFFER_FLAG_IS_SET (buffer,
         GST_BUFFER_FLAG_DELTA_UNIT);
     rtph264pay->discont = GST_BUFFER_IS_DISCONT (buffer);
+    marker = GST_BUFFER_FLAG_IS_SET (buffer, GST_BUFFER_FLAG_MARKER);
     GST_DEBUG_OBJECT (basepayload, "got %" G_GSIZE_FORMAT " bytes", size);
   } else {
-    dts = gst_adapter_prev_dts (rtph264pay->adapter, NULL);
-    pts = gst_adapter_prev_pts (rtph264pay->adapter, NULL);
     if (buffer) {
       if (!GST_BUFFER_FLAG_IS_SET (buffer, GST_BUFFER_FLAG_DELTA_UNIT)) {
         if (gst_adapter_available (rtph264pay->adapter) == 0)
@@ -1056,21 +1070,21 @@ gst_rtp_h264_pay_handle_buffer (GstRTPBasePayload * basepayload,
           delayed_discont = TRUE;
       }
 
-      if (!GST_CLOCK_TIME_IS_VALID (dts))
-        dts = GST_BUFFER_DTS (buffer);
-      if (!GST_CLOCK_TIME_IS_VALID (pts))
-        pts = GST_BUFFER_PTS (buffer);
-
+      marker = GST_BUFFER_FLAG_IS_SET (buffer, GST_BUFFER_FLAG_MARKER);
       gst_adapter_push (rtph264pay->adapter, buffer);
+      buffer = NULL;
     }
+
+    /* We want to use the first TS used to construct the following NAL */
+    dts = gst_adapter_prev_dts (rtph264pay->adapter, NULL);
+    pts = gst_adapter_prev_pts (rtph264pay->adapter, NULL);
+
     size = gst_adapter_available (rtph264pay->adapter);
     /* Nothing to do here if the adapter is empty, e.g. on EOS */
     if (size == 0)
       return GST_FLOW_OK;
     data = gst_adapter_map (rtph264pay->adapter, size);
-    GST_DEBUG_OBJECT (basepayload,
-        "got %" G_GSIZE_FORMAT " bytes (%" G_GSIZE_FORMAT ")", size,
-        buffer ? gst_buffer_get_size (buffer) : 0);
+    GST_DEBUG_OBJECT (basepayload, "got %" G_GSIZE_FORMAT " bytes", size);
   }
 
   ret = GST_FLOW_OK;
@@ -1110,9 +1124,9 @@ gst_rtp_h264_pay_handle_buffer (GstRTPBasePayload * basepayload,
       /* If we're at the end of the buffer, then we're at the end of the
        * access unit
        */
-      if (rtph264pay->alignment == GST_H264_ALIGNMENT_AU
-          && size - nal_len <= nal_length_size) {
-        end_of_au = TRUE;
+      if (size - nal_len <= nal_length_size) {
+        if (rtph264pay->alignment == GST_H264_ALIGNMENT_AU || marker)
+          end_of_au = TRUE;
       }
 
       paybuf = gst_buffer_copy_region (buffer, GST_BUFFER_COPY_ALL, offset,
@@ -1172,7 +1186,7 @@ gst_rtp_h264_pay_handle_buffer (GstRTPBasePayload * basepayload,
       next = next_start_code (data, size);
 
       /* nal or au aligned input needs no delaying until next time */
-      if (next == size && buffer != NULL &&
+      if (next == size && !draining &&
           rtph264pay->alignment == GST_H264_ALIGNMENT_UNKNOWN) {
         /* Didn't find the start of next NAL and it's not EOS,
          * handle it next time */
@@ -1240,7 +1254,7 @@ gst_rtp_h264_pay_handle_buffer (GstRTPBasePayload * basepayload,
        * trailing 0x0 that can be discarded */
       size = nal_len;
       data = gst_adapter_map (rtph264pay->adapter, size);
-      if (i + 1 != nal_queue->len || buffer != NULL)
+      if (i + 1 != nal_queue->len || !draining)
         for (; size > 1 && data[size - 1] == 0x0; size--)
           /* skip */ ;
 
@@ -1252,9 +1266,11 @@ gst_rtp_h264_pay_handle_buffer (GstRTPBasePayload * basepayload,
        * actually payload the NAL so we can know if the current NAL is
        * the last one of an access unit or not if we are in bytestream mode
        */
-      if ((rtph264pay->alignment == GST_H264_ALIGNMENT_AU || buffer == NULL) &&
-          i == nal_queue->len - 1)
-        end_of_au = TRUE;
+      if (i == nal_queue->len - 1) {
+        if (rtph264pay->alignment == GST_H264_ALIGNMENT_AU ||
+            marker || draining)
+          end_of_au = TRUE;
+      }
       paybuf = gst_adapter_take_buffer (rtph264pay->adapter, size);
       g_assert (paybuf);
 

@@ -18,13 +18,16 @@ endif
 
 EXTRA_DIST = \
 	qt/qmlsrc/main.qml \
-	qt/qmlsrc/qml.qrc \
+	qt/qmlsrc/qmlsrc.qrc \
+	qt/qmlsrc/meson.build \
 	qt/qmlsrc/grabqml.pro \
 	qt/qmlsrc/main.cpp \
+	qt/meson.build \
 	qt/qmlsink/main.qml \
-	qt/qmlsink/qml.qrc \
+	qt/qmlsink/qmlsink.qrc \
 	qt/qmlsink/CMakeLists.txt \
 	qt/qmlsink/play.pro \
+	qt/qmlsink/meson.build \
 	qt/qmlsink/main.cpp
 
 

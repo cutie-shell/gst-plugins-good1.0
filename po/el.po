@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 0.10.28.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-10-02 23:03+0100\n"
+"POT-Creation-Date: 2019-01-17 01:59+0000\n"
 "PO-Revision-Date: 2012-05-05 19:05+0100\n"
 "Last-Translator: Savvas Radevic <vicedar@gmail.com>\n"
 "Language-Team: Greek <team@lists.gnome.gr>\n"
@@ -94,10 +94,6 @@ msgstr "Το αρχείο αυτό είναι ανολοκλήρωτο και δ
 
 msgid "The video in this file might not play correctly."
 msgstr "Το βίντεο σε αυτό το αρχείο μπορεί να μην αναπαραχθεί σωστά."
-
-#, c-format
-msgid "This file contains too many streams. Only playing first %d"
-msgstr "Αυτό το αρχείο περιέχει πολλές ροές. Αναπαράγεται μόνο η πρώτη %d"
 
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
@@ -428,6 +424,9 @@ msgstr "Δεν είναι δυνατή η λειτουργία χωρίς ρολ
 
 #~ msgid "Internal data stream error."
 #~ msgstr "Εσωτερικό σφάλμα ροής δεδομένων."
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr "Αυτό το αρχείο περιέχει πολλές ροές. Αναπαράγεται μόνο η πρώτη %d"
 
 #~ msgid "Internal data flow error."
 #~ msgstr "Εσωτερικό σφάλμα ροής δεδομένων."

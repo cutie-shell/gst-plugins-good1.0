@@ -6,7 +6,7 @@ jack_sources = [
   'gstjackutil.c',
 ]
 
-libjack_dep = dependency('jack', version : '>= 1.9.7', required : false)
+libjack_dep = dependency('jack', version : '>= 1.9.7', required : get_option('jack'))
 
 if libjack_dep.found()
   gstjack = library('gstjack',
@@ -17,4 +17,5 @@ if libjack_dep.found()
     install : true,
     install_dir : plugins_install_dir,
   )
+  pkgconfig.generate(gstjack, install_dir : plugins_pkgconfig_install_dir)
 endif

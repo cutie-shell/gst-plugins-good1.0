@@ -118,8 +118,10 @@ GObject
               GstIirEqualizer3Bands
               GstIirEqualizerNBands
             GstSpectrum
+            GstStereo
           GstAudioPanorama
           GstBreakMyData
+          GstCairoOverlay
           GstCapsSetter
           GstCpuReport
           GstLevel
@@ -133,7 +135,6 @@ GObject
             GstAgingTV
             GstAlpha
             GstAlphaColor
-            GstCairoOverlay
             GstDiceTV
             GstEdgeTV
             GstGamma
@@ -287,6 +288,7 @@ GObject
           GstRTPDTMFMux
         GstRTPRtxQueue
         GstRndBufferSize
+        GstRtpFunnel
         GstRtpJitterBuffer
         GstRtpPtDemux
         GstRtpRedDec

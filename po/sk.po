@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.7.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-10-02 23:03+0100\n"
+"POT-Creation-Date: 2019-01-17 01:59+0000\n"
 "PO-Revision-Date: 2016-05-20 12:31+0100\n"
 "Last-Translator: Peter Tuhársky <tuharsky@misbb.sk>\n"
 "Language-Team: Slovak <sk-i18n@lists.linux.sk>\n"
@@ -90,10 +90,6 @@ msgstr "Tento súbor je neúplný a nedá sa prehrať."
 
 msgid "The video in this file might not play correctly."
 msgstr "Video v tomto súbore možno nebude hrať korektne."
-
-#, c-format
-msgid "This file contains too many streams. Only playing first %d"
-msgstr "Tento súbor obsahuje príliš mnoho prúdov údajov. Prehrávam iba prvý %d"
 
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
@@ -411,6 +407,10 @@ msgstr "Zmena rozlíšenia za chodu nie je zatiaľ podporovaná."
 
 msgid "Cannot operate without a clock"
 msgstr "Nemôžem fungovať bez hodín"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr ""
+#~ "Tento súbor obsahuje príliš mnoho prúdov údajov. Prehrávam iba prvý %d"
 
 #~ msgid "Record Source"
 #~ msgstr "Zdroj záznamu"

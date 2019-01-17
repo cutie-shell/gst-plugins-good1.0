@@ -3,7 +3,7 @@
   <description>Still frame stream generator</description>
   <filename>../../gst/imagefreeze/.libs/libgstimagefreeze.so</filename>
   <basename>libgstimagefreeze.so</basename>
-  <version>1.14.4</version>
+  <version>1.15.1</version>
   <license>LGPL</license>
   <source>gst-plugins-good</source>
   <package>GStreamer Good Plug-ins source release</package>
@@ -20,13 +20,13 @@
           <name>sink</name>
           <direction>sink</direction>
           <presence>always</presence>
-          <details>video/x-raw</details>
+          <details>video/x-raw(ANY)</details>
         </caps>
         <caps>
           <name>src</name>
           <direction>source</direction>
           <presence>always</presence>
-          <details>video/x-raw</details>
+          <details>video/x-raw(ANY)</details>
         </caps>
       </pads>
     </element>

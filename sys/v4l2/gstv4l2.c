@@ -47,8 +47,11 @@
 #include "gstv4l2sink.h"
 #include "gstv4l2radio.h"
 #include "gstv4l2videodec.h"
+#include "gstv4l2fwhtenc.h"
 #include "gstv4l2h263enc.h"
 #include "gstv4l2h264enc.h"
+#include "gstv4l2h265enc.h"
+#include "gstv4l2jpegenc.h"
 #include "gstv4l2mpeg4enc.h"
 #include "gstv4l2vp8enc.h"
 #include "gstv4l2vp9enc.h"
@@ -125,6 +128,8 @@ gst_v4l2_probe_and_register (GstPlugin * plugin)
   struct v4l2_capability vcap;
   guint32 device_caps;
 
+  GST_DEBUG ("Probing devices");
+
   it = gst_v4l2_iterator_new ();
 
   while (gst_v4l2_iterator_next (it)) {
@@ -185,8 +190,16 @@ gst_v4l2_probe_and_register (GstPlugin * plugin)
       gst_v4l2_video_dec_register (plugin, basename, it->device_path,
           sink_caps, src_caps);
     } else if (gst_v4l2_is_video_enc (sink_caps, src_caps, NULL)) {
+      if (gst_v4l2_is_fwht_enc (sink_caps, src_caps))
+        gst_v4l2_fwht_enc_register (plugin, basename, it->device_path,
+            sink_caps, src_caps);
+
       if (gst_v4l2_is_h264_enc (sink_caps, src_caps))
         gst_v4l2_h264_enc_register (plugin, basename, it->device_path,
+            sink_caps, src_caps);
+
+      if (gst_v4l2_is_h265_enc (sink_caps, src_caps))
+        gst_v4l2_h265_enc_register (plugin, basename, it->device_path,
             sink_caps, src_caps);
 
       if (gst_v4l2_is_mpeg4_enc (sink_caps, src_caps))
@@ -195,6 +208,10 @@ gst_v4l2_probe_and_register (GstPlugin * plugin)
 
       if (gst_v4l2_is_h263_enc (sink_caps, src_caps))
         gst_v4l2_h263_enc_register (plugin, basename, it->device_path,
+            sink_caps, src_caps);
+
+      if (gst_v4l2_is_jpeg_enc (sink_caps, src_caps))
+        gst_v4l2_jpeg_enc_register (plugin, basename, it->device_path,
             sink_caps, src_caps);
 
       if (gst_v4l2_is_vp8_enc (sink_caps, src_caps))

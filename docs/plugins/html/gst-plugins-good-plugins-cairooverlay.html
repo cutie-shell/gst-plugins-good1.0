@@ -16,7 +16,8 @@
 <td width="100%" align="left" class="shortcuts">
 <a href="#" class="shortcut">Top</a><span id="nav_description">  <span class="dim">|</span> 
                   <a href="#gst-plugins-good-plugins-cairooverlay.description" class="shortcut">Description</a></span><span id="nav_hierarchy">  <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-cairooverlay.object-hierarchy" class="shortcut">Object Hierarchy</a></span><span id="nav_signals">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-cairooverlay.object-hierarchy" class="shortcut">Object Hierarchy</a></span><span id="nav_properties">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-cairooverlay.properties" class="shortcut">Properties</a></span><span id="nav_signals">  <span class="dim">|</span> 
                   <a href="#gst-plugins-good-plugins-cairooverlay.signals" class="shortcut">Signals</a></span>
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
@@ -33,6 +34,21 @@
 </td>
 <td class="gallery_image" valign="top" align="right"></td>
 </tr></table></div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-cairooverlay.properties"></a><h2>Properties</h2>
+<div class="informaltable"><table class="informaltable" border="0">
+<colgroup>
+<col width="150px" class="properties_type">
+<col width="300px" class="properties_name">
+<col width="200px" class="properties_flags">
+</colgroup>
+<tbody><tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-cairooverlay.html#GstCairoOverlay--draw-on-transparent-surface" title="The “draw-on-transparent-surface” property">draw-on-transparent-surface</a></td>
+<td class="property_flags">Read / Write</td>
+</tr></tbody>
+</table></div>
+</div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-cairooverlay.signals"></a><h2>Signals</h2>
 <div class="informaltable"><table class="informaltable" border="0">
@@ -75,8 +91,7 @@
         <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstObject.html#GstObject-struct">GstObject</a>
             <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct">GstElement</a>
                 <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gstreamer-libs-1.0/GstBaseTransform.html#GstBaseTransform-struct">GstBaseTransform</a>
-                    <span class="lineart">╰──</span> <a href="/usr/share/gtk-doc/html/gst-plugins-base-libs-1.0/GstVideoFilter.html#GstVideoFilter-struct">GstVideoFilter</a>
-                        <span class="lineart">╰──</span> GstCairoOverlay
+                    <span class="lineart">╰──</span> GstCairoOverlay
 </pre>
 </div>
 <div class="refsect1">
@@ -84,7 +99,7 @@
 <p>cairooverlay renders an overlay using a application provided render function.</p>
 <p>The full example can be found in tests/examples/cairo/cairo_overlay.c</p>
 <div class="refsect2">
-<a name="id-1.2.38.7.4"></a><h3>Example code</h3>
+<a name="id-1.2.38.8.4"></a><h3>Example code</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -176,16 +191,16 @@
     <span class="keyword">return</span><span class="gtkdoc opt">;</span>
 
   scale <span class="gtkdoc opt">=</span> <span class="number">2</span><span class="gtkdoc opt">*(((</span>timestamp<span class="gtkdoc opt">/(</span><span class="gtkdoc kwb">int</span><span class="gtkdoc opt">)</span><span class="number">1</span>e7<span class="gtkdoc opt">) %</span> <span class="number">70</span><span class="gtkdoc opt">)+</span><span class="number">30</span><span class="gtkdoc opt">)/</span><span class="number">100.0</span><span class="gtkdoc opt">;</span>
-  <span class="function">cairo_translate</span><span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">,</span> s<span class="gtkdoc opt">-&gt;</span>width<span class="gtkdoc opt">/</span><span class="number">2</span><span class="gtkdoc opt">, (</span>s<span class="gtkdoc opt">-&gt;</span>height<span class="gtkdoc opt">/</span><span class="number">2</span><span class="gtkdoc opt">)-</span><span class="number">30</span><span class="gtkdoc opt">);</span>
-  <span class="function">cairo_scale</span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">,</span> scale<span class="gtkdoc opt">,</span> scale<span class="gtkdoc opt">);</span>
+  <span class="function"><a href="/usr/share/gtk-doc/html/cairo/cairo-Transformations.html#cairo-translate">cairo_translate</a></span><span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">,</span> s<span class="gtkdoc opt">-&gt;</span>width<span class="gtkdoc opt">/</span><span class="number">2</span><span class="gtkdoc opt">, (</span>s<span class="gtkdoc opt">-&gt;</span>height<span class="gtkdoc opt">/</span><span class="number">2</span><span class="gtkdoc opt">)-</span><span class="number">30</span><span class="gtkdoc opt">);</span>
+  <span class="function"><a href="/usr/share/gtk-doc/html/cairo/cairo-Transformations.html#cairo-scale">cairo_scale</a></span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">,</span> scale<span class="gtkdoc opt">,</span> scale<span class="gtkdoc opt">);</span>
 
-  <span class="function">cairo_move_to</span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">);</span>
-  <span class="function">cairo_curve_to</span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">,-</span><span class="number">30</span><span class="gtkdoc opt">, -</span><span class="number">50</span><span class="gtkdoc opt">,-</span><span class="number">30</span><span class="gtkdoc opt">, -</span><span class="number">50</span><span class="gtkdoc opt">,</span><span class="number">0</span><span class="gtkdoc opt">);</span>
-  <span class="function">cairo_curve_to</span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">, -</span><span class="number">50</span><span class="gtkdoc opt">,</span><span class="number">30</span><span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">,</span><span class="number">35</span><span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">,</span><span class="number">60</span> <span class="gtkdoc opt">);</span>
-  <span class="function">cairo_curve_to</span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">,</span><span class="number">35</span><span class="gtkdoc opt">,</span> <span class="number">50</span><span class="gtkdoc opt">,</span><span class="number">30</span><span class="gtkdoc opt">,</span> <span class="number">50</span><span class="gtkdoc opt">,</span><span class="number">0</span> <span class="gtkdoc opt">); *</span>  
-  <span class="function">cairo_curve_to</span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">,</span> <span class="number">50</span><span class="gtkdoc opt">,-</span><span class="number">30</span><span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">,-</span><span class="number">30</span><span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">,</span><span class="number">0</span> <span class="gtkdoc opt">);</span>
-  <span class="function">cairo_set_source_rgba</span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">,</span> <span class="number">0.9</span><span class="gtkdoc opt">,</span> <span class="number">0.0</span><span class="gtkdoc opt">,</span> <span class="number">0.1</span><span class="gtkdoc opt">,</span> <span class="number">0.7</span><span class="gtkdoc opt">);</span>
-  <span class="function">cairo_fill</span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">);</span>
+  <span class="function"><a href="/usr/share/gtk-doc/html/cairo/cairo-Paths.html#cairo-move-to">cairo_move_to</a></span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">);</span>
+  <span class="function"><a href="/usr/share/gtk-doc/html/cairo/cairo-Paths.html#cairo-curve-to">cairo_curve_to</a></span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">,-</span><span class="number">30</span><span class="gtkdoc opt">, -</span><span class="number">50</span><span class="gtkdoc opt">,-</span><span class="number">30</span><span class="gtkdoc opt">, -</span><span class="number">50</span><span class="gtkdoc opt">,</span><span class="number">0</span><span class="gtkdoc opt">);</span>
+  <span class="function"><a href="/usr/share/gtk-doc/html/cairo/cairo-Paths.html#cairo-curve-to">cairo_curve_to</a></span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">, -</span><span class="number">50</span><span class="gtkdoc opt">,</span><span class="number">30</span><span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">,</span><span class="number">35</span><span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">,</span><span class="number">60</span> <span class="gtkdoc opt">);</span>
+  <span class="function"><a href="/usr/share/gtk-doc/html/cairo/cairo-Paths.html#cairo-curve-to">cairo_curve_to</a></span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">,</span><span class="number">35</span><span class="gtkdoc opt">,</span> <span class="number">50</span><span class="gtkdoc opt">,</span><span class="number">30</span><span class="gtkdoc opt">,</span> <span class="number">50</span><span class="gtkdoc opt">,</span><span class="number">0</span> <span class="gtkdoc opt">); *</span>  
+  <span class="function"><a href="/usr/share/gtk-doc/html/cairo/cairo-Paths.html#cairo-curve-to">cairo_curve_to</a></span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">,</span> <span class="number">50</span><span class="gtkdoc opt">,-</span><span class="number">30</span><span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">,-</span><span class="number">30</span><span class="gtkdoc opt">,</span> <span class="number">0</span><span class="gtkdoc opt">,</span><span class="number">0</span> <span class="gtkdoc opt">);</span>
+  <span class="function"><a href="/usr/share/gtk-doc/html/cairo/cairo-cairo-t.html#cairo-set-source-rgba">cairo_set_source_rgba</a></span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">,</span> <span class="number">0.9</span><span class="gtkdoc opt">,</span> <span class="number">0.0</span><span class="gtkdoc opt">,</span> <span class="number">0.1</span><span class="gtkdoc opt">,</span> <span class="number">0.7</span><span class="gtkdoc opt">);</span>
+  <span class="function"><a href="/usr/share/gtk-doc/html/cairo/cairo-cairo-t.html#cairo-fill">cairo_fill</a></span> <span class="gtkdoc opt">(</span>cr<span class="gtkdoc opt">);</span>
 <span class="gtkdoc opt">}</span>
 
 <span class="gtkdoc opt">...</span>
@@ -206,7 +221,7 @@ cairo_overlay <span class="gtkdoc opt">=</span> <span class="function"><a href="
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.38.7.5.1"></a><h3>Element Information</h3>
+<a name="id-1.2.38.8.5.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -232,7 +247,7 @@ cairo_overlay <span class="gtkdoc opt">=</span> <span class="function"><a href="
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.38.7.5.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.38.8.5.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -293,6 +308,16 @@ cairo_overlay <span class="gtkdoc opt">=</span> <span class="function"><a href="
 <div class="refsect2">
 <a name="GstCairoOverlay-struct"></a><h3>struct GstCairoOverlay</h3>
 <pre class="programlisting">struct GstCairoOverlay;</pre>
+</div>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-cairooverlay.property-details"></a><h2>Property Details</h2>
+<div class="refsect2">
+<a name="GstCairoOverlay--draw-on-transparent-surface"></a><h3>The <code class="literal">“draw-on-transparent-surface”</code> property</h3>
+<pre class="programlisting">  “draw-on-transparent-surface” <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<p>Let the draw signal work on a transparent surface and blend the results with the video at a later time.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: FALSE</p>
 </div>
 </div>
 <div class="refsect1">

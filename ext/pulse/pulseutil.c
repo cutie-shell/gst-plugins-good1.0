@@ -138,7 +138,7 @@ gst_pulse_fill_sample_spec (GstAudioRingBufferSpec * spec, pa_sample_spec * ss)
 
 gboolean
 gst_pulse_fill_format_info (GstAudioRingBufferSpec * spec, pa_format_info ** f,
-    guint * channels)
+    guint * rate, guint * channels)
 {
   pa_format_info *format;
   pa_sample_format_t sf = PA_SAMPLE_INVALID;
@@ -186,7 +186,10 @@ gst_pulse_fill_format_info (GstAudioRingBufferSpec * spec, pa_format_info ** f,
     goto fail;
 
   *f = format;
-  *channels = GST_AUDIO_INFO_CHANNELS (ainfo);
+  if (rate)
+    *rate = GST_AUDIO_INFO_RATE (ainfo);
+  if (channels)
+    *channels = GST_AUDIO_INFO_CHANNELS (ainfo);
 
   return TRUE;
 
@@ -434,12 +437,34 @@ gst_pulse_format_info_int_prop_to_value (pa_format_info * format,
   return TRUE;
 }
 
+/* FIXME: switch to PA API when it is available */
+int
+gst_pulse_format_info_get_channel_map (pa_format_info * f, pa_channel_map * map)
+{
+  int r;
+  char *map_str;
+
+  r = pa_format_info_get_prop_string (f, PA_PROP_FORMAT_CHANNEL_MAP, &map_str);
+  if (r < 0)
+    return r;
+
+  map = pa_channel_map_parse (map, map_str);
+  pa_xfree (map_str);
+
+  if (!map)
+    return -PA_ERR_INVALID;
+
+  return 0;
+}
+
 GstCaps *
 gst_pulse_format_info_to_caps (pa_format_info * format)
 {
   GstCaps *ret = NULL;
   GValue v = { 0, };
   pa_sample_spec ss;
+  pa_channel_map map;
+  int channels = 0;
 
   switch (format->encoding) {
     case PA_ENCODING_PCM:{
@@ -450,7 +475,7 @@ gst_pulse_format_info_to_caps (pa_format_info * format)
       if (pa_format_info_get_prop_string (format,
               PA_PROP_FORMAT_SAMPLE_FORMAT, &tmp)) {
         /* No specific sample format means any sample format */
-        ret = gst_caps_from_string (_PULSE_CAPS_PCM);
+        ret = gst_pulse_fix_pcm_caps (gst_caps_from_string (_PULSE_CAPS_PCM));
         goto out;
 
       } else if (ss.format == PA_SAMPLE_ALAW) {
@@ -504,6 +529,68 @@ gst_pulse_format_info_to_caps (pa_format_info * format)
           &v))
     gst_caps_set_value (ret, "channels", &v);
 
+  if (pa_format_info_get_prop_int (format, PA_PROP_FORMAT_CHANNELS,
+          &channels) == 0
+      && gst_pulse_format_info_get_channel_map (format, &map) == 0) {
+    guint64 channel_mask;
+    GstAudioRingBufferSpec spec;
+
+    GST_AUDIO_INFO_CHANNELS (&spec.info) = channels;
+
+    if (gst_pulse_channel_map_to_gst (&map, &spec) &&
+        !(GST_AUDIO_INFO_IS_UNPOSITIONED (&spec.info)) &&
+        gst_audio_channel_positions_to_mask (&GST_AUDIO_INFO_POSITION
+            (&spec.info, 0), channels, FALSE, &channel_mask)) {
+      gst_caps_set_simple (ret, "channel-mask", GST_TYPE_BITMASK,
+          channel_mask, NULL);
+    } else {
+      GST_WARNING ("Could not convert channel map to channel mask");
+    }
+  }
+
 out:
   return ret;
+}
+
+GstCaps *
+gst_pulse_fix_pcm_caps (GstCaps * incaps)
+{
+  GstCaps *outcaps;
+  int i;
+
+  outcaps = gst_caps_make_writable (incaps);
+
+  for (i = 0; i < gst_caps_get_size (outcaps); i++) {
+    GstStructure *st = gst_caps_get_structure (outcaps, i);
+    const gchar *format = gst_structure_get_name (st);
+    const GValue *value;
+    GValue new_value = G_VALUE_INIT;
+    gint min, max, step;
+
+    if (!(g_str_equal (format, "audio/x-raw") ||
+            g_str_equal (format, "audio/x-alaw") ||
+            g_str_equal (format, "audio/x-mulaw")))
+      continue;
+
+    value = gst_structure_get_value (st, "rate");
+
+    if (!GST_VALUE_HOLDS_INT_RANGE (value))
+      continue;
+
+    min = gst_value_get_int_range_min (value);
+    max = gst_value_get_int_range_max (value);
+    step = gst_value_get_int_range_step (value);
+
+    if (min > PA_RATE_MAX)
+      min = PA_RATE_MAX;
+    if (max > PA_RATE_MAX)
+      max = PA_RATE_MAX;
+
+    g_value_init (&new_value, GST_TYPE_INT_RANGE);
+    gst_value_set_int_range_step (&new_value, min, max, step);
+
+    gst_structure_take_value (st, "rate", &new_value);
+  }
+
+  return outcaps;
 }

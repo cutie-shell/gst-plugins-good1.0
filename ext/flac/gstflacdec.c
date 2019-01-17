@@ -263,6 +263,9 @@ gst_flac_dec_set_format (GstAudioDecoder * dec, GstCaps * caps)
     gst_adapter_clear (flacdec->adapter);
   }
 
+  FLAC__stream_decoder_reset (flacdec->decoder);
+  flacdec->got_headers = FALSE;
+
   num = gst_value_array_get_size (headers);
   for (i = 0; i < num; ++i) {
     const GValue *header_val;
@@ -486,6 +489,11 @@ gst_flac_dec_metadata_cb (const FLAC__StreamDecoder * decoder,
           metadata->data.stream_info.sample_rate,
           metadata->data.stream_info.channels, position);
 
+      gst_audio_decoder_set_output_format (GST_AUDIO_DECODER (flacdec),
+          &flacdec->info);
+
+      gst_audio_decoder_negotiate (GST_AUDIO_DECODER (flacdec));
+
       GST_DEBUG_OBJECT (flacdec, "blocksize: min=%u, max=%u",
           flacdec->min_blocksize, flacdec->max_blocksize);
       GST_DEBUG_OBJECT (flacdec, "sample rate: %u, channels: %u",
@@ -625,10 +633,8 @@ gst_flac_dec_write (GstFlacDec * flacdec, const FLAC__Frame * frame,
     GST_DEBUG_OBJECT (flacdec, "Negotiating %d Hz @ %d channels", sample_rate,
         channels);
 
-    memcpy (chanpos, channel_positions[flacdec->info.channels - 1],
-        sizeof (chanpos));
-    gst_audio_channel_positions_to_valid_order (chanpos,
-        flacdec->info.channels);
+    memcpy (chanpos, channel_positions[channels - 1], sizeof (chanpos));
+    gst_audio_channel_positions_to_valid_order (chanpos, channels);
     gst_audio_info_set_format (&flacdec->info,
         gst_audio_format_build_integer (TRUE, G_BYTE_ORDER, width, gdepth),
         sample_rate, channels, chanpos);

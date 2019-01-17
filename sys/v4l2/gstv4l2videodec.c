@@ -129,24 +129,11 @@ gst_v4l2_video_dec_open (GstVideoDecoder * decoder)
   if (gst_caps_is_empty (self->probed_sinkcaps))
     goto no_encoded_format;
 
-  self->probed_srccaps = gst_v4l2_object_probe_caps (self->v4l2capture,
-      gst_v4l2_object_get_raw_caps ());
-
-  if (gst_caps_is_empty (self->probed_srccaps))
-    goto no_raw_format;
-
   return TRUE;
 
 no_encoded_format:
   GST_ELEMENT_ERROR (self, RESOURCE, SETTINGS,
       (_("Decoder on device %s has no supported input format"),
-          self->v4l2output->videodev), (NULL));
-  goto failure;
-
-
-no_raw_format:
-  GST_ELEMENT_ERROR (self, RESOURCE, SETTINGS,
-      (_("Decoder on device %s has no supported output format"),
           self->v4l2output->videodev), (NULL));
   goto failure;
 
@@ -274,6 +261,13 @@ gst_v4l2_video_dec_set_format (GstVideoDecoder * decoder,
 
   ret = gst_v4l2_object_set_format (self->v4l2output, state->caps, &error);
 
+  gst_caps_replace (&self->probed_srccaps, NULL);
+  self->probed_srccaps = gst_v4l2_object_probe_caps (self->v4l2capture,
+      gst_v4l2_object_get_raw_caps ());
+
+  if (gst_caps_is_empty (self->probed_srccaps))
+    goto no_raw_format;
+
   if (ret)
     self->input_state = gst_video_codec_state_ref (state);
   else
@@ -281,6 +275,12 @@ gst_v4l2_video_dec_set_format (GstVideoDecoder * decoder,
 
 done:
   return ret;
+
+no_raw_format:
+  GST_ELEMENT_ERROR (self, RESOURCE, SETTINGS,
+      (_("Decoder on device %s has no supported output format"),
+          self->v4l2output->videodev), (NULL));
+  return GST_FLOW_ERROR;
 }
 
 static gboolean
@@ -381,6 +381,7 @@ gst_v4l2_video_dec_finish (GstVideoDecoder * decoder)
 
     /* If the decoder stop command succeeded, just wait until processing is
      * finished */
+    GST_DEBUG_OBJECT (self, "Waiting for decoder stop");
     GST_OBJECT_LOCK (task);
     while (GST_TASK_STATE (task) == GST_TASK_STARTED)
       GST_TASK_WAIT (task);
@@ -640,8 +641,7 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
     gst_structure_remove_field (st, "format");
 
     /* Probe currently available pixel formats */
-    available_caps = gst_v4l2_object_probe_caps (self->v4l2capture, NULL);
-    available_caps = gst_caps_make_writable (available_caps);
+    available_caps = gst_caps_copy (self->probed_srccaps);
     GST_DEBUG_OBJECT (self, "Available caps: %" GST_PTR_FORMAT, available_caps);
 
     /* Replace coded size with visible size, we want to negotiate visible size
@@ -1081,8 +1081,12 @@ G_STMT_START { \
     }
   } else if (gst_structure_has_name (s, "video/x-h263")) {
     SET_META ("H263");
+  } else if (gst_structure_has_name (s, "video/x-fwht")) {
+    SET_META ("FWHT");
   } else if (gst_structure_has_name (s, "video/x-h264")) {
     SET_META ("H264");
+  } else if (gst_structure_has_name (s, "video/x-h265")) {
+    SET_META ("H265");
   } else if (gst_structure_has_name (s, "video/x-wmv")) {
     SET_META ("VC1");
   } else if (gst_structure_has_name (s, "video/x-vp8")) {

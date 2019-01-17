@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good-1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-10-02 23:03+0100\n"
+"POT-Creation-Date: 2019-01-17 01:59+0000\n"
 "PO-Revision-Date: 2017-05-07 12:21+0200\n"
 "Last-Translator: Мирослав Николић <miroslavnikolic@rocketmail.com>\n"
 "Language-Team: Serbian <(nothing)>\n"
@@ -93,10 +93,6 @@ msgstr "Ова датотека је непотпуна и не може бит�
 
 msgid "The video in this file might not play correctly."
 msgstr "Видео у овој датотеци можда неће бити пуштен исправно."
-
-#, c-format
-msgid "This file contains too many streams. Only playing first %d"
-msgstr "Ова датотека садржи превише токова. Пуштам само први %d"
 
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
@@ -410,6 +406,9 @@ msgstr "Промена резолуције приликом извршавањ�
 
 msgid "Cannot operate without a clock"
 msgstr "Не могу да радим без сата"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr "Ова датотека садржи превише токова. Пуштам само први %d"
 
 #~ msgid "Record Source"
 #~ msgstr "Извор снимања"

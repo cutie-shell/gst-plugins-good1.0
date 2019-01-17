@@ -4,9 +4,9 @@ speex_sources = [
   'gstspeexenc.c',
 ]
 
-speex_dep = dependency('speex', version : '>=1.1.6', required : false)
+speex_dep = dependency('speex', version : '>=1.1.6', required : get_option('speex'))
 windows_args = []
-if host_machine.system() == 'windows'
+if host_system == 'windows'
   windows_args = ['-DWIN32']
 endif
 
@@ -20,4 +20,5 @@ if speex_dep.found()
     install : true,
     install_dir : plugins_install_dir,
   )
+  pkgconfig.generate(gstspeex, install_dir : plugins_pkgconfig_install_dir)
 endif

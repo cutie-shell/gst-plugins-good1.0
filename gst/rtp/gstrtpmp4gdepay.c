@@ -233,11 +233,14 @@ gst_rtp_mp4g_depay_setcaps (GstRTPBaseDepayload * depayload, GstCaps * caps)
     clock_rate = 90000;         /* default */
   depayload->clock_rate = clock_rate;
 
+  rtpmp4gdepay->check_adts = FALSE;
+
   if ((str = gst_structure_get_string (structure, "media"))) {
     if (strcmp (str, "audio") == 0) {
       srccaps = gst_caps_new_simple ("audio/mpeg",
           "mpegversion", G_TYPE_INT, 4, "stream-format", G_TYPE_STRING, "raw",
           NULL);
+      rtpmp4gdepay->check_adts = TRUE;
     } else if (strcmp (str, "video") == 0) {
       srccaps = gst_caps_new_simple ("video/mpeg",
           "mpegversion", G_TYPE_INT, 4,
@@ -325,10 +328,30 @@ gst_rtp_mp4g_depay_reset (GstRtpMP4GDepay * rtpmp4gdepay)
 }
 
 static void
+gst_rtp_mp4g_depay_push_outbuf (GstRtpMP4GDepay * rtpmp4gdepay,
+    GstBuffer * outbuf, guint AU_index)
+{
+  gboolean discont = FALSE;
+
+  if (AU_index != rtpmp4gdepay->next_AU_index) {
+    GST_DEBUG_OBJECT (rtpmp4gdepay, "discont, expected AU_index %u",
+        rtpmp4gdepay->next_AU_index);
+    GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_DISCONT);
+    discont = TRUE;
+  }
+
+  GST_DEBUG_OBJECT (rtpmp4gdepay, "pushing %sAU_index %u",
+      discont ? "" : "expected ", AU_index);
+
+  gst_rtp_drop_meta (GST_ELEMENT_CAST (rtpmp4gdepay), outbuf, 0);
+  gst_rtp_base_depayload_push (GST_RTP_BASE_DEPAYLOAD (rtpmp4gdepay), outbuf);
+  rtpmp4gdepay->next_AU_index = AU_index + 1;
+}
+
+static void
 gst_rtp_mp4g_depay_flush_queue (GstRtpMP4GDepay * rtpmp4gdepay)
 {
   GstBuffer *outbuf;
-  gboolean discont = FALSE;
   guint AU_index;
 
   while ((outbuf = g_queue_pop_head (rtpmp4gdepay->packets))) {
@@ -336,21 +359,7 @@ gst_rtp_mp4g_depay_flush_queue (GstRtpMP4GDepay * rtpmp4gdepay)
 
     GST_DEBUG_OBJECT (rtpmp4gdepay, "next available AU_index %u", AU_index);
 
-    if (rtpmp4gdepay->next_AU_index != AU_index) {
-      GST_DEBUG_OBJECT (rtpmp4gdepay, "discont, expected AU_index %u",
-          rtpmp4gdepay->next_AU_index);
-      discont = TRUE;
-    }
-
-    if (discont) {
-      GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_DISCONT);
-      discont = FALSE;
-    }
-
-    GST_DEBUG_OBJECT (rtpmp4gdepay, "pushing AU_index %u", AU_index);
-    gst_rtp_drop_meta (GST_ELEMENT_CAST (rtpmp4gdepay), outbuf, 0);
-    gst_rtp_base_depayload_push (GST_RTP_BASE_DEPAYLOAD (rtpmp4gdepay), outbuf);
-    rtpmp4gdepay->next_AU_index = AU_index + 1;
+    gst_rtp_mp4g_depay_push_outbuf (rtpmp4gdepay, outbuf, AU_index);
   }
 }
 
@@ -369,9 +378,7 @@ gst_rtp_mp4g_depay_queue (GstRtpMP4GDepay * rtpmp4gdepay, GstBuffer * outbuf)
 
     /* we received the expected packet, push it and flush as much as we can from
      * the queue */
-    gst_rtp_drop_meta (GST_ELEMENT_CAST (rtpmp4gdepay), outbuf, 0);
-    gst_rtp_base_depayload_push (GST_RTP_BASE_DEPAYLOAD (rtpmp4gdepay), outbuf);
-    rtpmp4gdepay->next_AU_index++;
+    gst_rtp_mp4g_depay_push_outbuf (rtpmp4gdepay, outbuf, AU_index);
 
     while ((outbuf = g_queue_peek_head (rtpmp4gdepay->packets))) {
       AU_index = GST_BUFFER_OFFSET (outbuf);
@@ -379,13 +386,8 @@ gst_rtp_mp4g_depay_queue (GstRtpMP4GDepay * rtpmp4gdepay, GstBuffer * outbuf)
       GST_DEBUG_OBJECT (rtpmp4gdepay, "next available AU_index %u", AU_index);
 
       if (rtpmp4gdepay->next_AU_index == AU_index) {
-        GST_DEBUG_OBJECT (rtpmp4gdepay, "pushing expected AU_index %u",
-            AU_index);
         outbuf = g_queue_pop_head (rtpmp4gdepay->packets);
-        gst_rtp_drop_meta (GST_ELEMENT_CAST (rtpmp4gdepay), outbuf, 0);
-        gst_rtp_base_depayload_push (GST_RTP_BASE_DEPAYLOAD (rtpmp4gdepay),
-            outbuf);
-        rtpmp4gdepay->next_AU_index++;
+        gst_rtp_mp4g_depay_push_outbuf (rtpmp4gdepay, outbuf, AU_index);
       } else {
         GST_DEBUG_OBJECT (rtpmp4gdepay, "waiting for next AU_index %u",
             rtpmp4gdepay->next_AU_index);
@@ -665,10 +667,29 @@ gst_rtp_mp4g_depay_process (GstRTPBaseDepayload * depayload, GstRTPBuffer * rtp)
         gst_adapter_push (rtpmp4gdepay->adapter, outbuf);
 
         if (M) {
+          guint32 v = 0;
           guint avail;
 
           /* packet is complete, flush */
           avail = gst_adapter_available (rtpmp4gdepay->adapter);
+
+          /* Some broken senders send ADTS headers (e.g. some Sony cameras).
+           * Try to detect those and skip them (still needs config set), but
+           * don't check every frame, only the first (unless we detect ADTS) */
+          if (rtpmp4gdepay->check_adts && avail >= 7) {
+            if (gst_adapter_masked_scan_uint32_peek (rtpmp4gdepay->adapter,
+                    0xfffe0000, 0xfff00000, 0, 4, &v) == 0) {
+              guint adts_hdr_len = (((v >> 16) & 0x1) == 0) ? 9 : 7;
+              if (avail > adts_hdr_len) {
+                GST_WARNING_OBJECT (rtpmp4gdepay, "Detected ADTS header of "
+                    "%u bytes, skipping", adts_hdr_len);
+                gst_adapter_flush (rtpmp4gdepay->adapter, adts_hdr_len);
+                avail -= adts_hdr_len;
+              }
+            } else {
+              rtpmp4gdepay->check_adts = FALSE;
+            }
+          }
 
           outbuf = gst_adapter_take_buffer (rtpmp4gdepay->adapter, avail);
 

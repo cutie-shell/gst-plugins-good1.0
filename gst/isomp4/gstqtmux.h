@@ -289,8 +289,10 @@ struct _GstQTMux
 
   gboolean reserved_prefill;
 
+  GstClockTime start_gap_threshold;
+
   /* for request pad naming */
-  guint video_pads, audio_pads, subtitle_pads;
+  guint video_pads, audio_pads, subtitle_pads, caption_pads;
 };
 
 struct _GstQTMuxClass
@@ -308,6 +310,7 @@ typedef struct _GstQTMuxClassParams
   GstCaps *video_sink_caps;
   GstCaps *audio_sink_caps;
   GstCaps *subtitle_sink_caps;
+  GstCaps *caption_sink_caps;
 } GstQTMuxClassParams;
 
 #define GST_QT_MUX_PARAMS_QDATA g_quark_from_static_string("qt-mux-params")

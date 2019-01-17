@@ -163,3 +163,45 @@
    fun:encode_frame
 }
 
+{
+   <twolame Conditional jump or move depends on uninitialised values>
+   Memcheck:Cond
+   fun:psycho_3
+   ...
+   fun:twolame_encode_flush
+}
+
+{
+   <getaddrinfo can leak when resolving addresses, see https://lists.debian.org/debian-glibc/2016/03/msg00243.html>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:__libc_alloc_buffer_allocate
+   ...
+   fun:__res_vinit
+   ...
+   fun:context_get.part.1
+   fun:gaih_inet.constprop.7
+   fun:getaddrinfo
+   ...
+}
+
+{
+  <gnutls sessions leak the certificates, even though gnutls_deinit is correctly called>
+  Memcheck:Leak
+  match-leak-kinds: definite
+  fun:malloc
+  ...
+  fun:g_tls_certificate_gnutls_real_copy
+  fun:g_tls_server_connection_gnutls_retrieve_function
+}
+
+{
+  <gnutls sessions leak the certificates, even though gnutls_deinit is correctly called>
+  Memcheck:Leak
+  match-leak-kinds: definite
+  fun:calloc
+  ...
+  fun:g_tls_certificate_gnutls_real_copy
+  fun:g_tls_server_connection_gnutls_retrieve_function
+}

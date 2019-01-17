@@ -1,4 +1,4 @@
-x11_dep = dependency('x11', required : false)
+x11_dep = dependency('x11', required : get_option('x11'))
 
 if x11_dep.found()
   x_args = []
@@ -27,4 +27,5 @@ if x11_dep.found()
     install : true,
     install_dir : plugins_install_dir,
   )
+  pkgconfig.generate(gstximagesrc, install_dir : plugins_pkgconfig_install_dir)
 endif

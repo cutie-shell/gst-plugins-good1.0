@@ -121,7 +121,9 @@ scanobj-build.stamp: $(SCANOBJ_DEPS) $(basefiles)
 	@if test x"$(srcdir)" != x. ; then				\
 	    for f in $(SCANOBJ_FILES) $(SCAN_FILES);			\
 	    do								\
-	        if test -e $(srcdir)/$$f; then cp -u $(srcdir)/$$f . ; fi;	\
+	        if test -e $(srcdir)/$$f; then				\
+	            cp -u $(srcdir)/$$f . || cp $(srcdir)/$$f . ;	\
+	        fi;							\
 	    done;							\
 	fi;								\
 	mkdir -p $(INSPECT_DIR); \
@@ -155,7 +157,9 @@ scan-build.stamp: $(HFILE_GLOB) $(EXTRA_HFILES) $(basefiles) scanobj-build.stamp
 	@if test x"$(srcdir)" != x. ; then				\
 	    for f in $(SCANOBJ_FILES) $(SCAN_FILES);			\
 	    do								\
-	        if test -e $(srcdir)/$$f; then cp -u $(srcdir)/$$f . ; fi;	\
+	        if test -e $(srcdir)/$$f; then				\
+	            cp -u $(srcdir)/$$f . || cp $(srcdir)/$$f .;	\
+	        fi;							\
 	    done;							\
 	fi
 	@_source_dir='' ;						\
@@ -308,7 +312,7 @@ check: check-hierarchy
 endif
 
 # wildcard is apparently not portable to other makes, hence the use of find
-inspect_files = $(shell find $(srcdir)/$(INSPECT_DIR) -name '*.xml')
+inspect_files = $(sort $(shell find $(srcdir)/$(INSPECT_DIR) -name '*.xml'))
 
 check-inspected-versions:
 	@echo Checking plugin versions of inspected plugin data ...; \

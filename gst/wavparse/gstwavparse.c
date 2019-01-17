@@ -390,7 +390,7 @@ gst_wavparse_perform_seek (GstWavParse * wav, GstEvent * event)
   gboolean update;
   GstSegment seeksegment = { 0, };
   gint64 last_stop;
-  guint32 seqnum = 0;
+  guint32 seqnum = GST_SEQNUM_INVALID;
 
   if (event) {
     GST_DEBUG_OBJECT (wav, "doing seek with event");
@@ -463,7 +463,8 @@ gst_wavparse_perform_seek (GstWavParse * wav, GstEvent * event)
       /* BYTE seek event */
       event = gst_event_new_seek (rate, GST_FORMAT_BYTES, flags, cur_type, cur,
           stop_type, stop);
-      gst_event_set_seqnum (event, seqnum);
+      if (seqnum != GST_SEQNUM_INVALID)
+        gst_event_set_seqnum (event, seqnum);
       res = gst_pad_push_event (wav->sinkpad, event);
     }
     return res;
@@ -483,7 +484,8 @@ gst_wavparse_perform_seek (GstWavParse * wav, GstEvent * event)
     GST_DEBUG_OBJECT (wav, "sending flush start");
 
     fevent = gst_event_new_flush_start ();
-    gst_event_set_seqnum (fevent, seqnum);
+    if (seqnum != GST_SEQNUM_INVALID)
+      gst_event_set_seqnum (fevent, seqnum);
     gst_pad_push_event (wav->sinkpad, gst_event_ref (fevent));
     gst_pad_push_event (wav->srcpad, fevent);
   } else {
@@ -573,7 +575,8 @@ gst_wavparse_perform_seek (GstWavParse * wav, GstEvent * event)
     GST_DEBUG_OBJECT (wav, "sending flush stop");
 
     fevent = gst_event_new_flush_stop (TRUE);
-    gst_event_set_seqnum (fevent, seqnum);
+    if (seqnum != GST_SEQNUM_INVALID)
+      gst_event_set_seqnum (fevent, seqnum);
     gst_pad_push_event (wav->sinkpad, gst_event_ref (fevent));
     gst_pad_push_event (wav->srcpad, fevent);
   }
@@ -596,7 +599,8 @@ gst_wavparse_perform_seek (GstWavParse * wav, GstEvent * event)
   if (wav->start_segment)
     gst_event_unref (wav->start_segment);
   wav->start_segment = gst_event_new_segment (&wav->segment);
-  gst_event_set_seqnum (wav->start_segment, seqnum);
+  if (seqnum != GST_SEQNUM_INVALID)
+    gst_event_set_seqnum (wav->start_segment, seqnum);
 
   /* mark discont if we are going to stream from another position. */
   if (last_stop != wav->segment.position) {
@@ -2742,6 +2746,25 @@ gst_wavparse_pad_query (GstPad * pad, GstObject * parent, GstQuery * query)
       if (res) {
         gst_query_set_seeking (query, fmt, seekable, 0, wav->segment.duration);
       }
+      break;
+    }
+    case GST_QUERY_SEGMENT:
+    {
+      GstFormat format;
+      gint64 start, stop;
+
+      format = wav->segment.format;
+
+      start =
+          gst_segment_to_stream_time (&wav->segment, format,
+          wav->segment.start);
+      if ((stop = wav->segment.stop) == -1)
+        stop = wav->segment.duration;
+      else
+        stop = gst_segment_to_stream_time (&wav->segment, format, stop);
+
+      gst_query_set_segment (query, wav->segment.rate, format, start, stop);
+      res = TRUE;
       break;
     }
     default:

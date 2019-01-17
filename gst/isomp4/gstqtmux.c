@@ -397,6 +397,7 @@ enum
   PROP_INTERLEAVE_BYTES,
   PROP_INTERLEAVE_TIME,
   PROP_MAX_RAW_AUDIO_DRIFT,
+  PROP_START_GAP_THRESHOLD,
 };
 
 /* some spare for header size as well */
@@ -420,6 +421,7 @@ enum
 #define DEFAULT_INTERLEAVE_BYTES 0
 #define DEFAULT_INTERLEAVE_TIME 250*GST_MSECOND
 #define DEFAULT_MAX_RAW_AUDIO_DRIFT 40 * GST_MSECOND
+#define DEFAULT_START_GAP_THRESHOLD 0
 
 static void gst_qt_mux_finalize (GObject * object);
 
@@ -460,7 +462,8 @@ gst_qt_mux_base_init (gpointer g_class)
   GstElementClass *element_class = GST_ELEMENT_CLASS (g_class);
   GstQTMuxClass *klass = (GstQTMuxClass *) g_class;
   GstQTMuxClassParams *params;
-  GstPadTemplate *videosinktempl, *audiosinktempl, *subtitlesinktempl;
+  GstPadTemplate *videosinktempl, *audiosinktempl, *subtitlesinktempl,
+      *captionsinktempl;
   GstPadTemplate *srctempl;
   gchar *longname, *description;
 
@@ -503,6 +506,13 @@ gst_qt_mux_base_init (gpointer g_class)
         GST_PAD_SINK, GST_PAD_REQUEST, params->subtitle_sink_caps,
         GST_TYPE_QT_MUX_PAD);
     gst_element_class_add_pad_template (element_class, subtitlesinktempl);
+  }
+
+  if (params->caption_sink_caps) {
+    captionsinktempl = gst_pad_template_new_with_gtype ("caption_%u",
+        GST_PAD_SINK, GST_PAD_REQUEST, params->caption_sink_caps,
+        GST_TYPE_QT_MUX_PAD);
+    gst_element_class_add_pad_template (element_class, captionsinktempl);
   }
 
   klass->format = params->prop->format;
@@ -638,6 +648,11 @@ gst_qt_mux_class_init (GstQTMuxClass * klass)
       g_param_spec_uint64 ("max-raw-audio-drift", "Max Raw Audio Drift",
           "Maximum allowed drift of raw audio samples vs. timestamps in nanoseconds",
           0, G_MAXUINT64, DEFAULT_MAX_RAW_AUDIO_DRIFT,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (gobject_class, PROP_START_GAP_THRESHOLD,
+      g_param_spec_uint64 ("start-gap-threshold", "Start Gap Threshold",
+          "Threshold for creating an edit list for gaps at the start in nanoseconds",
+          0, G_MAXUINT64, DEFAULT_START_GAP_THRESHOLD,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gstelement_class->request_new_pad =
@@ -810,6 +825,7 @@ gst_qt_mux_init (GstQTMux * qtmux, GstQTMuxClass * qtmux_klass)
   qtmux->interleave_bytes = DEFAULT_INTERLEAVE_BYTES;
   qtmux->interleave_time = DEFAULT_INTERLEAVE_TIME;
   qtmux->max_raw_audio_drift = DEFAULT_MAX_RAW_AUDIO_DRIFT;
+  qtmux->start_gap_threshold = DEFAULT_START_GAP_THRESHOLD;
 
   /* always need this */
   qtmux->context =
@@ -860,6 +876,159 @@ gst_qt_mux_prepare_jpc_buffer (GstQTPad * qtpad, GstBuffer * buf,
   GST_WRITE_UINT32_LE (map.data + 4, FOURCC_jp2c);
 
   gst_buffer_unmap (buf, &map);
+  gst_buffer_unref (buf);
+
+  return newbuf;
+}
+
+static gsize
+extract_608_field_from_s334_1a (const guint8 * ccdata, gsize ccdata_size,
+    guint field, guint8 ** res)
+{
+  guint8 *storage;
+  gsize storage_size = 128;
+  gsize i, res_size = 0;
+
+  storage = g_malloc0 (storage_size);
+
+  /* Iterate over the ccdata and put the corresponding tuples for the given field
+   * in the storage */
+  for (i = 0; i < ccdata_size; i += 3) {
+    if ((field == 1 && (ccdata[i * 3] & 0x80)) ||
+        (field == 2 && !(ccdata[i * 3] & 0x80))) {
+      GST_DEBUG ("Storing matching cc for field %d : 0x%02x 0x%02x", field,
+          ccdata[i * 3 + 1], ccdata[i * 3 + 2]);
+      if (res_size >= storage_size) {
+        storage_size += 128;
+        storage = g_realloc (storage, storage_size);
+      }
+      storage[res_size] = ccdata[i * 3 + 1];
+      storage[res_size + 1] = ccdata[i * 3 + 2];
+      res_size += 2;
+    }
+  }
+
+  if (res_size == 0) {
+    g_free (storage);
+    *res = NULL;
+    return 0;
+  }
+
+  *res = storage;
+  return res_size;
+}
+
+
+static GstBuffer *
+gst_qt_mux_prepare_caption_buffer (GstQTPad * qtpad, GstBuffer * buf,
+    GstQTMux * qtmux)
+{
+  GstBuffer *newbuf = NULL;
+  GstMapInfo map, inmap;
+  gsize size;
+  gboolean in_prefill;
+
+  if (buf == NULL)
+    return NULL;
+
+  in_prefill = (qtmux->mux_mode == GST_QT_MUX_MODE_ROBUST_RECORDING_PREFILL);
+
+  size = gst_buffer_get_size (buf);
+  gst_buffer_map (buf, &inmap, GST_MAP_READ);
+
+  GST_LOG_OBJECT (qtmux,
+      "Preparing caption buffer %" GST_FOURCC_FORMAT " size:%" G_GSIZE_FORMAT,
+      GST_FOURCC_ARGS (qtpad->fourcc), size);
+
+  switch (qtpad->fourcc) {
+    case FOURCC_c608:
+    {
+      guint8 *cdat, *cdt2;
+      gsize cdat_size, cdt2_size, total_size = 0;
+      gsize write_offs = 0;
+
+      cdat_size =
+          extract_608_field_from_s334_1a (inmap.data, inmap.size, 1, &cdat);
+      cdt2_size =
+          extract_608_field_from_s334_1a (inmap.data, inmap.size, 2, &cdt2);
+
+      if (cdat_size)
+        total_size += cdat_size + 8;
+      if (cdt2_size)
+        total_size += cdt2_size + 8;
+      if (total_size == 0) {
+        GST_DEBUG_OBJECT (qtmux, "No 608 data ?");
+        /* FIXME : We might want to *always* store something, even if
+         * it's "empty" CC (i.e. 0x80 0x80) */
+        break;
+      }
+
+      newbuf = gst_buffer_new_and_alloc (in_prefill ? 20 : total_size);
+      /* Let's copy over all metadata and not the memory */
+      gst_buffer_copy_into (newbuf, buf, GST_BUFFER_COPY_METADATA, 0, size);
+
+      gst_buffer_map (newbuf, &map, GST_MAP_WRITE);
+      if (cdat_size || in_prefill) {
+        GST_WRITE_UINT32_BE (map.data, in_prefill ? 10 : cdat_size + 8);
+        GST_WRITE_UINT32_LE (map.data + 4, FOURCC_cdat);
+        if (cdat_size)
+          memcpy (map.data + 8, cdat, in_prefill ? 2 : cdat_size);
+        else {
+          /* Write 'empty' CC */
+          map.data[8] = 0x80;
+          map.data[9] = 0x80;
+        }
+        write_offs = in_prefill ? 10 : cdat_size + 8;
+        if (cdat_size)
+          g_free (cdat);
+      }
+
+      if (cdt2_size || in_prefill) {
+        GST_WRITE_UINT32_BE (map.data + write_offs,
+            in_prefill ? 10 : cdt2_size + 8);
+        GST_WRITE_UINT32_LE (map.data + write_offs + 4, FOURCC_cdt2);
+        if (cdt2_size)
+          memcpy (map.data + write_offs + 8, cdt2, in_prefill ? 2 : cdt2_size);
+        else {
+          /* Write 'empty' CC */
+          map.data[write_offs + 8] = 0x80;
+          map.data[write_offs + 9] = 0x80;
+        }
+        if (cdt2_size)
+          g_free (cdt2);
+      }
+      gst_buffer_unmap (newbuf, &map);
+      break;
+    }
+      break;
+    case FOURCC_c708:
+    {
+      /* Take the whole CDP */
+      if (in_prefill && size > 256) {
+        GST_ERROR_OBJECT (qtmux, "Input C708 CDP too big for prefill mode !");
+        break;
+      }
+      newbuf = gst_buffer_new_and_alloc (in_prefill ? 256 + 8 : size + 8);
+
+      /* Let's copy over all metadata and not the memory */
+      gst_buffer_copy_into (newbuf, buf, GST_BUFFER_COPY_METADATA, 0, size);
+
+      gst_buffer_map (newbuf, &map, GST_MAP_WRITE);
+
+      GST_WRITE_UINT32_BE (map.data, size + 8);
+      GST_WRITE_UINT32_LE (map.data + 4, FOURCC_ccdp);
+      memcpy (map.data + 8, inmap.data, inmap.size);
+
+      gst_buffer_unmap (newbuf, &map);
+      break;
+    }
+    default:
+      /* theoretically this should never happen, but let's keep this here in case */
+      GST_WARNING_OBJECT (qtmux, "Unknown caption format");
+      break;
+  }
+
+  gst_buffer_unmap (buf, &inmap);
   gst_buffer_unref (buf);
 
   return newbuf;
@@ -2265,6 +2434,8 @@ prefill_get_block_index (GstQTMux * qtmux, GstQTPad * qpad)
     case FOURCC_apco:
     case FOURCC_ap4h:
     case FOURCC_ap4x:
+    case FOURCC_c608:
+    case FOURCC_c708:
       return qpad->sample_offset;
     case FOURCC_sowt:
     case FOURCC_twos:
@@ -2333,6 +2504,13 @@ prefill_get_sample_size (GstQTMux * qtmux, GstQTPad * qpad)
         return 900000;
       }
       break;
+    case FOURCC_c608:
+      /* We always write both cdat and cdt2 atom in prefill mode */
+      return 20;
+    case FOURCC_c708:
+      /* We're cheating a bit by always allocating 256 bytes plus 8 bytes for the atom header
+       * even if we use less  */
+      return 256 + 8;
     case FOURCC_sowt:
     case FOURCC_twos:{
       guint64 block_idx;
@@ -2367,6 +2545,8 @@ prefill_get_next_timestamp (GstQTMux * qtmux, GstQTPad * qpad)
     case FOURCC_apco:
     case FOURCC_ap4h:
     case FOURCC_ap4x:
+    case FOURCC_c608:
+    case FOURCC_c708:
       return gst_util_uint64_scale (qpad->sample_offset + 1,
           qpad->expected_sample_duration_d * GST_SECOND,
           qpad->expected_sample_duration_n);
@@ -2463,6 +2643,33 @@ prefill_raw_audio_prepare_buf_func (GstQTPad * qtpad, GstBuffer * buf,
   return buf;
 }
 
+static void
+find_video_sample_duration (GstQTMux * qtmux, guint * dur_n, guint * dur_d)
+{
+  GSList *walk;
+
+  /* Find the (first) video track and assume that we have to output
+   * in that size */
+  for (walk = qtmux->collect->data; walk; walk = g_slist_next (walk)) {
+    GstCollectData *cdata = (GstCollectData *) walk->data;
+    GstQTPad *tmp_qpad = (GstQTPad *) cdata;
+
+    if (tmp_qpad->trak->is_video) {
+      *dur_n = tmp_qpad->expected_sample_duration_n;
+      *dur_d = tmp_qpad->expected_sample_duration_d;
+      break;
+    }
+  }
+
+  if (walk == NULL) {
+    GST_INFO_OBJECT (qtmux,
+        "Found no video framerate, using 40ms audio buffers");
+    *dur_n = 25;
+    *dur_d = 1;
+  }
+}
+
+/* Called when all pads are prerolled to adjust and  */
 static gboolean
 prefill_update_sample_size (GstQTMux * qtmux, GstQTPad * qpad)
 {
@@ -2472,37 +2679,26 @@ prefill_update_sample_size (GstQTMux * qtmux, GstQTPad * qpad)
     case FOURCC_apcs:
     case FOURCC_apco:
     case FOURCC_ap4h:
-    case FOURCC_ap4x:{
+    case FOURCC_ap4x:
+    {
       guint sample_size = prefill_get_sample_size (qtmux, qpad);
+      atom_trak_set_constant_size_samples (qpad->trak, sample_size);
+      return TRUE;
+    }
+    case FOURCC_c608:
+    case FOURCC_c708:
+    {
+      guint sample_size = prefill_get_sample_size (qtmux, qpad);
+      /* We need a "valid" duration */
+      find_video_sample_duration (qtmux, &qpad->expected_sample_duration_n,
+          &qpad->expected_sample_duration_d);
       atom_trak_set_constant_size_samples (qpad->trak, sample_size);
       return TRUE;
     }
     case FOURCC_sowt:
     case FOURCC_twos:{
-      GSList *walk;
-
-      /* Find the (first) video track and assume that we have to output
-       * in that size */
-      for (walk = qtmux->collect->data; walk; walk = g_slist_next (walk)) {
-        GstCollectData *cdata = (GstCollectData *) walk->data;
-        GstQTPad *tmp_qpad = (GstQTPad *) cdata;
-
-        if (tmp_qpad->trak->is_video) {
-          qpad->expected_sample_duration_n =
-              tmp_qpad->expected_sample_duration_n;
-          qpad->expected_sample_duration_d =
-              tmp_qpad->expected_sample_duration_d;
-          break;
-        }
-      }
-
-      if (walk == NULL) {
-        GST_INFO_OBJECT (qpad->collect.pad,
-            "Found no video framerate, using 40ms audio buffers");
-        qpad->expected_sample_duration_n = 25;
-        qpad->expected_sample_duration_d = 1;
-      }
-
+      find_video_sample_duration (qtmux, &qpad->expected_sample_duration_n,
+          &qpad->expected_sample_duration_d);
       /* Set a prepare_buf_func that ensures this */
       qpad->prepare_buf_func = prefill_raw_audio_prepare_buf_func;
       qpad->raw_audio_adapter = gst_adapter_new ();
@@ -2780,6 +2976,10 @@ gst_qt_mux_start_file (GstQTMux * qtmux)
             (NULL));
         return GST_FLOW_ERROR;
       }
+      if (qtmux->reserved_moov_update_period == GST_CLOCK_TIME_NONE) {
+        GST_WARNING_OBJECT (qtmux,
+            "Robust muxing requires reserved-moov-update-period to be set");
+      }
       break;
     case GST_QT_MUX_MODE_FAST_START:
     case GST_QT_MUX_MODE_FRAGMENTED_STREAMABLE:
@@ -2839,6 +3039,50 @@ gst_qt_mux_start_file (GstQTMux * qtmux)
       suggested_timescale *= 2;
 
     qtmux->timescale = suggested_timescale;
+  }
+
+  /* Set width/height/timescale of any closed caption tracks to that of the
+   * first video track */
+  {
+    guint video_width = 0, video_height = 0;
+    guint32 video_timescale = 0;
+    GSList *walk;
+
+    for (walk = qtmux->sinkpads; walk; walk = g_slist_next (walk)) {
+      GstCollectData *cdata = (GstCollectData *) walk->data;
+      GstQTPad *qpad = (GstQTPad *) cdata;
+
+      if (!qpad->trak)
+        continue;
+
+      /* Not closed caption */
+      if (qpad->trak->mdia.hdlr.handler_type != FOURCC_clcp)
+        continue;
+
+      if (video_width == 0 || video_height == 0 || video_timescale == 0) {
+        GSList *walk2;
+
+        for (walk2 = qtmux->sinkpads; walk2; walk2 = g_slist_next (walk2)) {
+          GstCollectData *cdata2 = (GstCollectData *) walk2->data;
+          GstQTPad *qpad2 = (GstQTPad *) cdata2;
+
+          if (!qpad2->trak)
+            continue;
+
+          /* not video */
+          if (!qpad2->trak->mdia.minf.vmhd)
+            continue;
+
+          video_width = qpad2->trak->tkhd.width;
+          video_height = qpad2->trak->tkhd.height;
+          video_timescale = qpad2->trak->mdia.mdhd.time_info.timescale;
+        }
+      }
+
+      qpad->trak->tkhd.width = video_width << 16;
+      qpad->trak->tkhd.height = video_height << 16;
+      qpad->trak->mdia.mdhd.time_info.timescale = video_timescale;
+    }
   }
 
   /* initialize our moov recovery file */
@@ -3262,13 +3506,19 @@ gst_qt_mux_update_edit_lists (GstQTMux * qtmux)
       has_gap = (qtpad->first_ts > (qtmux->first_ts + qtpad->dts_adjustment));
 
       if (has_gap) {
-        GstClockTime diff;
+        GstClockTime diff, trak_lateness;
 
         diff = qtpad->first_ts - (qtmux->first_ts + qtpad->dts_adjustment);
         lateness = gst_util_uint64_scale_round (diff,
             qtmux->timescale, GST_SECOND);
 
-        if (lateness > 0) {
+        /* Allow up to 1 trak timescale unit of lateness, Such a small
+         * timestamp/duration can't be represented by the trak-specific parts
+         * of the headers anyway, so it's irrelevantly small */
+        trak_lateness = gst_util_uint64_scale (diff,
+            atom_trak_get_timescale (qtpad->trak), GST_SECOND);
+
+        if (trak_lateness > 0 && diff > qtmux->start_gap_threshold) {
           GST_DEBUG_OBJECT (qtmux,
               "Pad %s is a late stream by %" GST_TIME_FORMAT,
               GST_PAD_NAME (qtpad->collect.pad), GST_TIME_ARGS (diff));
@@ -3401,9 +3651,11 @@ gst_qt_mux_stop_file (GstQTMux * qtmux)
        * mvhd should be consistent with empty moov
        * (but TODO maybe some clients do not handle that well ?) */
       qtmux->moov->mvex.mehd.fragment_duration =
-          gst_util_uint64_scale (qtmux->last_dts, qtmux->timescale, GST_SECOND);
-      GST_DEBUG_OBJECT (qtmux, "rewriting moov with mvex duration %"
-          GST_TIME_FORMAT, GST_TIME_ARGS (qtmux->last_dts));
+          gst_util_uint64_scale_round (qtmux->last_dts, qtmux->timescale,
+          GST_SECOND);
+      GST_DEBUG_OBJECT (qtmux,
+          "rewriting moov with mvex duration %" GST_TIME_FORMAT,
+          GST_TIME_ARGS (qtmux->last_dts));
       /* seek and rewrite the header */
       gst_segment_init (&segment, GST_FORMAT_BYTES);
       segment.start = qtmux->moov_pos;
@@ -4019,6 +4271,21 @@ gst_qt_mux_register_and_push_sample (GstQTMux * qtmux, GstQTPad * pad,
         GST_ELEMENT_ERROR (qtmux, STREAM, MUX, (NULL),
             ("Unexpected values in sample %" G_GUINT64_FORMAT,
                 pad->sample_offset + 1));
+        GST_ERROR_OBJECT (qtmux, "Expected: samples %u, delta %u, size %u, "
+            "chunk offset %" G_GUINT64_FORMAT ", "
+            "pts offset %" G_GUINT64_FORMAT ", sync %d",
+            sample_entry->nsamples,
+            sample_entry->delta,
+            sample_entry->size,
+            sample_entry->chunk_offset,
+            sample_entry->pts_offset, sample_entry->sync);
+        GST_ERROR_OBJECT (qtmux, "Got: samples %u, delta %u, size %u, "
+            "chunk offset %" G_GUINT64_FORMAT ", "
+            "pts offset %" G_GUINT64_FORMAT ", sync %d",
+            nsamples,
+            (guint) scaled_duration,
+            sample_size, chunk_offset, pts_offset, sync);
+
         gst_buffer_unref (buffer);
         return GST_FLOW_ERROR;
       }
@@ -4517,8 +4784,10 @@ gst_qt_mux_add_buffer (GstQTMux * qtmux, GstQTPad * pad, GstBuffer * buf)
           gst_qt_mux_register_and_push_sample (qtmux, pad, empty_buf, FALSE, 1,
           last_dts + scaled_duration, empty_duration_scaled,
           empty_size, chunk_offset, sync, TRUE, 0);
-    } else {
-      /* our only case currently is tx3g subtitles, so there is no reason to fill this yet */
+    } else if (pad->fourcc != FOURCC_c608 && pad->fourcc != FOURCC_c708) {
+      /* This assert is kept here to make sure implementors of new
+       * sparse input format decide whether there needs to be special
+       * gap handling or not */
       g_assert_not_reached ();
       GST_WARNING_OBJECT (qtmux,
           "no empty buffer creation function found for pad %s",
@@ -4828,6 +5097,36 @@ gst_qtmux_caps_is_subset_full (GstQTMux * qtmux, GstCaps * subset,
   return gst_structure_foreach (sub_s, check_field, sup_s);
 }
 
+/* will unref @qtmux */
+static gboolean
+gst_qt_mux_can_renegotiate (GstQTMux * qtmux, GstPad * pad, GstCaps * caps)
+{
+  GstCaps *current_caps;
+
+  /* does not go well to renegotiate stream mid-way, unless
+   * the old caps are a subset of the new one (this means upstream
+   * added more info to the caps, as both should be 'fixed' caps) */
+  current_caps = gst_pad_get_current_caps (pad);
+  g_assert (caps != NULL);
+
+  if (!gst_qtmux_caps_is_subset_full (qtmux, current_caps, caps)) {
+    gst_caps_unref (current_caps);
+    GST_WARNING_OBJECT (qtmux,
+        "pad %s refused renegotiation to %" GST_PTR_FORMAT,
+        GST_PAD_NAME (pad), caps);
+    gst_object_unref (qtmux);
+    return FALSE;
+  }
+
+  GST_DEBUG_OBJECT (qtmux,
+      "pad %s accepted renegotiation to %" GST_PTR_FORMAT " from %"
+      GST_PTR_FORMAT, GST_PAD_NAME (pad), caps, current_caps);
+  gst_object_unref (qtmux);
+  gst_caps_unref (current_caps);
+
+  return TRUE;
+}
+
 static gboolean
 gst_qt_mux_audio_sink_set_caps (GstQTPad * qtpad, GstCaps * caps)
 {
@@ -4846,27 +5145,8 @@ gst_qt_mux_audio_sink_set_caps (GstQTPad * qtpad, GstCaps * caps)
   const gchar *stream_format;
   guint32 timescale;
 
-  /* does not go well to renegotiate stream mid-way, unless
-   * the old caps are a subset of the new one (this means upstream
-   * added more info to the caps, as both should be 'fixed' caps) */
-  if (qtpad->fourcc) {
-    GstCaps *current_caps;
-
-    current_caps = gst_pad_get_current_caps (pad);
-    g_assert (caps != NULL);
-
-    if (!gst_qtmux_caps_is_subset_full (qtmux, current_caps, caps)) {
-      gst_caps_unref (current_caps);
-      goto refuse_renegotiation;
-    }
-    GST_DEBUG_OBJECT (qtmux,
-        "pad %s accepted renegotiation to %" GST_PTR_FORMAT " from %"
-        GST_PTR_FORMAT, GST_PAD_NAME (pad), caps, current_caps);
-    gst_caps_unref (current_caps);
-    gst_object_unref (qtmux);
-
-    return TRUE;
-  }
+  if (qtpad->fourcc)
+    return gst_qt_mux_can_renegotiate (qtmux, pad, caps);
 
   GST_DEBUG_OBJECT (qtmux, "%s:%s, caps=%" GST_PTR_FORMAT,
       GST_DEBUG_PAD_NAME (pad), caps);
@@ -5192,14 +5472,6 @@ refuse_caps:
     gst_object_unref (qtmux);
     return FALSE;
   }
-refuse_renegotiation:
-  {
-    GST_WARNING_OBJECT (qtmux,
-        "pad %s refused renegotiation to %" GST_PTR_FORMAT,
-        GST_PAD_NAME (pad), caps);
-    gst_object_unref (qtmux);
-    return FALSE;
-  }
 }
 
 static gboolean
@@ -5223,27 +5495,8 @@ gst_qt_mux_video_sink_set_caps (GstQTPad * qtpad, GstCaps * caps)
   int par_num, par_den;
   const gchar *multiview_mode;
 
-  /* does not go well to renegotiate stream mid-way, unless
-   * the old caps are a subset of the new one (this means upstream
-   * added more info to the caps, as both should be 'fixed' caps) */
-  if (qtpad->fourcc) {
-    GstCaps *current_caps;
-
-    current_caps = gst_pad_get_current_caps (pad);
-    g_assert (caps != NULL);
-
-    if (!gst_qtmux_caps_is_subset_full (qtmux, current_caps, caps)) {
-      gst_caps_unref (current_caps);
-      goto refuse_renegotiation;
-    }
-    GST_DEBUG_OBJECT (qtmux,
-        "pad %s accepted renegotiation to %" GST_PTR_FORMAT " from %"
-        GST_PTR_FORMAT, GST_PAD_NAME (pad), caps, current_caps);
-    gst_caps_unref (current_caps);
-    gst_object_unref (qtmux);
-
-    return TRUE;
-  }
+  if (qtpad->fourcc)
+    return gst_qt_mux_can_renegotiate (qtmux, pad, caps);
 
   GST_DEBUG_OBJECT (qtmux, "%s:%s, caps=%" GST_PTR_FORMAT,
       GST_DEBUG_PAD_NAME (pad), caps);
@@ -5578,6 +5831,35 @@ gst_qt_mux_video_sink_set_caps (GstQTPad * qtpad, GstCaps * caps)
   } else if (strcmp (mimetype, "video/x-cineform") == 0) {
     entry.fourcc = FOURCC_cfhd;
     sync = FALSE;
+  } else if (strcmp (mimetype, "video/x-av1") == 0) {
+    gint presentation_delay;
+    guint8 presentation_delay_byte = 0;
+    GstBuffer *av1_codec_data;
+
+    if (gst_structure_get_int (structure, "presentation-delay",
+            &presentation_delay)) {
+      presentation_delay_byte = 1 << 5;
+      presentation_delay_byte |= MAX (0xF, presentation_delay & 0xF);
+    }
+
+
+    av1_codec_data = gst_buffer_new_allocate (NULL, 5, NULL);
+    /* Fill version and 3 bytes of flags to 0 */
+    gst_buffer_memset (av1_codec_data, 0, 0, 4);
+    gst_buffer_fill (av1_codec_data, 4, &presentation_delay_byte, 1);
+    if (codec_data)
+      av1_codec_data = gst_buffer_append (av1_codec_data,
+          gst_buffer_ref ((GstBuffer *) codec_data));
+
+    entry.fourcc = FOURCC_av01;
+
+    ext_atom = build_btrt_extension (0, qtpad->avg_bitrate, qtpad->max_bitrate);
+    if (ext_atom != NULL)
+      ext_atom_list = g_list_prepend (ext_atom_list, ext_atom);
+    ext_atom = build_codec_data_extension (FOURCC_av1C, av1_codec_data);
+    if (ext_atom != NULL)
+      ext_atom_list = g_list_prepend (ext_atom_list, ext_atom);
+    gst_buffer_unref (av1_codec_data);
   }
 
   if (!entry.fourcc)
@@ -5747,15 +6029,6 @@ refuse_caps:
     gst_object_unref (qtmux);
     return FALSE;
   }
-refuse_renegotiation:
-  {
-    GST_ELEMENT_WARNING (qtmux, STREAM, FORMAT,
-        ("Can't change input format at runtime."),
-        ("pad %s refused renegotiation to %" GST_PTR_FORMAT, GST_PAD_NAME (pad),
-            caps));
-    gst_object_unref (qtmux);
-    return FALSE;
-  }
 }
 
 static gboolean
@@ -5766,27 +6039,8 @@ gst_qt_mux_subtitle_sink_set_caps (GstQTPad * qtpad, GstCaps * caps)
   GstStructure *structure;
   SubtitleSampleEntry entry = { 0, };
 
-  /* does not go well to renegotiate stream mid-way, unless
-   * the old caps are a subset of the new one (this means upstream
-   * added more info to the caps, as both should be 'fixed' caps) */
-  if (qtpad->fourcc) {
-    GstCaps *current_caps;
-
-    current_caps = gst_pad_get_current_caps (pad);
-    g_assert (caps != NULL);
-
-    if (!gst_qtmux_caps_is_subset_full (qtmux, current_caps, caps)) {
-      gst_caps_unref (current_caps);
-      goto refuse_renegotiation;
-    }
-    GST_DEBUG_OBJECT (qtmux,
-        "pad %s accepted renegotiation to %" GST_PTR_FORMAT " from %"
-        GST_PTR_FORMAT, GST_PAD_NAME (pad), caps, current_caps);
-    gst_caps_unref (current_caps);
-    gst_object_unref (qtmux);
-
-    return TRUE;
-  }
+  if (qtpad->fourcc)
+    return gst_qt_mux_can_renegotiate (qtmux, pad, caps);
 
   GST_DEBUG_OBJECT (qtmux, "%s:%s, caps=%" GST_PTR_FORMAT,
       GST_DEBUG_PAD_NAME (pad), caps);
@@ -5828,11 +6082,66 @@ refuse_caps:
     gst_object_unref (qtmux);
     return FALSE;
   }
-refuse_renegotiation:
+}
+
+static gboolean
+gst_qt_mux_caption_sink_set_caps (GstQTPad * qtpad, GstCaps * caps)
+{
+  GstPad *pad = qtpad->collect.pad;
+  GstQTMux *qtmux = GST_QT_MUX_CAST (gst_pad_get_parent (pad));
+  GstStructure *structure;
+  guint32 fourcc_entry;
+  guint32 timescale;
+
+  if (qtpad->fourcc)
+    return gst_qt_mux_can_renegotiate (qtmux, pad, caps);
+
+  GST_DEBUG_OBJECT (qtmux, "%s:%s, caps=%" GST_PTR_FORMAT,
+      GST_DEBUG_PAD_NAME (pad), caps);
+
+  /* captions default */
+  qtpad->is_out_of_order = FALSE;
+  qtpad->sync = FALSE;
+  qtpad->sparse = TRUE;
+  /* Closed caption data are within atoms */
+  qtpad->prepare_buf_func = gst_qt_mux_prepare_caption_buffer;
+
+  structure = gst_caps_get_structure (caps, 0);
+
+  /* We know we only handle 608,format=s334-1a and 708,format=cdp */
+  if (gst_structure_has_name (structure, "closedcaption/x-cea-608")) {
+    fourcc_entry = FOURCC_c608;
+  } else if (gst_structure_has_name (structure, "closedcaption/x-cea-708")) {
+    fourcc_entry = FOURCC_c708;
+  } else
+    goto refuse_caps;
+
+  /* We set the real timescale later to the one from the video track when
+   * writing the headers */
+  timescale = gst_qt_mux_pad_get_timescale (GST_QT_MUX_PAD_CAST (pad));
+  if (!timescale && qtmux->trak_timescale)
+    timescale = qtmux->trak_timescale;
+  else if (!timescale)
+    timescale = 30000;
+
+  qtpad->fourcc = fourcc_entry;
+  qtpad->trak_ste =
+      (SampleTableEntry *) atom_trak_set_caption_type (qtpad->trak,
+      qtmux->context, timescale, fourcc_entry);
+
+  /* Initialize caption track language code to 0 unless something else is
+   * specified. Without this, Final Cut considers it "non-standard"
+   */
+  qtpad->trak->mdia.mdhd.language_code = 0;
+
+  gst_object_unref (qtmux);
+  return TRUE;
+
+  /* ERRORS */
+refuse_caps:
   {
-    GST_WARNING_OBJECT (qtmux,
-        "pad %s refused renegotiation to %" GST_PTR_FORMAT, GST_PAD_NAME (pad),
-        caps);
+    GST_WARNING_OBJECT (qtmux, "pad %s refused caps %" GST_PTR_FORMAT,
+        GST_PAD_NAME (pad), caps);
     gst_object_unref (qtmux);
     return FALSE;
   }
@@ -5910,9 +6219,7 @@ gst_qt_mux_sink_event (GstCollectPads * pads, GstCollectData * data,
           g_assert (qtpad);
           if (qtpad->trak) {
             /* https://developer.apple.com/library/mac/#documentation/QuickTime/QTFF/QTFFChap4/qtff4.html */
-            qtpad->trak->mdia.mdhd.language_code =
-                (iso_code[0] - 0x60) * 0x400 + (iso_code[1] - 0x60) * 0x20 +
-                (iso_code[2] - 0x60);
+            qtpad->trak->mdia.mdhd.language_code = language_code (iso_code);
           }
         }
         g_free (code);
@@ -6007,6 +6314,14 @@ gst_qt_mux_request_new_pad (GstElement * element,
       name = g_strdup (req_name);
     } else {
       name = g_strdup_printf ("subtitle_%u", qtmux->subtitle_pads++);
+    }
+    lock = FALSE;
+  } else if (templ == gst_element_class_get_pad_template (klass, "caption_%u")) {
+    setcaps_func = gst_qt_mux_caption_sink_set_caps;
+    if (req_name != NULL && sscanf (req_name, "caption_%u", &pad_id) == 1) {
+      name = g_strdup (req_name);
+    } else {
+      name = g_strdup_printf ("caption_%u", qtmux->caption_pads++);
     }
     lock = FALSE;
   } else
@@ -6132,6 +6447,9 @@ gst_qt_mux_get_property (GObject * object,
     case PROP_MAX_RAW_AUDIO_DRIFT:
       g_value_set_uint64 (value, qtmux->max_raw_audio_drift);
       break;
+    case PROP_START_GAP_THRESHOLD:
+      g_value_set_uint64 (value, qtmux->start_gap_threshold);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -6223,6 +6541,9 @@ gst_qt_mux_set_property (GObject * object,
     case PROP_MAX_RAW_AUDIO_DRIFT:
       qtmux->max_raw_audio_drift = g_value_get_uint64 (value);
       break;
+    case PROP_START_GAP_THRESHOLD:
+      qtmux->start_gap_threshold = g_value_get_uint64 (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -6303,7 +6624,7 @@ gst_qt_mux_register (GstPlugin * plugin)
 
   while (TRUE) {
     GstQTMuxFormatProp *prop;
-    GstCaps *subtitle_caps;
+    GstCaps *subtitle_caps, *caption_caps;
 
     prop = &gst_qt_mux_format_list[i];
     format = prop->format;
@@ -6321,6 +6642,12 @@ gst_qt_mux_register (GstPlugin * plugin)
       params->subtitle_sink_caps = subtitle_caps;
     } else {
       gst_caps_unref (subtitle_caps);
+    }
+    caption_caps = gst_static_caps_get (&prop->caption_sink_caps);
+    if (!gst_caps_is_equal (caption_caps, GST_CAPS_NONE)) {
+      params->caption_sink_caps = caption_caps;
+    } else {
+      gst_caps_unref (caption_caps);
     }
 
     /* create the type now */

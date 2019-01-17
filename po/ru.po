@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-10-02 23:03+0100\n"
+"POT-Creation-Date: 2019-01-17 01:59+0000\n"
 "PO-Revision-Date: 2017-05-05 19:23+0300\n"
 "Last-Translator: Yuri Kozlov <yuray@komyakino.ru>\n"
 "Language-Team: Russian <gnu@d07.ru>\n"
@@ -98,11 +98,6 @@ msgstr "Файл не полон и не может быть воспроизв�
 
 msgid "The video in this file might not play correctly."
 msgstr "Видео из этого файла может быть воспроизведено некорректно."
-
-#, c-format
-msgid "This file contains too many streams. Only playing first %d"
-msgstr ""
-"Файл содержит слишком много потоков. Будет воспроизведёно только первых %d"
 
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
@@ -421,6 +416,10 @@ msgstr ""
 
 msgid "Cannot operate without a clock"
 msgstr "Операция невозможна без часов"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr ""
+#~ "Файл содержит слишком много потоков. Будет воспроизведёно только первых %d"
 
 #~ msgid "Record Source"
 #~ msgstr "Устройство записи"

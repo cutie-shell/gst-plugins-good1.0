@@ -22,6 +22,7 @@
 
 #include <gst/gst.h>
 #include <gst/pbutils/pbutils.h>
+#include <gst/base/base.h>
 
 G_BEGIN_DECLS
 #define GST_TYPE_SPLITMUX_SINK               (gst_splitmux_sink_get_type())
@@ -73,12 +74,14 @@ typedef struct _MqStreamCtx
   guint q_overrun_id;
   guint sink_pad_block_id;
   guint src_pad_block_id;
+  gulong fragment_block_id;
 
   gboolean is_reference;
 
   gboolean flushing;
   gboolean in_eos;
   gboolean out_eos;
+  gboolean out_eos_async_done;
   gboolean need_unblock;
   gboolean caps_change;
 
@@ -117,6 +120,8 @@ struct _GstSplitMuxSink
   gchar *threshold_timecode_str;
   GstClockTime next_max_tc_time;
   GstClockTime alignment_threshold;
+
+  gboolean reset_muxer;
 
   GstElement *muxer;
   GstElement *sink;
@@ -167,7 +172,16 @@ struct _GstSplitMuxSink
   gboolean use_robust_muxing;
   gboolean muxer_has_reserved_props;
 
-  gboolean split_now;
+  gboolean split_requested;
+  gboolean do_split_next_gop;
+  GstQueueArray *times_to_split;
+
+  /* Async finalize options */
+  gboolean async_finalize;
+  gchar *muxer_factory;
+  GstStructure *muxer_properties;
+  gchar *sink_factory;
+  GstStructure *sink_properties;
 };
 
 struct _GstSplitMuxSinkClass
@@ -176,6 +190,8 @@ struct _GstSplitMuxSinkClass
 
   /* actions */
   void     (*split_now)   (GstSplitMuxSink * splitmux);
+  void     (*split_after) (GstSplitMuxSink * splitmux);
+  void     (*split_at_running_time)   (GstSplitMuxSink * splitmux, GstClockTime split_time);
 };
 
 G_END_DECLS

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-10-02 23:03+0100\n"
+"POT-Creation-Date: 2019-01-17 01:59+0000\n"
 "PO-Revision-Date: 2017-05-23 23:04+0200\n"
 "Last-Translator: Johnny A. Solbu <johnny@solbu.net>\n"
 "Language-Team: Norwegian Bokmaal <i18n-nb@lister.ping.uio.no>\n"
@@ -91,10 +91,6 @@ msgstr "Filen er ufullstendig og kan ikke spilles."
 
 msgid "The video in this file might not play correctly."
 msgstr "Videoen i denne filen spilles kanskje ikke av korrekt."
-
-#, c-format
-msgid "This file contains too many streams. Only playing first %d"
-msgstr "Filen inneholder for mange strømmer. Spiller bare første %d"
 
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
@@ -405,6 +401,9 @@ msgstr "Endring av oppløsning under kjøring støttes ikke enda."
 
 msgid "Cannot operate without a clock"
 msgstr "Kan ikke operere uten en klokke"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr "Filen inneholder for mange strømmer. Spiller bare første %d"
 
 #~ msgid "Record Source"
 #~ msgstr "Opptakskilde"

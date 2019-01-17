@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.10.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-10-02 23:03+0100\n"
+"POT-Creation-Date: 2019-01-17 01:59+0000\n"
 "PO-Revision-Date: 2016-11-10 22:06+0700\n"
 "Last-Translator: Andhika Padmawan <andhika.padmawan@gmail.com>\n"
 "Language-Team: Indonesian <translation-team-id@lists.sourceforge.net>\n"
@@ -92,10 +92,6 @@ msgstr "Berkas ini tidak lengkap dan tak dapat diputar."
 
 msgid "The video in this file might not play correctly."
 msgstr "Video di berkas ini mungkin tak dapat diputar dengan benar."
-
-#, c-format
-msgid "This file contains too many streams. Only playing first %d"
-msgstr "Berkas ini berisi terlalu banyak arus. Hanya memutar %d pertama"
 
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
@@ -409,6 +405,9 @@ msgstr "Mengubah resolusi saat waktu berjalan belum didukung."
 
 msgid "Cannot operate without a clock"
 msgstr "Tak dapat beroperasi tanpa jam"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr "Berkas ini berisi terlalu banyak arus. Hanya memutar %d pertama"
 
 #~ msgid "Record Source"
 #~ msgstr "Sumber Rekaman"

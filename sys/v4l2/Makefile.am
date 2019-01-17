@@ -15,8 +15,11 @@ libgstvideo4linux2_la_SOURCES = gstv4l2.c \
 				gstv4l2transform.c \
 				gstv4l2videodec.c \
 				gstv4l2videoenc.c \
+				gstv4l2fwhtenc.c \
 				gstv4l2h263enc.c \
 				gstv4l2h264enc.c \
+				gstv4l2h265enc.c \
+				gstv4l2jpegenc.c \
 				gstv4l2mpeg4enc.c \
 				gstv4l2vidorient.c \
 				gstv4l2vp8enc.c \
@@ -61,8 +64,11 @@ noinst_HEADERS = \
 	gstv4l2transform.h \
 	gstv4l2videodec.h \
 	gstv4l2videoenc.h \
+	gstv4l2fwhtenc.h \
 	gstv4l2h263enc.h \
 	gstv4l2h264enc.h \
+	gstv4l2h265enc.h \
+	gstv4l2jpegenc.h \
 	gstv4l2mpeg4enc.h \
 	gstv4l2vidorient.h \
 	gstv4l2vp8enc.h \

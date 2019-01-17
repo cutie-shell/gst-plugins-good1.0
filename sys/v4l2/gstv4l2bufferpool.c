@@ -611,7 +611,7 @@ wrong_config:
 }
 
 static GstFlowReturn
-gst_v4l2_buffer_pool_resurect_buffer (GstV4l2BufferPool * pool)
+gst_v4l2_buffer_pool_resurrect_buffer (GstV4l2BufferPool * pool)
 {
   GstBufferPoolAcquireParams params = { 0 };
   GstBuffer *buffer = NULL;
@@ -652,9 +652,9 @@ gst_v4l2_buffer_pool_streamon (GstV4l2BufferPool * pool)
       if (!V4L2_TYPE_IS_OUTPUT (pool->obj->type)) {
         /* For captures, we need to enqueue buffers before we start streaming,
          * so the driver don't underflow immediatly. As we have put then back
-         * into the base class queue, resurect them, then releasing will queue
+         * into the base class queue, resurrect them, then releasing will queue
          * them back. */
-        while (gst_v4l2_buffer_pool_resurect_buffer (pool) == GST_FLOW_OK)
+        while (gst_v4l2_buffer_pool_resurrect_buffer (pool) == GST_FLOW_OK)
           continue;
       }
 
@@ -741,6 +741,23 @@ gst_v4l2_buffer_pool_start (GstBufferPool * bpool)
   gboolean can_allocate = FALSE, ret = TRUE;
 
   GST_DEBUG_OBJECT (pool, "activating pool");
+
+  if (pool->other_pool) {
+    GstBuffer *buffer;
+
+    if (!gst_buffer_pool_set_active (pool->other_pool, TRUE))
+      goto other_pool_failed;
+
+    if (gst_buffer_pool_acquire_buffer (pool->other_pool, &buffer, NULL) !=
+        GST_FLOW_OK)
+      goto other_pool_failed;
+
+    if (!gst_v4l2_object_try_import (obj, buffer)) {
+      gst_buffer_unref (buffer);
+      goto cannot_import;
+    }
+    gst_buffer_unref (buffer);
+  }
 
   config = gst_buffer_pool_get_config (bpool);
   if (!gst_buffer_pool_config_get_params (config, &caps, &size, &min_buffers,
@@ -861,10 +878,6 @@ gst_v4l2_buffer_pool_start (GstBufferPool * bpool)
   pclass->set_config (bpool, config);
   gst_structure_free (config);
 
-  if (pool->other_pool)
-    if (!gst_buffer_pool_set_active (pool->other_pool, TRUE))
-      goto other_pool_failed;
-
   /* now, allocate the buffers: */
   if (!pclass->start (bpool))
     goto start_failed;
@@ -875,7 +888,7 @@ gst_v4l2_buffer_pool_start (GstBufferPool * bpool)
 
     pool->group_released_handler =
         g_signal_connect_swapped (pool->vallocator, "group-released",
-        G_CALLBACK (gst_v4l2_buffer_pool_resurect_buffer), pool);
+        G_CALLBACK (gst_v4l2_buffer_pool_resurrect_buffer), pool);
     ret = gst_v4l2_buffer_pool_streamon (pool);
   }
 
@@ -903,13 +916,18 @@ start_failed:
   }
 other_pool_failed:
   {
-    GST_ERROR_OBJECT (pool, "failed to active the other pool %"
+    GST_ERROR_OBJECT (pool, "failed to activate the other pool %"
         GST_PTR_FORMAT, pool->other_pool);
     return FALSE;
   }
 queue_failed:
   {
     GST_ERROR_OBJECT (pool, "failed to queue buffers into the capture queue");
+    return FALSE;
+  }
+cannot_import:
+  {
+    GST_ERROR_OBJECT (pool, "cannot import buffers from downstream pool");
     return FALSE;
   }
 }
@@ -984,26 +1002,43 @@ gst_v4l2_buffer_pool_flush_stop (GstBufferPool * bpool)
 }
 
 static GstFlowReturn
-gst_v4l2_buffer_pool_poll (GstV4l2BufferPool * pool)
+gst_v4l2_buffer_pool_poll (GstV4l2BufferPool * pool, gboolean wait)
 {
   gint ret;
+  GstClockTime timeout;
+
+  if (wait)
+    timeout = GST_CLOCK_TIME_NONE;
+  else
+    timeout = 0;
 
   /* In RW mode there is no queue, hence no need to wait while the queue is
    * empty */
   if (pool->obj->mode != GST_V4L2_IO_RW) {
     GST_OBJECT_LOCK (pool);
+
+    if (!wait && pool->empty) {
+      GST_OBJECT_UNLOCK (pool);
+      goto no_buffers;
+    }
+
     while (pool->empty)
       g_cond_wait (&pool->empty_cond, GST_OBJECT_GET_LOCK (pool));
+
     GST_OBJECT_UNLOCK (pool);
   }
 
-  if (!pool->can_poll_device)
-    goto done;
+  if (!pool->can_poll_device) {
+    if (wait)
+      goto done;
+    else
+      goto no_buffers;
+  }
 
   GST_LOG_OBJECT (pool, "polling device");
 
 again:
-  ret = gst_poll_wait (pool->poll, GST_CLOCK_TIME_NONE);
+  ret = gst_poll_wait (pool->poll, timeout);
   if (G_UNLIKELY (ret < 0)) {
     switch (errno) {
       case EBUSY:
@@ -1025,6 +1060,9 @@ again:
   if (gst_poll_fd_has_error (pool->poll, &pool->pollfd))
     goto select_error;
 
+  if (ret == 0)
+    goto no_buffers;
+
 done:
   return GST_FLOW_OK;
 
@@ -1040,20 +1078,17 @@ select_error:
         ("poll error %d: %s (%d)", ret, g_strerror (errno), errno));
     return GST_FLOW_ERROR;
   }
+no_buffers:
+  return GST_FLOW_CUSTOM_SUCCESS;
 }
 
 static GstFlowReturn
-gst_v4l2_buffer_pool_qbuf (GstV4l2BufferPool * pool, GstBuffer * buf)
+gst_v4l2_buffer_pool_qbuf (GstV4l2BufferPool * pool, GstBuffer * buf,
+    GstV4l2MemoryGroup * group)
 {
-  GstV4l2MemoryGroup *group = NULL;
   const GstV4l2Object *obj = pool->obj;
   GstClockTime timestamp;
   gint index;
-
-  if (!gst_v4l2_is_buffer_valid (buf, &group)) {
-    GST_ERROR_OBJECT (pool, "invalid buffer %p", buf);
-    return GST_FLOW_ERROR;
-  }
 
   index = group->buffer.index;
 
@@ -1120,10 +1155,11 @@ queue_failed:
 }
 
 static GstFlowReturn
-gst_v4l2_buffer_pool_dqbuf (GstV4l2BufferPool * pool, GstBuffer ** buffer)
+gst_v4l2_buffer_pool_dqbuf (GstV4l2BufferPool * pool, GstBuffer ** buffer,
+    gboolean wait)
 {
   GstFlowReturn res;
-  GstBuffer *outbuf;
+  GstBuffer *outbuf = NULL;
   GstV4l2Object *obj = pool->obj;
   GstClockTime timestamp;
   GstV4l2MemoryGroup *group;
@@ -1131,8 +1167,13 @@ gst_v4l2_buffer_pool_dqbuf (GstV4l2BufferPool * pool, GstBuffer ** buffer)
   gsize size;
   gint i;
 
-  if ((res = gst_v4l2_buffer_pool_poll (pool)) != GST_FLOW_OK)
+  if ((res = gst_v4l2_buffer_pool_poll (pool, wait)) < GST_FLOW_OK)
     goto poll_failed;
+
+  if (res == GST_FLOW_CUSTOM_SUCCESS) {
+    GST_LOG_OBJECT (pool, "nothing to dequeue");
+    goto done;
+  }
 
   GST_LOG_OBJECT (pool, "dequeueing a buffer");
 
@@ -1260,7 +1301,7 @@ gst_v4l2_buffer_pool_dqbuf (GstV4l2BufferPool * pool, GstBuffer ** buffer)
 done:
   *buffer = outbuf;
 
-  return GST_FLOW_OK;
+  return res;
 
   /* ERRORS */
 poll_failed:
@@ -1295,7 +1336,7 @@ gst_v4l2_buffer_pool_acquire_buffer (GstBufferPool * bpool, GstBuffer ** buffer,
 
   GST_DEBUG_OBJECT (pool, "acquire");
 
-  /* If this is being called to resurect a lost buffer */
+  /* If this is being called to resurrect a lost buffer */
   if (params && params->flags & GST_V4L2_BUFFER_POOL_ACQUIRE_FLAG_RESURRECT) {
     ret = pclass->acquire_buffer (bpool, buffer, params);
     goto done;
@@ -1320,7 +1361,7 @@ gst_v4l2_buffer_pool_acquire_buffer (GstBufferPool * bpool, GstBuffer ** buffer,
           /* just dequeue a buffer, we basically use the queue of v4l2 as the
            * storage for our buffers. This function does poll first so we can
            * interrupt it fine. */
-          ret = gst_v4l2_buffer_pool_dqbuf (pool, buffer);
+          ret = gst_v4l2_buffer_pool_dqbuf (pool, buffer, TRUE);
           break;
         }
         default:
@@ -1391,11 +1432,14 @@ gst_v4l2_buffer_pool_release_buffer (GstBufferPool * bpool, GstBuffer * buffer)
         {
           GstV4l2MemoryGroup *group;
           if (gst_v4l2_is_buffer_valid (buffer, &group)) {
+            GstFlowReturn ret = GST_FLOW_OK;
+
             gst_v4l2_allocator_reset_group (pool->vallocator, group);
             /* queue back in the device */
             if (pool->other_pool)
-              gst_v4l2_buffer_pool_prepare_buffer (pool, buffer, NULL);
-            if (gst_v4l2_buffer_pool_qbuf (pool, buffer) != GST_FLOW_OK)
+              ret = gst_v4l2_buffer_pool_prepare_buffer (pool, buffer, NULL);
+            if (ret != GST_FLOW_OK ||
+                gst_v4l2_buffer_pool_qbuf (pool, buffer, group) != GST_FLOW_OK)
               pclass->release_buffer (bpool, buffer);
           } else {
             /* Simply release invalide/modified buffer, the allocator will
@@ -1632,7 +1676,7 @@ gst_v4l2_do_read (GstV4l2BufferPool * pool, GstBuffer * buf)
   gst_buffer_map (buf, &map, GST_MAP_WRITE);
 
   do {
-    if ((res = gst_v4l2_buffer_pool_poll (pool)) != GST_FLOW_OK)
+    if ((res = gst_v4l2_buffer_pool_poll (pool, TRUE)) != GST_FLOW_OK)
       goto poll_error;
 
     amount = obj->read (obj->video_fd, map.data, toread);
@@ -1735,7 +1779,7 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf)
             /* If we have no more buffer, and can allocate it time to do so */
             if (num_queued == 0) {
               if (GST_V4L2_ALLOCATOR_CAN_ALLOCATE (pool->vallocator, MMAP)) {
-                ret = gst_v4l2_buffer_pool_resurect_buffer (pool);
+                ret = gst_v4l2_buffer_pool_resurrect_buffer (pool);
                 if (ret == GST_FLOW_OK)
                   goto done;
               }
@@ -1746,7 +1790,7 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf)
               GstBuffer *copy;
 
               if (GST_V4L2_ALLOCATOR_CAN_ALLOCATE (pool->vallocator, MMAP)) {
-                ret = gst_v4l2_buffer_pool_resurect_buffer (pool);
+                ret = gst_v4l2_buffer_pool_resurrect_buffer (pool);
                 if (ret == GST_FLOW_OK)
                   goto done;
               }
@@ -1767,7 +1811,8 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf)
           }
 
           /* buffer not from our pool, grab a frame and copy it into the target */
-          if ((ret = gst_v4l2_buffer_pool_dqbuf (pool, &tmp)) != GST_FLOW_OK)
+          if ((ret = gst_v4l2_buffer_pool_dqbuf (pool, &tmp, TRUE))
+              != GST_FLOW_OK)
             goto done;
 
           /* An empty buffer on capture indicates the end of stream */
@@ -1846,6 +1891,7 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf)
         case GST_V4L2_IO_MMAP:
         {
           GstBuffer *to_queue = NULL;
+          GstBuffer *buffer;
           GstV4l2MemoryGroup *group;
           gint index;
 
@@ -1886,9 +1932,13 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf)
               gst_buffer_unref (to_queue);
               goto prepare_failed;
             }
+
+            /* retreive the group */
+            gst_v4l2_is_buffer_valid (to_queue, &group);
           }
 
-          if ((ret = gst_v4l2_buffer_pool_qbuf (pool, to_queue)) != GST_FLOW_OK)
+          if ((ret = gst_v4l2_buffer_pool_qbuf (pool, to_queue, group))
+              != GST_FLOW_OK)
             goto queue_failed;
 
           /* if we are not streaming yet (this is the first buffer, start
@@ -1916,15 +1966,21 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf)
            * otherwise the pool will think it is outstanding and will refuse to stop. */
           gst_buffer_unref (to_queue);
 
+          /* release as many buffer as possible */
+          while (gst_v4l2_buffer_pool_dqbuf (pool, &buffer, FALSE) ==
+              GST_FLOW_OK) {
+            if (buffer->pool == NULL)
+              gst_v4l2_buffer_pool_release_buffer (bpool, buffer);
+          }
+
           if (g_atomic_int_get (&pool->num_queued) >= pool->min_latency) {
-            GstBuffer *out;
             /* all buffers are queued, try to dequeue one and release it back
              * into the pool so that _acquire can get to it again. */
-            ret = gst_v4l2_buffer_pool_dqbuf (pool, &out);
-            if (ret == GST_FLOW_OK && out->pool == NULL)
+            ret = gst_v4l2_buffer_pool_dqbuf (pool, &buffer, TRUE);
+            if (ret == GST_FLOW_OK && buffer->pool == NULL)
               /* release the rendered buffer back into the pool. This wakes up any
                * thread waiting for a buffer in _acquire(). */
-              gst_v4l2_buffer_pool_release_buffer (bpool, out);
+              gst_v4l2_buffer_pool_release_buffer (bpool, buffer);
           }
           break;
         }

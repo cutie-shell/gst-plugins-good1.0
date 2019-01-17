@@ -53,13 +53,6 @@
  * SSRC in the RTP packets to its own SSRC and wil forward the packets on the
  * send_rtp_src_\%u pad after updating its internal state.
  *
- * #GstRtpBin can also demultiplex incoming bundled streams. The first
- * #GstRtpSession will have a #GstRtpSsrcDemux element splitting the streams
- * based on their SSRC and potentially dispatched to a different #GstRtpSession.
- * Because retransmission SSRCs need to be merged with the corresponding media
- * stream the #GstRtpBin::on-bundled-ssrc signal is emitted so that the
- * application can find out to which session the SSRC belongs.
- *
  * The session manager needs the clock-rate of the payload types it is handling
  * and will signal the #GstRtpSession::request-pt-map signal when it needs such a
  * mapping. One can clear the cached values with the #GstRtpSession::clear-pt-map
@@ -204,9 +197,6 @@ static GstStaticPadTemplate rtpbin_send_rtp_src_template =
     GST_STATIC_CAPS ("application/x-rtp;application/x-srtp")
     );
 
-#define GST_RTP_BIN_GET_PRIVATE(obj)  \
-   (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GST_TYPE_RTP_BIN, GstRtpBinPrivate))
-
 #define GST_RTP_BIN_LOCK(bin)   g_mutex_lock (&(bin)->priv->bin_lock)
 #define GST_RTP_BIN_UNLOCK(bin) g_mutex_unlock (&(bin)->priv->bin_lock)
 
@@ -262,6 +252,7 @@ enum
   SIGNAL_RESET_SYNC,
   SIGNAL_GET_SESSION,
   SIGNAL_GET_INTERNAL_SESSION,
+  SIGNAL_GET_STORAGE,
   SIGNAL_GET_INTERNAL_STORAGE,
 
   SIGNAL_ON_NEW_SSRC,
@@ -386,12 +377,12 @@ static void free_client (GstRtpBinClient * client, GstRtpBin * bin);
 static void free_stream (GstRtpBinStream * stream, GstRtpBin * bin);
 static GstRtpBinSession *create_session (GstRtpBin * rtpbin, gint id);
 static GstPad *complete_session_sink (GstRtpBin * rtpbin,
-    GstRtpBinSession * session, gboolean bundle_demuxer_needed);
+    GstRtpBinSession * session);
 static void
 complete_session_receiver (GstRtpBin * rtpbin, GstRtpBinSession * session,
     guint sessid);
 static GstPad *complete_session_rtcp (GstRtpBin * rtpbin,
-    GstRtpBinSession * session, guint sessid, gboolean bundle_demuxer_needed);
+    GstRtpBinSession * session, guint sessid);
 
 /* Manages the RTP stream for one SSRC.
  *
@@ -463,12 +454,6 @@ struct _GstRtpBinSession
 
   /* Fec support */
   GstElement *storage;
-
-  /* Bundling support */
-  GstElement *rtp_funnel;
-  GstElement *rtcp_funnel;
-  GstElement *bundle_demux;
-  gulong bundle_demux_newpad_sig;
 
   GMutex lock;
 
@@ -670,102 +655,6 @@ ssrc_demux_pad_removed (GstElement * element, guint ssrc, GstPad * pad,
   GST_RTP_BIN_UNLOCK (rtpbin);
 }
 
-static void
-new_bundled_ssrc_pad_found (GstElement * element, guint ssrc, GstPad * pad,
-    GstRtpBinSession * session)
-{
-  GValue result = G_VALUE_INIT;
-  GValue params[2] = { G_VALUE_INIT, G_VALUE_INIT };
-  guint session_id = 0;
-  GstRtpBinSession *target_session = NULL;
-  GstRtpBin *rtpbin = session->bin;
-  gchar *name;
-  GstPad *src_pad;
-  GstPad *recv_rtp_sink = NULL;
-  GstPad *recv_rtcp_sink = NULL;
-  GstPadLinkReturn ret;
-
-  GST_RTP_BIN_DYN_LOCK (rtpbin);
-  GST_DEBUG_OBJECT (rtpbin, "new bundled SSRC pad %08x, %s:%s", ssrc,
-      GST_DEBUG_PAD_NAME (pad));
-
-  g_value_init (&result, G_TYPE_UINT);
-  g_value_init (&params[0], GST_TYPE_ELEMENT);
-  g_value_set_object (&params[0], rtpbin);
-  g_value_init (&params[1], G_TYPE_UINT);
-  g_value_set_uint (&params[1], ssrc);
-
-  g_signal_emitv (params,
-      gst_rtp_bin_signals[SIGNAL_ON_BUNDLED_SSRC], 0, &result);
-  g_value_unset (&params[0]);
-
-  session_id = g_value_get_uint (&result);
-  if (session_id == 0) {
-    target_session = session;
-  } else {
-    target_session = find_session_by_id (rtpbin, (gint) session_id);
-    if (!target_session) {
-      target_session = create_session (rtpbin, session_id);
-    }
-    if (!target_session) {
-      /* create_session() warned already */
-      GST_RTP_BIN_DYN_UNLOCK (rtpbin);
-      return;
-    }
-
-    if (!target_session->recv_rtp_sink) {
-      recv_rtp_sink = complete_session_sink (rtpbin, target_session, FALSE);
-    }
-
-    if (!target_session->recv_rtp_src)
-      complete_session_receiver (rtpbin, target_session, session_id);
-
-    if (!target_session->recv_rtcp_sink) {
-      recv_rtcp_sink =
-          complete_session_rtcp (rtpbin, target_session, session_id, FALSE);
-    }
-  }
-
-  GST_DEBUG_OBJECT (rtpbin, "Assigning bundled ssrc %u to session %u", ssrc,
-      session_id);
-
-  if (!recv_rtp_sink) {
-    recv_rtp_sink =
-        gst_element_get_request_pad (target_session->rtp_funnel, "sink_%u");
-  }
-
-  if (!recv_rtcp_sink) {
-    recv_rtcp_sink =
-        gst_element_get_request_pad (target_session->rtcp_funnel, "sink_%u");
-  }
-
-  name = g_strdup_printf ("src_%u", ssrc);
-  src_pad = gst_element_get_static_pad (element, name);
-  ret = gst_pad_link (src_pad, recv_rtp_sink);
-  g_free (name);
-  gst_object_unref (src_pad);
-  gst_object_unref (recv_rtp_sink);
-  if (ret != GST_PAD_LINK_OK) {
-    g_warning
-        ("rtpbin: failed to link bundle demuxer to receive rtp funnel for session %u",
-        session_id);
-  }
-
-  name = g_strdup_printf ("rtcp_src_%u", ssrc);
-  src_pad = gst_element_get_static_pad (element, name);
-  gst_pad_link (src_pad, recv_rtcp_sink);
-  g_free (name);
-  gst_object_unref (src_pad);
-  gst_object_unref (recv_rtcp_sink);
-  if (ret != GST_PAD_LINK_OK) {
-    g_warning
-        ("rtpbin: failed to link bundle demuxer to receive rtcp sink pad for session %u",
-        session_id);
-  }
-
-  GST_RTP_BIN_DYN_UNLOCK (rtpbin);
-}
-
 /* create a session with the given id.  Must be called with RTP_BIN_LOCK */
 static GstRtpBinSession *
 create_session (GstRtpBin * rtpbin, gint id)
@@ -784,6 +673,9 @@ create_session (GstRtpBin * rtpbin, gint id)
   if (!(storage = gst_element_factory_make ("rtpstorage", NULL)))
     goto no_storage;
 
+  /* need to sink the storage or otherwise signal handlers from bindings will
+   * take ownership of it and we don't own it anymore */
+  gst_object_ref_sink (storage);
   g_signal_emit (rtpbin, gst_rtp_bin_signals[SIGNAL_NEW_STORAGE], 0, storage,
       id);
 
@@ -794,9 +686,6 @@ create_session (GstRtpBin * rtpbin, gint id)
   sess->session = session;
   sess->demux = demux;
   sess->storage = storage;
-
-  sess->rtp_funnel = gst_element_factory_make ("funnel", NULL);
-  sess->rtcp_funnel = gst_element_factory_make ("funnel", NULL);
 
   sess->ptmap = g_hash_table_new_full (NULL, NULL, NULL,
       (GDestroyNotify) gst_caps_unref);
@@ -845,9 +734,11 @@ create_session (GstRtpBin * rtpbin, gint id)
 
   gst_bin_add (GST_BIN_CAST (rtpbin), session);
   gst_bin_add (GST_BIN_CAST (rtpbin), demux);
-  gst_bin_add (GST_BIN_CAST (rtpbin), sess->rtp_funnel);
-  gst_bin_add (GST_BIN_CAST (rtpbin), sess->rtcp_funnel);
   gst_bin_add (GST_BIN_CAST (rtpbin), storage);
+
+  /* unref the storage again, the bin has a reference now and
+   * we don't need it anymore */
+  gst_object_unref (storage);
 
   GST_OBJECT_LOCK (rtpbin);
   target = GST_STATE_TARGET (rtpbin);
@@ -856,8 +747,6 @@ create_session (GstRtpBin * rtpbin, gint id)
   /* change state only to what's needed */
   gst_element_set_state (demux, target);
   gst_element_set_state (session, target);
-  gst_element_set_state (sess->rtp_funnel, target);
-  gst_element_set_state (sess->rtcp_funnel, target);
   gst_element_set_state (storage, target);
 
   return sess;
@@ -1144,6 +1033,24 @@ gst_rtp_bin_get_internal_session (GstRtpBin * bin, guint session_id)
   GST_RTP_BIN_UNLOCK (bin);
 
   return internal_session;
+}
+
+static GstElement *
+gst_rtp_bin_get_storage (GstRtpBin * bin, guint session_id)
+{
+  GstRtpBinSession *session;
+  GstElement *res = NULL;
+
+  GST_RTP_BIN_LOCK (bin);
+  GST_DEBUG_OBJECT (bin, "retrieving internal storage object, index: %u",
+      session_id);
+  session = find_session_by_id (bin, (gint) session_id);
+  if (session && session->storage) {
+    res = gst_object_ref (session->storage);
+  }
+  GST_RTP_BIN_UNLOCK (bin);
+
+  return res;
 }
 
 static GObject *
@@ -1834,12 +1741,19 @@ create_stream (GstRtpBinSession * session, guint32 ssrc)
   g_object_set (buffer, "max-ts-offset-adjustment",
       rtpbin->max_ts_offset_adjustment, NULL);
 
+  /* need to sink the jitterbufer or otherwise signal handlers from bindings will
+   * take ownership of it and we don't own it anymore */
+  gst_object_ref_sink (buffer);
   g_signal_emit (rtpbin, gst_rtp_bin_signals[SIGNAL_NEW_JITTERBUFFER], 0,
       buffer, session->id, ssrc);
 
   if (!rtpbin->ignore_pt)
     gst_bin_add (GST_BIN_CAST (rtpbin), demux);
   gst_bin_add (GST_BIN_CAST (rtpbin), buffer);
+
+  /* unref the jitterbuffer again, the bin has a reference now and
+   * we don't need it anymore */
+  gst_object_unref (buffer);
 
   /* link stuff */
   if (demux)
@@ -1964,7 +1878,7 @@ static void gst_rtp_bin_release_pad (GstElement * element, GstPad * pad);
 static void gst_rtp_bin_handle_message (GstBin * bin, GstMessage * message);
 
 #define gst_rtp_bin_parent_class parent_class
-G_DEFINE_TYPE (GstRtpBin, gst_rtp_bin, GST_TYPE_BIN);
+G_DEFINE_TYPE_WITH_PRIVATE (GstRtpBin, gst_rtp_bin, GST_TYPE_BIN);
 
 static gboolean
 _gst_element_accumulator (GSignalInvocationHint * ihint,
@@ -2008,8 +1922,6 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gobject_class = (GObjectClass *) klass;
   gstelement_class = (GstElementClass *) klass;
   gstbin_class = (GstBinClass *) klass;
-
-  g_type_class_add_private (klass, sizeof (GstRtpBinPrivate));
 
   gobject_class->dispose = gst_rtp_bin_dispose;
   gobject_class->finalize = gst_rtp_bin_finalize;
@@ -2124,6 +2036,21 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
       G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (GstRtpBinClass,
           get_internal_storage), NULL, NULL, g_cclosure_marshal_generic,
       G_TYPE_OBJECT, 1, G_TYPE_UINT);
+
+  /**
+   * GstRtpBin::get-storage:
+   * @rtpbin: the object which received the signal
+   * @id: the session id
+   *
+   * Request the RTPStorage element as #GObject in session @id.
+   *
+   * Since: 1.16
+   */
+  gst_rtp_bin_signals[SIGNAL_GET_STORAGE] =
+      g_signal_new ("get-storage", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (GstRtpBinClass,
+          get_storage), NULL, NULL, g_cclosure_marshal_generic,
+      GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
 
   /**
    * GstRtpBin::on-new-ssrc:
@@ -2468,29 +2395,6 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
           on_sender_ssrc_active), NULL, NULL, g_cclosure_marshal_generic,
       G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_UINT);
 
-
-  /**
-   * GstRtpBin::on-bundled-ssrc:
-   * @rtpbin: the object which received the signal
-   * @ssrc: the bundled SSRC
-   *
-   * Notify of a new incoming bundled SSRC. If no handler is connected to the
-   * signal then the #GstRtpSession created for the recv_rtp_sink_\%u
-   * request pad will be managing this new SSRC. However if there is a handler
-   * connected then the application can decided to dispatch this new stream to
-   * another session by providing its ID as return value of the handler. This
-   * can be particularly useful to keep retransmission SSRCs grouped with the
-   * session for which they handle retransmission.
-   *
-   * Since: 1.12
-   */
-  gst_rtp_bin_signals[SIGNAL_ON_BUNDLED_SSRC] =
-      g_signal_new ("on-bundled-ssrc", G_TYPE_FROM_CLASS (klass),
-      G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass,
-          on_bundled_ssrc), NULL, NULL,
-      g_cclosure_marshal_generic, G_TYPE_UINT, 1, G_TYPE_UINT);
-
-
   g_object_class_install_property (gobject_class, PROP_SDES,
       g_param_spec_boxed ("sdes", "SDES",
           "The SDES items of this session",
@@ -2704,6 +2608,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   klass->get_session = GST_DEBUG_FUNCPTR (gst_rtp_bin_get_session);
   klass->get_internal_session =
       GST_DEBUG_FUNCPTR (gst_rtp_bin_get_internal_session);
+  klass->get_storage = GST_DEBUG_FUNCPTR (gst_rtp_bin_get_storage);
   klass->get_internal_storage =
       GST_DEBUG_FUNCPTR (gst_rtp_bin_get_internal_storage);
   klass->request_rtp_encoder = GST_DEBUG_FUNCPTR (gst_rtp_bin_request_encoder);
@@ -2719,7 +2624,7 @@ gst_rtp_bin_init (GstRtpBin * rtpbin)
 {
   gchar *cname;
 
-  rtpbin->priv = GST_RTP_BIN_GET_PRIVATE (rtpbin);
+  rtpbin->priv = gst_rtp_bin_get_instance_private (rtpbin);
   g_mutex_init (&rtpbin->priv->bin_lock);
   g_mutex_init (&rtpbin->priv->dyn_lock);
 
@@ -3367,7 +3272,7 @@ copy_sticky_events (GstPad * pad, GstEvent ** event, gpointer user_data)
   return TRUE;
 }
 
-/* a new pad (SSRC) was created in @session. This signal is emited from the
+/* a new pad (SSRC) was created in @session. This signal is emitted from the
  * payload demuxer. */
 static void
 new_payload_found (GstElement * element, guint pt, GstPad * pad,
@@ -3549,7 +3454,7 @@ payload_type_change (GstElement * element, guint pt, GstRtpBinSession * session)
       0, session->id, pt);
 }
 
-/* emited when caps changed for the session */
+/* emitted when caps changed for the session */
 static void
 caps_changed (GstPad * pad, GParamSpec * pspec, GstRtpBinSession * session)
 {
@@ -3637,7 +3542,7 @@ new_ssrc_pad_found (GstElement * element, guint ssrc, GstPad * pad,
     stream->demux_padremoved_sig = g_signal_connect (stream->demux,
         "pad-removed", (GCallback) payload_pad_removed, stream);
 
-    /* connect to the request-pt-map signal. This signal will be emited by the
+    /* connect to the request-pt-map signal. This signal will be emitted by the
      * demuxer so that it can apply a proper caps on the buffers for the
      * depayloaders. */
     stream->demux_ptreq_sig = g_signal_connect (stream->demux,
@@ -3689,39 +3594,11 @@ no_stream:
   }
 }
 
-static void
-session_maybe_create_bundle_demuxer (GstRtpBinSession * session)
-{
-  GstRtpBin *rtpbin;
-
-  if (session->bundle_demux)
-    return;
-
-  rtpbin = session->bin;
-  if (g_signal_has_handler_pending (rtpbin,
-          gst_rtp_bin_signals[SIGNAL_ON_BUNDLED_SSRC], 0, TRUE)) {
-    GST_DEBUG_OBJECT (rtpbin, "Adding a bundle SSRC demuxer to session %u",
-        session->id);
-    session->bundle_demux = gst_element_factory_make ("rtpssrcdemux", NULL);
-    session->bundle_demux_newpad_sig = g_signal_connect (session->bundle_demux,
-        "new-ssrc-pad", (GCallback) new_bundled_ssrc_pad_found, session);
-
-    gst_bin_add (GST_BIN_CAST (rtpbin), session->bundle_demux);
-    gst_element_sync_state_with_parent (session->bundle_demux);
-  } else {
-    GST_DEBUG_OBJECT (rtpbin,
-        "No handler for the on-bundled-ssrc signal so no need for a bundle SSRC demuxer in session %u",
-        session->id);
-  }
-}
-
 static GstPad *
-complete_session_sink (GstRtpBin * rtpbin, GstRtpBinSession * session,
-    gboolean bundle_demuxer_needed)
+complete_session_sink (GstRtpBin * rtpbin, GstRtpBinSession * session)
 {
   guint sessid = session->id;
   GstPad *recv_rtp_sink;
-  GstPad *funnel_src;
   GstElement *decoder;
 
   g_assert (!session->recv_rtp_sink);
@@ -3734,9 +3611,6 @@ complete_session_sink (GstRtpBin * rtpbin, GstRtpBinSession * session,
 
   g_signal_connect (session->recv_rtp_sink, "notify::caps",
       (GCallback) caps_changed, session);
-
-  if (bundle_demuxer_needed)
-    session_maybe_create_bundle_demuxer (session);
 
   GST_DEBUG_OBJECT (rtpbin, "requesting RTP decoder");
   decoder = session_request_element (session, SIGNAL_REQUEST_RTP_DECODER);
@@ -3755,14 +3629,8 @@ complete_session_sink (GstRtpBin * rtpbin, GstRtpBinSession * session,
     if (decsrc == NULL)
       goto dec_src_failed;
 
-    if (session->bundle_demux) {
-      GstPad *demux_sink;
-      demux_sink = gst_element_get_static_pad (session->bundle_demux, "sink");
-      ret = gst_pad_link (decsrc, demux_sink);
-      gst_object_unref (demux_sink);
-    } else {
-      ret = gst_pad_link (decsrc, session->recv_rtp_sink);
-    }
+    ret = gst_pad_link (decsrc, session->recv_rtp_sink);
+
     gst_object_unref (decsrc);
 
     if (ret != GST_PAD_LINK_OK)
@@ -3770,18 +3638,8 @@ complete_session_sink (GstRtpBin * rtpbin, GstRtpBinSession * session,
 
   } else {
     GST_DEBUG_OBJECT (rtpbin, "no RTP decoder given");
-    if (session->bundle_demux) {
-      recv_rtp_sink =
-          gst_element_get_static_pad (session->bundle_demux, "sink");
-    } else {
-      recv_rtp_sink =
-          gst_element_get_request_pad (session->rtp_funnel, "sink_%u");
-    }
+    recv_rtp_sink = gst_object_ref (session->recv_rtp_sink);
   }
-
-  funnel_src = gst_element_get_static_pad (session->rtp_funnel, "src");
-  gst_pad_link (funnel_src, session->recv_rtp_sink);
-  gst_object_unref (funnel_src);
 
   return recv_rtp_sink;
 
@@ -3940,10 +3798,9 @@ create_recv_rtp (GstRtpBin * rtpbin, GstPadTemplate * templ, const gchar * name)
     return session->recv_rtp_sink_ghost;
 
   /* setup the session sink pad */
-  recv_rtp_sink = complete_session_sink (rtpbin, session, TRUE);
+  recv_rtp_sink = complete_session_sink (rtpbin, session);
   if (!recv_rtp_sink)
     goto session_sink_failed;
-
 
   GST_DEBUG_OBJECT (rtpbin, "ghosting session sink pad");
   session->recv_rtp_sink_ghost =
@@ -3985,11 +3842,6 @@ remove_recv_rtp (GstRtpBin * rtpbin, GstRtpBinSession * session)
     g_signal_handler_disconnect (session->demux, session->demux_padremoved_sig);
     session->demux_padremoved_sig = 0;
   }
-  if (session->bundle_demux_newpad_sig) {
-    g_signal_handler_disconnect (session->bundle_demux,
-        session->bundle_demux_newpad_sig);
-    session->bundle_demux_newpad_sig = 0;
-  }
   if (session->recv_rtp_src) {
     gst_object_unref (session->recv_rtp_src);
     session->recv_rtp_src = NULL;
@@ -4009,12 +3861,11 @@ remove_recv_rtp (GstRtpBin * rtpbin, GstRtpBinSession * session)
 
 static GstPad *
 complete_session_rtcp (GstRtpBin * rtpbin, GstRtpBinSession * session,
-    guint sessid, gboolean bundle_demuxer_needed)
+    guint sessid)
 {
   GstElement *decoder;
   GstPad *sinkdpad;
   GstPad *decsink = NULL;
-  GstPad *funnel_src;
 
   /* get recv_rtp pad and store */
   GST_DEBUG_OBJECT (rtpbin, "getting RTCP sink pad");
@@ -4022,9 +3873,6 @@ complete_session_rtcp (GstRtpBin * rtpbin, GstRtpBinSession * session,
       gst_element_get_request_pad (session->session, "recv_rtcp_sink");
   if (session->recv_rtcp_sink == NULL)
     goto pad_failed;
-
-  if (bundle_demuxer_needed)
-    session_maybe_create_bundle_demuxer (session);
 
   GST_DEBUG_OBJECT (rtpbin, "getting RTCP decoder");
   decoder = session_request_element (session, SIGNAL_REQUEST_RTCP_DECODER);
@@ -4042,26 +3890,15 @@ complete_session_rtcp (GstRtpBin * rtpbin, GstRtpBinSession * session,
     if (decsrc == NULL)
       goto dec_src_failed;
 
-    if (session->bundle_demux) {
-      GstPad *demux_sink;
-      demux_sink =
-          gst_element_get_static_pad (session->bundle_demux, "rtcp_sink");
-      ret = gst_pad_link (decsrc, demux_sink);
-      gst_object_unref (demux_sink);
-    } else {
-      ret = gst_pad_link (decsrc, session->recv_rtcp_sink);
-    }
+    ret = gst_pad_link (decsrc, session->recv_rtcp_sink);
+
     gst_object_unref (decsrc);
 
     if (ret != GST_PAD_LINK_OK)
       goto dec_link_failed;
   } else {
     GST_DEBUG_OBJECT (rtpbin, "no RTCP decoder given");
-    if (session->bundle_demux) {
-      decsink = gst_element_get_static_pad (session->bundle_demux, "rtcp_sink");
-    } else {
-      decsink = gst_element_get_request_pad (session->rtcp_funnel, "sink_%u");
-    }
+    decsink = gst_object_ref (session->recv_rtcp_sink);
   }
 
   /* get srcpad, link to SSRCDemux */
@@ -4074,10 +3911,6 @@ complete_session_rtcp (GstRtpBin * rtpbin, GstRtpBinSession * session,
   sinkdpad = gst_element_get_static_pad (session->demux, "rtcp_sink");
   gst_pad_link_full (session->sync_src, sinkdpad, GST_PAD_LINK_CHECK_NOTHING);
   gst_object_unref (sinkdpad);
-
-  funnel_src = gst_element_get_static_pad (session->rtcp_funnel, "src");
-  gst_pad_link (funnel_src, session->recv_rtcp_sink);
-  gst_object_unref (funnel_src);
 
   return decsink;
 
@@ -4142,7 +3975,7 @@ create_recv_rtcp (GstRtpBin * rtpbin, GstPadTemplate * templ,
   if (session->recv_rtcp_sink_ghost != NULL)
     return session->recv_rtcp_sink_ghost;
 
-  decsink = complete_session_rtcp (rtpbin, session, sessid, TRUE);
+  decsink = complete_session_rtcp (rtpbin, session, sessid);
   if (!decsink)
     goto create_error;
 

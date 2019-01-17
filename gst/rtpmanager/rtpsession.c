@@ -722,16 +722,15 @@ rtp_session_create_sources (RTPSession * sess)
 static void
 create_source_stats (gpointer key, RTPSource * source, GValueArray * arr)
 {
-  GValue value = G_VALUE_INIT;
+  GValue *value;
   GstStructure *s;
 
   g_object_get (source, "stats", &s, NULL);
 
-  g_value_init (&value, GST_TYPE_STRUCTURE);
-  gst_value_set_structure (&value, s);
-  g_value_array_append (arr, &value);
-  gst_structure_free (s);
-  g_value_unset (&value);
+  g_value_array_append (arr, NULL);
+  value = g_value_array_get_nth (arr, arr->n_values - 1);
+  g_value_init (value, GST_TYPE_STRUCTURE);
+  g_value_take_boxed (value, s);
 }
 
 static GstStructure *
@@ -822,6 +821,9 @@ rtp_session_set_property (GObject * object, guint prop_id,
       if (sess->callbacks.reconsider)
         sess->callbacks.reconsider (sess, sess->reconsider_user_data);
       break;
+    case PROP_RTCP_FEEDBACK_RETENTION_WINDOW:
+      sess->rtcp_feedback_retention_window = g_value_get_uint64 (value);
+      break;
     case PROP_RTCP_IMMEDIATE_FEEDBACK_THRESHOLD:
       sess->rtcp_immediate_feedback_threshold = g_value_get_uint (value);
       break;
@@ -900,6 +902,9 @@ rtp_session_get_property (GObject * object, guint prop_id,
       break;
     case PROP_RTCP_MIN_INTERVAL:
       g_value_set_uint64 (value, sess->stats.min_interval * GST_SECOND);
+      break;
+    case PROP_RTCP_FEEDBACK_RETENTION_WINDOW:
+      g_value_set_uint64 (value, sess->rtcp_feedback_retention_window);
       break;
     case PROP_RTCP_IMMEDIATE_FEEDBACK_THRESHOLD:
       g_value_set_uint (value, sess->rtcp_immediate_feedback_threshold);
@@ -1059,6 +1064,47 @@ rtp_session_new (void)
   sess = g_object_new (RTP_TYPE_SESSION, NULL);
 
   return sess;
+}
+
+/**
+ * rtp_session_reset:
+ * @sess: an #RTPSession
+ *
+ * Reset the sources of @sess.
+ */
+void
+rtp_session_reset (RTPSession * sess)
+{
+  g_return_if_fail (RTP_IS_SESSION (sess));
+
+  /* remove all sources */
+  g_hash_table_remove_all (sess->ssrcs[sess->mask_idx]);
+  sess->total_sources = 0;
+  sess->stats.sender_sources = 0;
+  sess->stats.internal_sender_sources = 0;
+  sess->stats.internal_sources = 0;
+  sess->stats.active_sources = 0;
+
+  sess->generation = 0;
+  sess->first_rtcp = TRUE;
+  sess->next_rtcp_check_time = GST_CLOCK_TIME_NONE;
+  sess->last_rtcp_check_time = GST_CLOCK_TIME_NONE;
+  sess->last_rtcp_send_time = GST_CLOCK_TIME_NONE;
+  sess->last_rtcp_interval = GST_CLOCK_TIME_NONE;
+  sess->next_early_rtcp_time = GST_CLOCK_TIME_NONE;
+  sess->scheduled_bye = FALSE;
+
+  /* reset session stats */
+  sess->stats.bye_members = 0;
+  sess->stats.nacks_dropped = 0;
+  sess->stats.nacks_sent = 0;
+  sess->stats.nacks_received = 0;
+
+  sess->is_doing_ptp = TRUE;
+
+  g_list_free_full (sess->conflicting_addresses,
+      (GDestroyNotify) rtp_conflicting_address_free);
+  sess->conflicting_addresses = NULL;
 }
 
 /**
@@ -1350,6 +1396,12 @@ rtp_session_get_sdes_struct (RTPSession * sess)
   return result;
 }
 
+static void
+source_set_sdes (const gchar * key, RTPSource * source, GstStructure * sdes)
+{
+  rtp_source_set_sdes_struct (source, gst_structure_copy (sdes));
+}
+
 /**
  * rtp_session_set_sdes_struct:
  * @sess: an #RTSPSession
@@ -1367,6 +1419,9 @@ rtp_session_set_sdes_struct (RTPSession * sess, const GstStructure * sdes)
   if (sess->sdes)
     gst_structure_free (sess->sdes);
   sess->sdes = gst_structure_copy (sdes);
+
+  g_hash_table_foreach (sess->ssrcs[sess->mask_idx],
+      (GHFunc) source_set_sdes, sess->sdes);
   RTP_SESSION_UNLOCK (sess);
 }
 
@@ -2139,7 +2194,8 @@ rtp_session_process_rtp (RTPSession * sess, GstBuffer * buffer,
           current_time, running_time, ntpnstime)) {
     GST_DEBUG ("invalid RTP packet received");
     RTP_SESSION_UNLOCK (sess);
-    return rtp_session_process_rtcp (sess, buffer, current_time, ntpnstime);
+    return rtp_session_process_rtcp (sess, buffer, current_time, running_time,
+        ntpnstime);
   }
 
   ssrc = pinfo.ssrc;
@@ -2616,8 +2672,12 @@ rtp_session_process_pli (RTPSession * sess, guint32 sender_ssrc,
     return;
 
   src = find_source (sess, sender_ssrc);
-  if (src == NULL)
-    return;
+  if (src == NULL) {
+    /* try to find a src with media_ssrc instead */
+    src = find_source (sess, media_ssrc);
+    if (src == NULL)
+      return;
+  }
 
   rtp_session_request_local_key_unit (sess, src, media_ssrc, FALSE,
       current_time);
@@ -2764,7 +2824,7 @@ rtp_session_process_feedback (RTPSession * sess, GstRTCPPacket * packet,
       gst_buffer_unref (fci_buffer);
   }
 
-  if (src && sess->rtcp_feedback_retention_window) {
+  if (src && sess->rtcp_feedback_retention_window != GST_CLOCK_TIME_NONE) {
     rtp_source_retain_rtcp_packet (src, packet, pinfo->running_time);
   }
 
@@ -2824,7 +2884,7 @@ rtp_session_process_feedback (RTPSession * sess, GstRTCPPacket * packet,
  */
 GstFlowReturn
 rtp_session_process_rtcp (RTPSession * sess, GstBuffer * buffer,
-    GstClockTime current_time, guint64 ntpnstime)
+    GstClockTime current_time, GstClockTime running_time, guint64 ntpnstime)
 {
   GstRTCPPacket packet;
   gboolean more, is_bye = FALSE, do_sync = FALSE;
@@ -2846,7 +2906,7 @@ rtp_session_process_rtcp (RTPSession * sess, GstBuffer * buffer,
   RTP_SESSION_LOCK (sess);
   /* update pinfo stats */
   update_packet_info (sess, &pinfo, FALSE, FALSE, FALSE, buffer, current_time,
-      -1, ntpnstime);
+      running_time, ntpnstime);
 
   /* start processing the compound packet */
   gst_rtcp_buffer_map (buffer, GST_MAP_READ, &rtcp);
@@ -3019,6 +3079,10 @@ rtp_session_send_rtp (RTPSession * sess, gpointer data, gboolean is_list,
   if (created)
     on_new_sender_ssrc (sess, source);
 
+  if (!source->internal)
+    /* FIXME: Send GstRTPCollision upstream  */
+    goto collision;
+
   prevsender = RTP_SOURCE_IS_SENDER (source);
   oldrate = source->bitrate;
 
@@ -3041,6 +3105,15 @@ invalid_packet:
     gst_mini_object_unref (GST_MINI_OBJECT_CAST (data));
     RTP_SESSION_UNLOCK (sess);
     GST_DEBUG ("invalid RTP packet received");
+    return GST_FLOW_OK;
+  }
+collision:
+  {
+    g_object_unref (source);
+    gst_mini_object_unref (GST_MINI_OBJECT_CAST (data));
+    RTP_SESSION_UNLOCK (sess);
+    GST_WARNING ("non-internal source with same ssrc %08x, drop packet",
+        pinfo.ssrc);
     return GST_FLOW_OK;
   }
 }
@@ -3390,8 +3463,8 @@ session_report_blocks (const gchar * key, RTPSource * source, ReportData * data)
     return;
   }
 
-  /* only report about other sender */
-  if (source == data->source)
+  /* only report about remote sources */
+  if (source->internal)
     goto reported;
 
   if (!RTP_SOURCE_IS_SENDER (source)) {
@@ -3577,8 +3650,8 @@ session_cleanup (const gchar * key, RTPSource * source, ReportData * data)
   /* check for outdated collisions */
   if (source->internal) {
     GST_DEBUG ("Timing out collisions for %x", source->ssrc);
-    rtp_source_timeout (source, data->current_time,
-        data->running_time - sess->rtcp_feedback_retention_window);
+    rtp_source_timeout (source, data->current_time, data->running_time,
+        sess->rtcp_feedback_retention_window);
   }
 
   /* nothing else to do when without RTCP */

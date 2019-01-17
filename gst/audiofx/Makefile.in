@@ -205,7 +205,8 @@ am_libgstaudiofx_la_OBJECTS = libgstaudiofx_la-audiofx.lo \
 	libgstaudiofx_la-audiowsinclimit.lo \
 	libgstaudiofx_la-audiofirfilter.lo \
 	libgstaudiofx_la-audioecho.lo \
-	libgstaudiofx_la-gstscaletempo.lo
+	libgstaudiofx_la-gstscaletempo.lo \
+	libgstaudiofx_la-gststereo.lo
 am__objects_1 = libgstaudiofx_la-tmp-orc.lo
 nodist_libgstaudiofx_la_OBJECTS = $(am__objects_1)
 libgstaudiofx_la_OBJECTS = $(am_libgstaudiofx_la_OBJECTS) \
@@ -249,6 +250,7 @@ am__depfiles_remade = ./$(DEPDIR)/libgstaudiofx_la-audioamplify.Plo \
 	./$(DEPDIR)/libgstaudiofx_la-audiowsincband.Plo \
 	./$(DEPDIR)/libgstaudiofx_la-audiowsinclimit.Plo \
 	./$(DEPDIR)/libgstaudiofx_la-gstscaletempo.Plo \
+	./$(DEPDIR)/libgstaudiofx_la-gststereo.Plo \
 	./$(DEPDIR)/libgstaudiofx_la-tmp-orc.Plo
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
@@ -698,7 +700,8 @@ libgstaudiofx_la_SOURCES = audiofx.c\
 	audiowsinclimit.c \
 	audiofirfilter.c \
 	audioecho.c \
-	gstscaletempo.c
+	gstscaletempo.c \
+	gststereo.c
 
 nodist_libgstaudiofx_la_SOURCES = $(ORC_NODIST_SOURCES)
 
@@ -734,6 +737,7 @@ noinst_HEADERS = audiopanorama.h \
 	audiofirfilter.h \
 	audioecho.h \
 	gstscaletempo.h \
+	gststereo.h \
 	math_compat.h
 
 all: $(BUILT_SOURCES)
@@ -832,6 +836,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstaudiofx_la-audiowsincband.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstaudiofx_la-audiowsinclimit.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstaudiofx_la-gstscaletempo.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstaudiofx_la-gststereo.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstaudiofx_la-tmp-orc.Plo@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
@@ -975,6 +980,13 @@ libgstaudiofx_la-gstscaletempo.lo: gstscaletempo.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstscaletempo.c' object='libgstaudiofx_la-gstscaletempo.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstaudiofx_la_CFLAGS) $(CFLAGS) -c -o libgstaudiofx_la-gstscaletempo.lo `test -f 'gstscaletempo.c' || echo '$(srcdir)/'`gstscaletempo.c
+
+libgstaudiofx_la-gststereo.lo: gststereo.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstaudiofx_la_CFLAGS) $(CFLAGS) -MT libgstaudiofx_la-gststereo.lo -MD -MP -MF $(DEPDIR)/libgstaudiofx_la-gststereo.Tpo -c -o libgstaudiofx_la-gststereo.lo `test -f 'gststereo.c' || echo '$(srcdir)/'`gststereo.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstaudiofx_la-gststereo.Tpo $(DEPDIR)/libgstaudiofx_la-gststereo.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gststereo.c' object='libgstaudiofx_la-gststereo.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstaudiofx_la_CFLAGS) $(CFLAGS) -c -o libgstaudiofx_la-gststereo.lo `test -f 'gststereo.c' || echo '$(srcdir)/'`gststereo.c
 
 libgstaudiofx_la-tmp-orc.lo: tmp-orc.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstaudiofx_la_CFLAGS) $(CFLAGS) -MT libgstaudiofx_la-tmp-orc.lo -MD -MP -MF $(DEPDIR)/libgstaudiofx_la-tmp-orc.Tpo -c -o libgstaudiofx_la-tmp-orc.lo `test -f 'tmp-orc.c' || echo '$(srcdir)/'`tmp-orc.c
@@ -1139,6 +1151,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libgstaudiofx_la-audiowsincband.Plo
 	-rm -f ./$(DEPDIR)/libgstaudiofx_la-audiowsinclimit.Plo
 	-rm -f ./$(DEPDIR)/libgstaudiofx_la-gstscaletempo.Plo
+	-rm -f ./$(DEPDIR)/libgstaudiofx_la-gststereo.Plo
 	-rm -f ./$(DEPDIR)/libgstaudiofx_la-tmp-orc.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
@@ -1201,6 +1214,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libgstaudiofx_la-audiowsincband.Plo
 	-rm -f ./$(DEPDIR)/libgstaudiofx_la-audiowsinclimit.Plo
 	-rm -f ./$(DEPDIR)/libgstaudiofx_la-gstscaletempo.Plo
+	-rm -f ./$(DEPDIR)/libgstaudiofx_la-gststereo.Plo
 	-rm -f ./$(DEPDIR)/libgstaudiofx_la-tmp-orc.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic

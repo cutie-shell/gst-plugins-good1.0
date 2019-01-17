@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.10.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-10-02 23:03+0100\n"
+"POT-Creation-Date: 2019-01-17 01:59+0000\n"
 "PO-Revision-Date: 2017-02-17 10:54+0100\n"
 "Last-Translator: Fabio Tomat <f.t.public@gmail.com>\n"
 "Language-Team: Friulian <f.t.public@gmail.com>\n"
@@ -93,10 +93,6 @@ msgstr "Chest file nol è complet e nol pues jessi riprodot."
 
 msgid "The video in this file might not play correctly."
 msgstr "il video in chest file al podarès no funzionâ ben."
-
-#, c-format
-msgid "This file contains too many streams. Only playing first %d"
-msgstr "Chest file al conten masse flus. Si riprodusarà nome i prins %d"
 
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
@@ -420,6 +416,9 @@ msgstr "Il cambiâ la risoluzion dilunc la vore nol è ancjemò supuartât."
 
 msgid "Cannot operate without a clock"
 msgstr "Impussibil operâ cence un orloi"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr "Chest file al conten masse flus. Si riprodusarà nome i prins %d"
 
 #~ msgid "Record Source"
 #~ msgstr "Sorzint regjistrazion"

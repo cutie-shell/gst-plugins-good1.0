@@ -307,11 +307,6 @@
 <td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></td>
 </tr>
 <tr>
-<td class="signal_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="returnvalue">guint</span></a></td>
-<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-on-bundled-ssrc" title="The “on-bundled-ssrc” signal">on-bundled-ssrc</a></td>
-<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
-</tr>
-<tr>
 <td class="signal_type">
 <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct"><span class="returnvalue">GObject</span></a>*</td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-get-internal-storage" title="The “get-internal-storage” signal">get-internal-storage</a></td>
@@ -333,6 +328,12 @@
 <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct"><span class="returnvalue">GstElement</span></a>*</td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-request-fec-encoder" title="The “request-fec-encoder” signal">request-fec-encoder</a></td>
 <td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type">
+<a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct"><span class="returnvalue">GstElement</span></a>*</td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-get-storage" title="The “get-storage” signal">get-storage</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></td>
 </tr>
 </tbody>
 </table></div>
@@ -394,12 +395,6 @@ automatically create a send_rtp_src_%u pad. If the session number is not provide
 the pad from the lowest available session will be returned. The session manager will modify the
 SSRC in the RTP packets to its own SSRC and wil forward the packets on the
 send_rtp_src_%u pad after updating its internal state.</p>
-<p><a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a> can also demultiplex incoming bundled streams. The first
-<a class="link" href="gst-plugins-good-plugins-rtpsession.html#GstRtpSession"><span class="type">GstRtpSession</span></a> will have a <a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux"><span class="type">GstRtpSsrcDemux</span></a> element splitting the streams
-based on their SSRC and potentially dispatched to a different <a class="link" href="gst-plugins-good-plugins-rtpsession.html#GstRtpSession"><span class="type">GstRtpSession</span></a>.
-Because retransmission SSRCs need to be merged with the corresponding media
-stream the <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-on-bundled-ssrc" title="The “on-bundled-ssrc” signal"><span class="type">“on-bundled-ssrc”</span></a> signal is emitted so that the
-application can find out to which session the SSRC belongs.</p>
 <p>The session manager needs the clock-rate of the payload types it is handling
 and will signal the <a class="link" href="gst-plugins-good-plugins-rtpsession.html#GstRtpSession-request-pt-map" title="The “request-pt-map” signal"><span class="type">“request-pt-map”</span></a> signal when it needs such a
 mapping. One can clear the cached values with the <a class="link" href="gst-plugins-good-plugins-rtpsession.html#GstRtpSession-clear-pt-map" title="The “clear-pt-map” signal"><span class="type">“clear-pt-map”</span></a>
@@ -429,7 +424,7 @@ An AUX receiver has 1 src_%u pad that much match the sessionid in the signal
 and 1 or more sink_%u pads. A session will be made for each sink_%u pad
 when the corresponding recv_rtp_sink_%u pad is requested on <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a>.</p>
 <div class="refsect2">
-<a name="id-1.2.136.9.13"></a><h3>Example pipelines</h3>
+<a name="id-1.2.136.9.12"></a><h3>Example pipelines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -521,7 +516,7 @@ on port 5007.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.136.9.14.1"></a><h3>Element Information</h3>
+<a name="id-1.2.136.9.13.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -547,7 +542,7 @@ on port 5007.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.136.9.14.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.136.9.13.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -1980,50 +1975,6 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
 </div>
 <hr>
 <div class="refsect2">
-<a name="GstRtpBin-on-bundled-ssrc"></a><h3>The <code class="literal">“on-bundled-ssrc”</code> signal</h3>
-<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="returnvalue">guint</span></a>
-user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a> *rtpbin,
-               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a>      ssrc,
-               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>   user_data)</pre>
-<p>Notify of a new incoming bundled SSRC. If no handler is connected to the
-signal then the <a class="link" href="gst-plugins-good-plugins-rtpsession.html#GstRtpSession"><span class="type">GstRtpSession</span></a> created for the recv_rtp_sink_%u
-request pad will be managing this new SSRC. However if there is a handler
-connected then the application can decided to dispatch this new stream to
-another session by providing its ID as return value of the handler. This
-can be particularly useful to keep retransmission SSRCs grouped with the
-session for which they handle retransmission.</p>
-<div class="refsect3">
-<a name="GstRtpBin-on-bundled-ssrc.parameters"></a><h4>Parameters</h4>
-<div class="informaltable"><table class="informaltable" width="100%" border="0">
-<colgroup>
-<col width="150px" class="parameters_name">
-<col class="parameters_description">
-<col width="200px" class="parameters_annotations">
-</colgroup>
-<tbody>
-<tr>
-<td class="parameter_name"><p>rtpbin</p></td>
-<td class="parameter_description"><p>the object which received the signal</p></td>
-<td class="parameter_annotations"> </td>
-</tr>
-<tr>
-<td class="parameter_name"><p>ssrc</p></td>
-<td class="parameter_description"><p>the bundled SSRC</p></td>
-<td class="parameter_annotations"> </td>
-</tr>
-<tr>
-<td class="parameter_name"><p>user_data</p></td>
-<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
-<td class="parameter_annotations"> </td>
-</tr>
-</tbody>
-</table></div>
-</div>
-<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
-<p class="since">Since: 1.12</p>
-</div>
-<hr>
-<div class="refsect2">
 <a name="GstRtpBin-get-internal-storage"></a><h3>The <code class="literal">“get-internal-storage”</code> signal</h3>
 <pre class="programlisting"><a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct"><span class="returnvalue">GObject</span></a>*
 user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a> *rtpbin,
@@ -2190,6 +2141,45 @@ will be added to the bin after the RTPSession.</p>
 </div>
 <p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
 <p class="since">Since: 1.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpBin-get-storage"></a><h3>The <code class="literal">“get-storage”</code> signal</h3>
+<pre class="programlisting"><a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct"><span class="returnvalue">GstElement</span></a>*
+user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a> *rtpbin,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint"><span class="type">guint</span></a>      id,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>   user_data)</pre>
+<p>Request the RTPStorage element as <a href="/usr/share/gtk-doc/html/gobject/gobject-The-Base-Object-Type.html#GObject-struct"><span class="type">GObject</span></a> in session <em class="parameter"><code>id</code></em>
+.</p>
+<div class="refsect3">
+<a name="GstRtpBin-get-storage.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>rtpbin</p></td>
+<td class="parameter_description"><p>the object which received the signal</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>id</p></td>
+<td class="parameter_description"><p>the session id</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></p>
+<p class="since">Since: 1.16</p>
 </div>
 </div>
 <div class="refsect1">

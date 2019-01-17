@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-10-02 23:03+0100\n"
+"POT-Creation-Date: 2019-01-17 01:59+0000\n"
 "PO-Revision-Date: 2017-10-23 23:59+0100\n"
 "Last-Translator: Freek de Kruijf <f.de.kruijf@gmail.com>\n"
 "Language-Team: Dutch <vertaling@vrijschrift.org>\n"
@@ -92,11 +92,6 @@ msgstr "Dit bestand is incompleet en kan niet afgespeeld worden."
 
 msgid "The video in this file might not play correctly."
 msgstr "De video in dit bestand zal mogelijk niet correct afgespeeld worden."
-
-#, c-format
-msgid "This file contains too many streams. Only playing first %d"
-msgstr ""
-"Dit bestand bevat te veel stromen. Alleen de eerste %d worden afgespeeld."
 
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
@@ -411,6 +406,10 @@ msgstr "Tijdens het draaien kan de resolutie nog niet gewijzigd worden."
 
 msgid "Cannot operate without a clock"
 msgstr "Kan niet werken zonder een klok."
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr ""
+#~ "Dit bestand bevat te veel stromen. Alleen de eerste %d worden afgespeeld."
 
 #~ msgid "Record Source"
 #~ msgstr "Opnamebron"

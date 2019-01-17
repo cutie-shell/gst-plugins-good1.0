@@ -38,6 +38,8 @@ G_BEGIN_DECLS
 
 typedef struct _GstFlvMuxPad GstFlvMuxPad;
 typedef struct _GstFlvMuxPadClass GstFlvMuxPadClass;
+typedef struct _GstFlvMux GstFlvMux;
+typedef struct _GstFlvMuxClass GstFlvMuxClass;
 
 #define GST_TYPE_FLV_MUX \
   (gst_flv_mux_get_type ())
@@ -66,11 +68,13 @@ struct _GstFlvMuxPad
   GstClockTime last_timestamp;
   gint64 pts;
   gint64 dts;
+
+  gboolean info_changed;
 };
 
-typedef struct _GstFlvMuxPadClass {
+struct _GstFlvMuxPadClass {
   GstAggregatorPadClass parent;
-} GstFlvMuxPadClass;
+};
 
 typedef enum
 {
@@ -78,7 +82,7 @@ typedef enum
   GST_FLV_MUX_STATE_DATA
 } GstFlvMuxState;
 
-typedef struct _GstFlvMux {
+struct _GstFlvMux {
   GstAggregator   aggregator;
 
   GstPad         *srcpad;
@@ -89,6 +93,7 @@ typedef struct _GstFlvMux {
   GstFlvMuxPad *video_pad;
   gboolean streamable;
   gchar *metadatacreator;
+  gchar *encoder;
 
   GstTagList *tags;
   gboolean new_tags;
@@ -96,11 +101,14 @@ typedef struct _GstFlvMux {
   guint64 byte_count;
   guint64 duration;
   gint64 first_timestamp;
-} GstFlvMux;
+  GstClockTime last_dts;
 
-typedef struct _GstFlvMuxClass {
+  gboolean sent_header;
+};
+
+struct _GstFlvMuxClass {
   GstAggregatorClass parent;
-} GstFlvMuxClass;
+};
 
 GType    gst_flv_mux_pad_get_type(void);
 GType    gst_flv_mux_get_type    (void);

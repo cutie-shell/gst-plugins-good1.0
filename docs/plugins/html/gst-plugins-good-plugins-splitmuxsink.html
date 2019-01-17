@@ -103,6 +103,40 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--use-robust-muxing" title="The “use-robust-muxing” property">use-robust-muxing</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--async-finalize" title="The “async-finalize” property">async-finalize</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--muxer-factory" title="The “muxer-factory” property">muxer-factory</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type">
+<a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstStructure.html#GstStructure-struct"><span class="type">GstStructure</span></a> *</td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--muxer-properties" title="The “muxer-properties” property">muxer-properties</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--reset-muxer" title="The “reset-muxer” property">reset-muxer</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--sink-factory" title="The “sink-factory” property">sink-factory</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type">
+<a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstStructure.html#GstStructure-struct"><span class="type">GstStructure</span></a> *</td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--sink-properties" title="The “sink-properties” property">sink-properties</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -130,6 +164,26 @@
 <tr>
 <td class="signal_type"><span class="returnvalue">void</span></td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink-split-now" title="The “split-now” signal">split-now</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type"><span class="returnvalue">void</span></td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink-muxer-added" title="The “muxer-added” signal">muxer-added</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type"><span class="returnvalue">void</span></td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink-sink-added" title="The “sink-added” signal">sink-added</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type"><span class="returnvalue">void</span></td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink-split-after" title="The “split-after” signal">split-after</a></td>
+<td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
+</tr>
+<tr>
+<td class="signal_type"><span class="returnvalue">void</span></td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink-split-at-running-time" title="The “split-at-running-time” signal">split-at-running-time</a></td>
 <td class="signal_flags"><a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
 </tr>
 </tbody>
@@ -179,8 +233,14 @@ distance between any 2 keyframes is larger than the limits.</p>
 stream contents, and the video stream must contain closed GOPs for the output
 file parts to be played individually correctly. In the absence of a video
 stream, the first available stream is used as reference for synchronization.</p>
+<p>In the async-finalize mode, when the threshold is crossed, the old muxer
+and sink is disconnected from the pipeline and left to finish the file
+asynchronously, and a new muxer and sink is created to continue with the
+next fragment. For that reason, instead of muxer and sink objects, the
+muxer-factory and sink-factory properties are used to construct the new
+objects, together with muxer-properties and sink-properties.</p>
 <div class="refsect2">
-<a name="id-1.2.253.9.6"></a><h3>Example pipelines</h3>
+<a name="id-1.2.253.9.7"></a><h3>Example pipelines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -195,11 +255,26 @@ stream, the first available stream is used as reference for synchronization.</p>
 Records a video stream captured from a v4l2 device and muxes it into
 ISO mp4 files, splitting as needed to limit size/duration to 10 seconds
 and 1MB maximum size.
+
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>e v4l2src num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">500</span> <span class="gtkdoc opt">!</span> video<span class="gtkdoc opt">/</span>x<span class="gtkdoc opt">-</span>raw<span class="gtkdoc opt">,</span>width<span class="gtkdoc opt">=</span><span class="number">320</span><span class="gtkdoc opt">,</span>height<span class="gtkdoc opt">=</span><span class="number">240</span> <span class="gtkdoc opt">!</span> videoconvert <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> timeoverlay <span class="gtkdoc opt">!</span> x264enc key<span class="gtkdoc opt">-</span><span class="gtkdoc kwb">int</span><span class="gtkdoc opt">-</span>max<span class="gtkdoc opt">=</span><span class="number">10</span> <span class="gtkdoc opt">!</span> h264parse <span class="gtkdoc opt">!</span> splitmuxsink location<span class="gtkdoc opt">=</span>video<span class="gtkdoc opt">%</span><span class="number">02</span>d<span class="gtkdoc opt">.</span>mkv max<span class="gtkdoc opt">-</span>size<span class="gtkdoc opt">-</span>time<span class="gtkdoc opt">=</span><span class="number">10000000000</span> muxer<span class="gtkdoc opt">-</span>factory<span class="gtkdoc opt">=</span>matroskamux muxer<span class="gtkdoc opt">-</span>properties<span class="gtkdoc opt">=</span><span class="string">&quot;properties,streamable=true&quot;</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+Records a video stream captured from a v4l2 device and muxer it into
+streamable Matroska files, splitting as needed to limit size/duration to 10
+seconds. Each file will finalize asynchronously.
 </div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.253.9.7.1"></a><h3>Element Information</h3>
+<a name="id-1.2.253.9.8.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -225,7 +300,7 @@ and 1MB maximum size.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.253.9.7.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.253.9.8.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -235,6 +310,30 @@ and 1MB maximum size.
 <tr>
 <td><p><span class="term">name</span></p></td>
 <td>audio_%u</td>
+</tr>
+<tr>
+<td><p><span class="term">direction</span></p></td>
+<td>sink</td>
+</tr>
+<tr>
+<td><p><span class="term">presence</span></p></td>
+<td>request</td>
+</tr>
+<tr>
+<td><p><span class="term">details</span></p></td>
+<td>ANY</td>
+</tr>
+</tbody>
+</table></div>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
+<col align="left" valign="top">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td><p><span class="term">name</span></p></td>
+<td>caption_%u</td>
 </tr>
 <tr>
 <td><p><span class="term">direction</span></p></td>
@@ -350,14 +449,14 @@ and 1MB maximum size.
 <div class="refsect2">
 <a name="GstSplitMuxSink--muxer"></a><h3>The <code class="literal">“muxer”</code> property</h3>
 <pre class="programlisting">  “muxer”                    <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct"><span class="type">GstElement</span></a> *</pre>
-<p>The muxer element to use (NULL = default mp4mux).</p>
+<p>The muxer element to use (NULL = default mp4mux). Valid only for async-finalize = FALSE.</p>
 <p>Flags: Read / Write</p>
 </div>
 <hr>
 <div class="refsect2">
 <a name="GstSplitMuxSink--sink"></a><h3>The <code class="literal">“sink”</code> property</h3>
 <pre class="programlisting">  “sink”                     <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct"><span class="type">GstElement</span></a> *</pre>
-<p>The sink element (or element chain) to use (NULL = default filesink).</p>
+<p>The sink element (or element chain) to use (NULL = default filesink). Valid only for async-finalize = FALSE.</p>
 <p>Flags: Read / Write</p>
 </div>
 <hr>
@@ -396,9 +495,55 @@ and 1MB maximum size.
 <div class="refsect2">
 <a name="GstSplitMuxSink--use-robust-muxing"></a><h3>The <code class="literal">“use-robust-muxing”</code> property</h3>
 <pre class="programlisting">  “use-robust-muxing”        <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
-<p>Check if muxers support robust muxing via the reserved-max-duration and reserved-duration-remaining properties and use them if so. (Only present on qtmux and mp4mux for now). splitmuxsink may then also  create new fragments if the reserved header space is about to overflow. Note this does not set reserved-moov-update-period - apps should do that manually.</p>
+<p>Check if muxers support robust muxing via the reserved-max-duration and reserved-duration-remaining properties and use them if so. (Only present on qtmux and mp4mux for now). splitmuxsink may then also  create new fragments if the reserved header space is about to overflow. Note that for mp4mux and qtmux, reserved-moov-update-period must be set manually by the app to a non-zero value for robust muxing to have an effect.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: FALSE</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink--async-finalize"></a><h3>The <code class="literal">“async-finalize”</code> property</h3>
+<pre class="programlisting">  “async-finalize”           <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<p>Finalize each fragment asynchronously and start a new one.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: FALSE</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink--muxer-factory"></a><h3>The <code class="literal">“muxer-factory”</code> property</h3>
+<pre class="programlisting">  “muxer-factory”            <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
+<p>The muxer element factory to use (default = mp4mux). Valid only for async-finalize = TRUE.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: "mp4mux"</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink--muxer-properties"></a><h3>The <code class="literal">“muxer-properties”</code> property</h3>
+<pre class="programlisting">  “muxer-properties”         <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstStructure.html#GstStructure-struct"><span class="type">GstStructure</span></a> *</pre>
+<p>The muxer element properties to use. Example: {properties,boolean-prop=true,string-prop="hi"}. Valid only for async-finalize = TRUE.</p>
+<p>Flags: Read / Write</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink--reset-muxer"></a><h3>The <code class="literal">“reset-muxer”</code> property</h3>
+<pre class="programlisting">  “reset-muxer”              <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<p>Reset the muxer after each segment. Disabling this will not work for most muxers.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: TRUE</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink--sink-factory"></a><h3>The <code class="literal">“sink-factory”</code> property</h3>
+<pre class="programlisting">  “sink-factory”             <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
+<p>The sink element factory to use (default = filesink). Valid only for async-finalize = TRUE.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: "filesink"</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink--sink-properties"></a><h3>The <code class="literal">“sink-properties”</code> property</h3>
+<pre class="programlisting">  “sink-properties”          <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstStructure.html#GstStructure-struct"><span class="type">GstStructure</span></a> *</pre>
+<p>The sink element properties to use. Example: {properties,boolean-prop=true,string-prop="hi"}. Valid only for async-finalize = TRUE.</p>
+<p>Flags: Read / Write</p>
 </div>
 </div>
 <div class="refsect1">
@@ -495,7 +640,17 @@ from the reference stream in the new file</p></td>
 <pre class="programlisting"><span class="returnvalue">void</span>
 user_function (<a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink"><span class="type">GstSplitMuxSink</span></a> *splitmux,
                <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
-<p>When called by the user, this action signal splits the video file (and begins a new one) immediately.</p>
+<p>When called by the user, this action signal splits the video file (and
+begins a new one) as soon as the given running time is reached. If this
+action signal is called multiple times, running times are queued up and
+processed in the order they were given.</p>
+<p>Note that this is prone to race conditions, where said running time is
+reached and surpassed before we had a chance to split. The file will
+still split immediately, but in order to make sure that the split doesn't
+happen too late, it is recommended to call this action signal from
+something that will prevent further buffers from flowing into
+splitmuxsink before the split is completed, such as a pad probe before
+splitmuxsink.</p>
 <div class="refsect3">
 <a name="GstSplitMuxSink-split-now.parameters"></a><h4>Parameters</h4>
 <div class="informaltable"><table class="informaltable" width="100%" border="0">
@@ -519,7 +674,123 @@ user_function (<a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#
 </table></div>
 </div>
 <p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+<p class="since">Since: 1.16</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink-muxer-added"></a><h3>The <code class="literal">“muxer-added”</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+user_function (<a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink"><span class="type">GstSplitMuxSink</span></a> *splitmux,
+               <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct"><span class="type">GstElement</span></a>      *muxer,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
+<div class="refsect3">
+<a name="GstSplitMuxSink-muxer-added.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>splitmux</p></td>
+<td class="parameter_description"><p>the <a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink"><span class="type">GstSplitMuxSink</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>muxer</p></td>
+<td class="parameter_description"><p>the newly added muxer element</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
 <p class="since">Since: 1.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink-sink-added"></a><h3>The <code class="literal">“sink-added”</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+user_function (<a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink"><span class="type">GstSplitMuxSink</span></a> *splitmux,
+               <a href="/usr/share/gtk-doc/html/gstreamer-1.0/GstElement.html#GstElement-struct"><span class="type">GstElement</span></a>      *sink,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
+<div class="refsect3">
+<a name="GstSplitMuxSink-sink-added.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>splitmux</p></td>
+<td class="parameter_description"><p>the <a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink"><span class="type">GstSplitMuxSink</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>sink</p></td>
+<td class="parameter_description"><p>the newly added sink element</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+<p class="since">Since: 1.14</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink-split-after"></a><h3>The <code class="literal">“split-after”</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+user_function (<a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink"><span class="type">GstSplitMuxSink</span></a> *splitmux,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
+<p>When called by the user, this action signal splits the video file (and begins a new one) immediately.
+The current GOP will be output to the old file.</p>
+<div class="refsect3">
+<a name="GstSplitMuxSink-split-after.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>splitmux</p></td>
+<td class="parameter_description"><p>the <a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink"><span class="type">GstSplitMuxSink</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+<p class="since">Since: 1.16</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink-split-at-running-time"></a><h3>The <code class="literal">“split-at-running-time”</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>
+user_function (<a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink"><span class="type">GstSplitMuxSink</span></a> *gstsplitmuxsink,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#guint64"><span class="type">guint64</span></a>          arg1,
+               <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
+<p>Flags: <a href="/usr/share/gtk-doc/html/gobject/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
 </div>
 </div>
 </div>

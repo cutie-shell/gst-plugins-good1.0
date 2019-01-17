@@ -247,7 +247,7 @@ basic_check_cb (GstPad * pad, int i)
   fail_unless (buffers && g_list_length (buffers) == 1);
 
   gst_rtp_buffer_map (buffers->data, GST_MAP_READ, &rtpbuffer);
-  fail_unless_equals_int (66, gst_rtp_buffer_get_ssrc (&rtpbuffer));
+  fail_unless_equals_int (55, gst_rtp_buffer_get_ssrc (&rtpbuffer));
   fail_unless_equals_int64 (200 - 57 + 1000 + i,
       gst_rtp_buffer_get_timestamp (&rtpbuffer));
   fail_unless_equals_int (100 + 1 + i, gst_rtp_buffer_get_seq (&rtpbuffer));
@@ -281,7 +281,7 @@ lock_check_cb (GstPad * pad, int i)
 
     fail_unless (buffers && g_list_length (buffers) == 1);
     gst_rtp_buffer_map (buffers->data, GST_MAP_READ, &rtpbuffer);
-    fail_unless_equals_int (66, gst_rtp_buffer_get_ssrc (&rtpbuffer));
+    fail_unless_equals_int (55, gst_rtp_buffer_get_ssrc (&rtpbuffer));
     fail_unless_equals_int64 (200 - 57 + 1000 + i,
         gst_rtp_buffer_get_timestamp (&rtpbuffer));
     fail_unless_equals_int (100 + 1 + i, gst_rtp_buffer_get_seq (&rtpbuffer));
@@ -348,6 +348,17 @@ _rtp_buffer_get_ssrc (GstBuffer * buf)
   guint32 ret;
   g_assert (gst_rtp_buffer_map (buf, GST_MAP_READ, &rtp));
   ret = gst_rtp_buffer_get_ssrc (&rtp);
+  gst_rtp_buffer_unmap (&rtp);
+  return ret;
+}
+
+static guint32
+_rtp_buffer_get_ts (GstBuffer * buf)
+{
+  GstRTPBuffer rtp = GST_RTP_BUFFER_INIT;
+  guint32 ret;
+  g_assert (gst_rtp_buffer_map (buf, GST_MAP_READ, &rtp));
+  ret = gst_rtp_buffer_get_timestamp (&rtp);
   gst_rtp_buffer_unmap (&rtp);
   return ret;
 }
@@ -423,7 +434,44 @@ GST_START_TEST (test_rtpmux_ssrc_property_not_set)
 
 GST_END_TEST;
 
-GST_START_TEST (test_rtpmux_ssrc_downstream_can_overrule)
+GST_START_TEST (test_rtpmux_ssrc_downstream_overrules_upstream)
+{
+  GstHarness *h = gst_harness_new_with_padnames ("rtpmux", NULL, "src");
+  GstHarness *h0 = gst_harness_new_with_element (h->element, "sink_0", NULL);
+  GstHarness *h1 = gst_harness_new_with_element (h->element, "sink_1", NULL);
+  GstBuffer *buf0;
+  GstBuffer *buf1;
+
+  /* downstream is specifying 444444 as ssrc */
+  gst_harness_set_sink_caps_str (h, "application/x-rtp, ssrc=(uint)444444");
+
+  /* while upstream ssrc is 222222 and 333333 */
+  gst_harness_set_src_caps_str (h0, "application/x-rtp, ssrc=(uint)222222");
+  gst_harness_set_src_caps_str (h1, "application/x-rtp, ssrc=(uint)333333");
+
+  fail_unless_equals_int (GST_FLOW_OK,
+      gst_harness_push (h0, generate_test_buffer (0, 222222)));
+  fail_unless_equals_int (GST_FLOW_OK,
+      gst_harness_push (h1, generate_test_buffer (0, 333333)));
+
+  buf0 = gst_harness_pull (h);
+  buf1 = gst_harness_pull (h);
+
+  /* we expect the ssrc to be downstream ssrc */
+  fail_unless_equals_int (444444, _rtp_buffer_get_ssrc (buf0));
+  fail_unless_equals_int (444444, _rtp_buffer_get_ssrc (buf1));
+
+  gst_buffer_unref (buf0);
+  gst_buffer_unref (buf1);
+
+  gst_harness_teardown (h0);
+  gst_harness_teardown (h1);
+  gst_harness_teardown (h);
+}
+
+GST_END_TEST;
+
+GST_START_TEST (test_rtpmux_ssrc_property_overrules_downstream)
 {
   GstHarness *h = gst_harness_new_with_padnames ("rtpmux", NULL, "src");
   GstHarness *h0 = gst_harness_new_with_element (h->element, "sink_0", NULL);
@@ -441,6 +489,16 @@ GST_START_TEST (test_rtpmux_ssrc_downstream_can_overrule)
   gst_harness_set_src_caps_str (h0, "application/x-rtp, ssrc=(uint)222222");
   gst_harness_set_src_caps_str (h1, "application/x-rtp, ssrc=(uint)333333");
 
+  /* pushing now should fail */
+  fail_unless_equals_int (GST_FLOW_NOT_NEGOTIATED,
+      gst_harness_push (h0, generate_test_buffer (0, 222222)));
+  fail_unless_equals_int (GST_FLOW_NOT_NEGOTIATED,
+      gst_harness_push (h1, generate_test_buffer (0, 333333)));
+
+  /* open up the restriction on ssrc downstream */
+  gst_harness_set_sink_caps_str (h, "application/x-rtp");
+
+  /* and push again */
   fail_unless_equals_int (GST_FLOW_OK,
       gst_harness_push (h0, generate_test_buffer (0, 222222)));
   fail_unless_equals_int (GST_FLOW_OK,
@@ -449,9 +507,53 @@ GST_START_TEST (test_rtpmux_ssrc_downstream_can_overrule)
   buf0 = gst_harness_pull (h);
   buf1 = gst_harness_pull (h);
 
-  /* we expect the ssrc to be downstream ssrc */
-  fail_unless_equals_int (444444, _rtp_buffer_get_ssrc (buf0));
-  fail_unless_equals_int (444444, _rtp_buffer_get_ssrc (buf1));
+  /* we expect the ssrc to be property ssrc */
+  fail_unless_equals_int (111111, _rtp_buffer_get_ssrc (buf0));
+  fail_unless_equals_int (111111, _rtp_buffer_get_ssrc (buf1));
+
+  gst_buffer_unref (buf0);
+  gst_buffer_unref (buf1);
+
+  gst_harness_teardown (h0);
+  gst_harness_teardown (h1);
+  gst_harness_teardown (h);
+}
+
+GST_END_TEST;
+
+GST_START_TEST (test_rtpmux_ssrc_property_survive_statechange)
+{
+  GstHarness *h = gst_harness_new_with_padnames ("rtpmux", NULL, "src");
+  GstHarness *h0 = gst_harness_new_with_element (h->element, "sink_0", NULL);
+  GstHarness *h1 = gst_harness_new_with_element (h->element, "sink_1", NULL);
+  GstBuffer *buf0;
+  GstBuffer *buf1;
+
+  gst_element_set_state (h->element, GST_STATE_NULL);
+  /* rtpmux ssrc is set to 111111 */
+  g_object_set (h->element, "ssrc", 111111, NULL);
+  gst_element_set_state (h->element, GST_STATE_PLAYING);
+
+  /* upstream ssrc is 222222 and 333333 */
+  gst_harness_set_src_caps_str (h0, "application/x-rtp, ssrc=(uint)222222");
+  gst_harness_set_src_caps_str (h1, "application/x-rtp, ssrc=(uint)333333");
+
+  /* downstream is specifying 444444 as ssrc */
+  gst_harness_set_sink_caps_str (h, "application/x-rtp, ssrc=(uint)444444");
+  gst_harness_set_sink_caps_str (h, "application/x-rtp");
+
+  /* push */
+  fail_unless_equals_int (GST_FLOW_OK,
+      gst_harness_push (h0, generate_test_buffer (0, 222222)));
+  fail_unless_equals_int (GST_FLOW_OK,
+      gst_harness_push (h1, generate_test_buffer (0, 333333)));
+
+  buf0 = gst_harness_pull (h);
+  buf1 = gst_harness_pull (h);
+
+  /* we expect the ssrc to be property ssrc */
+  fail_unless_equals_int (111111, _rtp_buffer_get_ssrc (buf0));
+  fail_unless_equals_int (111111, _rtp_buffer_get_ssrc (buf1));
 
   gst_buffer_unref (buf0);
   gst_buffer_unref (buf1);
@@ -481,10 +583,10 @@ GST_START_TEST (test_rtpmux_ssrc_downstream_dynamic)
   g_object_set (capsfilter, "caps", caps, NULL);
   gst_caps_unref (caps);
 
-  /* while upstream ssrc is 222222 and 333333 */
   gst_harness_set_src_caps_str (h0, "application/x-rtp, ssrc=(uint)222222");
   gst_harness_set_src_caps_str (h1, "application/x-rtp, ssrc=(uint)333333");
 
+  /* push on both sinkpads with different ssrc */
   fail_unless_equals_int (GST_FLOW_OK,
       gst_harness_push (h0, generate_test_buffer (0, 222222)));
   fail_unless_equals_int (GST_FLOW_OK,
@@ -524,6 +626,72 @@ GST_START_TEST (test_rtpmux_ssrc_downstream_dynamic)
 
 GST_END_TEST;
 
+
+GST_START_TEST (test_rtpmux_caps_query_with_downsteam_ts_offset_and_ssrc)
+{
+  GstHarness *h = gst_harness_new_with_padnames ("rtpmux", "sink_0", "src");
+  GstCaps *caps;
+  const GstStructure *s;
+
+  /* downstream is specifying 100 as ts-offset and 111 as ssrc */
+  gst_harness_set_sink_caps_str (h, "application/x-rtp, "
+      "timstamp-offset=(uint)100, ssrc=(uint)111");
+
+  caps = gst_pad_peer_query_caps (h->srcpad, NULL);
+  s = gst_caps_get_structure (caps, 0);
+
+  /* check that the query does not contain any of these fields */
+  fail_unless (!gst_structure_has_field (s, "timestamp-offset"));
+  fail_unless (!gst_structure_has_field (s, "ssrc"));
+
+  gst_caps_unref (caps);
+  gst_harness_teardown (h);
+}
+
+GST_END_TEST;
+
+GST_START_TEST (test_rtpmux_ts_offset_downstream_overrules_upstream)
+{
+  GstHarness *h = gst_harness_new_with_padnames ("rtpmux", NULL, "src");
+  GstHarness *h0 = gst_harness_new_with_element (h->element, "sink_0", NULL);
+  GstHarness *h1 = gst_harness_new_with_element (h->element, "sink_1", NULL);
+  GstBuffer *buf0;
+  GstBuffer *buf1;
+
+  /* downstream is specifying 1234567 as ts-offset */
+  gst_harness_set_sink_caps_str (h,
+      "application/x-rtp, timestamp-offset=(uint)1234567");
+
+  /* while upstream ts-offset is 1600 (10 * 160) and 16000 (100 * 160) */
+  gst_harness_set_src_caps_str (h0,
+      "application/x-rtp, timestamp-offset=(uint)1600");
+  gst_harness_set_src_caps_str (h1,
+      "application/x-rtp, timestamp-offset=(uint)16000");
+
+  /* push a buffer starting with rtp-timestamp: 1600 (10 * 160) */
+  fail_unless_equals_int (GST_FLOW_OK,
+      gst_harness_push (h0, generate_test_buffer (10, 222222)));
+  /* push a buffer starting with rtp-timestamp: 16000 (100 * 160) */
+  fail_unless_equals_int (GST_FLOW_OK,
+      gst_harness_push (h1, generate_test_buffer (100, 333333)));
+
+  buf0 = gst_harness_pull (h);
+  buf1 = gst_harness_pull (h);
+
+  /* we expect the buffers to start from 1234567 */
+  fail_unless_equals_int (1234567, _rtp_buffer_get_ts (buf0));
+  fail_unless_equals_int (1234567, _rtp_buffer_get_ts (buf1));
+
+  gst_buffer_unref (buf0);
+  gst_buffer_unref (buf1);
+
+  gst_harness_teardown (h0);
+  gst_harness_teardown (h1);
+  gst_harness_teardown (h);
+}
+
+GST_END_TEST;
+
 static Suite *
 rtpmux_suite (void)
 {
@@ -535,8 +703,17 @@ rtpmux_suite (void)
   tcase_add_test (tc_chain, test_rtpmux_basic);
   tcase_add_test (tc_chain, test_rtpmux_ssrc_property);
   tcase_add_test (tc_chain, test_rtpmux_ssrc_property_not_set);
-  tcase_add_test (tc_chain, test_rtpmux_ssrc_downstream_can_overrule);
+
+  tcase_add_test (tc_chain, test_rtpmux_ssrc_downstream_overrules_upstream);
+  tcase_add_test (tc_chain, test_rtpmux_ssrc_property_overrules_downstream);
+  tcase_add_test (tc_chain, test_rtpmux_ssrc_property_survive_statechange);
+
   tcase_add_test (tc_chain, test_rtpmux_ssrc_downstream_dynamic);
+
+  tcase_add_test (tc_chain,
+      test_rtpmux_caps_query_with_downsteam_ts_offset_and_ssrc);
+  tcase_add_test (tc_chain,
+      test_rtpmux_ts_offset_downstream_overrules_upstream);
 
   tc_chain = tcase_create ("rtpdtmfmux_basic");
   tcase_add_test (tc_chain, test_rtpdtmfmux_basic);

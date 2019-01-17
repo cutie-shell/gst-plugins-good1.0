@@ -27,48 +27,18 @@ the plug-in code, LGPL or LGPL-compatible for the supporting library).
 
  <repository>
    <GitRepository>
-     <location rdf:resource="git://anongit.freedesktop.org/gstreamer/gst-plugins-good"/>
-     <browse rdf:resource="http://cgit.freedesktop.org/gstreamer/gst-plugins-good"/>
+     <location rdf:resource="git://gitlab.freedesktop.org/gstreamer/gst-plugins-good"/>
+     <browse rdf:resource="http://gitlab.freedesktop.org/gstreamer/gst-plugins-good"/>
    </GitRepository>
  </repository>
 
  <release>
   <Version>
-   <revision>1.14.4</revision>
-   <branch>1.14</branch>
+   <revision>1.15.1</revision>
+   <branch>master</branch>
    <name></name>
-   <created>2018-10-02</created>
-   <file-release rdf:resource="https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.14.4.tar.xz" />
-  </Version>
- </release>
-
- <release>
-  <Version>
-   <revision>1.14.3</revision>
-   <branch>1.14</branch>
-   <name></name>
-   <created>2018-09-16</created>
-   <file-release rdf:resource="https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.14.3.tar.xz" />
-  </Version>
- </release>
-
- <release>
-  <Version>
-   <revision>1.14.2</revision>
-   <branch>1.14</branch>
-   <name></name>
-   <created>2018-07-20</created>
-   <file-release rdf:resource="https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.14.2.tar.xz" />
-  </Version>
- </release>
-
- <release>
-  <Version>
-   <revision>1.14.1</revision>
-   <branch>1.14</branch>
-   <name></name>
-   <created>2018-05-17</created>
-   <file-release rdf:resource="https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.14.1.tar.xz" />
+   <created>2019-01-17</created>
+   <file-release rdf:resource="https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.15.1.tar.xz" />
   </Version>
  </release>
 

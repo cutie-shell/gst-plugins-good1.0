@@ -180,7 +180,8 @@ am_libgstrtpmanager_la_OBJECTS = libgstrtpmanager_la-gstrtpmanager.lo \
 	libgstrtpmanager_la-rtpsession.lo \
 	libgstrtpmanager_la-rtpsource.lo \
 	libgstrtpmanager_la-rtpstats.lo \
-	libgstrtpmanager_la-gstrtpsession.lo
+	libgstrtpmanager_la-gstrtpsession.lo \
+	libgstrtpmanager_la-gstrtpfunnel.lo
 libgstrtpmanager_la_OBJECTS = $(am_libgstrtpmanager_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -207,6 +208,7 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/libgstrtpmanager_la-gstrtpbin.Plo \
 	./$(DEPDIR)/libgstrtpmanager_la-gstrtpdtmfmux.Plo \
+	./$(DEPDIR)/libgstrtpmanager_la-gstrtpfunnel.Plo \
 	./$(DEPDIR)/libgstrtpmanager_la-gstrtpjitterbuffer.Plo \
 	./$(DEPDIR)/libgstrtpmanager_la-gstrtpmanager.Plo \
 	./$(DEPDIR)/libgstrtpmanager_la-gstrtpmux.Plo \
@@ -651,7 +653,8 @@ libgstrtpmanager_la_SOURCES = gstrtpmanager.c \
 			      rtpsession.c      \
 			      rtpsource.c      \
 			      rtpstats.c      \
-			      gstrtpsession.c
+			      gstrtpsession.c \
+			      gstrtpfunnel.c
 
 noinst_HEADERS = gstrtpbin.h \
 		 gstrtpdtmfmux.h \
@@ -666,7 +669,8 @@ noinst_HEADERS = gstrtpbin.h \
 		 rtpsession.h  \
 		 rtpsource.h  \
 		 rtpstats.h  \
-		 gstrtpsession.h
+		 gstrtpsession.h \
+		 gstrtpfunnel.h
 
 libgstrtpmanager_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) \
 	$(GST_NET_CFLAGS) $(WARNING_CFLAGS) $(ERROR_CFLAGS)
@@ -756,6 +760,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtpmanager_la-gstrtpbin.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtpmanager_la-gstrtpdtmfmux.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtpmanager_la-gstrtpfunnel.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtpmanager_la-gstrtpjitterbuffer.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtpmanager_la-gstrtpmanager.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstrtpmanager_la-gstrtpmux.Plo@am__quote@ # am--include-marker
@@ -905,6 +910,13 @@ libgstrtpmanager_la-gstrtpsession.lo: gstrtpsession.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtpmanager_la_CFLAGS) $(CFLAGS) -c -o libgstrtpmanager_la-gstrtpsession.lo `test -f 'gstrtpsession.c' || echo '$(srcdir)/'`gstrtpsession.c
 
+libgstrtpmanager_la-gstrtpfunnel.lo: gstrtpfunnel.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtpmanager_la_CFLAGS) $(CFLAGS) -MT libgstrtpmanager_la-gstrtpfunnel.lo -MD -MP -MF $(DEPDIR)/libgstrtpmanager_la-gstrtpfunnel.Tpo -c -o libgstrtpmanager_la-gstrtpfunnel.lo `test -f 'gstrtpfunnel.c' || echo '$(srcdir)/'`gstrtpfunnel.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstrtpmanager_la-gstrtpfunnel.Tpo $(DEPDIR)/libgstrtpmanager_la-gstrtpfunnel.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstrtpfunnel.c' object='libgstrtpmanager_la-gstrtpfunnel.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstrtpmanager_la_CFLAGS) $(CFLAGS) -c -o libgstrtpmanager_la-gstrtpfunnel.lo `test -f 'gstrtpfunnel.c' || echo '$(srcdir)/'`gstrtpfunnel.c
+
 mostlyclean-libtool:
 	-rm -f *.lo
 
@@ -1041,6 +1053,7 @@ clean-am: clean-generic clean-libtool clean-pluginLTLIBRARIES \
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/libgstrtpmanager_la-gstrtpbin.Plo
 	-rm -f ./$(DEPDIR)/libgstrtpmanager_la-gstrtpdtmfmux.Plo
+	-rm -f ./$(DEPDIR)/libgstrtpmanager_la-gstrtpfunnel.Plo
 	-rm -f ./$(DEPDIR)/libgstrtpmanager_la-gstrtpjitterbuffer.Plo
 	-rm -f ./$(DEPDIR)/libgstrtpmanager_la-gstrtpmanager.Plo
 	-rm -f ./$(DEPDIR)/libgstrtpmanager_la-gstrtpmux.Plo
@@ -1101,6 +1114,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/libgstrtpmanager_la-gstrtpbin.Plo
 	-rm -f ./$(DEPDIR)/libgstrtpmanager_la-gstrtpdtmfmux.Plo
+	-rm -f ./$(DEPDIR)/libgstrtpmanager_la-gstrtpfunnel.Plo
 	-rm -f ./$(DEPDIR)/libgstrtpmanager_la-gstrtpjitterbuffer.Plo
 	-rm -f ./$(DEPDIR)/libgstrtpmanager_la-gstrtpmanager.Plo
 	-rm -f ./$(DEPDIR)/libgstrtpmanager_la-gstrtpmux.Plo

@@ -109,6 +109,12 @@ static gboolean gst_rtp_h265_depay_setcaps (GstRTPBaseDepayload * filter,
     GstCaps * caps);
 static gboolean gst_rtp_h265_depay_handle_event (GstRTPBaseDepayload * depay,
     GstEvent * event);
+static GstBuffer *gst_rtp_h265_complete_au (GstRtpH265Depay * rtph265depay,
+    GstClockTime * out_timestamp, gboolean * out_keyframe);
+static void gst_rtp_h265_depay_push (GstRtpH265Depay * rtph265depay,
+    GstBuffer * outbuf, gboolean keyframe, GstClockTime timestamp,
+    gboolean marker);
+
 
 static void
 gst_rtp_h265_depay_class_init (GstRtpH265DepayClass * klass)
@@ -179,6 +185,21 @@ gst_rtp_h265_depay_reset (GstRtpH265Depay * rtph265depay, gboolean hard)
     }
     gst_allocation_params_init (&rtph265depay->params);
   }
+}
+
+static void
+gst_rtp_h265_depay_drain (GstRtpH265Depay * rtph265depay)
+{
+  GstClockTime timestamp;
+  gboolean keyframe;
+  GstBuffer *outbuf;
+
+  if (!rtph265depay->picture_start)
+    return;
+
+  outbuf = gst_rtp_h265_complete_au (rtph265depay, &timestamp, &keyframe);
+  if (outbuf)
+    gst_rtp_h265_depay_push (rtph265depay, outbuf, keyframe, timestamp, FALSE);
 }
 
 static void
@@ -1058,6 +1079,35 @@ gst_rtp_h265_complete_au (GstRtpH265Depay * rtph265depay,
 #define NAL_TYPE_IS_KEY(nt) (NAL_TYPE_IS_PARAMETER_SET(nt) || NAL_TYPE_IS_IRAP(nt))
 
 static void
+gst_rtp_h265_depay_push (GstRtpH265Depay * rtph265depay, GstBuffer * outbuf,
+    gboolean keyframe, GstClockTime timestamp, gboolean marker)
+{
+  /* prepend codec_data */
+  if (rtph265depay->codec_data) {
+    GST_DEBUG_OBJECT (rtph265depay, "prepending codec_data");
+    gst_rtp_copy_video_meta (rtph265depay, rtph265depay->codec_data, outbuf);
+    outbuf = gst_buffer_append (rtph265depay->codec_data, outbuf);
+    rtph265depay->codec_data = NULL;
+    keyframe = TRUE;
+  }
+  outbuf = gst_buffer_make_writable (outbuf);
+
+  gst_rtp_drop_non_video_meta (rtph265depay, outbuf);
+
+  GST_BUFFER_PTS (outbuf) = timestamp;
+
+  if (keyframe)
+    GST_BUFFER_FLAG_UNSET (outbuf, GST_BUFFER_FLAG_DELTA_UNIT);
+  else
+    GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_DELTA_UNIT);
+
+  if (marker)
+    GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_MARKER);
+
+  gst_rtp_base_depayload_push (GST_RTP_BASE_DEPAYLOAD (rtph265depay), outbuf);
+}
+
+static void
 gst_rtp_h265_depay_handle_nal (GstRtpH265Depay * rtph265depay, GstBuffer * nal,
     GstClockTime in_timestamp, gboolean marker)
 {
@@ -1151,26 +1201,8 @@ gst_rtp_h265_depay_handle_nal (GstRtpH265Depay * rtph265depay, GstBuffer * nal,
   }
 
   if (outbuf) {
-    /* prepend codec_data */
-    if (rtph265depay->codec_data) {
-      GST_DEBUG_OBJECT (depayload, "prepending codec_data");
-      gst_rtp_copy_video_meta (rtph265depay, rtph265depay->codec_data, outbuf);
-      outbuf = gst_buffer_append (rtph265depay->codec_data, outbuf);
-      rtph265depay->codec_data = NULL;
-      out_keyframe = TRUE;
-    }
-    outbuf = gst_buffer_make_writable (outbuf);
-
-    gst_rtp_drop_non_video_meta (rtph265depay, outbuf);
-
-    GST_BUFFER_PTS (outbuf) = out_timestamp;
-
-    if (out_keyframe)
-      GST_BUFFER_FLAG_UNSET (outbuf, GST_BUFFER_FLAG_DELTA_UNIT);
-    else
-      GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_DELTA_UNIT);
-
-    gst_rtp_base_depayload_push (depayload, outbuf);
+    gst_rtp_h265_depay_push (rtph265depay, outbuf, out_keyframe, out_timestamp,
+        marker);
   }
 
   return;
@@ -1561,6 +1593,9 @@ gst_rtp_h265_depay_handle_event (GstRTPBaseDepayload * depay, GstEvent * event)
   switch (GST_EVENT_TYPE (event)) {
     case GST_EVENT_FLUSH_STOP:
       gst_rtp_h265_depay_reset (rtph265depay, FALSE);
+      break;
+    case GST_EVENT_EOS:
+      gst_rtp_h265_depay_drain (rtph265depay);
       break;
     default:
       break;

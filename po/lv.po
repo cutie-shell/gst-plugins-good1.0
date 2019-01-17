@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.2.1\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-10-02 23:03+0100\n"
+"POT-Creation-Date: 2019-01-17 01:59+0000\n"
 "PO-Revision-Date: 2014-04-20 16:38+0300\n"
 "Last-Translator: Rihards Prieditis <rprieditis@gmail.com>\n"
 "Language-Team: Latvian <translation-team-lv@lists.sourceforge.net>\n"
@@ -94,10 +94,6 @@ msgstr "Šī datne ir nepabeigta un to nevar atskaņot."
 
 msgid "The video in this file might not play correctly."
 msgstr "Video šajā datnē varētu tikt atskaņots nepareizi."
-
-#, c-format
-msgid "This file contains too many streams. Only playing first %d"
-msgstr "Šī datne satur pārāk daudz straumju. Tiek atskaņota tikai pirmā %d"
 
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
@@ -415,6 +411,9 @@ msgstr "Izšķirtspējas mainīšana izpildlaikā pašlaik netiek atbalstīta."
 
 msgid "Cannot operate without a clock"
 msgstr "Nevar veikt darbības bez pulksteņa"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr "Šī datne satur pārāk daudz straumju. Tiek atskaņota tikai pirmā %d"
 
 #~ msgid "Record Source"
 #~ msgstr "Ierakstīšanas avots"

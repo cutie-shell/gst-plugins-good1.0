@@ -170,6 +170,18 @@ struct _GstRTSPStream {
 };
 
 /**
+ * GstRTSPSrcTimeoutCause:
+ * @GST_RTSP_SRC_TIMEOUT_CAUSE_RTCP: timeout triggered by RTCP
+ *
+ * Different causes to why the rtspsrc generated the GstRTSPSrcTimeout
+ * message.
+ */
+typedef enum
+{
+  GST_RTSP_SRC_TIMEOUT_CAUSE_RTCP
+} GstRTSPSrcTimeoutCause;
+
+/**
  * GstRTSPNatMethod:
  * @GST_RTSP_NAT_NONE: none
  * @GST_RTSP_NAT_DUMMY: send dummy packets
@@ -181,6 +193,7 @@ typedef enum
   GST_RTSP_NAT_NONE,
   GST_RTSP_NAT_DUMMY
 } GstRTSPNatMethod;
+
 
 struct _GstRTSPSrc {
   GstBin           parent;
@@ -200,6 +213,7 @@ struct _GstRTSPSrc {
   /* UDP mode loop */
   gint             pending_cmd;
   gint             busy_cmd;
+  GCond            cmd_cond;
   gboolean         ignore_timeout;
   gboolean         open_error;
 
@@ -256,6 +270,7 @@ struct _GstRTSPSrc {
   gint64            max_ts_offset;
   gboolean          max_ts_offset_is_set;
   gint              backchannel;
+  GstClockTime      teardown_timeout;
 
   /* state */
   GstRTSPState       state;
@@ -291,6 +306,9 @@ struct _GstRTSPSrc {
 
   GstRTSPConnInfo  conninfo;
 
+  /* SET/GET PARAMETER requests queue */
+  GQueue set_get_param_q;
+
   /* a list of RTSP extensions as GstElement */
   GstRTSPExtensionList  *extensions;
 
@@ -301,6 +319,10 @@ struct _GstRTSPSrc {
 struct _GstRTSPSrcClass {
   GstBinClass parent_class;
 
+ /* action signals */
+  gboolean (*get_parameter) (GstRTSPSrc *rtsp, const gchar *parameter, const gchar *content_type, GstPromise *promise);
+  gboolean (*get_parameters) (GstRTSPSrc *rtsp, gchar **parameters, const gchar *content_type, GstPromise *promise);
+  gboolean (*set_parameter) (GstRTSPSrc *rtsp, const gchar *name, const gchar *value, const gchar *content_type, GstPromise *promise);
   GstFlowReturn (*push_backchannel_buffer) (GstRTSPSrc *src, guint id, GstSample *sample);
 };
 

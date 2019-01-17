@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 0.10.25.3\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-10-02 23:03+0100\n"
+"POT-Creation-Date: 2019-01-17 01:59+0000\n"
 "PO-Revision-Date: 2010-11-17 23:03+0200\n"
 "Last-Translator: Tommi Vainikainen <Tommi.Vainikainen@iki.fi>\n"
 "Language-Team: Finnish <translation-team-fi@lists.sourceforge.net>\n"
@@ -96,10 +96,6 @@ msgstr "Tiedosto on vajaa eikä sitä voida esittää."
 
 msgid "The video in this file might not play correctly."
 msgstr "Tiedostossa olevaa videota ei ehkä voida näyttää oikein."
-
-#, c-format
-msgid "This file contains too many streams. Only playing first %d"
-msgstr "Tiedosto sisältää useita virtoja. Soitetaan vain ensimmäiset %d"
 
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
@@ -417,6 +413,9 @@ msgstr "Resoluution vaihto käytön aikana ei ole vielä mahdollista."
 
 msgid "Cannot operate without a clock"
 msgstr "Ei voitu toimia ilman kelloa"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr "Tiedosto sisältää useita virtoja. Soitetaan vain ensimmäiset %d"
 
 #~ msgid "Record Source"
 #~ msgstr "Nauhoituslähde"

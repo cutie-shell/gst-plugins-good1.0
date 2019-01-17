@@ -54,6 +54,12 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-flvmux.html#GstFlvMux--metadatacreator" title="The “metadatacreator” property">metadatacreator</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type">
+<a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-flvmux.html#GstFlvMux--encoder" title="The “encoder” property">encoder</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -65,8 +71,8 @@
 <col class="description">
 </colgroup>
 <tbody><tr>
-<td class="datatype_keyword"> </td>
-<td class="function_name"><a class="link" href="gst-plugins-good-plugins-flvmux.html#GstFlvMux-struct" title="GstFlvMux">GstFlvMux</a></td>
+<td class="datatype_keyword">struct</td>
+<td class="function_name"><a class="link" href="gst-plugins-good-plugins-flvmux.html#GstFlvMux-struct" title="struct GstFlvMux">GstFlvMux</a></td>
 </tr></tbody>
 </table></div>
 </div>
@@ -259,8 +265,8 @@ GstFlvMux implements
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-flvmux.other_details"></a><h2>Types and Values</h2>
 <div class="refsect2">
-<a name="GstFlvMux-struct"></a><h3>GstFlvMux</h3>
-<pre class="programlisting">typedef struct _GstFlvMux GstFlvMux;</pre>
+<a name="GstFlvMux-struct"></a><h3>struct GstFlvMux</h3>
+<pre class="programlisting">struct GstFlvMux;</pre>
 </div>
 </div>
 <div class="refsect1">
@@ -278,6 +284,14 @@ duration)</p>
 <a name="GstFlvMux--metadatacreator"></a><h3>The <code class="literal">“metadatacreator”</code> property</h3>
 <pre class="programlisting">  “metadatacreator”          <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
 <p>The value of metadatacreator in the meta packet.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: NULL</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstFlvMux--encoder"></a><h3>The <code class="literal">“encoder”</code> property</h3>
+<pre class="programlisting">  “encoder”                  <a href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
+<p>The value of encoder in the meta packet.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: NULL</p>
 </div>

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-10-02 23:03+0100\n"
+"POT-Creation-Date: 2019-01-17 01:59+0000\n"
 "PO-Revision-Date: 2017-05-05 06:52+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
@@ -96,10 +96,6 @@ msgstr "Tập tin này chưa hoàn thành nên không thể được phát."
 
 msgid "The video in this file might not play correctly."
 msgstr "Ảnh động trong tập tin này có thể không phát đúng."
-
-#, c-format
-msgid "This file contains too many streams. Only playing first %d"
-msgstr "Tập tin này chứa quá nhiều luồng nên chỉ phát %d đầu tiên"
 
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
@@ -420,6 +416,9 @@ msgstr "Chưa hỗ trợ khả năng thay đổi độ phân giải trong khi ch
 
 msgid "Cannot operate without a clock"
 msgstr "Không thể thao tác khi không có đồng hồ"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr "Tập tin này chứa quá nhiều luồng nên chỉ phát %d đầu tiên"
 
 #~ msgid "Record Source"
 #~ msgstr "Ghi lưu nguồn"

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2018-10-02 23:03+0100\n"
+"POT-Creation-Date: 2019-01-17 01:59+0000\n"
 "PO-Revision-Date: 2017-05-05 10:55+0300\n"
 "Last-Translator: Mehmet Kececi <mkececi@mehmetkececi.com>\n"
 "Language-Team: Turkish <gnu-tr-u12a@lists.sourceforge.net>\n"
@@ -95,10 +95,6 @@ msgstr "Dosya eksik ve oynatılamaz."
 
 msgid "The video in this file might not play correctly."
 msgstr "Bu dosyadaki vidyo doğru oynatılamıyabilir."
-
-#, c-format
-msgid "This file contains too many streams. Only playing first %d"
-msgstr "Bu dosya çok fazla akış içeriyor. Sadece ilki oynatılıyor %d"
 
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
@@ -405,6 +401,9 @@ msgstr "Çalışırken çözünürlüğü değiştirmek henüz desteklenmiyor."
 
 msgid "Cannot operate without a clock"
 msgstr "Saat olmadan çalışamaz"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr "Bu dosya çok fazla akış içeriyor. Sadece ilki oynatılıyor %d"
 
 #~ msgid "Record Source"
 #~ msgstr "Kayıt Kaynağı"

@@ -1,19 +1,19 @@
-x11_dep = dependency('x11', required : get_option('x11'))
+x11_dep = dependency('x11', required : get_option('ximagesrc'))
 
 if x11_dep.found()
   x_args = []
-  # FIXME: Need to check for XShmAttach inside libXext
-  xshm_dep = dependency('xext', required : false)
-  if xshm_dep.found()
+  xshm_dep = dependency('xext', required : get_option('ximagesrc-xshm'))
+  # FIXME: should add a 'required' arg to cc.has_function() in Meson and use it here
+  if xshm_dep.found() and cc.has_function('XShmAttach', dependencies: xshm_dep)
     x_args += ['-DHAVE_XSHM']
   endif
 
-  xfixes_dep = dependency('xfixes', required : false)
+  xfixes_dep = dependency('xfixes', required : get_option('ximagesrc-xfixes'))
   if xfixes_dep.found()
     x_args += ['-DHAVE_XFIXES']
   endif
 
-  xdamage_dep = dependency('xdamage', required : false)
+  xdamage_dep = dependency('xdamage', required : get_option('ximagesrc-xdamage'))
   if xdamage_dep.found()
     x_args += ['-DHAVE_XDAMAGE']
   endif

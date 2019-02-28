@@ -205,7 +205,7 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(top_srcdir)/common/cruft.mak $(top_srcdir)/common/po.mak \
 	$(top_srcdir)/common/release.mak ABOUT-NLS AUTHORS COPYING \
 	ChangeLog INSTALL NEWS README compile config.guess \
-	config.rpath config.sub install-sh ltmain.sh missing
+	config.rpath config.sub depcomp install-sh ltmain.sh missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -530,6 +530,8 @@ VPX_130_CFLAGS = @VPX_130_CFLAGS@
 VPX_130_LIBS = @VPX_130_LIBS@
 VPX_140_CFLAGS = @VPX_140_CFLAGS@
 VPX_140_LIBS = @VPX_140_LIBS@
+VPX_180_CFLAGS = @VPX_180_CFLAGS@
+VPX_180_LIBS = @VPX_180_LIBS@
 VPX_CFLAGS = @VPX_CFLAGS@
 VPX_LIBS = @VPX_LIBS@
 WARNING_CFLAGS = @WARNING_CFLAGS@

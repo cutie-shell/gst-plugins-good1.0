@@ -222,7 +222,7 @@ GST_START_TEST (test_rtph265depay_with_downstream_allocator)
       "clock-rate", G_TYPE_INT, 90000,
       "encoding-name", G_TYPE_STRING, "H265",
       "ssrc", G_TYPE_UINT, 1990683810,
-      "timestamp-offset", G_TYPE_UINT, 3697583446,
+      "timestamp-offset", G_TYPE_UINT, 3697583446UL,
       "seqnum-offset", G_TYPE_UINT, 15568,
       "a-framerate", G_TYPE_STRING, "30", NULL);
   g_object_set (src, "format", GST_FORMAT_TIME, "caps", caps, NULL);
@@ -626,6 +626,8 @@ rtph265_suite (void)
   tcase_add_test (tc_chain, test_rtph265depay_with_downstream_allocator);
   tcase_add_test (tc_chain, test_rtph265depay_eos);
   tcase_add_test (tc_chain, test_rtph265depay_marker_to_flag);
+  /* TODO We need a sample to test with */
+  /* tcase_add_test (tc_chain, test_rtph265depay_aggregate_marker); */
 
   tc_chain = tcase_create ("rtph265pay");
   suite_add_tcase (s, tc_chain);

@@ -293,6 +293,9 @@
 /* Define to enable Qt elements (used by qt). */
 #undef HAVE_QT
 
+/* Define if Qt Android integration is installed */
+#undef HAVE_QT_ANDROID
+
 /* Define if Qt eglfs integration is installed */
 #undef HAVE_QT_EGLFS
 
@@ -388,6 +391,9 @@
 
 /* Defined if the VPX library version is 1.4 or bigger */
 #undef HAVE_VPX_1_4
+
+/* Defined if the VPX library version is 1.8 or bigger */
+#undef HAVE_VPX_1_8
 
 /* Define to enable Win32 WaveForm (used by waveformsink). */
 #undef HAVE_WAVEFORM

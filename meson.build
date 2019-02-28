@@ -1,5 +1,5 @@
 project('gst-plugins-good', 'c',
-  version : '1.15.1',
+  version : '1.15.2',
   meson_version : '>= 0.47',
   default_options : [ 'warning_level=1',
                       'buildtype=debugoptimized' ])
@@ -297,7 +297,7 @@ if build_gstgl
     set_variable('gst_gl_have_platform_@0@'.format(p), gst_gl_platforms.contains(p))
   endforeach
 
-  foreach api : ['opengl', 'gles2']
+  foreach api : ['gl', 'gles2']
     set_variable('gst_gl_have_api_@0@'.format(api), gst_gl_apis.contains(api))
   endforeach
 endif
@@ -322,7 +322,8 @@ libsinc = include_directories('gst-libs')
 have_orcc = false
 orcc_args = []
 # Used by various libraries/elements that use Orc code
-orc_dep = dependency('orc-0.4', version : orc_req, required : get_option('orc'))
+orc_dep = dependency('orc-0.4', version : orc_req, required : get_option('orc'),
+    fallback : ['orc', 'orc_dep'])
 orcc = find_program('orcc', required : get_option('orc'))
 if orc_dep.found() and orcc.found()
   have_orcc = true

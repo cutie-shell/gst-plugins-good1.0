@@ -18,7 +18,7 @@ moc_headers = [
 if have_cxx and build_gstgl
   qt5_mod = import('qt5')
   qt5qml_dep = dependency('qt5', modules : ['Core', 'Gui', 'Qml', 'Quick'],
-                          required: get_option('qt5'))
+                          required: get_option('qt5'), static: host_machine.system() == 'ios')
 
   # FIXME Add a way to get that information out of the qt5 module
   moc = find_program('moc-qt5', 'moc', required : get_option('qt5'))
@@ -49,7 +49,7 @@ if have_cxx and build_gstgl
       endif
     endif
     if not have_qpa_include
-      qmake = find_program('qmake')
+      qmake = find_program('qmake-qt5', 'qmake')
       if qmake.found()
         qt_version = run_command(qmake, '-query', 'QT_VERSION').stdout().strip()
         qt_include_dir = run_command(qmake, '-query', 'QT_INSTALL_HEADERS').stdout().strip()
@@ -77,7 +77,11 @@ if have_cxx and build_gstgl
     endif
 
     if gst_gl_have_platform_egl
+      # Embedded linux (e.g. i.MX6) with or without windowing support
+      qt_defines += ['-DHAVE_QT_EGLFS']
+      have_qt_windowing = true
       if have_qpa_include
+        # Wayland windowing
         if gst_gl_have_window_wayland
           # FIXME: automagic
           qt5waylandextras = dependency('qt5', modules : ['WaylandClient'], required : false)
@@ -87,19 +91,23 @@ if have_cxx and build_gstgl
             have_qt_windowing = true
           endif
         endif
+        # Android windowing
         if gst_gl_have_window_android
           # FIXME: automagic
-          # FIXME: untested
           qt5androidextras = dependency('qt5', modules : ['AndroidExtras'], required : false)
-          if qt5androidextras.found()
-            optional_deps += qt5androidextras
-            # also uses the HAVE_QT_EGLFS define below
+          # for gl functions in QtGui/qopenglfunctions.h
+          # FIXME: automagic
+          glesv2_dep = cc.find_library('GLESv2', required : false)
+          if glesv2_dep.found() and qt5androidextras.found()
+            optional_deps += [qt5androidextras, glesv2_dep]
+            qt_defines += ['-DHAVE_QT_ANDROID']
             have_qt_windowing = true
+            # Needed for C++11 support in Cerbero. People building with Android
+            # in some other way need to add the necessary bits themselves.
+            optional_deps += dependency('gnustl', required : false)
           endif
         endif
       endif
-      qt_defines += ['-DHAVE_QT_EGLFS']
-      have_qt_windowing = true
     endif
 
     if gst_gl_have_platform_wgl and gst_gl_have_window_win32
@@ -113,18 +121,34 @@ if have_cxx and build_gstgl
       endif
     endif
 
-    # FIXME: OSX/iOS definitions
+    if gst_gl_have_window_cocoa and gst_gl_have_platform_cgl
+      # FIXME: automagic
+      qt5macextras = dependency('qt5', modules : ['MacExtras'], required : false)
+      if qt5macextras.found()
+        qt_defines += ['-DHAVE_QT_MAC']
+        optional_deps += qt5macextras
+        have_qt_windowing = true
+      endif
+    endif
+
+    if gst_gl_have_window_eagl and gst_gl_have_platform_eagl
+      if host_machine.system() == 'ios'
+        qt_defines += ['-DHAVE_QT_IOS']
+        have_qt_windowing = true
+      endif
+    endif
 
     if have_qt_windowing
       # Build it!
       moc_files = qt5_mod.preprocess(moc_headers : moc_headers)
-      library('gstqmlgl', sources, moc_files,
+      gstqmlgl = library('gstqmlgl', sources, moc_files,
         cpp_args : gst_plugins_good_args + qt_defines,
         link_args : noseh_link_args,
         include_directories: [configinc, libsinc],
         dependencies : [glib_deps, gst_dep, gstvideo_dep, gstgl_dep, qt5qml_dep, optional_deps],
         install: true,
         install_dir : plugins_install_dir)
+      pkgconfig.generate(gstqmlgl, install_dir : plugins_pkgconfig_install_dir)
     endif
   endif
 endif

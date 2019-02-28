@@ -5,7 +5,7 @@ dnl please read gstreamer/docs/random/autotools before changing this file
 dnl initialize autoconf
 dnl releases only do -Wall, git and prerelease does -Werror too
 dnl use a three digit version number for releases, and four for git/pre
-AC_INIT([GStreamer Good Plug-ins],[1.15.1],[http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer],[gst-plugins-good])
+AC_INIT([GStreamer Good Plug-ins],[1.15.2],[http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer],[gst-plugins-good])
 
 AG_GST_INIT
 
@@ -46,11 +46,11 @@ AC_DEFINE_UNQUOTED(GST_API_VERSION, "$GST_API_VERSION",
   [GStreamer API Version])
 
 AG_GST_LIBTOOL_PREPARE
-AS_LIBTOOL(GST, 1501, 0, 1501)
+AS_LIBTOOL(GST, 1502, 0, 1502)
 
 dnl *** required versions of GStreamer stuff ***
-GST_REQ=1.15.1
-GSTPB_REQ=1.15.1
+GST_REQ=1.15.2
+GSTPB_REQ=1.15.2
 
 dnl *** autotools stuff ****
 
@@ -925,8 +925,8 @@ AG_GST_CHECK_FEATURE(QT, [Qt elements], qt, [
                 QT_LIBS="$QT_LIBS $GNUSTL_LIBS"
                 ], [
                 AC_MSG_NOTICE([Could not find Standard C++ library])])
-              AC_DEFINE([HAVE_QT_EGLFS], [],
-                [Define if Qt eglfs integration is installed])
+              AC_DEFINE([HAVE_QT_ANDROID], [],
+                [Define if Qt Android integration is installed])
               QT_CFLAGS="$QT_CFLAGS $QT_ANDROID_CFLAGS"
               QT_LIBS="$QT_LIBS $QT_ANDROID_LIBS"
               HAVE_QT_WINDOWING="yes"
@@ -1052,6 +1052,10 @@ AG_GST_CHECK_FEATURE(VPX, [VPX decoder], vpx, [
 
     PKG_CHECK_MODULES(VPX_140, vpx >= 1.4.0, [
       AC_DEFINE(HAVE_VPX_1_4, 1, [Defined if the VPX library version is 1.4 or bigger])
+    ], [true])
+
+    PKG_CHECK_MODULES(VPX_180, vpx >= 1.8.0, [
+      AC_DEFINE(HAVE_VPX_1_8, 1, [Defined if the VPX library version is 1.8 or bigger])
     ], [true])
 
     LIBS="$OLD_LIBS"

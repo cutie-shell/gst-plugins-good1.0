@@ -898,7 +898,7 @@ gst_pulseringbuffer_acquire (GstAudioRingBuffer * buf,
 
   GST_LOG_OBJECT (psink, "creating sample spec");
   /* convert the gstreamer sample spec to the pulseaudio format */
-  if (!gst_pulse_fill_format_info (spec, &pbuf->format, NULL, &pbuf->channels))
+  if (!gst_pulse_fill_format_info (spec, &pbuf->format, &pbuf->channels))
     goto invalid_spec;
   pbuf->is_pcm = pa_format_info_is_pcm (pbuf->format);
 
@@ -2183,8 +2183,9 @@ gst_pulsesink_query_getcaps (GstPulseSink * psink, GstCaps * filter)
   }
 
   for (i = g_list_first (device_info.formats); i; i = g_list_next (i)) {
-    gst_caps_append (ret,
-        gst_pulse_format_info_to_caps ((pa_format_info *) i->data));
+    GstCaps *caps = gst_pulse_format_info_to_caps ((pa_format_info *) i->data);
+    if (caps)
+      gst_caps_append (ret, caps);
   }
 
 unlock:
@@ -2273,7 +2274,7 @@ gst_pulsesink_query_acceptcaps (GstPulseSink * psink, GstCaps * caps)
   if (!gst_audio_ring_buffer_parse_caps (&spec, caps))
     goto out;
 
-  if (!gst_pulse_fill_format_info (&spec, &format, NULL, &channels))
+  if (!gst_pulse_fill_format_info (&spec, &format, &channels))
     goto out;
 
   /* Make sure input is framed (one frame per buffer) and can be payloaded */

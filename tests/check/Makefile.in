@@ -761,9 +761,12 @@ elements_rtpssrcdemux_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_rtpssrcdemux_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-elements_rtpstorage_SOURCES = elements/rtpstorage.c
-elements_rtpstorage_OBJECTS =  \
-	elements/rtpstorage-rtpstorage.$(OBJEXT)
+am_elements_rtpstorage_OBJECTS =  \
+	elements/rtpstorage-rtpstorage.$(OBJEXT) \
+	../../gst/rtp/elements_rtpstorage-gstrtpstorage.$(OBJEXT) \
+	../../gst/rtp/elements_rtpstorage-rtpstorage.$(OBJEXT) \
+	../../gst/rtp/elements_rtpstorage-rtpstoragestream.$(OBJEXT)
+elements_rtpstorage_OBJECTS = $(am_elements_rtpstorage_OBJECTS)
 elements_rtpstorage_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_2)
@@ -983,8 +986,11 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = elements/$(DEPDIR)/aacparse.Po \
-	elements/$(DEPDIR)/ac3parse.Po \
+am__depfiles_remade =  \
+	../../gst/rtp/$(DEPDIR)/elements_rtpstorage-gstrtpstorage.Po \
+	../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstorage.Po \
+	../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstoragestream.Po \
+	elements/$(DEPDIR)/aacparse.Po elements/$(DEPDIR)/ac3parse.Po \
 	elements/$(DEPDIR)/alpha-alpha.Po \
 	elements/$(DEPDIR)/alphacolor-alphacolor.Po \
 	elements/$(DEPDIR)/amrparse.Po elements/$(DEPDIR)/apev2mux.Po \
@@ -1126,8 +1132,8 @@ SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/rtph265.c elements/rtpjitterbuffer.c \
 	elements/rtpmux.c elements/rtpred.c elements/rtprtx.c \
 	elements/rtpsession.c elements/rtpssrcdemux.c \
-	elements/rtpstorage.c elements/rtpulpfec.c elements/rtpvp9.c \
-	elements/shapewipe.c elements/souphttpsrc.c \
+	$(elements_rtpstorage_SOURCES) elements/rtpulpfec.c \
+	elements/rtpvp9.c elements/shapewipe.c elements/souphttpsrc.c \
 	elements/spectrum.c elements/splitmux.c elements/udpsink.c \
 	elements/udpsrc.c elements/videobox.c elements/videocrop.c \
 	elements/videofilter.c elements/videomixer.c elements/vp8dec.c \
@@ -1169,8 +1175,8 @@ DIST_SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/rtph265.c elements/rtpjitterbuffer.c \
 	elements/rtpmux.c elements/rtpred.c elements/rtprtx.c \
 	elements/rtpsession.c elements/rtpssrcdemux.c \
-	elements/rtpstorage.c elements/rtpulpfec.c elements/rtpvp9.c \
-	elements/shapewipe.c elements/souphttpsrc.c \
+	$(elements_rtpstorage_SOURCES) elements/rtpulpfec.c \
+	elements/rtpvp9.c elements/shapewipe.c elements/souphttpsrc.c \
 	elements/spectrum.c elements/splitmux.c elements/udpsink.c \
 	elements/udpsrc.c elements/videobox.c elements/videocrop.c \
 	elements/videofilter.c elements/videomixer.c elements/vp8dec.c \
@@ -1786,10 +1792,10 @@ AM_TESTS_ENVIRONMENT = CK_DEFAULT_TIMEOUT=20 $(REGISTRY_ENVIRONMENT) \
 	GST_PLUGIN_PATH_1_0=$(top_builddir)/gst:$(top_builddir)/ext:$(top_builddir)/sys:$(GSTPB_PLUGINS_DIR):$(GST_PLUGINS_DIR) \
 	GST_PLUGIN_LOADING_WHITELIST="gstreamer@$(GST_PLUGINS_DIR):gst-plugins-base@$(GSTPB_PLUGINS_DIR):gst-plugins-good@$(top_builddir)" \
 	GST_STATE_IGNORE_ELEMENTS="aasink autoaudiosrc autoaudiosink \
-	autovideosrc autovideosink cacasink cairotextoverlay \
-	halaudiosrc halaudiosink jackaudiosrc jackaudiosink osssrc \
-	osssink osxaudiosink osxaudiosrc osxvideosrc osxvideosink \
-	pulsesink pulsesrc pulsemixer v4l2src" \
+	autovideosrc autovideosink cacasink cairotextoverlay gtkglsink \
+	gtksink halaudiosrc halaudiosink jackaudiosrc jackaudiosink \
+	osssrc osssink osxaudiosink osxaudiosrc osxvideosrc \
+	osxvideosink pulsesink pulsesrc pulsemixer v4l2src" \
 	GSETTINGS_BACKEND="memory"
 
 # inspect every plugin feature
@@ -2142,6 +2148,12 @@ elements_rtpfunnel_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_C
 elements_rtpfunnel_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
 elements_rtpcollision_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rtpcollision_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_NET_LIBS) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)
+elements_rtpstorage_SOURCES = \
+	elements/rtpstorage.c \
+	../../gst/rtp/gstrtpstorage.c \
+	../../gst/rtp/rtpstorage.c \
+	../../gst/rtp/rtpstoragestream.c
+
 elements_rtpstorage_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rtpstorage_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_NET_LIBS) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)
 elements_rtpred_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
@@ -2650,6 +2662,21 @@ elements/rtpssrcdemux$(EXEEXT): $(elements_rtpssrcdemux_OBJECTS) $(elements_rtps
 	$(AM_V_CCLD)$(elements_rtpssrcdemux_LINK) $(elements_rtpssrcdemux_OBJECTS) $(elements_rtpssrcdemux_LDADD) $(LIBS)
 elements/rtpstorage-rtpstorage.$(OBJEXT): elements/$(am__dirstamp) \
 	elements/$(DEPDIR)/$(am__dirstamp)
+../../gst/rtp/$(am__dirstamp):
+	@$(MKDIR_P) ../../gst/rtp
+	@: > ../../gst/rtp/$(am__dirstamp)
+../../gst/rtp/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ../../gst/rtp/$(DEPDIR)
+	@: > ../../gst/rtp/$(DEPDIR)/$(am__dirstamp)
+../../gst/rtp/elements_rtpstorage-gstrtpstorage.$(OBJEXT):  \
+	../../gst/rtp/$(am__dirstamp) \
+	../../gst/rtp/$(DEPDIR)/$(am__dirstamp)
+../../gst/rtp/elements_rtpstorage-rtpstorage.$(OBJEXT):  \
+	../../gst/rtp/$(am__dirstamp) \
+	../../gst/rtp/$(DEPDIR)/$(am__dirstamp)
+../../gst/rtp/elements_rtpstorage-rtpstoragestream.$(OBJEXT):  \
+	../../gst/rtp/$(am__dirstamp) \
+	../../gst/rtp/$(DEPDIR)/$(am__dirstamp)
 
 elements/rtpstorage$(EXEEXT): $(elements_rtpstorage_OBJECTS) $(elements_rtpstorage_DEPENDENCIES) $(EXTRA_elements_rtpstorage_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/rtpstorage$(EXEEXT)
@@ -2867,6 +2894,7 @@ pipelines/wavpack$(EXEEXT): $(pipelines_wavpack_OBJECTS) $(pipelines_wavpack_DEP
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f ../../gst/rtp/*.$(OBJEXT)
 	-rm -f elements/*.$(OBJEXT)
 	-rm -f elements/*.lo
 	-rm -f generic/*.$(OBJEXT)
@@ -2876,6 +2904,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@../../gst/rtp/$(DEPDIR)/elements_rtpstorage-gstrtpstorage.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstorage.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstoragestream.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/aacparse.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/ac3parse.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/alpha-alpha.Po@am__quote@ # am--include-marker
@@ -3686,6 +3717,48 @@ elements/rtpstorage-rtpstorage.obj: elements/rtpstorage.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/rtpstorage.c' object='elements/rtpstorage-rtpstorage.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -c -o elements/rtpstorage-rtpstorage.obj `if test -f 'elements/rtpstorage.c'; then $(CYGPATH_W) 'elements/rtpstorage.c'; else $(CYGPATH_W) '$(srcdir)/elements/rtpstorage.c'; fi`
+
+../../gst/rtp/elements_rtpstorage-gstrtpstorage.o: ../../gst/rtp/gstrtpstorage.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -MT ../../gst/rtp/elements_rtpstorage-gstrtpstorage.o -MD -MP -MF ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-gstrtpstorage.Tpo -c -o ../../gst/rtp/elements_rtpstorage-gstrtpstorage.o `test -f '../../gst/rtp/gstrtpstorage.c' || echo '$(srcdir)/'`../../gst/rtp/gstrtpstorage.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-gstrtpstorage.Tpo ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-gstrtpstorage.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='../../gst/rtp/gstrtpstorage.c' object='../../gst/rtp/elements_rtpstorage-gstrtpstorage.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -c -o ../../gst/rtp/elements_rtpstorage-gstrtpstorage.o `test -f '../../gst/rtp/gstrtpstorage.c' || echo '$(srcdir)/'`../../gst/rtp/gstrtpstorage.c
+
+../../gst/rtp/elements_rtpstorage-gstrtpstorage.obj: ../../gst/rtp/gstrtpstorage.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -MT ../../gst/rtp/elements_rtpstorage-gstrtpstorage.obj -MD -MP -MF ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-gstrtpstorage.Tpo -c -o ../../gst/rtp/elements_rtpstorage-gstrtpstorage.obj `if test -f '../../gst/rtp/gstrtpstorage.c'; then $(CYGPATH_W) '../../gst/rtp/gstrtpstorage.c'; else $(CYGPATH_W) '$(srcdir)/../../gst/rtp/gstrtpstorage.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-gstrtpstorage.Tpo ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-gstrtpstorage.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='../../gst/rtp/gstrtpstorage.c' object='../../gst/rtp/elements_rtpstorage-gstrtpstorage.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -c -o ../../gst/rtp/elements_rtpstorage-gstrtpstorage.obj `if test -f '../../gst/rtp/gstrtpstorage.c'; then $(CYGPATH_W) '../../gst/rtp/gstrtpstorage.c'; else $(CYGPATH_W) '$(srcdir)/../../gst/rtp/gstrtpstorage.c'; fi`
+
+../../gst/rtp/elements_rtpstorage-rtpstorage.o: ../../gst/rtp/rtpstorage.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -MT ../../gst/rtp/elements_rtpstorage-rtpstorage.o -MD -MP -MF ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstorage.Tpo -c -o ../../gst/rtp/elements_rtpstorage-rtpstorage.o `test -f '../../gst/rtp/rtpstorage.c' || echo '$(srcdir)/'`../../gst/rtp/rtpstorage.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstorage.Tpo ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstorage.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='../../gst/rtp/rtpstorage.c' object='../../gst/rtp/elements_rtpstorage-rtpstorage.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -c -o ../../gst/rtp/elements_rtpstorage-rtpstorage.o `test -f '../../gst/rtp/rtpstorage.c' || echo '$(srcdir)/'`../../gst/rtp/rtpstorage.c
+
+../../gst/rtp/elements_rtpstorage-rtpstorage.obj: ../../gst/rtp/rtpstorage.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -MT ../../gst/rtp/elements_rtpstorage-rtpstorage.obj -MD -MP -MF ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstorage.Tpo -c -o ../../gst/rtp/elements_rtpstorage-rtpstorage.obj `if test -f '../../gst/rtp/rtpstorage.c'; then $(CYGPATH_W) '../../gst/rtp/rtpstorage.c'; else $(CYGPATH_W) '$(srcdir)/../../gst/rtp/rtpstorage.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstorage.Tpo ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstorage.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='../../gst/rtp/rtpstorage.c' object='../../gst/rtp/elements_rtpstorage-rtpstorage.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -c -o ../../gst/rtp/elements_rtpstorage-rtpstorage.obj `if test -f '../../gst/rtp/rtpstorage.c'; then $(CYGPATH_W) '../../gst/rtp/rtpstorage.c'; else $(CYGPATH_W) '$(srcdir)/../../gst/rtp/rtpstorage.c'; fi`
+
+../../gst/rtp/elements_rtpstorage-rtpstoragestream.o: ../../gst/rtp/rtpstoragestream.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -MT ../../gst/rtp/elements_rtpstorage-rtpstoragestream.o -MD -MP -MF ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstoragestream.Tpo -c -o ../../gst/rtp/elements_rtpstorage-rtpstoragestream.o `test -f '../../gst/rtp/rtpstoragestream.c' || echo '$(srcdir)/'`../../gst/rtp/rtpstoragestream.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstoragestream.Tpo ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstoragestream.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='../../gst/rtp/rtpstoragestream.c' object='../../gst/rtp/elements_rtpstorage-rtpstoragestream.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -c -o ../../gst/rtp/elements_rtpstorage-rtpstoragestream.o `test -f '../../gst/rtp/rtpstoragestream.c' || echo '$(srcdir)/'`../../gst/rtp/rtpstoragestream.c
+
+../../gst/rtp/elements_rtpstorage-rtpstoragestream.obj: ../../gst/rtp/rtpstoragestream.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -MT ../../gst/rtp/elements_rtpstorage-rtpstoragestream.obj -MD -MP -MF ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstoragestream.Tpo -c -o ../../gst/rtp/elements_rtpstorage-rtpstoragestream.obj `if test -f '../../gst/rtp/rtpstoragestream.c'; then $(CYGPATH_W) '../../gst/rtp/rtpstoragestream.c'; else $(CYGPATH_W) '$(srcdir)/../../gst/rtp/rtpstoragestream.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstoragestream.Tpo ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstoragestream.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='../../gst/rtp/rtpstoragestream.c' object='../../gst/rtp/elements_rtpstorage-rtpstoragestream.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpstorage_CFLAGS) $(CFLAGS) -c -o ../../gst/rtp/elements_rtpstorage-rtpstoragestream.obj `if test -f '../../gst/rtp/rtpstoragestream.c'; then $(CYGPATH_W) '../../gst/rtp/rtpstoragestream.c'; else $(CYGPATH_W) '$(srcdir)/../../gst/rtp/rtpstoragestream.c'; fi`
 
 elements/rtpulpfec-rtpulpfec.o: elements/rtpulpfec.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_rtpulpfec_CFLAGS) $(CFLAGS) -MT elements/rtpulpfec-rtpulpfec.o -MD -MP -MF elements/$(DEPDIR)/rtpulpfec-rtpulpfec.Tpo -c -o elements/rtpulpfec-rtpulpfec.o `test -f 'elements/rtpulpfec.c' || echo '$(srcdir)/'`elements/rtpulpfec.c
@@ -4898,6 +4971,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f ../../gst/rtp/$(DEPDIR)/$(am__dirstamp)
+	-rm -f ../../gst/rtp/$(am__dirstamp)
 	-rm -f elements/$(DEPDIR)/$(am__dirstamp)
 	-rm -f elements/$(am__dirstamp)
 	-rm -f generic/$(DEPDIR)/$(am__dirstamp)
@@ -4916,7 +4991,10 @@ clean-am: clean-checkPROGRAMS clean-generic clean-libtool clean-local \
 	clean-noinstLTLIBRARIES mostlyclean-am
 
 distclean: distclean-am
-		-rm -f elements/$(DEPDIR)/aacparse.Po
+		-rm -f ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-gstrtpstorage.Po
+	-rm -f ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstorage.Po
+	-rm -f ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstoragestream.Po
+	-rm -f elements/$(DEPDIR)/aacparse.Po
 	-rm -f elements/$(DEPDIR)/ac3parse.Po
 	-rm -f elements/$(DEPDIR)/alpha-alpha.Po
 	-rm -f elements/$(DEPDIR)/alphacolor-alphacolor.Po
@@ -5062,7 +5140,10 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f elements/$(DEPDIR)/aacparse.Po
+		-rm -f ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-gstrtpstorage.Po
+	-rm -f ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstorage.Po
+	-rm -f ../../gst/rtp/$(DEPDIR)/elements_rtpstorage-rtpstoragestream.Po
+	-rm -f elements/$(DEPDIR)/aacparse.Po
 	-rm -f elements/$(DEPDIR)/ac3parse.Po
 	-rm -f elements/$(DEPDIR)/alpha-alpha.Po
 	-rm -f elements/$(DEPDIR)/alphacolor-alphacolor.Po

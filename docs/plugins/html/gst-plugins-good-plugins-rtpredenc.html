@@ -100,11 +100,25 @@ should be set to a payload type different from both the protected and
 protection packets' payload types.</p>
 <p>When using <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a>, this element should be inserted through the
 <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-request-fec-encoder" title="The “request-fec-encoder” signal"><span class="type">“request-fec-encoder”</span></a> signal.</p>
+<div class="refsect2">
+<a name="id-1.2.209.7.6"></a><h3>Example pipeline</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> videotestsrc <span class="gtkdoc opt">!</span> x264enc <span class="gtkdoc opt">!</span> video<span class="gtkdoc opt">/</span>x<span class="gtkdoc opt">-</span>h264<span class="gtkdoc opt">,</span> profile<span class="gtkdoc opt">=</span>baseline <span class="gtkdoc opt">!</span> rtph264pay pt<span class="gtkdoc opt">=</span><span class="number">96</span> <span class="gtkdoc opt">!</span> rtpulpfecenc percentage<span class="gtkdoc opt">=</span><span class="number">100</span> pt<span class="gtkdoc opt">=</span><span class="number">122</span> <span class="gtkdoc opt">!</span> rtpredenc pt<span class="gtkdoc opt">=</span><span class="number">122</span> distance<span class="gtkdoc opt">=</span><span class="number">2</span> <span class="gtkdoc opt">!</span> identity drop<span class="gtkdoc opt">-</span>probability<span class="gtkdoc opt">=</span><span class="number">0.05</span> <span class="gtkdoc opt">!</span> udpsink port<span class="gtkdoc opt">=</span><span class="number">8888</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ This example will send a stream with RED and ULP FEC.
+</div>
 <p>See also: <a class="link" href="gst-plugins-good-plugins-rtpreddec.html#GstRtpRedDec"><span class="type">GstRtpRedDec</span></a>, <span class="type">GstWebRTCBin</span>, <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a></p>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.209.7.7.1"></a><h3>Element Information</h3>
+<a name="id-1.2.209.7.8.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -130,7 +144,7 @@ protection packets' payload types.</p>
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.209.7.7.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.209.7.8.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">

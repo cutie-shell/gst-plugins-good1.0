@@ -106,6 +106,13 @@
 <a name="gst-plugins-good-plugins-rtpulpfecenc.description"></a><h2>Description</h2>
 <p>Generic Forward Error Correction (FEC) encoder using Uneven Level
 Protection (ULP) as described in RFC 5109.</p>
+<p>It differs from the RFC in one important way, it multiplexes the
+FEC packets in the same sequence number as media packets. This is to be
+compatible with libwebrtc as using in Google Chrome and with Microsoft
+Lync / Skype for Business.</p>
+<p>Be warned that after using this element, it is no longer possible to know if
+there is a gap in the media stream based on the sequence numbers as the FEC
+packets become interleaved with the media packets.</p>
 <p>This element will insert protection packets in any RTP stream, which
 can then be used on the receiving side to recover lost packets.</p>
 <p>This element rewrites packets' seqnums, which means that when combined
@@ -133,15 +140,30 @@ to some packets not being protected, thus lowering the overall recovery
 rate on the receiving side.</p>
 <p>When using <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a>, this element should be inserted through the
 <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-request-fec-encoder" title="The “request-fec-encoder” signal"><span class="type">“request-fec-encoder”</span></a> signal.</p>
-<p>Example programs using this element can be found at
-<a class="ulink" href="https://github.com/sdroege/gstreamer-rs/blob/master/examples/src/bin/rtpfecserver.rs" target="_top">https://github.com/sdroege/gstreamer-rs/blob/master/examples/src/bin/rtpfecserver.rs</a>
+<div class="refsect2">
+<a name="id-1.2.228.7.12"></a><h3>Example pipeline</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> videotestsrc <span class="gtkdoc opt">!</span> x264enc <span class="gtkdoc opt">!</span> video<span class="gtkdoc opt">/</span>x<span class="gtkdoc opt">-</span>h264<span class="gtkdoc opt">,</span> profile<span class="gtkdoc opt">=</span>baseline <span class="gtkdoc opt">!</span> rtph264pay pt<span class="gtkdoc opt">=</span><span class="number">96</span> <span class="gtkdoc opt">!</span> rtpulpfecenc percentage<span class="gtkdoc opt">=</span><span class="number">100</span> pt<span class="gtkdoc opt">=</span><span class="number">122</span> <span class="gtkdoc opt">!</span> udpsink port<span class="gtkdoc opt">=</span><span class="number">8888</span></pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ This example will receive a stream with FEC and try to reconstruct the packets.
+
+Example programs are available at
+<a class="ulink" href="https://gitlab.freedesktop.org/gstreamer/gstreamer-rs/blob/master/examples/src/bin/rtpfecserver.rs" target="_top">rtpfecserver.rs</a>
 and
-<a class="ulink" href="https://github.com/sdroege/gstreamer-rs/blob/master/examples/src/bin/rtpfecclient.rs" target="_top">https://github.com/sdroege/gstreamer-rs/blob/master/examples/src/bin/rtpfecclient.rs</a>.</p>
+<a class="ulink" href="https://gitlab.freedesktop.org/gstreamer/gstreamer-rs/blob/master/examples/src/bin/rtpfecclient.rs" target="_top">rtpfecclient.rs</a>
+</div>
 <p>See also: <a class="link" href="gst-plugins-good-plugins-rtpulpfecdec.html#GstRtpUlpFecDec"><span class="type">GstRtpUlpFecDec</span></a>, <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a></p>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.228.7.12.1"></a><h3>Element Information</h3>
+<a name="id-1.2.228.7.14.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -167,7 +189,7 @@ and
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.228.7.12.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.228.7.14.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">

@@ -634,6 +634,7 @@
     <keyword type="struct" name="struct GstId3v2Mux" link="gst-plugins-good-plugins-id3v2mux.html#GstId3v2Mux-struct"/>
     <keyword type="struct" name="struct GstIirEqualizer" link="gst-plugins-good-plugins-iirequalizer.html#GstIirEqualizer-struct"/>
     <keyword type="struct" name="struct GstImageFreeze" link="gst-plugins-good-plugins-imagefreeze.html#GstImageFreeze-struct"/>
+    <keyword type="property" name="The “num-buffers” property" link="gst-plugins-good-plugins-imagefreeze.html#GstImageFreeze--num-buffers"/>
     <keyword type="struct" name="struct GstInterleave" link="gst-plugins-good-plugins-interleave.html#GstInterleave-struct"/>
     <keyword type="property" name="The “channel-positions” property" link="gst-plugins-good-plugins-interleave.html#GstInterleave--channel-positions"/>
     <keyword type="property" name="The “channel-positions-from-input” property" link="gst-plugins-good-plugins-interleave.html#GstInterleave--channel-positions-from-input"/>

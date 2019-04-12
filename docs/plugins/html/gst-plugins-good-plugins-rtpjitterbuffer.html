@@ -242,7 +242,7 @@ property is set, lost packets will result in a custom serialized downstream
 event of name GstRTPPacketLost. The lost packet events are usually used by a
 depayloader or other element to create concealment data or some other logic
 to gracefully handle the missing packets.</p>
-<p>The jitterbuffer will use the DTS (or PTS if no DTS is set) of the incomming
+<p>The jitterbuffer will use the DTS (or PTS if no DTS is set) of the incoming
 buffer and the rtptime inside the RTP packet to create a PTS on the outgoing
 buffer.</p>
 <p>The jitterbuffer can also be configured to send early retransmission events
@@ -261,7 +261,7 @@ seqnum Ni is expected at time Ti = T0 + i*(Tm - T0)/(Nm - N0). Any
 previously scheduled timeout is overwritten.</p></li>
 <li class="listitem"><p>If seqnum N arrived, all seqnum older than
 N - <a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-delay-reorder" title="The “rtx-delay-reorder” property"><span class="type">“rtx-delay-reorder”</span></a> are considered late
-immediately. This is to request fast feedback for abonormally reorder
+immediately. This is to request fast feedback for abnormally reorder
 packets before any of the previous timeouts is triggered.</p></li>
 </ul></div>
 <p>A late packet triggers the GstRTPRetransmissionRequest custom upstream

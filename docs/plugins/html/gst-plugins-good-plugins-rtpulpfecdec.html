@@ -92,25 +92,43 @@
 <a name="gst-plugins-good-plugins-rtpulpfecdec.description"></a><h2>Description</h2>
 <p>Generic Forward Error Correction (FEC) decoder for Uneven Level
 Protection (ULP) as described in RFC 5109.</p>
+<p>It differs from the RFC in one important way, it multiplexes the
+FEC packets in the same sequence number as media packets. This is to be
+compatible with libwebrtc as using in Google Chrome and with Microsoft
+Lync / Skype for Business.</p>
 <p>This element will work in combination with an upstream <a class="link" href="gst-plugins-good-plugins-rtpstorage.html#GstRtpStorage"><span class="type">GstRtpStorage</span></a>
 element and attempt to recover packets declared lost through custom
 'GstRTPPacketLost' events, usually emitted by <a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer"><span class="type">GstRtpJitterBuffer</span></a>.</p>
-<p>As such, this element cannot be usefully used from the command line,
-because a reference to the upstream storage object needs to be
-provided to it through its <a class="link" href="gst-plugins-good-plugins-rtpulpfecdec.html#GstRtpUlpFecDec--storage" title="The “storage” property"><span class="type">“storage”</span></a> property, example
-programs are available at
-<a class="ulink" href="https://github.com/sdroege/gstreamer-rs/blob/master/examples/src/bin/rtpfecserver.rs" target="_top">https://github.com/sdroege/gstreamer-rs/blob/master/examples/src/bin/rtpfecserver.rs</a>
-and
-<a class="ulink" href="https://github.com/sdroege/gstreamer-rs/blob/master/examples/src/bin/rtpfecclient.rs" target="_top">https://github.com/sdroege/gstreamer-rs/blob/master/examples/src/bin/rtpfecclient.rs</a>.</p>
+<p>If no storage is provided using the <a class="link" href="gst-plugins-good-plugins-rtpulpfecdec.html#GstRtpUlpFecDec--storage" title="The “storage” property"><span class="type">“storage”</span></a>
+property, it will try to get it from an element upstream.</p>
 <p>Additionally, the payload types of the protection packets *must* be
 provided to this element via its <a class="link" href="gst-plugins-good-plugins-rtpulpfecdec.html#GstRtpUlpFecDec--pt" title="The “pt” property"><span class="type">“pt”</span></a> property.</p>
 <p>When using <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a>, this element should be inserted through the
 <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-request-fec-decoder" title="The “request-fec-decoder” signal"><span class="type">“request-fec-decoder”</span></a> signal.</p>
+<div class="refsect2">
+<a name="id-1.2.227.7.8"></a><h3>Example pipeline</h3>
+<div class="informalexample">
+  <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr>
+        <td class="listing_lines" align="right"><pre>1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> udpsrc port<span class="gtkdoc opt">=</span><span class="number">8888</span> caps<span class="gtkdoc opt">=</span><span class="string">&quot;application/x-rtp, payload=96, clock-rate=90000&quot;</span> <span class="gtkdoc opt">!</span> rtpstorage size<span class="gtkdoc opt">-</span>time<span class="gtkdoc opt">=</span><span class="number">220000000</span> <span class="gtkdoc opt">!</span> rtpssrcdemux <span class="gtkdoc opt">!</span> application<span class="gtkdoc opt">/</span>x<span class="gtkdoc opt">-</span>rtp<span class="gtkdoc opt">,</span> payload<span class="gtkdoc opt">=</span><span class="number">96</span><span class="gtkdoc opt">,</span> clock<span class="gtkdoc opt">-</span>rate<span class="gtkdoc opt">=</span><span class="number">90000</span><span class="gtkdoc opt">,</span> media<span class="gtkdoc opt">=</span>video<span class="gtkdoc opt">,</span> encoding<span class="gtkdoc opt">-</span>name<span class="gtkdoc opt">=</span>H264 <span class="gtkdoc opt">!</span> rtpjitterbuffer <span class="keyword">do</span><span class="gtkdoc opt">-</span>lost<span class="gtkdoc opt">=</span><span class="number">1</span> latency<span class="gtkdoc opt">=</span><span class="number">200</span> <span class="gtkdoc opt">!</span>  rtpulpfecdec pt<span class="gtkdoc opt">=</span><span class="number">122</span> <span class="gtkdoc opt">!</span> rtph264depay <span class="gtkdoc opt">!</span> avdec_h264 <span class="gtkdoc opt">!</span> videoconvert <span class="gtkdoc opt">!</span> autovideosink</pre></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+ This example will receive a stream with FEC and try to reconstruct the packets.
+
+Example programs are available at
+<a class="ulink" href="https://gitlab.freedesktop.org/gstreamer/gstreamer-rs/blob/master/examples/src/bin/rtpfecserver.rs" target="_top">rtpfecserver.rs</a>
+and
+<a class="ulink" href="https://gitlab.freedesktop.org/gstreamer/gstreamer-rs/blob/master/examples/src/bin/rtpfecclient.rs" target="_top">rtpfecclient.rs</a>
+</div>
 <p>See also: <a class="link" href="gst-plugins-good-plugins-rtpulpfecenc.html#GstRtpUlpFecEnc"><span class="type">GstRtpUlpFecEnc</span></a>, <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a>, <a class="link" href="gst-plugins-good-plugins-rtpstorage.html#GstRtpStorage"><span class="type">GstRtpStorage</span></a></p>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.227.7.8.1"></a><h3>Element Information</h3>
+<a name="id-1.2.227.7.10.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -136,7 +154,7 @@ provided to this element via its <a class="link" href="gst-plugins-good-plugins-
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.227.7.8.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.227.7.10.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">

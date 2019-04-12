@@ -56,11 +56,11 @@ typedef GstFlowReturn (*RTPSessionProcessRTP) (RTPSession *sess, RTPSource *src,
  * RTPSessionSendRTP:
  * @sess: an #RTPSession
  * @src: the #RTPSource
- * @buffer: the RTP buffer ready for sending
+ * @data: the RTP buffer or buffer list ready for sending
  * @user_data: user data specified when registering
  *
- * This callback will be called when @sess has @buffer ready for sending to
- * all listening participants in this session.
+ * This callback will be called when @sess has @data (a buffer or buffer list)
+ * ready for sending to all listening participants in this session.
  *
  * Returns: a #GstFlowReturn.
  */
@@ -293,6 +293,8 @@ struct _RTPSession {
   gboolean      is_doing_ptp;
 
   GList         *conflicting_addresses;
+
+  gboolean timestamp_sender_reports;
 };
 
 /**
@@ -328,6 +330,8 @@ struct _RTPSessionClass {
   void (*on_receiving_rtcp) (RTPSession *sess, GstBuffer *buffer);
   void (*on_new_sender_ssrc)     (RTPSession *sess, RTPSource *source);
   void (*on_sender_ssrc_active)  (RTPSession *sess, RTPSource *source);
+  guint (*on_sending_nacks) (RTPSession *sess, guint sender_ssrc,
+      guint media_ssrc, GArray *nacks, GstBuffer *buffer);
 };
 
 GType rtp_session_get_type (void);
@@ -375,7 +379,6 @@ gboolean        rtp_session_add_source             (RTPSession *sess, RTPSource 
 guint           rtp_session_get_num_sources        (RTPSession *sess);
 guint           rtp_session_get_num_active_sources (RTPSession *sess);
 RTPSource*      rtp_session_get_source_by_ssrc     (RTPSession *sess, guint32 ssrc);
-RTPSource*      rtp_session_create_source          (RTPSession *sess);
 
 /* processing packets from receivers */
 GstFlowReturn   rtp_session_process_rtp            (RTPSession *sess, GstBuffer *buffer,

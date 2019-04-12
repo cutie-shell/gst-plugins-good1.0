@@ -20,6 +20,8 @@
 
 #include "rtpstoragestream.h"
 
+#define GST_CAT_DEFAULT (gst_rtp_storage_debug)
+
 static RtpStorageItem *
 rtp_storage_item_new (GstBuffer * buffer, guint8 pt, guint16 seq)
 {
@@ -74,8 +76,42 @@ rtp_storage_stream_resize (RtpStorageStream * stream, GstClockTime size_time)
 
   for (i = 0; i < too_old_buffers_num; ++i) {
     RtpStorageItem *item = g_queue_pop_tail (&stream->queue);
+
+    GST_TRACE ("Removing %u/%u buffers, pt=%d seq=%d for ssrc=%08x",
+        i, too_old_buffers_num, item->pt, item->seq, stream->ssrc);
+
     rtp_storage_item_free (item);
   }
+}
+
+/* This algorithm corresponds to rtp_jitter_buffer_get_seqnum_diff(),
+ * we want to keep the same number of packets in the worse case.
+ */
+
+static guint16
+rtp_storage_stream_get_seqnum_diff (RtpStorageStream * stream)
+{
+  guint32 high_seqnum, low_seqnum;
+  RtpStorageItem *high_item, *low_item;
+  guint16 result;
+
+
+  high_item = (RtpStorageItem *) g_queue_peek_head (&stream->queue);
+  low_item = (RtpStorageItem *) g_queue_peek_tail (&stream->queue);
+
+  if (!high_item || !low_item || high_item == low_item)
+    return 0;
+
+  high_seqnum = high_item->seq;
+  low_seqnum = low_item->seq;
+
+  /* it needs to work if seqnum wraps */
+  if (high_seqnum >= low_seqnum) {
+    result = (guint32) (high_seqnum - low_seqnum);
+  } else {
+    result = (guint32) (high_seqnum + G_MAXUINT16 + 1 - low_seqnum);
+  }
+  return result;
 }
 
 void
@@ -83,6 +119,20 @@ rtp_storage_stream_resize_and_add_item (RtpStorageStream * stream,
     GstClockTime size_time, GstBuffer * buffer, guint8 pt, guint16 seq)
 {
   GstClockTime arrival_time = GST_BUFFER_DTS_OR_PTS (buffer);
+
+  /* These limits match those of the jittebuffer, we keep a couple more
+   * packets to avoid races as it can be queried after the output of the
+   * jitterbuffer.
+   */
+  if (rtp_storage_stream_get_seqnum_diff (stream) >= 32765 ||
+      stream->queue.length > 10100) {
+    RtpStorageItem *item = g_queue_pop_tail (&stream->queue);
+
+    GST_WARNING ("Queue too big, removing pt=%d seq=%d for ssrc=%08x",
+        item->pt, item->seq, stream->ssrc);
+
+    rtp_storage_item_free (item);
+  }
 
   if (G_LIKELY (GST_CLOCK_TIME_IS_VALID (arrival_time))) {
     if (G_LIKELY (GST_CLOCK_TIME_IS_VALID (stream->max_arrival_time)))
@@ -196,6 +246,9 @@ rtp_storage_stream_get_packets_for_recovery (RtpStorageStream * stream,
     GstBufferList *ret = gst_buffer_list_new_sized (ret_length);
     GList *it;
 
+    GST_LOG ("Found %u buffers with lost seq=%d for ssrc=%08x, creating %"
+        GST_PTR_FORMAT, ret_length, lost_seq, stream->ssrc, ret);
+
     for (it = start; it != end->prev; it = it->prev)
       gst_buffer_list_add (ret,
           gst_buffer_ref (((RtpStorageItem *) it->data)->buffer));
@@ -212,8 +265,13 @@ rtp_storage_stream_get_redundant_packet (RtpStorageStream * stream,
   GList *it;
   for (it = stream->queue.head; it; it = it->next) {
     RtpStorageItem *item = it->data;
-    if (item->seq == lost_seq)
+    if (item->seq == lost_seq) {
+      GST_LOG ("Found buffer pt=%u seq=%u for ssrc=%08x %" GST_PTR_FORMAT,
+          item->pt, item->seq, stream->ssrc, item->buffer);
       return gst_buffer_ref (item->buffer);
+    }
   }
+  GST_DEBUG ("Could not find packet with seq=%u for ssrc=%08x",
+      lost_seq, stream->ssrc);
   return NULL;
 }

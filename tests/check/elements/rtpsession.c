@@ -203,8 +203,11 @@ session_harness_produce_rtcp (SessionHarness * h, gint num_rtcp_packets)
 {
   /* due to randomness in rescheduling of RTCP timeout, we need to
      keep cranking until we have the desired amount of packets */
-  while (gst_harness_buffers_in_queue (h->rtcp_h) < num_rtcp_packets)
+  while (gst_harness_buffers_in_queue (h->rtcp_h) < num_rtcp_packets) {
     session_harness_crank_clock (h);
+    /* allow the rtcp-thread to settle before checking the queue */
+    gst_test_clock_wait_for_next_pending_id (h->testclock, NULL);
+  }
 }
 
 static void
@@ -227,6 +230,24 @@ session_harness_force_key_unit (SessionHarness * h,
   if (sfr)
     gst_structure_set (s, "sfr", G_TYPE_UINT64, *sfr, NULL);
 
+  gst_harness_push_upstream_event (h->recv_rtp_h,
+      gst_event_new_custom (GST_EVENT_CUSTOM_UPSTREAM, s));
+}
+
+static void
+session_harness_rtp_retransmission_request (SessionHarness * h,
+    guint ssrc, guint seqnum, guint delay, guint deadline, guint avg_rtt)
+{
+  GstClockTime running_time = GST_CLOCK_TIME_NONE;
+
+  GstStructure *s = gst_structure_new ("GstRTPRetransmissionRequest",
+      "running-time", GST_TYPE_CLOCK_TIME, running_time,
+      "ssrc", G_TYPE_UINT, ssrc,
+      "seqnum", G_TYPE_UINT, seqnum,
+      "delay", G_TYPE_UINT, delay,
+      "deadline", G_TYPE_UINT, deadline,
+      "avg-rtt", G_TYPE_UINT, avg_rtt,
+      NULL);
   gst_harness_push_upstream_event (h->recv_rtp_h,
       gst_event_new_custom (GST_EVENT_CUSTOM_UPSTREAM, s));
 }
@@ -1052,16 +1073,16 @@ GST_START_TEST (test_request_pli)
   fail_unless_equals_int (GST_FLOW_OK,
       session_harness_recv_rtp (h, generate_test_buffer (0, 0x12345678)));
 
-  /* fix to make the test deterministic: We need to wait for the RTCP-thread
-     to have settled to ensure the key-unit will considered once released */
-  gst_test_clock_wait_for_next_pending_id (h->testclock, NULL);
+  /* Wait for first regular RTCP to be sent so that we are clear to send early RTCP */
+  session_harness_produce_rtcp (h, 1);
+  gst_buffer_unref (session_harness_pull_rtcp (h));
 
   /* request PLI */
   session_harness_force_key_unit (h, 0, 0x12345678, TEST_BUF_PT, NULL, NULL);
 
-  session_harness_produce_rtcp (h, 1);
+  /* PLI should be produced immediately as early RTCP is allowed. Pull buffer
+     without advancing the clock to ensure this is the case */
   buf = session_harness_pull_rtcp (h);
-
   fail_unless (gst_rtcp_buffer_validate (buf));
   gst_rtcp_buffer_map (buf, GST_MAP_READ, &rtcp);
   fail_unless_equals_int (3, gst_rtcp_buffer_get_packet_count (&rtcp));
@@ -1349,6 +1370,497 @@ GST_START_TEST (test_change_sent_sdes)
 
 GST_END_TEST;
 
+GST_START_TEST (test_request_nack)
+{
+  SessionHarness *h = session_harness_new ();
+  GstBuffer *buf;
+  GstRTCPBuffer rtcp = GST_RTCP_BUFFER_INIT;
+  GstRTCPPacket rtcp_packet;
+  guint8 *fci_data;
+  guint32 fci_length;
+
+  g_object_set (h->internal_session, "internal-ssrc", 0xDEADBEEF, NULL);
+
+  /* Receive a RTP buffer from the wire */
+  fail_unless_equals_int (GST_FLOW_OK,
+      session_harness_recv_rtp (h, generate_test_buffer (0, 0x12345678)));
+
+  /* Wait for first regular RTCP to be sent so that we are clear to send early RTCP */
+  session_harness_produce_rtcp (h, 1);
+  gst_buffer_unref (session_harness_pull_rtcp (h));
+
+  /* request NACK immediately */
+  session_harness_rtp_retransmission_request (h, 0x12345678, 1234, 0, 0, 0);
+
+  /* NACK should be produced immediately as early RTCP is allowed. Pull buffer
+     without advancing the clock to ensure this is the case */
+  buf = session_harness_pull_rtcp (h);
+
+  fail_unless (gst_rtcp_buffer_validate (buf));
+  gst_rtcp_buffer_map (buf, GST_MAP_READ, &rtcp);
+  fail_unless_equals_int (3, gst_rtcp_buffer_get_packet_count (&rtcp));
+  fail_unless (gst_rtcp_buffer_get_first_packet (&rtcp, &rtcp_packet));
+
+  /* first a Receiver Report */
+  fail_unless_equals_int (GST_RTCP_TYPE_RR,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless (gst_rtcp_packet_move_to_next (&rtcp_packet));
+
+  /* then a SDES */
+  fail_unless_equals_int (GST_RTCP_TYPE_SDES,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless (gst_rtcp_packet_move_to_next (&rtcp_packet));
+
+  /* and then our NACK */
+  fail_unless_equals_int (GST_RTCP_TYPE_RTPFB,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless_equals_int (GST_RTCP_RTPFB_TYPE_NACK,
+      gst_rtcp_packet_fb_get_type (&rtcp_packet));
+
+  fail_unless_equals_int (0xDEADBEEF,
+      gst_rtcp_packet_fb_get_sender_ssrc (&rtcp_packet));
+  fail_unless_equals_int (0x12345678,
+      gst_rtcp_packet_fb_get_media_ssrc (&rtcp_packet));
+
+  fci_data = gst_rtcp_packet_fb_get_fci (&rtcp_packet);
+  fci_length =
+      gst_rtcp_packet_fb_get_fci_length (&rtcp_packet) * sizeof (guint32);
+  fail_unless_equals_int (4, fci_length);
+  fail_unless_equals_int (GST_READ_UINT32_BE (fci_data), 1234L << 16);
+
+  gst_rtcp_buffer_unmap (&rtcp);
+  gst_buffer_unref (buf);
+
+  session_harness_free (h);
+}
+
+GST_END_TEST;
+
+typedef struct
+{
+  gulong id;
+  GstPad *pad;
+  GMutex mutex;
+  GCond cond;
+  gboolean blocked;
+} BlockingProbeData;
+
+static GstPadProbeReturn
+on_rtcp_pad_blocked (GstPad * pad, GstPadProbeInfo * info, gpointer user_data)
+{
+  BlockingProbeData *probe = user_data;
+
+  g_mutex_lock (&probe->mutex);
+  probe->blocked = TRUE;
+  g_cond_signal (&probe->cond);
+  g_mutex_unlock (&probe->mutex);
+
+  return GST_PAD_PROBE_OK;
+}
+
+static void
+session_harness_block_rtcp (SessionHarness * h, BlockingProbeData * probe)
+{
+  probe->pad = gst_element_get_static_pad (h->session, "send_rtcp_src");
+  fail_unless (probe->pad);
+
+  g_mutex_init (&probe->mutex);
+  g_cond_init (&probe->cond);
+  probe->blocked = FALSE;
+  probe->id = gst_pad_add_probe (probe->pad,
+      GST_PAD_PROBE_TYPE_BLOCK | GST_PAD_PROBE_TYPE_BUFFER |
+      GST_PAD_PROBE_TYPE_BUFFER_LIST, on_rtcp_pad_blocked, probe, NULL);
+
+  g_mutex_lock (&probe->mutex);
+  while (!probe->blocked) {
+    session_harness_crank_clock (h);
+    g_cond_wait (&probe->cond, &probe->mutex);
+  }
+  g_mutex_unlock (&probe->mutex);
+}
+
+static void
+session_harness_unblock_rtcp (SessionHarness * h, BlockingProbeData * probe)
+{
+  gst_pad_remove_probe (probe->pad, probe->id);
+  gst_object_unref (probe->pad);
+  g_mutex_clear (&probe->mutex);
+}
+
+GST_START_TEST (test_request_nack_surplus)
+{
+  SessionHarness *h = session_harness_new ();
+  GstRTCPPacket rtcp_packet;
+  BlockingProbeData probe;
+  GstBuffer *buf;
+  GstRTCPBuffer rtcp = GST_RTCP_BUFFER_INIT;
+  guint8 *fci_data;
+  gint i;
+  GstStructure *sdes;
+
+  g_object_set (h->internal_session, "internal-ssrc", 0xDEADBEEF, NULL);
+
+  /* sdes cname has variable size, fix it */
+  g_object_get (h->internal_session, "sdes", &sdes, NULL);
+  gst_structure_set (sdes, "cname", G_TYPE_STRING, "user@test", NULL);
+  g_object_set (h->internal_session, "sdes", sdes, NULL);
+  gst_structure_free (sdes);
+
+  /* Receive a RTP buffer from the wire */
+  fail_unless_equals_int (GST_FLOW_OK,
+      session_harness_recv_rtp (h, generate_test_buffer (0, 0x12345678)));
+
+  /* Block on first regular RTCP so we can fill the nack list */
+  session_harness_block_rtcp (h, &probe);
+
+  /* request 400 NACK with 17 seqnum distance to optain the worst possible
+   * packing  */
+  for (i = 0; i < 350; i++)
+    session_harness_rtp_retransmission_request (h, 0x12345678, 1234 + i * 17,
+        0, 0, 0);
+  /* and the last 50 with a 2s deadline */
+  for (i = 350; i < 400; i++)
+    session_harness_rtp_retransmission_request (h, 0x12345678, 1234 + i * 17,
+        0, 2000, 0);
+
+  /* Unblock and wait for the regular and first early packet */
+  session_harness_unblock_rtcp (h, &probe);
+  session_harness_produce_rtcp (h, 2);
+
+  /* Move time forward, so that only the remaining 50 are still up to date */
+  session_harness_advance_and_crank (h, GST_SECOND);
+  session_harness_produce_rtcp (h, 3);
+
+  /* ignore the regular RTCP packet */
+  buf = session_harness_pull_rtcp (h);
+  gst_buffer_unref (buf);
+
+  /* validate the first early RTCP which should hold 335 Nack */
+  buf = session_harness_pull_rtcp (h);
+
+  fail_unless (gst_rtcp_buffer_validate (buf));
+  gst_rtcp_buffer_map (buf, GST_MAP_READ, &rtcp);
+  fail_unless_equals_int (3, gst_rtcp_buffer_get_packet_count (&rtcp));
+  fail_unless (gst_rtcp_buffer_get_first_packet (&rtcp, &rtcp_packet));
+
+  /* first a Receiver Report */
+  fail_unless_equals_int (GST_RTCP_TYPE_RR,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless (gst_rtcp_packet_move_to_next (&rtcp_packet));
+
+  /* then a SDES */
+  fail_unless_equals_int (GST_RTCP_TYPE_SDES,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless (gst_rtcp_packet_move_to_next (&rtcp_packet));
+
+  /* and then our NACK */
+  fail_unless_equals_int (GST_RTCP_TYPE_RTPFB,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless_equals_int (GST_RTCP_RTPFB_TYPE_NACK,
+      gst_rtcp_packet_fb_get_type (&rtcp_packet));
+
+  fail_unless_equals_int (0xDEADBEEF,
+      gst_rtcp_packet_fb_get_sender_ssrc (&rtcp_packet));
+  fail_unless_equals_int (0x12345678,
+      gst_rtcp_packet_fb_get_media_ssrc (&rtcp_packet));
+
+  fail_unless_equals_int (340,
+      gst_rtcp_packet_fb_get_fci_length (&rtcp_packet));
+  fci_data = gst_rtcp_packet_fb_get_fci (&rtcp_packet);
+  fail_unless_equals_int (GST_READ_UINT32_BE (fci_data), 1234L << 16);
+
+  gst_rtcp_buffer_unmap (&rtcp);
+  gst_buffer_unref (buf);
+
+  /* validate the second early RTCP which should hold 50 Nack */
+  buf = session_harness_pull_rtcp (h);
+
+  fail_unless (gst_rtcp_buffer_validate (buf));
+  gst_rtcp_buffer_map (buf, GST_MAP_READ, &rtcp);
+  fail_unless_equals_int (3, gst_rtcp_buffer_get_packet_count (&rtcp));
+  fail_unless (gst_rtcp_buffer_get_first_packet (&rtcp, &rtcp_packet));
+
+  /* first a Receiver Report */
+  fail_unless_equals_int (GST_RTCP_TYPE_RR,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless (gst_rtcp_packet_move_to_next (&rtcp_packet));
+
+  /* then a SDES */
+  fail_unless_equals_int (GST_RTCP_TYPE_SDES,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless (gst_rtcp_packet_move_to_next (&rtcp_packet));
+
+  /* and then our NACK */
+  fail_unless_equals_int (GST_RTCP_TYPE_RTPFB,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless_equals_int (GST_RTCP_RTPFB_TYPE_NACK,
+      gst_rtcp_packet_fb_get_type (&rtcp_packet));
+
+  fail_unless_equals_int (0xDEADBEEF,
+      gst_rtcp_packet_fb_get_sender_ssrc (&rtcp_packet));
+  fail_unless_equals_int (0x12345678,
+      gst_rtcp_packet_fb_get_media_ssrc (&rtcp_packet));
+
+  fail_unless_equals_int (50, gst_rtcp_packet_fb_get_fci_length (&rtcp_packet));
+  fci_data = gst_rtcp_packet_fb_get_fci (&rtcp_packet);
+  fail_unless_equals_int (GST_READ_UINT32_BE (fci_data),
+      (guint16) (1234 + 350 * 17) << 16);
+
+  gst_rtcp_buffer_unmap (&rtcp);
+  gst_buffer_unref (buf);
+
+  session_harness_free (h);
+}
+
+GST_END_TEST;
+
+GST_START_TEST (test_request_nack_packing)
+{
+  SessionHarness *h = session_harness_new ();
+  GstRTCPPacket rtcp_packet;
+  BlockingProbeData probe;
+  GstBuffer *buf;
+  GstRTCPBuffer rtcp = GST_RTCP_BUFFER_INIT;
+  guint8 *fci_data;
+  gint i;
+
+  g_object_set (h->internal_session, "internal-ssrc", 0xDEADBEEF, NULL);
+
+  /* Receive a RTP buffer from the wire */
+  fail_unless_equals_int (GST_FLOW_OK,
+      session_harness_recv_rtp (h, generate_test_buffer (0, 0x12345678)));
+
+  /* Block on first regular RTCP so we can fill the nack list */
+  session_harness_block_rtcp (h, &probe);
+
+  /* append 16 consecutive seqnum */
+  for (i = 1; i < 17; i++)
+    session_harness_rtp_retransmission_request (h, 0x12345678, 1234 + i,
+        0, 0, 0);
+  /* prepend one, still consecutive */
+  session_harness_rtp_retransmission_request (h, 0x12345678, 1234, 0, 0, 0);
+  /* update it */
+  session_harness_rtp_retransmission_request (h, 0x12345678, 1234, 0, 0, 0);
+
+  /* Unblock and wait for the regular and first early packet */
+  session_harness_unblock_rtcp (h, &probe);
+  session_harness_produce_rtcp (h, 2);
+
+  /* ignore the regular RTCP packet */
+  buf = session_harness_pull_rtcp (h);
+  gst_buffer_unref (buf);
+
+  /* validate the early RTCP which should hold 1 Nack */
+  buf = session_harness_pull_rtcp (h);
+
+  fail_unless (gst_rtcp_buffer_validate (buf));
+  gst_rtcp_buffer_map (buf, GST_MAP_READ, &rtcp);
+  fail_unless_equals_int (3, gst_rtcp_buffer_get_packet_count (&rtcp));
+  fail_unless (gst_rtcp_buffer_get_first_packet (&rtcp, &rtcp_packet));
+
+  /* first a Receiver Report */
+  fail_unless_equals_int (GST_RTCP_TYPE_RR,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless (gst_rtcp_packet_move_to_next (&rtcp_packet));
+
+  /* then a SDES */
+  fail_unless_equals_int (GST_RTCP_TYPE_SDES,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless (gst_rtcp_packet_move_to_next (&rtcp_packet));
+
+  /* and then our NACK */
+  fail_unless_equals_int (GST_RTCP_TYPE_RTPFB,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless_equals_int (GST_RTCP_RTPFB_TYPE_NACK,
+      gst_rtcp_packet_fb_get_type (&rtcp_packet));
+
+  fail_unless_equals_int (0xDEADBEEF,
+      gst_rtcp_packet_fb_get_sender_ssrc (&rtcp_packet));
+  fail_unless_equals_int (0x12345678,
+      gst_rtcp_packet_fb_get_media_ssrc (&rtcp_packet));
+
+  fail_unless_equals_int (1, gst_rtcp_packet_fb_get_fci_length (&rtcp_packet));
+  fci_data = gst_rtcp_packet_fb_get_fci (&rtcp_packet);
+  fail_unless_equals_int (GST_READ_UINT32_BE (fci_data), 1234L << 16 | 0xFFFF);
+
+  gst_rtcp_buffer_unmap (&rtcp);
+  gst_buffer_unref (buf);
+
+  session_harness_free (h);
+}
+
+GST_END_TEST;
+
+GST_START_TEST (test_disable_sr_timestamp)
+{
+  SessionHarness *h = session_harness_new ();
+  GstBuffer *buf;
+  GstRTCPBuffer rtcp = GST_RTCP_BUFFER_INIT;
+  GstRTCPPacket rtcp_packet;
+  guint64 ntptime;
+  guint32 rtptime;
+
+  g_object_set (h->internal_session, "disable-sr-timestamp", TRUE, NULL);
+
+  /* Push RTP buffer to make sure RTCP-thread have started */
+  fail_unless_equals_int (GST_FLOW_OK,
+      session_harness_send_rtp (h, generate_test_buffer (0, 0xDEADBEEF)));
+
+  /* crank the RTCP-thread and pull out rtcp, generating a stats-callback */
+  session_harness_crank_clock (h);
+  buf = session_harness_pull_rtcp (h);
+
+  gst_rtcp_buffer_map (buf, GST_MAP_READWRITE, &rtcp);
+
+  fail_unless (gst_rtcp_buffer_get_first_packet (&rtcp, &rtcp_packet));
+
+  fail_unless_equals_int (GST_RTCP_TYPE_SR,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+
+  gst_rtcp_packet_sr_get_sender_info (&rtcp_packet, NULL, &ntptime, &rtptime,
+      NULL, NULL);
+
+  fail_unless_equals_uint64 (ntptime, 0);
+  fail_unless (rtptime == 0);
+
+  gst_rtcp_buffer_unmap (&rtcp);
+  gst_buffer_unref (buf);
+
+  session_harness_free (h);
+}
+
+GST_END_TEST;
+
+static guint
+on_sending_nacks (GObject * internal_session, guint sender_ssrc,
+    guint media_ssrc, GArray * nacks, GstBuffer * buffer)
+{
+  GstRTCPBuffer rtcp = GST_RTCP_BUFFER_INIT;
+  GstRTCPPacket packet;
+  guint16 seqnum = g_array_index (nacks, guint16, 0);
+  guint8 *data;
+
+  if (seqnum == 1235)
+    return 0;
+
+  fail_unless (gst_rtcp_buffer_map (buffer, GST_MAP_READWRITE, &rtcp));
+  fail_unless (gst_rtcp_buffer_add_packet (&rtcp, GST_RTCP_TYPE_APP, &packet));
+
+  gst_rtcp_packet_app_set_ssrc (&packet, media_ssrc);
+  gst_rtcp_packet_app_set_name (&packet, "TEST");
+
+  fail_unless (gst_rtcp_packet_app_set_data_length (&packet, 1));
+  data = gst_rtcp_packet_app_get_data (&packet);
+  GST_WRITE_UINT32_BE (data, seqnum);
+
+  gst_rtcp_buffer_unmap (&rtcp);
+  return 1;
+}
+
+GST_START_TEST (test_on_sending_nacks)
+{
+  SessionHarness *h = session_harness_new ();
+  BlockingProbeData probe;
+  GstBuffer *buf;
+  GstRTCPBuffer rtcp = GST_RTCP_BUFFER_INIT;
+  GstRTCPPacket rtcp_packet;
+  guint8 *data;
+
+  g_object_set (h->internal_session, "internal-ssrc", 0xDEADBEEF, NULL);
+
+  /* Receive a RTP buffer from the wire */
+  fail_unless_equals_int (GST_FLOW_OK,
+      session_harness_recv_rtp (h, generate_test_buffer (0, 0x12345678)));
+
+  /* Block on first regular RTCP so we can fill the nack list */
+  session_harness_block_rtcp (h, &probe);
+  g_signal_connect (h->internal_session, "on-sending-nacks",
+      G_CALLBACK (on_sending_nacks), NULL);
+
+  /* request NACK immediately */
+  session_harness_rtp_retransmission_request (h, 0x12345678, 1234, 0, 0, 0);
+  session_harness_rtp_retransmission_request (h, 0x12345678, 1235, 0, 0, 0);
+
+  session_harness_unblock_rtcp (h, &probe);
+  gst_buffer_unref (session_harness_pull_rtcp (h));
+  session_harness_produce_rtcp (h, 2);
+
+  /* first packet only includes seqnum 1234 in an APP FB */
+  buf = session_harness_pull_rtcp (h);
+
+  fail_unless (gst_rtcp_buffer_validate (buf));
+  gst_rtcp_buffer_map (buf, GST_MAP_READ, &rtcp);
+  fail_unless_equals_int (3, gst_rtcp_buffer_get_packet_count (&rtcp));
+  fail_unless (gst_rtcp_buffer_get_first_packet (&rtcp, &rtcp_packet));
+
+  /* first a Receiver Report */
+  fail_unless_equals_int (GST_RTCP_TYPE_RR,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless (gst_rtcp_packet_move_to_next (&rtcp_packet));
+
+  /* then a SDES */
+  fail_unless_equals_int (GST_RTCP_TYPE_SDES,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless (gst_rtcp_packet_move_to_next (&rtcp_packet));
+
+  /* and then our NACK */
+  fail_unless_equals_int (GST_RTCP_TYPE_APP,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless_equals_string ("TEST",
+      gst_rtcp_packet_app_get_name (&rtcp_packet));
+
+  fail_unless_equals_int (0x12345678,
+      gst_rtcp_packet_app_get_ssrc (&rtcp_packet));
+
+  fail_unless_equals_int (1,
+      gst_rtcp_packet_app_get_data_length (&rtcp_packet));
+  data = gst_rtcp_packet_app_get_data (&rtcp_packet);
+  fail_unless_equals_int (GST_READ_UINT32_BE (data), 1234L);
+
+  gst_rtcp_buffer_unmap (&rtcp);
+  gst_buffer_unref (buf);
+
+  /* second will contain seqnum 1235 in a generic nack packet */
+  buf = session_harness_pull_rtcp (h);
+
+  fail_unless (gst_rtcp_buffer_validate (buf));
+  gst_rtcp_buffer_map (buf, GST_MAP_READ, &rtcp);
+  fail_unless_equals_int (3, gst_rtcp_buffer_get_packet_count (&rtcp));
+  fail_unless (gst_rtcp_buffer_get_first_packet (&rtcp, &rtcp_packet));
+
+  /* first a Receiver Report */
+  fail_unless_equals_int (GST_RTCP_TYPE_RR,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless (gst_rtcp_packet_move_to_next (&rtcp_packet));
+
+  /* then a SDES */
+  fail_unless_equals_int (GST_RTCP_TYPE_SDES,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless (gst_rtcp_packet_move_to_next (&rtcp_packet));
+
+  /* and then our NACK */
+  fail_unless_equals_int (GST_RTCP_TYPE_RTPFB,
+      gst_rtcp_packet_get_type (&rtcp_packet));
+  fail_unless_equals_int (GST_RTCP_RTPFB_TYPE_NACK,
+      gst_rtcp_packet_fb_get_type (&rtcp_packet));
+
+  fail_unless_equals_int (0xDEADBEEF,
+      gst_rtcp_packet_fb_get_sender_ssrc (&rtcp_packet));
+  fail_unless_equals_int (0x12345678,
+      gst_rtcp_packet_fb_get_media_ssrc (&rtcp_packet));
+
+  fail_unless_equals_int (1, gst_rtcp_packet_fb_get_fci_length (&rtcp_packet));
+  data = gst_rtcp_packet_fb_get_fci (&rtcp_packet);
+  fail_unless_equals_int (GST_READ_UINT32_BE (data), 1235L << 16);
+
+  gst_rtcp_buffer_unmap (&rtcp);
+  gst_buffer_unref (buf);
+
+  session_harness_free (h);
+}
+
+GST_END_TEST;
+
 static Suite *
 rtpsession_suite (void)
 {
@@ -1366,6 +1878,9 @@ rtpsession_suite (void)
   tcase_add_test (tc_chain, test_ssrc_collision_when_sending);
   tcase_add_test (tc_chain, test_request_fir);
   tcase_add_test (tc_chain, test_request_pli);
+  tcase_add_test (tc_chain, test_request_nack);
+  tcase_add_test (tc_chain, test_request_nack_surplus);
+  tcase_add_test (tc_chain, test_request_nack_packing);
   tcase_add_test (tc_chain, test_illegal_rtcp_fb_packet);
   tcase_add_test (tc_chain, test_feedback_rtcp_race);
   tcase_add_test (tc_chain, test_receive_regular_pli);
@@ -1373,6 +1888,8 @@ rtpsession_suite (void)
   tcase_add_test (tc_chain, test_dont_send_rtcp_while_idle);
   tcase_add_test (tc_chain, test_send_rtcp_when_signalled);
   tcase_add_test (tc_chain, test_change_sent_sdes);
+  tcase_add_test (tc_chain, test_disable_sr_timestamp);
+  tcase_add_test (tc_chain, test_on_sending_nacks);
   return s;
 }
 

@@ -79,7 +79,7 @@ static GParamSpec *klass_properties[N_PROPERTIES] = { NULL, };
 
 #define DEFAULT_SIZE_TIME (0)
 
-GST_DEBUG_CATEGORY_STATIC (gst_rtp_storage_debug);
+GST_DEBUG_CATEGORY (gst_rtp_storage_debug);
 #define GST_CAT_DEFAULT (gst_rtp_storage_debug)
 
 G_DEFINE_TYPE (GstRtpStorage, gst_rtp_storage, GST_TYPE_ELEMENT);
@@ -102,6 +102,8 @@ gst_rtp_storage_set_property (GObject * object, guint prop_id,
 
   switch (prop_id) {
     case PROP_SIZE_TIME:
+      GST_DEBUG_OBJECT (self, "RTP storage size set to %" GST_TIME_FORMAT,
+          GST_TIME_ARGS (g_value_get_uint64 (value)));
       rtp_storage_set_size (self->storage, g_value_get_uint64 (value));
       break;
     default:
@@ -130,6 +132,23 @@ gst_rtp_storage_get_property (GObject * object, guint prop_id,
   }
 }
 
+static gboolean
+gst_rtp_storage_src_query (GstPad * pad, GstObject * parent, GstQuery * query)
+{
+  GstRtpStorage *self = GST_RTP_STORAGE (parent);
+
+  if (GST_QUERY_TYPE (query) == GST_QUERY_CUSTOM) {
+    GstStructure *s = gst_query_writable_structure (query);
+
+    if (gst_structure_has_name (s, "GstRtpStorage")) {
+      gst_structure_set (s, "storage", G_TYPE_OBJECT, self->storage, NULL);
+      return TRUE;
+    }
+  }
+
+  return gst_pad_query_default (pad, parent, query);
+}
+
 static void
 gst_rtp_storage_init (GstRtpStorage * self)
 {
@@ -138,6 +157,8 @@ gst_rtp_storage_init (GstRtpStorage * self)
   GST_PAD_SET_PROXY_CAPS (self->sinkpad);
   GST_PAD_SET_PROXY_ALLOCATION (self->sinkpad);
   gst_pad_set_chain_function (self->sinkpad, gst_rtp_storage_chain);
+
+  gst_pad_set_query_function (self->srcpad, gst_rtp_storage_src_query);
 
   gst_element_add_pad (GST_ELEMENT (self), self->srcpad);
   gst_element_add_pad (GST_ELEMENT (self), self->sinkpad);
@@ -161,6 +182,7 @@ gst_rtp_storage_class_init (GstRtpStorageClass * klass)
 
   GST_DEBUG_CATEGORY_INIT (gst_rtp_storage_debug,
       "rtpstorage", 0, "RTP Storage");
+  GST_DEBUG_REGISTER_FUNCPTR (gst_rtp_storage_chain);
 
   gst_element_class_add_pad_template (element_class,
       gst_static_pad_template_get (&srctemplate));

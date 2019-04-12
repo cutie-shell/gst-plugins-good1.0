@@ -67,9 +67,10 @@ static GstFlowReturn gst_rtp_mp4a_pay_handle_buffer (GstRTPBasePayload *
     payload, GstBuffer * buffer);
 
 #define gst_rtp_mp4a_pay_parent_class parent_class
-G_DEFINE_TYPE (GstRtpMP4APay, gst_rtp_mp4a_pay, GST_TYPE_RTP_BASE_PAYLOAD)
+G_DEFINE_TYPE (GstRtpMP4APay, gst_rtp_mp4a_pay, GST_TYPE_RTP_BASE_PAYLOAD);
 
-     static void gst_rtp_mp4a_pay_class_init (GstRtpMP4APayClass * klass)
+static void
+gst_rtp_mp4a_pay_class_init (GstRtpMP4APayClass * klass)
 {
   GObjectClass *gobject_class;
   GstElementClass *gstelement_class;
@@ -441,7 +442,7 @@ gst_rtp_mp4a_pay_handle_buffer (GstRTPBasePayload * basepayload,
     offset += payload_len;
     size -= payload_len;
 
-    /* copy incomming timestamp (if any) to outgoing buffers */
+    /* copy incoming timestamp (if any) to outgoing buffers */
     GST_BUFFER_PTS (outbuf) = timestamp;
 
     fragmented = TRUE;

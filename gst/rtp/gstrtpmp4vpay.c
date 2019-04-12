@@ -80,9 +80,10 @@ static gboolean gst_rtp_mp4v_pay_sink_event (GstRTPBasePayload * pay,
     GstEvent * event);
 
 #define gst_rtp_mp4v_pay_parent_class parent_class
-G_DEFINE_TYPE (GstRtpMP4VPay, gst_rtp_mp4v_pay, GST_TYPE_RTP_BASE_PAYLOAD)
+G_DEFINE_TYPE (GstRtpMP4VPay, gst_rtp_mp4v_pay, GST_TYPE_RTP_BASE_PAYLOAD);
 
-     static void gst_rtp_mp4v_pay_class_init (GstRtpMP4VPayClass * klass)
+static void
+gst_rtp_mp4v_pay_class_init (GstRtpMP4VPayClass * klass)
 {
   GObjectClass *gobject_class;
   GstElementClass *gstelement_class;
@@ -449,7 +450,7 @@ gst_rtp_mp4v_pay_handle_buffer (GstRTPBasePayload * basepayload,
     rtpmp4vpay->duration = 0;
   }
 
-  /* depay incomming data and see if we need to start a new RTP
+  /* depay incoming data and see if we need to start a new RTP
    * packet */
   flush =
       gst_rtp_mp4v_pay_depay_data (rtpmp4vpay, map.data, size, &strip, &vopi);

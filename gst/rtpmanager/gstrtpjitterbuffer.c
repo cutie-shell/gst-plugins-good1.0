@@ -47,7 +47,7 @@
  * depayloader or other element to create concealment data or some other logic
  * to gracefully handle the missing packets.
  *
- * The jitterbuffer will use the DTS (or PTS if no DTS is set) of the incomming
+ * The jitterbuffer will use the DTS (or PTS if no DTS is set) of the incoming
  * buffer and the rtptime inside the RTP packet to create a PTS on the outgoing
  * buffer.
  *
@@ -69,7 +69,7 @@
  *
  * - If seqnum N arrived, all seqnum older than
  *     N - #GstRtpJitterBuffer:rtx-delay-reorder are considered late
- *     immediately. This is to request fast feedback for abonormally reorder
+ *     immediately. This is to request fast feedback for abnormally reorder
  *     packets before any of the previous timeouts is triggered.
  *
  * A late packet triggers the GstRTPRetransmissionRequest custom upstream
@@ -999,6 +999,7 @@ gst_rtp_jitter_buffer_class_init (GstRtpJitterBufferClass * klass)
 
   GST_DEBUG_CATEGORY_INIT
       (rtpjitterbuffer_debug, "rtpjitterbuffer", 0, "RTP Jitter Buffer");
+  GST_DEBUG_REGISTER_FUNCPTR (gst_rtp_jitter_buffer_chain_rtcp);
 }
 
 static void

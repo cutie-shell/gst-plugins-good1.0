@@ -12,7 +12,7 @@ AM_TESTS_ENVIRONMENT += \
 	GST_PLUGIN_PATH_1_0=$(top_builddir)/gst:$(top_builddir)/ext:$(top_builddir)/sys:$(GSTPB_PLUGINS_DIR):$(GST_PLUGINS_DIR)			\
 	GST_PLUGIN_LOADING_WHITELIST="gstreamer@$(GST_PLUGINS_DIR):gst-plugins-base@$(GSTPB_PLUGINS_DIR):gst-plugins-good@$(top_builddir)"	\
 	GST_STATE_IGNORE_ELEMENTS="aasink autoaudiosrc autoaudiosink autovideosrc autovideosink \
-		cacasink cairotextoverlay \
+		cacasink cairotextoverlay gtkglsink gtksink \
 		halaudiosrc halaudiosink jackaudiosrc jackaudiosink \
 		osssrc osssink osxaudiosink osxaudiosrc osxvideosrc osxvideosink \
 		pulsesink pulsesrc pulsemixer v4l2src" \
@@ -617,6 +617,12 @@ elements_rtpfunnel_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) 
 
 elements_rtpcollision_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rtpcollision_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_NET_LIBS) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)
+
+elements_rtpstorage_SOURCES = \
+	elements/rtpstorage.c \
+	../../gst/rtp/gstrtpstorage.c \
+	../../gst/rtp/rtpstorage.c \
+	../../gst/rtp/rtpstoragestream.c
 
 elements_rtpstorage_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_rtpstorage_LDADD = $(GST_PLUGINS_BASE_LIBS) $(GST_NET_LIBS) -lgstrtp-$(GST_API_VERSION) $(GIO_LIBS) $(LDADD)

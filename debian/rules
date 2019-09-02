@@ -80,6 +80,7 @@ export OIL_CPU_FLAGS
 
 PLUGINS += pulseaudio gtk3 qt5 plugins-good
 CONFIG_ARGS :=
+CONFIG_ARGS += --enable-v4l2-probe
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 PLUGINS +=
 endif

@@ -1,3 +1,9 @@
+gst-plugins-good1.0 (1.16.2-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Sebastian Dröge <slomo@debian.org>  Wed, 04 Dec 2019 14:20:01 +0200
+
 gst-plugins-good1.0 (1.16.1-1) unstable; urgency=medium
 
   * New upstream bugfix release

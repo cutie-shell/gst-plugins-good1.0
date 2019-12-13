@@ -158,4 +158,3 @@ Description: GStreamer plugins from the "good" set
  to provide a backtrace with names in a debugger, this makes it somewhat
  easier to interpret core dumps. The libraries are installed in
  /usr/lib/debug and are automatically used by gdb.
-

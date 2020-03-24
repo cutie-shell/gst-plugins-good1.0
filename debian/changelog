@@ -1,3 +1,10 @@
+gst-plugins-good1.0 (1.16.2-3) unstable; urgency=medium
+
+  * debian/build-deps.in:
+    + Add build dependency on libx11-xcb-dev (Closes: #948714).
+
+ -- Sebastian Dröge <slomo@debian.org>  Tue, 24 Mar 2020 12:34:14 +0200
+
 gst-plugins-good1.0 (1.16.2-2) unstable; urgency=medium
 
   * Source-only re-upload.

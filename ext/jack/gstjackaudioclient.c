@@ -494,7 +494,7 @@ gst_jack_audio_connection_remove_client (GstJackAudioConnection * conn,
  * Get the jack client connection for @id and @server. Connections to the same
  * @id and @server will receive the same physical Jack client connection and
  * will therefore be scheduled in the same process callback.
- * 
+ *
  * Returns: a #GstJackAudioClient.
  */
 GstJackAudioClient *
@@ -591,7 +591,7 @@ gst_jack_audio_client_get_client (GstJackAudioClient * client)
  * @client: a #GstJackAudioClient
  * @active: new mode for the client
  *
- * Activate or deactive @client. When a client is activated it will receive
+ * Activate or deactivate @client. When a client is activated it will receive
  * callbacks when data should be processed.
  *
  * Returns: 0 if all ok.

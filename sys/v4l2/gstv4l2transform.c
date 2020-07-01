@@ -754,7 +754,7 @@ gst_v4l2_transform_fixate_caps (GstBaseTransform * trans,
         goto done;
       }
 
-      /* If all this failed, keep the height that was nearest to the orignal
+      /* If all this failed, keep the height that was nearest to the original
        * height and the nearest possible width. This changes the DAR but
        * there's not much else to do here.
        */
@@ -893,8 +893,24 @@ gst_v4l2_transform_prepare_output_buffer (GstBaseTransform * trans,
   /* Ensure input internal pool is active */
   if (!gst_buffer_pool_is_active (pool)) {
     GstStructure *config = gst_buffer_pool_get_config (pool);
-    gint min = self->v4l2output->min_buffers == 0 ? GST_V4L2_MIN_BUFFERS :
-        self->v4l2output->min_buffers;
+    gint min = MAX (GST_V4L2_MIN_BUFFERS (self->v4l2output),
+        self->v4l2output->min_buffers);
+
+    if (self->v4l2output->mode == GST_V4L2_IO_USERPTR ||
+        self->v4l2output->mode == GST_V4L2_IO_DMABUF_IMPORT) {
+      if (!gst_v4l2_object_try_import (self->v4l2output, inbuf)) {
+        GST_ERROR_OBJECT (self, "cannot import buffers from upstream");
+        return GST_FLOW_ERROR;
+      }
+
+      if (self->v4l2output->need_video_meta) {
+        /* We may need video meta if imported buffer is using non-standard
+         * stride/padding */
+        gst_buffer_pool_config_add_option (config,
+            GST_BUFFER_POOL_OPTION_VIDEO_META);
+      }
+    }
+
     gst_buffer_pool_config_set_params (config, self->incaps,
         self->v4l2output->info.size, min, min);
 
@@ -1154,7 +1170,6 @@ gst_v4l2_transform_subclass_init (gpointer g_class, gpointer data)
 
   klass->default_device = cdata->device;
 
-  /* Note: gst_pad_template_new() take the floating ref from the caps */
   gst_element_class_add_pad_template (element_class,
       gst_pad_template_new ("sink", GST_PAD_SINK, GST_PAD_ALWAYS,
           cdata->sink_caps));

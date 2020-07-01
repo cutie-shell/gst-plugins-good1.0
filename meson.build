@@ -1,6 +1,6 @@
 project('gst-plugins-good', 'c',
-  version : '1.16.2',
-  meson_version : '>= 0.47',
+  version : '1.17.1',
+  meson_version : '>= 0.48',
   default_options : [ 'warning_level=1',
                       'buildtype=debugoptimized' ])
 
@@ -16,16 +16,16 @@ else
 endif
 gst_version_is_dev = gst_version_minor % 2 == 1 and gst_version_micro < 90
 
-# FIXME: automagic
-have_cxx = add_languages('cpp', required : false)
+have_cxx = add_languages('cpp', native: false, required: false)
 
-glib_req = '>= 2.40.0'
+glib_req = '>= 2.44.0'
 orc_req = '>= 0.4.17'
 gst_req = '>= @0@.@1@.0'.format(gst_version_major, gst_version_minor)
 
 api_version = '1.0'
 
 plugins_install_dir = join_paths(get_option('libdir'), 'gstreamer-1.0')
+plugins = []
 
 cc = meson.get_compiler('c')
 host_system = host_machine.system()
@@ -150,6 +150,7 @@ check_functions = [
 # check token HAVE_RDTSC
   ['HAVE_SINH', 'sinh', '#include<math.h>'],
 # check token HAVE_WAVEFORM
+  ['HAVE_GMTIME_R', 'gmtime_r', '#include<time.h>'],
 ]
 
 libm = cc.find_library('m', required : false)
@@ -271,9 +272,9 @@ gstvideo_dep = dependency('gstreamer-video-1.0', version : gst_req,
 gstgl_dep = dependency('gstreamer-gl-1.0', version : gst_req,
     fallback : ['gst-plugins-base', 'gstgl_dep'], required: false)
 
-build_gstgl = gstgl_dep.found() # FIXME: add option?
+have_gstgl = gstgl_dep.found()
 
-if build_gstgl
+if have_gstgl
   if gstgl_dep.type_name() == 'pkgconfig'
     gst_gl_apis = gstgl_dep.get_pkgconfig_variable('gl_apis').split()
     gst_gl_winsys = gstgl_dep.get_pkgconfig_variable('gl_winsys').split()
@@ -334,6 +335,46 @@ else
   cdata.set('DISABLE_ORC', 1)
 endif
 
+have_nasm = false
+# FIXME: nasm path needs testing on non-Linux, esp. Windows
+host_cpu = host_machine.cpu_family()
+if host_cpu == 'x86_64'
+  if cc.get_id() == 'msvc'
+    message('Nasm disabled on MSVC')
+  else
+    asm_option = get_option('asm')
+    nasm = find_program('nasm', native: true, required: asm_option)
+    if nasm.found()
+      # We can't use the version: kwarg for find_program because old versions
+      # of nasm don't support --version
+      ret = run_command(nasm, '-v')
+      if ret.returncode() == 0
+        nasm_version = ret.stdout().strip().split()[2]
+        nasm_req = '>=2.13'
+        if nasm_version.version_compare(nasm_req)
+          message('nasm found on x86-64')
+          cdata.set('HAVE_NASM', 1)
+          have_nasm = true
+        else
+          if asm_option.enabled()
+            error('asm option is enabled, and nasm @0@ was found, but @1@ is required'.format(nasm_version, nasm_req))
+          endif
+          message('nasm @0@ was found, but @1@ is required'.format(nasm_version, nasm_req))
+        endif
+      else
+        if asm_option.enabled()
+          error('asm option is enabled, but nasm is not usable: @0@\n@1@'.format(ret.stdout(), ret.stderr()))
+        endif
+        message('nasm was found, but it\'s not usable')
+      endif
+      # Unset nasm to not be 'found'
+      if not have_nasm
+        nasm = disabler()
+      endif
+    endif
+  endif
+endif
+
 # Disable compiler warnings for unused variables and args if gst debug system is disabled
 if gst_dep.type_name() == 'internal'
   gst_debug_disabled = not subproject('gstreamer').get_variable('gst_debug')
@@ -357,6 +398,7 @@ endif
 
 presetdir = join_paths(get_option('datadir'), 'gstreamer-' + api_version, 'presets')
 
+python3 = import('python').find_installation()
 pkgconfig = import('pkgconfig')
 plugins_pkgconfig_install_dir = join_paths(plugins_install_dir, 'pkgconfig')
 if get_option('default_library') == 'shared'
@@ -368,7 +410,7 @@ subdir('gst')
 subdir('sys')
 subdir('ext')
 subdir('tests')
-subdir('pkgconfig')
+subdir('docs')
 
 # xgettext is optional (on Windows for instance)
 if find_program('xgettext', required : get_option('nls')).found()
@@ -378,5 +420,4 @@ endif
 
 configure_file(output : 'config.h', configuration : cdata)
 
-python3 = import('python').find_installation()
 run_command(python3, '-c', 'import shutil; shutil.copy("hooks/pre-commit.hook", ".git/hooks/pre-commit")')

@@ -28,30 +28,38 @@
 #if GST_GL_HAVE_WINDOW_X11 && defined (HAVE_QT_X11)
 #include <QX11Info>
 #include <gst/gl/x11/gstgldisplay_x11.h>
+#include <QtPlatformHeaders/QGLXNativeContext>
 #endif
 
-#if GST_GL_HAVE_WINDOW_WAYLAND && GST_GL_HAVE_PLATFORM_EGL && defined (HAVE_QT_WAYLAND)
-#include <qpa/qplatformnativeinterface.h>
-#include <gst/gl/wayland/gstgldisplay_wayland.h>
-#endif
-
-#if GST_GL_HAVE_PLATFORM_EGL && (defined (HAVE_QT_EGLFS) || defined (HAVE_QT_ANDROID))
-#if GST_GL_HAVE_WINDOW_VIV_FB
-#include <qpa/qplatformnativeinterface.h>
-#include <gst/gl/viv-fb/gstgldisplay_viv_fb.h>
-#else
+#if GST_GL_HAVE_PLATFORM_EGL && (defined (HAVE_QT_WAYLAND) || defined (HAVE_QT_EGLFS) || defined (HAVE_QT_ANDROID))
 #include <gst/gl/egl/gstegl.h>
-#include <gst/gl/egl/gstgldisplay_egl.h>
 #ifdef HAVE_QT_QPA_HEADER
 #include <qpa/qplatformnativeinterface.h>
 #endif
+#include <QtPlatformHeaders/QEGLNativeContext>
+#include <gst/gl/egl/gstgldisplay_egl.h>
 #endif
+
+#if GST_GL_HAVE_WINDOW_WAYLAND && defined (HAVE_QT_WAYLAND)
+#include <gst/gl/wayland/gstgldisplay_wayland.h>
+#endif
+
+#if GST_GL_HAVE_WINDOW_VIV_FB
+#include <gst/gl/viv-fb/gstgldisplay_viv_fb.h>
+#endif
+
+#if GST_GL_HAVE_WINDOW_WIN32 && GST_GL_HAVE_PLATFORM_WGL && defined (HAVE_QT_WIN32)
+#include <windows.h>
+#include <QtPlatformHeaders/QWGLNativeContext>
 #endif
 
 #include <gst/gl/gstglfuncs.h>
 
 #define GST_CAT_DEFAULT qt_gl_utils_debug
 GST_DEBUG_CATEGORY_STATIC (GST_CAT_DEFAULT);
+
+G_LOCK_DEFINE_STATIC (display_lock);
+static GWeakRef qt_display;
 
 GstGLDisplay *
 gst_qt_get_gl_display ()
@@ -67,6 +75,16 @@ gst_qt_get_gl_display ()
         "Qt gl utility functions");
     g_once_init_leave (&_debug, 1);
   }
+
+  G_LOCK (display_lock);
+  /* XXX: this assumes that only one display will ever be created by Qt */
+  display = static_cast<GstGLDisplay *>(g_weak_ref_get (&qt_display));
+  if (display) {
+    GST_INFO ("returning previously created display");
+    G_UNLOCK (display_lock);
+    return display;
+  }
+
   GST_INFO ("QGuiApplication::instance()->platformName() %s", app->platformName().toUtf8().data());
 
 #if GST_GL_HAVE_WINDOW_X11 && defined (HAVE_QT_X11)
@@ -145,6 +163,9 @@ gst_qt_get_gl_display ()
   if (!display)
     display = gst_gl_display_new ();
 
+  g_weak_ref_set (&qt_display, display);
+  G_UNLOCK (display_lock);
+
   return display;
 }
 
@@ -158,6 +179,17 @@ gst_qt_get_gl_wrapcontext (GstGLDisplay * display,
   GError *error = NULL;
 
   g_return_val_if_fail (display != NULL && wrap_glcontext != NULL, FALSE);
+
+  /* see if we already have a current GL context in GStreamer for this thread */
+  {
+    GstGLContext *current = gst_gl_context_get_current ();
+    if (current) {
+      if (current->display == display) {
+        *wrap_glcontext = static_cast<GstGLContext *> (gst_object_ref (current));
+        return TRUE;
+      }
+    }
+  }
 
 #if GST_GL_HAVE_WINDOW_X11 && defined (HAVE_QT_X11)
   if (GST_IS_GL_DISPLAY_X11 (display)) {
@@ -216,7 +248,7 @@ gst_qt_get_gl_wrapcontext (GstGLDisplay * display,
   gst_gl_context_activate(*wrap_glcontext, TRUE);
   if (!gst_gl_context_fill_info (*wrap_glcontext, &error)) {
     GST_ERROR ("failed to retrieve qt context info: %s", error->message);
-    g_object_unref (*wrap_glcontext);
+    gst_object_unref (*wrap_glcontext);
     *wrap_glcontext = NULL;
     return FALSE;
   } else {
@@ -247,9 +279,9 @@ gst_qt_get_gl_wrapcontext (GstGLDisplay * display,
       gst_object_unref (window);
       if (!gst_gl_context_create (*context, *wrap_glcontext, &error)) {
         GST_ERROR ("failed to create shared GL context: %s", error->message);
-        g_object_unref (*context);
+        gst_object_unref (*context);
         *context = NULL;
-        g_object_unref (*wrap_glcontext);
+        gst_object_unref (*wrap_glcontext);
         *wrap_glcontext = NULL;
         wglMakeCurrent (device, (HGLRC) gl_handle);
         return FALSE;
@@ -261,4 +293,68 @@ gst_qt_get_gl_wrapcontext (GstGLDisplay * display,
   }
 
   return TRUE;
+}
+
+QVariant
+qt_opengl_native_context_from_gst_gl_context (GstGLContext * context)
+{
+    guintptr handle;
+    GstGLPlatform platform;
+
+    handle = gst_gl_context_get_gl_context (context);
+    platform = gst_gl_context_get_gl_platform (context);
+
+#if GST_GL_HAVE_WINDOW_X11 && defined (HAVE_QT_X11)
+    if (platform == GST_GL_PLATFORM_GLX) {
+        GstGLDisplay *display = gst_gl_context_get_display (context);
+        GstGLWindow *window = gst_gl_context_get_window (context);
+        Display *xdisplay = (Display *) gst_gl_display_get_handle (display);
+        Window win = gst_gl_window_get_window_handle (window);
+        gst_object_unref (window);
+        gst_object_unref (display);
+        return QVariant::fromValue(QGLXNativeContext((GLXContext) handle, xdisplay, win));
+    }
+#endif
+#if GST_GL_HAVE_PLATFORM_EGL && (defined (HAVE_QT_WAYLAND) || defined (HAVE_QT_EGLFS) || defined (HAVE_QT_ANDROID))
+    if (platform == GST_GL_PLATFORM_EGL) {
+        EGLDisplay egl_display = EGL_DEFAULT_DISPLAY;
+        GstGLDisplay *display = gst_gl_context_get_display (context);
+        GstGLDisplayEGL *display_egl = gst_gl_display_egl_from_gl_display (display);
+#if GST_GL_HAVE_WINDOW_WAYLAND && defined (HAVE_QT_WAYLAND)
+        if (gst_gl_display_get_handle_type (display) == GST_GL_DISPLAY_TYPE_WAYLAND) {
+#if 1
+            g_warning ("Qt does not support wrapping native OpenGL contexts "
+                "on wayland. See https://bugreports.qt.io/browse/QTBUG-82528");
+            gst_object_unref (display_egl);
+            gst_object_unref (display);
+            return QVariant::fromValue(nullptr);
+#else
+            if (display_egl)
+                egl_display = (EGLDisplay) gst_gl_display_get_handle ((GstGLDisplay *) display_egl);
+#endif
+        }
+#endif
+        gst_object_unref (display_egl);
+        gst_object_unref (display);
+        return QVariant::fromValue(QEGLNativeContext((EGLContext) handle, egl_display));
+    }
+#endif
+#if GST_GL_HAVE_WINDOW_WIN32 && GST_GL_HAVE_PLATFORM_WGL && defined (HAVE_QT_WIN32)
+    if (platform == GST_GL_PLATFORM_WGL) {
+        GstGLWindow *window = gst_gl_context_get_window (context);
+        guintptr hwnd = gst_gl_window_get_window_handle (window);
+        gst_object_unref (window);
+        return QVariant::fromValue(QWGLNativeContext((HGLRC) handle, (HWND) hwnd));
+    }
+#endif
+    {
+      gchar *platform_s = gst_gl_platform_to_string (platform);
+      g_warning ("Unimplemented configuration!  This means either:\n"
+          "1. The qmlgl plugin was built without support for your platform.\n"
+          "2. The necessary code to convert from a GstGLContext to Qt's "
+          "native context type for \'%s\' currently does not exist.",
+          platform_s);
+      g_free (platform_s);
+    }
+    return QVariant::fromValue(nullptr);
 }

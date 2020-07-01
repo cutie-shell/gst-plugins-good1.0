@@ -19,17 +19,17 @@
 
 /**
  * SECTION:element-dcaparse
+ * @title: dcaparse
  * @short_description: DCA (DTS Coherent Acoustics) parser
  * @see_also: #GstAmrParse, #GstAACParse, #GstAc3Parse
  *
  * This is a DCA (DTS Coherent Acoustics) parser.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 filesrc location=abc.dts ! dcaparse ! dtsdec ! audioresample ! audioconvert ! autoaudiosink
  * ]|
- * </refsect2>
+ *
  */
 
 /* TODO:
@@ -612,6 +612,8 @@ gst_dca_parse_pre_push_frame (GstBaseParse * parse, GstBaseParseFrame * frame)
     /* also signals the end of first-frame processing */
     dcaparse->sent_codec_tag = TRUE;
   }
+
+  frame->flags |= GST_BASE_PARSE_FRAME_FLAG_CLIP;
 
   return GST_FLOW_OK;
 }

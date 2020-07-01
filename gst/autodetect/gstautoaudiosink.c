@@ -20,19 +20,19 @@
 
 /**
  * SECTION:element-autoaudiosink
+ * @title: autoaudiosink
  * @see_also: autovideosink, alsasink, osssink
  *
  * autoaudiosink is an audio sink that automatically detects an appropriate
  * audio sink to use.  It does so by scanning the registry for all elements
- * that have <quote>Sink</quote> and <quote>Audio</quote> in the class field
+ * that have "Sink" and "Audio" in the class field
  * of their element information, and also have a non-zero autoplugging rank.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 -v -m audiotestsrc ! audioconvert ! audioresample ! autoaudiosink
  * ]|
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H

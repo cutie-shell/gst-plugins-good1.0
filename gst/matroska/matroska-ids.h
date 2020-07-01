@@ -132,6 +132,7 @@
 #define GST_MATROSKA_ID_VIDEOPIXELCROPLEFT         0x54CC
 #define GST_MATROSKA_ID_VIDEOPIXELCROPRIGHT        0x54DD
 #define GST_MATROSKA_ID_VIDEOFLAGINTERLACED        0x9A
+#define GST_MATROSKA_ID_VIDEOFIELDORDER            0x9D
 /* semi-draft */
 #define GST_MATROSKA_ID_VIDEOSTEREOMODE            0x53B8
 #define GST_MATROSKA_ID_VIDEOASPECTRATIOTYPE       0x54B3
@@ -145,6 +146,20 @@
 #define GST_MATROSKA_ID_VIDEORANGE                 0x55B9
 #define GST_MATROSKA_ID_VIDEOTRANSFERCHARACTERISTICS  0x55BA
 #define GST_MATROSKA_ID_VIDEOPRIMARIES             0x55BB
+#define GST_MATROSKA_ID_MAXCLL                     0x55BC
+#define GST_MATROSKA_ID_MAXFALL                    0x55BD
+#define GST_MATROSKA_ID_MASTERINGMETADATA          0x55D0
+/* IDs in the MasteringMetadata */
+#define GST_MATROSKA_ID_PRIMARYRCHROMATICITYX      0x55D1
+#define GST_MATROSKA_ID_PRIMARYRCHROMATICITYY      0x55D2
+#define GST_MATROSKA_ID_PRIMARYGCHROMATICITYX      0x55D3
+#define GST_MATROSKA_ID_PRIMARYGCHROMATICITYY      0x55D4
+#define GST_MATROSKA_ID_PRIMARYBCHROMATICITYX      0x55D5
+#define GST_MATROSKA_ID_PRIMARYBCHROMATICITYY      0x55D6
+#define GST_MATROSKA_ID_WHITEPOINTCHROMATICITYX    0x55D7
+#define GST_MATROSKA_ID_WHITEPOINTCHROMATICITYY    0x55D8
+#define GST_MATROSKA_ID_LUMINANCEMAX               0x55D9
+#define GST_MATROSKA_ID_LUMINANCEMIN               0x55DA
 
 /* IDs in the TrackAudio master */
 #define GST_MATROSKA_ID_AUDIOSAMPLINGFREQ          0xB5
@@ -403,7 +418,7 @@
 #define GST_MATROSKA_CODEC_ID_SUBTITLE_ASCII     "S_TEXT/ASCII"
 #define GST_MATROSKA_CODEC_ID_SUBTITLE_UTF8      "S_TEXT/UTF8"
 #define GST_MATROSKA_CODEC_ID_SUBTITLE_SSA       "S_TEXT/SSA"
-#define GST_MATROSKA_CODEC_ID_SUBTITLE_ASS       "S_TEXT/ASS" 
+#define GST_MATROSKA_CODEC_ID_SUBTITLE_ASS       "S_TEXT/ASS"
 #define GST_MATROSKA_CODEC_ID_SUBTITLE_USF       "S_TEXT/USF"
 #define GST_MATROSKA_CODEC_ID_SUBTITLE_VOBSUB    "S_VOBSUB"
 #define GST_MATROSKA_CODEC_ID_SUBTITLE_HDMVPGS   "S_HDMV/PGS"
@@ -600,10 +615,10 @@ struct _GstMatroskaTrackContext {
 
   /* any alignment we need our output buffers to have */
   gint          alignment;
-  
+
   /* for compatibility with VFW files, where timestamp represents DTS */
   gboolean      dts_only;
-  
+
   /* indicate that the track is raw (jpeg,raw variants) and so pts=dts */
   gboolean		intra_only;
 };
@@ -618,6 +633,7 @@ typedef struct _GstMatroskaTrackVideoContext {
   guint32       fourcc;
 
   GstMatroskaInterlaceMode interlace_mode;
+  GstVideoFieldOrder field_order;
 
   GstVideoMultiviewMode multiview_mode;
   GstVideoMultiviewFlags multiview_flags;
@@ -627,6 +643,11 @@ typedef struct _GstMatroskaTrackVideoContext {
 
   GstBuffer     *dirac_unit;
   GstVideoColorimetry colorimetry;
+
+  GstVideoMasteringDisplayInfo mastering_display_info;
+  gboolean mastering_display_info_present;
+
+  GstVideoContentLightLevel content_light_level;
 } GstMatroskaTrackVideoContext;
 
 typedef struct _GstMatroskaTrackAudioContext {

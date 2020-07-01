@@ -54,6 +54,13 @@ typedef enum
   GST_H264_ALIGNMENT_AU
 } GstH264Alignment;
 
+typedef enum
+{
+  GST_RTP_H264_AGGREGATE_NONE,
+  GST_RTP_H264_AGGREGATE_ZERO_LATENCY,
+  GST_RTP_H264_AGGREGATE_MAX_STAP,
+} GstRTPH264AggregateMode;
+
 struct _GstRtpH264Pay
 {
   GstRTPBasePayload payload;
@@ -75,10 +82,19 @@ struct _GstRtpH264Pay
   gboolean send_spspps;
   GstClockTime last_spspps;
 
+  gint fps_num;
+  gint fps_denum;
+
   /* TRUE if the next NALU processed should have the DELTA_UNIT flag */
   gboolean delta_unit;
   /* TRUE if the next NALU processed should have the DISCONT flag */
   gboolean discont;
+
+  /* aggregate buffers with STAP-A */
+  GstBufferList *bundle;
+  guint bundle_size;
+  gboolean bundle_contains_vcl;
+  GstRTPH264AggregateMode aggregate_mode;
 };
 
 struct _GstRtpH264PayClass

@@ -4,14 +4,14 @@
 #
 # Nicolas Velin <nicolas@velin.fr>, 2008.
 # Claude Paroz <claude@2xlibre.net>, 2008-2011.
-# Stéphane Aulery <lkppo@free.fr>, 2015, 2017, 2019.
+# Stéphane Aulery <lkppo@free.fr>, 2015, 2017.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.15.1\n"
+"Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2019-12-03 11:06+0000\n"
-"PO-Revision-Date: 2019-05-12 03:57+0200\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2017-05-05 22:27+0200\n"
 "Last-Translator: Stéphane Aulery <lkppo@free.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "Language: fr\n"
@@ -29,15 +29,12 @@ msgstr "Échec de décodage de l’image JPEG"
 msgid ""
 "Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
 msgstr ""
-"Configuration de l'encodeur audio LAME mp3 échouée. Vérifiez ses paramètres."
 
 #, c-format
 msgid ""
 "The requested bitrate %d kbit/s for property '%s' is not allowed. The "
 "bitrate was changed to %d kbit/s."
 msgstr ""
-"Le débit demandé de %d kbit/s pour la propriété « %s » n'est pas autorisé. "
-"Le débit a été changé en %d kbits/s."
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -72,7 +69,7 @@ msgid "Server does not support seeking."
 msgstr "Le serveur ne gère pas la recherche."
 
 msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
-msgstr "Configuration de l'encodeur TwoLAME échoué. Vérifiez ses paramètres."
+msgstr ""
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Entrée audio absente ou non valide, le flux AVI sera corrompu."
@@ -194,13 +191,14 @@ msgstr ""
 "Le pilote du périphérique « %s » ne prend en charge aucune méthode d’entrée-"
 "sortie connue."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' has no supported format"
-msgstr "Le périphérique « %s » n'a pas format pris en charge"
+msgstr ""
+"L’encodeur du périphérique « %s » ne prend en charge aucun format d’entrée"
 
 #, c-format
 msgid "Device '%s' failed during initialization"
-msgstr "L'initialisation du périphérique « %s » a échouée"
+msgstr ""
 
 #, c-format
 msgid "Device '%s' is busy"
@@ -219,13 +217,13 @@ msgstr "Le périphérique « %s » ne peut pas capturer dans le format spécif
 msgid "Device '%s' does support non-contiguous planes"
 msgstr "Le périphérique « %s » ne prend pas en charge les plans non contiguës"
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' does not support %s interlacing"
-msgstr "Le périphérique « %s » ne prend pas en charge l'entrelacement %s"
+msgstr "Le serveur ne gère pas la recherche."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' does not support %s colorimetry"
-msgstr "Le périphérique « %s » ne prend pas en charge la colorimétrie %s"
+msgstr "Le périphérique « %s » ne prend pas en charge les plans non contiguës"
 
 #, c-format
 msgid "Could not get parameters on device '%s'"
@@ -302,15 +300,15 @@ msgstr ""
 "Le convertisseur du périphérique « %s » ne prend en charge aucun format de "
 "sortie"
 
-#, c-format
+#, fuzzy, c-format
 msgid "Decoder on device %s has no supported input format"
 msgstr ""
-"Le décodeur du périphérique « %s » ne prend en charge aucun format d’entrée"
+"L’encodeur du périphérique « %s » ne prend en charge aucun format d’entrée"
 
-#, c-format
+#, fuzzy, c-format
 msgid "Decoder on device %s has no supported output format"
 msgstr ""
-"Le décodeur du périphérique « %s » ne prend en charge aucun format de sortie"
+"L’encodeur du périphérique « %s » ne prend en charge aucun format de sortie"
 
 msgid "Failed to start decoding thread."
 msgstr "Échec de démarrage du processus de décodage."
@@ -328,8 +326,9 @@ msgid "Encoder on device %s has no supported input format"
 msgstr ""
 "L’encodeur du périphérique « %s » ne prend en charge aucun format d’entrée"
 
+#, fuzzy
 msgid "Failed to start encoding thread."
-msgstr "Échec de démarrage du processus d'encodage."
+msgstr "Échec de démarrage du processus de décodage."
 
 #, c-format
 msgid ""

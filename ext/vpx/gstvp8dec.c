@@ -21,20 +21,19 @@
  */
 /**
  * SECTION:element-vp8dec
+ * @title: vp8dec
  * @see_also: vp8enc, matroskademux
  *
  * This element decodes VP8 streams into raw video.
- * <ulink url="http://www.webmproject.org">VP8</ulink> is a royalty-free
- * video codec maintained by <ulink url="http://www.google.com/">Google
- * </ulink>. It's the successor of On2 VP3, which was the base of the
- * Theora video codec.
+ * [VP8](http://www.webmproject.org) is a royalty-free video codec maintained by
+ * [Google](http://www.google.com/). It's the successor of On2 VP3, which was
+ * the base of the Theora video codec.
  *
- * <refsect2>
- * <title>Example pipeline</title>
+ * ## Example pipeline
  * |[
  * gst-launch-1.0 -v filesrc location=videotestsrc.webm ! matroskademux ! vp8dec ! videoconvert ! videoscale ! autovideosink
  * ]| This example pipeline will decode a WebM stream and decodes the VP8 video.
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H

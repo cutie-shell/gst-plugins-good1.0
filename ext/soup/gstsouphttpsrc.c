@@ -14,6 +14,7 @@
 
 /**
  * SECTION:element-souphttpsrc
+ * @title: souphttpsrc
  *
  * This plugin reads data from a remote location specified by a URI.
  * Supported protocols are 'http', 'https'.
@@ -30,11 +31,10 @@
  * If the server is not an Icecast server, it will behave as if the
  * #GstSoupHTTPSrc:iradio-mode property were not set. If it is, souphttpsrc will
  * output data with a media type of application/x-icy, in which case you will
- * need to use the #ICYDemux element as follow-up element to extract the Icecast
+ * need to use the #GstICYDemux element as follow-up element to extract the Icecast
  * metadata and to determine the underlying media type.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 -v souphttpsrc location=https://some.server.org/index.html
  *     ! filesink location=/home/joe/server.html
@@ -64,7 +64,7 @@
  * These are used by the mime/multipart demultiplexer to emit timestamps
  * on the JPEG-encoded video frame buffers. This allows the Matroska
  * multiplexer to timestamp the frames in the resulting file.
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -919,6 +919,7 @@ gst_soup_http_src_session_open (GstSoupHTTPSrc * src)
   if (!src->session) {
     GstQuery *query;
     gboolean can_share = (src->timeout == DEFAULT_TIMEOUT)
+        && (src->cookies == NULL)
         && (src->ssl_strict == DEFAULT_SSL_STRICT)
         && (src->tls_interaction == NULL) && (src->proxy == NULL)
         && (src->tls_database == DEFAULT_TLS_DATABASE)
@@ -1502,6 +1503,8 @@ gst_soup_http_src_build_message (GstSoupHTTPSrc * src, const gchar * method)
       soup_message_headers_append (src->msg->request_headers, "Cookie",
           *cookie);
     }
+
+    soup_message_disable_feature (src->msg, SOUP_TYPE_COOKIE_JAR);
   }
 
   if (!src->compress)
@@ -1535,6 +1538,9 @@ gst_soup_http_src_send_message (GstSoupHTTPSrc * src)
 
   src->input_stream =
       soup_session_send (src->session, src->msg, src->cancellable, &error);
+
+  if (error)
+    GST_DEBUG_OBJECT (src, "Sending message failed: %s", error->message);
 
   if (g_cancellable_is_cancelled (src->cancellable)) {
     ret = GST_FLOW_FLUSHING;

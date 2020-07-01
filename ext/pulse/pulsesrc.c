@@ -21,17 +21,17 @@
 
 /**
  * SECTION:element-pulsesrc
+ * @title: pulsesrc
  * @see_also: pulsesink
  *
  * This element captures audio from a
- * <ulink href="http://www.pulseaudio.org">PulseAudio sound server</ulink>.
+ * [PulseAudio sound server](http://www.pulseaudio.org).
  *
- * <refsect2>
- * <title>Example pipelines</title>
+ * ## Example pipelines
  * |[
  * gst-launch-1.0 -v pulsesrc ! audioconvert ! vorbisenc ! oggmux ! filesink location=alsasrc.ogg
  * ]| Record from a sound card using pulseaudio and encode to Ogg/Vorbis.
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -185,7 +185,7 @@ gst_pulsesrc_class_init (GstPulseSrcClass * klass)
    * GstPulseSrc:stream-properties:
    *
    * List of pulseaudio stream properties. A list of defined properties can be
-   * found in the <ulink href="http://0pointer.de/lennart/projects/pulseaudio/doxygen/proplist_8h.html">pulseaudio api docs</ulink>.
+   * found in the [pulseaudio api docs](http://0pointer.de/lennart/projects/pulseaudio/doxygen/proplist_8h.html).
    *
    * Below is an example for registering as a music application to pulseaudio.
    * |[

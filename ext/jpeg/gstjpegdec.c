@@ -22,15 +22,15 @@
 
 /**
  * SECTION:element-jpegdec
+ * @title: jpegdec
  *
  * Decodes jpeg images.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 -v filesrc location=mjpeg.avi ! avidemux !  queue ! jpegdec ! videoconvert ! videoscale ! autovideosink
  * ]| The above pipeline decode the mjpeg stream and renders it to the screen.
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -181,6 +181,8 @@ gst_jpeg_dec_class_init (GstJpegDecClass * klass)
 
   GST_DEBUG_CATEGORY_INIT (jpeg_dec_debug, "jpegdec", 0, "JPEG decoder");
   GST_DEBUG_CATEGORY_GET (GST_CAT_PERFORMANCE, "GST_PERFORMANCE");
+
+  gst_type_mark_as_plugin_api (GST_TYPE_IDCT_METHOD, 0);
 }
 
 static boolean
@@ -990,6 +992,9 @@ gst_jpeg_dec_negotiate (GstJpegDec * dec, gint width, gint height, gint clrspc,
     case JCS_GRAYSCALE:
       break;
     default:
+      /* aka JPEG chroma siting */
+      outstate->info.chroma_site = GST_VIDEO_CHROMA_SITE_NONE;
+
       outstate->info.colorimetry.range = GST_VIDEO_COLOR_RANGE_0_255;
       outstate->info.colorimetry.matrix = GST_VIDEO_COLOR_MATRIX_BT601;
       outstate->info.colorimetry.transfer = GST_VIDEO_TRANSFER_UNKNOWN;
@@ -1204,7 +1209,9 @@ gst_jpeg_dec_handle_frame (GstVideoDecoder * bdec, GstVideoCodecFrame * frame)
   guint8 *data;
   gsize nbytes;
 
-  gst_buffer_map (frame->input_buffer, &dec->current_frame_map, GST_MAP_READ);
+  if (!gst_buffer_map (frame->input_buffer, &dec->current_frame_map,
+          GST_MAP_READ))
+    goto map_failed;
 
   data = dec->current_frame_map.data;
   nbytes = dec->current_frame_map.size;
@@ -1393,6 +1400,13 @@ need_more_data:
     goto exit;
   }
   /* ERRORS */
+map_failed:
+  {
+    GST_ELEMENT_ERROR (dec, RESOURCE, READ, (_("Failed to read memory")),
+        ("gst_buffer_map() failed for READ access"));
+    ret = GST_FLOW_ERROR;
+    goto exit;
+  }
 decode_error:
   {
     gchar err_msg[JMSG_LENGTH_MAX];

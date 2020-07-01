@@ -1,5 +1,5 @@
 /* GStreamer split muxer bin
- * Copyright (C) 2014 Jan Schmidt <jan@centricular.com>
+ * Copyright (C) 2014-2019 Jan Schmidt <jan@centricular.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -91,8 +91,6 @@ typedef struct _MqStreamCtx
   GstClockTimeDiff in_running_time;
   GstClockTimeDiff out_running_time;
 
-  GstBuffer *prev_in_keyframe; /* store keyframe for each GOP */
-
   GstElement *q;
   GQueue queued_bufs;
 
@@ -118,8 +116,11 @@ struct _GstSplitMuxSink
   guint max_files;
   gboolean send_keyframe_requests;
   gchar *threshold_timecode_str;
-  GstClockTime next_max_tc_time;
+  /* created from threshold_timecode_str */
+  GstVideoTimeCodeInterval *tc_interval;
   GstClockTime alignment_threshold;
+  /* expected running time of next force keyframe unit event */
+  GstClockTime next_fku_time;
 
   gboolean reset_muxer;
 
@@ -135,7 +136,7 @@ struct _GstSplitMuxSink
 
   gchar *location;
   guint fragment_id;
-
+  guint start_index;
   GList *contexts;
 
   SplitMuxInputState input_state;
@@ -150,6 +151,14 @@ struct _GstSplitMuxSink
   GstClockTimeDiff fragment_start_time;
   /* Start time of the current GOP */
   GstClockTimeDiff gop_start_time;
+  /* The last timecode we have */
+  GstVideoTimeCode *in_tc;
+  /* Start timecode of the current fragment */
+  GstVideoTimeCode *fragment_start_tc;
+  /* Start timecode of the current GOP */
+  GstVideoTimeCode *gop_start_tc;
+  /* expected running time of next fragment in timecode mode */
+  GstClockTime next_fragment_start_tc_time;
 
   GQueue out_cmd_q;             /* Queue of commands for output thread */
 
@@ -182,6 +191,8 @@ struct _GstSplitMuxSink
   GstStructure *muxer_properties;
   gchar *sink_factory;
   GstStructure *sink_properties;
+
+  GstStructure *muxerpad_map;
 };
 
 struct _GstSplitMuxSinkClass

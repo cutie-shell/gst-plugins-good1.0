@@ -134,6 +134,8 @@ gst_rtp_vp8_pay_class_init (GstRtpVP8PayClass * gst_rtp_vp8_pay_class)
 
   GST_DEBUG_CATEGORY_INIT (gst_rtp_vp8_pay_debug, "rtpvp8pay", 0,
       "VP8 Video RTP Payloader");
+
+  gst_type_mark_as_plugin_api (GST_TYPE_RTP_VP8_PAY_PICTURE_ID_MODE, 0);
 }
 
 static void
@@ -531,6 +533,7 @@ gst_rtp_vp8_pay_set_caps (GstRTPBasePayload * payload, GstCaps * caps)
       if (!gst_value_can_intersect (&default_value, value))
         encoding_name = "VP8-DRAFT-IETF-01";
     }
+    gst_caps_unref (src_caps);
   }
 
   gst_rtp_base_payload_set_options (payload, "video", TRUE,

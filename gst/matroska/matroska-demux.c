@@ -33,15 +33,15 @@
 
 /**
  * SECTION:element-matroskademux
+ * @title: matroskademux
  *
  * matroskademux demuxes a Matroska file into the different contained streams.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 -v filesrc location=/path/to/mkv ! matroskademux ! vorbisdec ! audioconvert ! audioresample ! autoaudiosink
  * ]| This pipeline demuxes a Matroska file and outputs the contained Vorbis audio.
- * </refsect2>
+ *
  */
 
 
@@ -171,7 +171,7 @@ static GstCaps *gst_matroska_demux_video_caps (GstMatroskaTrackVideoContext
     gchar ** codec_name, guint32 * riff_fourcc);
 static GstCaps *gst_matroska_demux_audio_caps (GstMatroskaTrackAudioContext
     * audiocontext, const gchar * codec_id, guint8 * data, guint size,
-    gchar ** codec_name, guint16 * riff_audio_fmt);
+    gchar ** codec_name, guint16 * riff_audio_fmt, GstClockTime * lead_in_ts);
 static GstCaps
     * gst_matroska_demux_subtitle_caps (GstMatroskaTrackSubtitleContext *
     subtitlecontext, const gchar * codec_id, gpointer data, guint size);
@@ -339,6 +339,7 @@ gst_matroska_demux_reset (GstElement * element)
   demux->segment_seqnum = 0;
   demux->requested_seek_time = GST_CLOCK_TIME_NONE;
   demux->seek_offset = -1;
+  demux->audio_lead_in_ts = 0;
   demux->building_index = FALSE;
   if (demux->seek_event) {
     gst_event_unref (demux->seek_event);
@@ -464,6 +465,100 @@ gst_matroska_demux_add_stream_headers_to_caps (GstMatroskaDemux * demux,
 }
 
 static GstFlowReturn
+gst_matroska_demux_parse_mastering_metadata (GstMatroskaDemux * demux,
+    GstEbmlRead * ebml, GstMatroskaTrackVideoContext * video_context)
+{
+  GstFlowReturn ret = GST_FLOW_OK;
+  GstVideoMasteringDisplayInfo minfo;
+  guint32 id;
+  gdouble num;
+  /* Precision defined by HEVC specification */
+  const guint chroma_scale = 50000;
+  const guint luma_scale = 10000;
+
+  gst_video_mastering_display_info_init (&minfo);
+
+  DEBUG_ELEMENT_START (demux, ebml, "MasteringMetadata");
+
+  if ((ret = gst_ebml_read_master (ebml, &id)) != GST_FLOW_OK)
+    goto beach;
+
+  while (ret == GST_FLOW_OK && gst_ebml_read_has_remaining (ebml, 1, TRUE)) {
+    if ((ret = gst_ebml_peek_id (ebml, &id)) != GST_FLOW_OK)
+      goto beach;
+
+    /* all sub elements have float type */
+    if ((ret = gst_ebml_read_float (ebml, &id, &num)) != GST_FLOW_OK)
+      goto beach;
+
+    /* chromaticity should be in [0, 1] range */
+    if (id >= GST_MATROSKA_ID_PRIMARYRCHROMATICITYX &&
+        id <= GST_MATROSKA_ID_WHITEPOINTCHROMATICITYY) {
+      if (num < 0 || num > 1.0) {
+        GST_WARNING_OBJECT (demux, "0x%x has invalid value %f", id, num);
+        goto beach;
+      }
+    } else if (id == GST_MATROSKA_ID_LUMINANCEMAX ||
+        id == GST_MATROSKA_ID_LUMINANCEMIN) {
+      /* Note: webM spec said valid range is [0, 999.9999] but
+       * 1000 cd/m^2 is generally used value on HDR. Just check guint range here.
+       * See https://www.webmproject.org/docs/container/#LuminanceMax
+       */
+      if (num < 0 || num > (gdouble) (G_MAXUINT32 / luma_scale)) {
+        GST_WARNING_OBJECT (demux, "0x%x has invalid value %f", id, num);
+        goto beach;
+      }
+    }
+
+    switch (id) {
+      case GST_MATROSKA_ID_PRIMARYRCHROMATICITYX:
+        minfo.display_primaries[0].x = (guint16) (num * chroma_scale);
+        break;
+      case GST_MATROSKA_ID_PRIMARYRCHROMATICITYY:
+        minfo.display_primaries[0].y = (guint16) (num * chroma_scale);
+        break;
+      case GST_MATROSKA_ID_PRIMARYGCHROMATICITYX:
+        minfo.display_primaries[1].x = (guint16) (num * chroma_scale);
+        break;
+      case GST_MATROSKA_ID_PRIMARYGCHROMATICITYY:
+        minfo.display_primaries[1].y = (guint16) (num * chroma_scale);
+        break;
+      case GST_MATROSKA_ID_PRIMARYBCHROMATICITYX:
+        minfo.display_primaries[2].x = (guint16) (num * chroma_scale);
+        break;
+      case GST_MATROSKA_ID_PRIMARYBCHROMATICITYY:
+        minfo.display_primaries[2].y = (guint16) (num * chroma_scale);
+        break;
+      case GST_MATROSKA_ID_WHITEPOINTCHROMATICITYX:
+        minfo.white_point.x = (guint16) (num * chroma_scale);
+        break;
+      case GST_MATROSKA_ID_WHITEPOINTCHROMATICITYY:
+        minfo.white_point.y = (guint16) (num * chroma_scale);
+        break;
+      case GST_MATROSKA_ID_LUMINANCEMAX:
+        minfo.max_display_mastering_luminance = (guint32) (num * luma_scale);
+        break;
+      case GST_MATROSKA_ID_LUMINANCEMIN:
+        minfo.min_display_mastering_luminance = (guint32) (num * luma_scale);
+        break;
+      default:
+        GST_FIXME_OBJECT (demux,
+            "Unsupported subelement 0x%x in MasteringMetadata", id);
+        ret = gst_ebml_read_skip (ebml);
+        break;
+    }
+  }
+
+  video_context->mastering_display_info = minfo;
+  video_context->mastering_display_info_present = TRUE;
+
+beach:
+  DEBUG_ELEMENT_STOP (demux, ebml, "MasteringMetadata", ret);
+
+  return ret;
+}
+
+static GstFlowReturn
 gst_matroska_demux_parse_colour (GstMatroskaDemux * demux, GstEbmlRead * ebml,
     GstMatroskaTrackVideoContext * video_context)
 {
@@ -491,36 +586,7 @@ gst_matroska_demux_parse_colour (GstMatroskaDemux * demux, GstEbmlRead * ebml,
         if ((ret = gst_ebml_read_uint (ebml, &id, &num)) != GST_FLOW_OK)
           goto beach;
 
-        switch (num) {
-          case 0:
-            colorimetry.matrix = GST_VIDEO_COLOR_MATRIX_RGB;
-            break;
-          case 1:
-            colorimetry.matrix = GST_VIDEO_COLOR_MATRIX_BT709;
-            break;
-          case 2:
-            colorimetry.matrix = GST_VIDEO_COLOR_MATRIX_UNKNOWN;
-            break;
-          case 4:
-            colorimetry.matrix = GST_VIDEO_COLOR_MATRIX_FCC;
-            break;
-            /* FIXME: "5: BT470BG" is undefined in GstVideoColorMatrix
-             * but it's functionally same as "6: BT601" */
-          case 5:
-          case 6:
-            colorimetry.matrix = GST_VIDEO_COLOR_MATRIX_BT601;
-            break;
-          case 7:
-            colorimetry.matrix = GST_VIDEO_COLOR_MATRIX_SMPTE240M;
-            break;
-          case 9:
-            colorimetry.matrix = GST_VIDEO_COLOR_MATRIX_BT2020;
-            break;
-          default:
-            GST_FIXME_OBJECT (demux, "Unsupported color matrix coefficients  %"
-                G_GUINT64_FORMAT, num);
-            break;
-        }
+        colorimetry.matrix = gst_video_color_matrix_from_iso ((guint) num);
         break;
       }
 
@@ -550,47 +616,7 @@ gst_matroska_demux_parse_colour (GstMatroskaDemux * demux, GstEbmlRead * ebml,
         if ((ret = gst_ebml_read_uint (ebml, &id, &num)) != GST_FLOW_OK)
           goto beach;
 
-        switch (num) {
-            /* FIXME: "6: BT601" and "14: BT2020_10" are undefined in
-             * GstVideoTransferFunction, but functionally same as "1: BT709" */
-          case 1:
-          case 6:
-          case 14:
-            colorimetry.transfer = GST_VIDEO_TRANSFER_BT709;
-            break;
-          case 2:
-            colorimetry.transfer = GST_VIDEO_TRANSFER_UNKNOWN;
-            break;
-          case 4:
-            colorimetry.transfer = GST_VIDEO_TRANSFER_GAMMA22;
-            break;
-          case 5:
-            colorimetry.transfer = GST_VIDEO_TRANSFER_GAMMA28;
-            break;
-          case 7:
-            colorimetry.transfer = GST_VIDEO_TRANSFER_SMPTE240M;
-            break;
-          case 8:
-            colorimetry.transfer = GST_VIDEO_TRANSFER_GAMMA10;
-            break;
-          case 9:
-            colorimetry.transfer = GST_VIDEO_TRANSFER_LOG100;
-            break;
-          case 10:
-            colorimetry.transfer = GST_VIDEO_TRANSFER_LOG316;
-            break;
-          case 13:
-            colorimetry.transfer = GST_VIDEO_TRANSFER_SRGB;
-            break;
-          case 15:
-            colorimetry.transfer = GST_VIDEO_TRANSFER_BT2020_12;
-            break;
-          default:
-            GST_FIXME_OBJECT (demux,
-                "Unsupported color transfer characteristics  %"
-                G_GUINT64_FORMAT, num);
-            break;
-        }
+        colorimetry.transfer = gst_video_color_transfer_from_iso ((guint) num);
         break;
       }
 
@@ -598,35 +624,40 @@ gst_matroska_demux_parse_colour (GstMatroskaDemux * demux, GstEbmlRead * ebml,
         if ((ret = gst_ebml_read_uint (ebml, &id, &num)) != GST_FLOW_OK)
           goto beach;
 
-        switch (num) {
-          case 1:
-            colorimetry.primaries = GST_VIDEO_COLOR_PRIMARIES_BT709;
-            break;
-          case 2:
-            colorimetry.primaries = GST_VIDEO_COLOR_PRIMARIES_UNKNOWN;
-            break;
-          case 4:
-            colorimetry.primaries = GST_VIDEO_COLOR_PRIMARIES_BT470M;
-            break;
-          case 5:
-            colorimetry.primaries = GST_VIDEO_COLOR_PRIMARIES_BT470BG;
-            break;
-          case 6:
-            colorimetry.primaries = GST_VIDEO_COLOR_PRIMARIES_SMPTE170M;
-            break;
-          case 7:
-            colorimetry.primaries = GST_VIDEO_COLOR_PRIMARIES_SMPTE240M;
-            break;
-          case 8:
-            colorimetry.primaries = GST_VIDEO_COLOR_PRIMARIES_FILM;
-            break;
-          case 9:
-            colorimetry.primaries = GST_VIDEO_COLOR_PRIMARIES_BT2020;
-            break;
-          default:
-            GST_FIXME_OBJECT (demux, "Unsupported color primaries  %"
-                G_GUINT64_FORMAT, num);
-            break;
+        colorimetry.primaries =
+            gst_video_color_primaries_from_iso ((guint) num);
+        break;
+      }
+
+      case GST_MATROSKA_ID_MASTERINGMETADATA:{
+        if ((ret =
+                gst_matroska_demux_parse_mastering_metadata (demux, ebml,
+                    video_context)) != GST_FLOW_OK)
+          goto beach;
+        break;
+      }
+
+      case GST_MATROSKA_ID_MAXCLL:{
+        if ((ret = gst_ebml_read_uint (ebml, &id, &num)) != GST_FLOW_OK)
+          goto beach;
+        if (num > G_MAXUINT16) {
+          GST_WARNING_OBJECT (demux,
+              "Too large maxCLL value %" G_GUINT64_FORMAT, num);
+        } else {
+          video_context->content_light_level.max_content_light_level = num;
+        }
+        break;
+      }
+
+      case GST_MATROSKA_ID_MAXFALL:{
+        if ((ret = gst_ebml_read_uint (ebml, &id, &num)) != GST_FLOW_OK)
+          goto beach;
+        if (num >= G_MAXUINT16) {
+          GST_WARNING_OBJECT (demux,
+              "Too large maxFALL value %" G_GUINT64_FORMAT, num);
+        } else {
+          video_context->content_light_level.max_frame_average_light_level =
+              num;
         }
         break;
       }
@@ -930,6 +961,44 @@ gst_matroska_demux_parse_stream (GstMatroskaDemux * demux, GstEbmlRead * ebml,
 
               GST_DEBUG_OBJECT (demux, "video track interlacing mode: %d",
                   videocontext->interlace_mode);
+              break;
+            }
+
+              /* interlaced field order */
+            case GST_MATROSKA_ID_VIDEOFIELDORDER:{
+              guint64 num;
+
+              if ((ret = gst_ebml_read_uint (ebml, &id, &num)) != GST_FLOW_OK)
+                break;
+
+              if (videocontext->interlace_mode !=
+                  GST_MATROSKA_INTERLACE_MODE_INTERLACED) {
+                GST_WARNING_OBJECT (demux,
+                    "FieldOrder element when not interlaced - ignoring");
+                break;
+              }
+
+              if (num == 0)
+                /* turns out we're actually progressive */
+                videocontext->interlace_mode =
+                    GST_MATROSKA_INTERLACE_MODE_PROGRESSIVE;
+              else if (num == 2)
+                videocontext->field_order = GST_VIDEO_FIELD_ORDER_UNKNOWN;
+              else if (num == 9)
+                videocontext->field_order =
+                    GST_VIDEO_FIELD_ORDER_TOP_FIELD_FIRST;
+              else if (num == 14)
+                videocontext->field_order =
+                    GST_VIDEO_FIELD_ORDER_BOTTOM_FIELD_FIRST;
+              else {
+                GST_FIXME_OBJECT (demux,
+                    "Unknown or unsupported FieldOrder %" G_GUINT64_FORMAT,
+                    num);
+                videocontext->field_order = GST_VIDEO_FIELD_ORDER_UNKNOWN;
+              }
+
+              GST_DEBUG_OBJECT (demux, "video track field order: %d",
+                  videocontext->field_order);
               break;
             }
 
@@ -1433,12 +1502,18 @@ gst_matroska_demux_parse_stream (GstMatroskaDemux * demux, GstEbmlRead * ebml,
     }
 
     case GST_MATROSKA_TRACK_TYPE_AUDIO:{
+      GstClockTime lead_in_ts = 0;
       GstMatroskaTrackAudioContext *audiocontext =
           (GstMatroskaTrackAudioContext *) context;
 
       caps = gst_matroska_demux_audio_caps (audiocontext,
           context->codec_id, context->codec_priv, context->codec_priv_size,
-          &codec, &riff_audio_fmt);
+          &codec, &riff_audio_fmt, &lead_in_ts);
+      if (lead_in_ts > demux->audio_lead_in_ts) {
+        demux->audio_lead_in_ts = lead_in_ts;
+        GST_DEBUG_OBJECT (demux, "Increased audio lead-in to %" GST_TIME_FORMAT,
+            GST_TIME_ARGS (lead_in_ts));
+      }
 
       if (codec) {
         gst_tag_list_add (context->tags, GST_TAG_MERGE_REPLACE,
@@ -2296,6 +2371,7 @@ gst_matroska_demux_peek_cluster_info (GstMatroskaDemux * demux,
         cluster->time = demux->cluster_time * demux->common.time_scale;
         break;
       case GST_MATROSKA_ID_SILENTTRACKS:
+      case GST_EBML_ID_CRC32:
         /* ignore and continue */
         break;
       default:
@@ -2654,11 +2730,13 @@ gst_matroska_demux_handle_seek_event (GstMatroskaDemux * demux,
   GstSeekFlags flags;
   GstSeekType cur_type, stop_type;
   GstFormat format;
-  gboolean flush, keyunit, before, after, snap_next;
+  gboolean flush, keyunit, instant_rate_change, before, after, accurate,
+      snap_next;
   gdouble rate;
   gint64 cur, stop;
   GstMatroskaTrackContext *track = NULL;
   GstSegment seeksegment = { 0, };
+  guint64 seekpos;
   gboolean update = TRUE;
   gboolean pad_locked = FALSE;
   guint32 seqnum;
@@ -2681,6 +2759,40 @@ gst_matroska_demux_handle_seek_event (GstMatroskaDemux * demux,
     return FALSE;
   }
 
+  GST_DEBUG_OBJECT (demux, "configuring seek");
+
+  flush = ! !(flags & GST_SEEK_FLAG_FLUSH);
+  keyunit = ! !(flags & GST_SEEK_FLAG_KEY_UNIT);
+  after = ! !(flags & GST_SEEK_FLAG_SNAP_AFTER);
+  before = ! !(flags & GST_SEEK_FLAG_SNAP_BEFORE);
+  accurate = ! !(flags & GST_SEEK_FLAG_ACCURATE);
+  instant_rate_change = ! !(flags & GST_SEEK_FLAG_INSTANT_RATE_CHANGE);
+
+  /* Directly send the instant-rate-change event here before taking the
+   * stream-lock so that it can be applied as soon as possible */
+  if (instant_rate_change) {
+    GstEvent *ev;
+
+    /* instant rate change only supported if direction does not change. All
+     * other requirements are already checked before creating the seek event
+     * but let's double-check here to be sure */
+    if ((rate > 0 && demux->common.segment.rate < 0) ||
+        (rate < 0 && demux->common.segment.rate > 0) ||
+        cur_type != GST_SEEK_TYPE_NONE ||
+        stop_type != GST_SEEK_TYPE_NONE || flush) {
+      GST_ERROR_OBJECT (demux,
+          "Instant rate change seeks only supported in the "
+          "same direction, without flushing and position change");
+      return FALSE;
+    }
+
+    ev = gst_event_new_instant_rate_change (rate /
+        demux->common.segment.rate, (GstSegmentFlags) flags);
+    gst_event_set_seqnum (ev, seqnum);
+    gst_matroska_demux_send_event (demux, ev);
+    return TRUE;
+  }
+
   /* copy segment, we need this because we still need the old
    * segment when we close the current segment. */
   memcpy (&seeksegment, &demux->common.segment, sizeof (GstSegment));
@@ -2693,7 +2805,6 @@ gst_matroska_demux_handle_seek_event (GstMatroskaDemux * demux,
     seeksegment.duration = GST_CLOCK_TIME_NONE;
   }
 
-  GST_DEBUG_OBJECT (demux, "configuring seek");
   /* Subtract stream_start_time so we always seek on a segment
    * in stream time */
   if (GST_CLOCK_TIME_IS_VALID (demux->stream_start_time)) {
@@ -2705,8 +2816,11 @@ gst_matroska_demux_handle_seek_event (GstMatroskaDemux * demux,
       seeksegment.stop = seeksegment.duration;
   }
 
-  gst_segment_do_seek (&seeksegment, rate, format, flags,
-      cur_type, cur, stop_type, stop, &update);
+  if (!gst_segment_do_seek (&seeksegment, rate, format, flags,
+          cur_type, cur, stop_type, stop, &update)) {
+    GST_WARNING_OBJECT (demux, "gst_segment_do_seek() failed.");
+    return FALSE;
+  }
 
   /* Restore the clip timestamp offset */
   if (GST_CLOCK_TIME_IS_VALID (demux->stream_start_time)) {
@@ -2722,11 +2836,6 @@ gst_matroska_demux_handle_seek_event (GstMatroskaDemux * demux,
    * would be determined again when parsing, but anyway ... */
   seeksegment.duration = demux->common.segment.duration;
 
-  flush = ! !(flags & GST_SEEK_FLAG_FLUSH);
-  keyunit = ! !(flags & GST_SEEK_FLAG_KEY_UNIT);
-  after = ! !(flags & GST_SEEK_FLAG_SNAP_AFTER);
-  before = ! !(flags & GST_SEEK_FLAG_SNAP_BEFORE);
-
   /* always do full update if flushing,
    * otherwise problems might arise downstream with missing keyframes etc */
   update = update || flush;
@@ -2741,9 +2850,15 @@ gst_matroska_demux_handle_seek_event (GstMatroskaDemux * demux,
     snap_dir = snap_next ? GST_SEARCH_MODE_AFTER : GST_SEARCH_MODE_BEFORE;
 
   GST_OBJECT_LOCK (demux);
+
+  seekpos = seeksegment.position;
+  if (accurate) {
+    seekpos -= MIN (seeksegment.position, demux->audio_lead_in_ts);
+  }
+
   track = gst_matroska_read_common_get_seek_track (&demux->common, track);
   if ((entry = gst_matroska_read_common_do_index_seek (&demux->common, track,
-              seeksegment.position, &demux->seek_index, &demux->seek_entry,
+              seekpos, &demux->seek_index, &demux->seek_entry,
               snap_dir)) == NULL) {
     /* pull mode without index can scan later on */
     if (demux->streaming) {
@@ -2810,7 +2925,7 @@ next:
       gst_event_set_seqnum (flush_event, seqnum);
       gst_pad_push_event (demux->common.sinkpad, flush_event);
     }
-    entry = gst_matroska_demux_search_pos (demux, seeksegment.position);
+    entry = gst_matroska_demux_search_pos (demux, seekpos);
     /* keep local copy */
     if (entry) {
       scan_entry = *entry;
@@ -2938,6 +3053,35 @@ gst_matroska_demux_handle_seek_push (GstMatroskaDemux * demux, GstPad * pad,
 
   gst_event_parse_seek (event, &rate, &format, &flags, &cur_type, &cur,
       &stop_type, &stop);
+
+  /* Directly send the instant-rate-change event here before taking the
+   * stream-lock so that it can be applied as soon as possible */
+  if (flags & GST_SEEK_FLAG_INSTANT_RATE_CHANGE) {
+    guint32 seqnum;
+    GstEvent *ev;
+
+    /* instant rate change only supported if direction does not change. All
+     * other requirements are already checked before creating the seek event
+     * but let's double-check here to be sure */
+    if ((rate > 0 && demux->common.segment.rate < 0) ||
+        (rate < 0 && demux->common.segment.rate > 0) ||
+        cur_type != GST_SEEK_TYPE_NONE ||
+        stop_type != GST_SEEK_TYPE_NONE || (flags & GST_SEEK_FLAG_FLUSH)) {
+      GST_ERROR_OBJECT (demux,
+          "Instant rate change seeks only supported in the "
+          "same direction, without flushing and position change");
+      return FALSE;
+    }
+
+    seqnum = gst_event_get_seqnum (event);
+    ev = gst_event_new_instant_rate_change (rate / demux->common.segment.rate,
+        (GstSegmentFlags) flags);
+    gst_event_set_seqnum (ev, seqnum);
+    gst_matroska_demux_send_event (demux, ev);
+    return TRUE;
+  }
+
+
 
   /* sanity checks */
 
@@ -4434,7 +4578,7 @@ gst_matroska_demux_parse_blockgroup_or_simpleblock (GstMatroskaDemux * demux,
 
       /* QoS for video track with an index. the assumption is that
          index entries point to keyframes, but if that is not true we
-         will instad skip until the next keyframe. */
+         will instead skip until the next keyframe. */
       if (GST_CLOCK_TIME_IS_VALID (lace_time) &&
           stream->type == GST_MATROSKA_TRACK_TYPE_VIDEO &&
           stream->index_table && demux->common.segment.rate > 0.0) {
@@ -4996,7 +5140,7 @@ gst_matroska_demux_check_read_size (GstMatroskaDemux * demux, guint64 bytes)
   }
 }
 
-/* returns TRUE if we truely are in error state, and should give up */
+/* returns TRUE if we truly are in error state, and should give up */
 static inline GstFlowReturn
 gst_matroska_demux_check_parse_error (GstMatroskaDemux * demux)
 {
@@ -6395,7 +6539,12 @@ gst_matroska_demux_video_caps (GstMatroskaTrackVideoContext *
           break;
         case GST_MATROSKA_INTERLACE_MODE_INTERLACED:
           gst_structure_set (structure,
-              "interlace-mode", G_TYPE_STRING, "mixed", NULL);
+              "interlace-mode", G_TYPE_STRING, "interleaved", NULL);
+
+          if (videocontext->field_order != GST_VIDEO_FIELD_ORDER_UNKNOWN)
+            gst_structure_set (structure, "field-order", G_TYPE_STRING,
+                gst_video_field_order_to_string (videocontext->field_order),
+                NULL);
           break;
         default:
           break;
@@ -6427,6 +6576,21 @@ gst_matroska_demux_video_caps (GstMatroskaTrackVideoContext *
           NULL);
       GST_DEBUG ("setting colorimetry to %s", colorimetry);
       g_free (colorimetry);
+    }
+
+    if (videocontext->mastering_display_info_present) {
+      if (!gst_video_mastering_display_info_add_to_caps
+          (&videocontext->mastering_display_info, caps)) {
+        GST_WARNING ("couldn't set mastering display info to caps");
+      }
+    }
+
+    if (videocontext->content_light_level.max_content_light_level &&
+        videocontext->content_light_level.max_frame_average_light_level) {
+      if (!gst_video_content_light_level_add_to_caps
+          (&videocontext->content_light_level, caps)) {
+        GST_WARNING ("couldn't set content light level to caps");
+      }
     }
 
     caps = gst_caps_simplify (caps);
@@ -6506,10 +6670,16 @@ round_up_pow2 (guint n)
 static GstCaps *
 gst_matroska_demux_audio_caps (GstMatroskaTrackAudioContext *
     audiocontext, const gchar * codec_id, guint8 * data, guint size,
-    gchar ** codec_name, guint16 * riff_audio_fmt)
+    gchar ** codec_name, guint16 * riff_audio_fmt, GstClockTime * lead_in_ts)
 {
   GstMatroskaTrackContext *context = (GstMatroskaTrackContext *) audiocontext;
   GstCaps *caps = NULL;
+  guint lead_in = 0;
+  /* Max potential blocksize causing the longest possible lead_in_ts need, as
+   * we don't have the exact number parsed out here */
+  guint max_blocksize = 0;
+  /* Original samplerate before SBR multiplications, as parsers would use */
+  guint rate = audiocontext->samplerate;
 
   g_assert (audiocontext != NULL);
   g_assert (codec_name != NULL);
@@ -6540,6 +6710,8 @@ gst_matroska_demux_audio_caps (GstMatroskaTrackAudioContext *
     else
       layer = 3;
 
+    lead_in = 30;               /* Could mp2 need as much too? */
+    max_blocksize = 1152;
     caps = gst_caps_new_simple ("audio/mpeg",
         "mpegversion", G_TYPE_INT, 1, "layer", G_TYPE_INT, layer, NULL);
     *codec_name = g_strdup_printf ("MPEG-1 layer %d", layer);
@@ -6587,11 +6759,15 @@ gst_matroska_demux_audio_caps (GstMatroskaTrackAudioContext *
     context->alignment = round_up_pow2 (context->alignment);
   } else if (!strncmp (codec_id, GST_MATROSKA_CODEC_ID_AUDIO_AC3,
           strlen (GST_MATROSKA_CODEC_ID_AUDIO_AC3))) {
+    lead_in = 2;
+    max_blocksize = 1536;
     caps = gst_caps_new_simple ("audio/x-ac3",
         "framed", G_TYPE_BOOLEAN, TRUE, NULL);
     *codec_name = g_strdup ("AC-3 audio");
   } else if (!strncmp (codec_id, GST_MATROSKA_CODEC_ID_AUDIO_EAC3,
           strlen (GST_MATROSKA_CODEC_ID_AUDIO_EAC3))) {
+    lead_in = 2;
+    max_blocksize = 1536;
     caps = gst_caps_new_simple ("audio/x-eac3",
         "framed", G_TYPE_BOOLEAN, TRUE, NULL);
     *codec_name = g_strdup ("E-AC-3 audio");
@@ -6651,6 +6827,7 @@ gst_matroska_demux_audio_caps (GstMatroskaTrackAudioContext *
 
         samplerate =
             audiocontext->samplerate == 0 ? 48000 : audiocontext->samplerate;
+        rate = samplerate;
         channels = audiocontext->channels == 0 ? 2 : audiocontext->channels;
         if (channels == 1) {
           streams = 1;
@@ -6733,6 +6910,8 @@ gst_matroska_demux_audio_caps (GstMatroskaTrackAudioContext *
         /* assume SBR if samplerate <= 24kHz */
         if (obj_type == 5 || (freq_index >= 6 && freq_index != 15) ||
             (context->codec_priv_size == (5 + explicit_freq_bytes))) {
+          /* TODO: Commonly aacparse will reset the rate in caps to
+           * non-multiplied - which one is correct? */
           audiocontext->samplerate *= 2;
         }
       } else {
@@ -6790,6 +6969,8 @@ gst_matroska_demux_audio_caps (GstMatroskaTrackAudioContext *
     }
 
     if (priv) {
+      lead_in = 2;
+      max_blocksize = 1024;
       caps = gst_caps_new_simple ("audio/mpeg",
           "mpegversion", G_TYPE_INT, mpegversion,
           "framed", G_TYPE_BOOLEAN, TRUE,
@@ -6890,6 +7071,11 @@ gst_matroska_demux_audio_caps (GstMatroskaTrackAudioContext *
     }
 
     caps = gst_caps_simplify (caps);
+  }
+
+  if (lead_in_ts && lead_in && max_blocksize && rate) {
+    *lead_in_ts =
+        gst_util_uint64_scale (GST_SECOND, max_blocksize * lead_in, rate);
   }
 
   return caps;

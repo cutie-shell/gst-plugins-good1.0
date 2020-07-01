@@ -241,6 +241,7 @@ gst_rtp_mp4g_depay_setcaps (GstRTPBaseDepayload * depayload, GstCaps * caps)
           "mpegversion", G_TYPE_INT, 4, "stream-format", G_TYPE_STRING, "raw",
           NULL);
       rtpmp4gdepay->check_adts = TRUE;
+      rtpmp4gdepay->warn_adts = TRUE;
     } else if (strcmp (str, "video") == 0) {
       srccaps = gst_caps_new_simple ("video/mpeg",
           "mpegversion", G_TYPE_INT, 4,
@@ -597,7 +598,7 @@ gst_rtp_mp4g_depay_process (GstRTPBaseDepayload * depayload, GstRTPBuffer * rtp)
             rtpmp4gdepay->last_AU_index = AU_index;
           }
 
-          /* keep track of the higest AU_index */
+          /* keep track of the highest AU_index */
           if (rtpmp4gdepay->max_AU_index != -1
               && rtpmp4gdepay->max_AU_index <= AU_index) {
             GST_DEBUG_OBJECT (rtpmp4gdepay, "new interleave group, flushing");
@@ -681,13 +682,17 @@ gst_rtp_mp4g_depay_process (GstRTPBaseDepayload * depayload, GstRTPBuffer * rtp)
                     0xfffe0000, 0xfff00000, 0, 4, &v) == 0) {
               guint adts_hdr_len = (((v >> 16) & 0x1) == 0) ? 9 : 7;
               if (avail > adts_hdr_len) {
-                GST_WARNING_OBJECT (rtpmp4gdepay, "Detected ADTS header of "
-                    "%u bytes, skipping", adts_hdr_len);
+                if (rtpmp4gdepay->warn_adts) {
+                  GST_WARNING_OBJECT (rtpmp4gdepay, "Detected ADTS header of "
+                      "%u bytes, skipping", adts_hdr_len);
+                  rtpmp4gdepay->warn_adts = FALSE;
+                }
                 gst_adapter_flush (rtpmp4gdepay->adapter, adts_hdr_len);
                 avail -= adts_hdr_len;
               }
             } else {
               rtpmp4gdepay->check_adts = FALSE;
+              rtpmp4gdepay->warn_adts = TRUE;
             }
           }
 

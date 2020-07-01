@@ -2,14 +2,14 @@
 # This file is put in the public domain.
 #
 # Kjartan Maraas <kmaraas@gnome.org>, 2004-2010.
-# Johnny A. Solbu <johnny@solbu.net>, 2012-2019
+# Johnny A. Solbu <johnny@solbu.net>, 2012-2017
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.15.1\n"
+"Project-Id-Version: gst-plugins-good 1.12.0\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2019-12-03 11:06+0000\n"
-"PO-Revision-Date: 2019-09-03 09:55+0200\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2017-05-23 23:04+0200\n"
 "Last-Translator: Johnny A. Solbu <johnny@solbu.net>\n"
 "Language-Team: Norwegian Bokmaal <i18n-nb@lister.ping.uio.no>\n"
 "Language: nb_NO\n"
@@ -28,15 +28,12 @@ msgstr "Klarte ikke å dekode JPEG-bilde"
 msgid ""
 "Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
 msgstr ""
-"Kunne ikke konfigurere LAME mp3-lydkoder. Sjekk kodingsparametrene dine."
 
 #, c-format
 msgid ""
 "The requested bitrate %d kbit/s for property '%s' is not allowed. The "
 "bitrate was changed to %d kbit/s."
 msgstr ""
-"Den forespurte bitraten %d-kbit/s for egenskapen «%s» er ikke tillatt. "
-"Bitraten ble endret til %d kbit/s."
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
@@ -70,7 +67,6 @@ msgstr "Tjener støtter ikke søking."
 
 msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
 msgstr ""
-"Kunne ikke konfigurere TwoLame-enkoder. Kontroller kodingsparametrene dine."
 
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr "Ingen eller ugyldig inndatalyd, AVI-strømmen vil bli skadet."
@@ -184,13 +180,13 @@ msgstr "Driveren av enheten «%s» støtter ikke IO metoden %d"
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr "Driveren av enheten «%s» støtter ikke noen kjente IO-metoder."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' has no supported format"
-msgstr "Enhet «%s» har ingen støttede format"
+msgstr "Enkoder på enhet «%s» har ingen støttede inndataformat"
 
 #, c-format
 msgid "Device '%s' failed during initialization"
-msgstr "Enheten «%s» mislyktes under initialiseringen"
+msgstr ""
 
 #, c-format
 msgid "Device '%s' is busy"
@@ -208,13 +204,13 @@ msgstr "Enhet «%s» kan ikke fange i det angitte formatet"
 msgid "Device '%s' does support non-contiguous planes"
 msgstr "Enhet «%s» støtter ikke ikke-sammenhengende plan"
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' does not support %s interlacing"
-msgstr "Enhet «%s» støtter ikke %s-linjefletting"
+msgstr "Enhet «%s» støtter ikke videoopptak"
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' does not support %s colorimetry"
-msgstr "Enhet «%s» støtter ikke %s-kolorimetri"
+msgstr "Enhet «%s» støtter ikke videoopptak"
 
 #, c-format
 msgid "Could not get parameters on device '%s'"
@@ -282,13 +278,13 @@ msgstr "Konverter på enhet «%s» har ingen støttede inndataformat"
 msgid "Converter on device %s has no supported output format"
 msgstr "Konverter på enhet «%s» har ingen støttede utdataformat"
 
-#, c-format
+#, fuzzy, c-format
 msgid "Decoder on device %s has no supported input format"
-msgstr "Dekoder på enhet «%s» har ingen støttede inndataformat"
+msgstr "Enkoder på enhet «%s» har ingen støttede inndataformat"
 
-#, c-format
+#, fuzzy, c-format
 msgid "Decoder on device %s has no supported output format"
-msgstr "Dekoder på enhet «%s» har ingen støttede utdataformat"
+msgstr "Enkoder på enhet «%s» har ingen støttede utdataformat"
 
 msgid "Failed to start decoding thread."
 msgstr "Klarte ikke å starte dekoding av tråden."
@@ -304,8 +300,9 @@ msgstr "Enkoder på enhet «%s» har ingen støttede utdataformat"
 msgid "Encoder on device %s has no supported input format"
 msgstr "Enkoder på enhet «%s» har ingen støttede inndataformat"
 
+#, fuzzy
 msgid "Failed to start encoding thread."
-msgstr "Klarte ikke å starte kodingstråd."
+msgstr "Klarte ikke å starte dekoding av tråden."
 
 #, c-format
 msgid ""

@@ -18,19 +18,19 @@
  */
 /**
  * SECTION:element-aasink
+ * @title: aasink
  * @see_also: #GstCACASink
  *
  * Displays video as b/w ascii art.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 filesrc location=test.avi ! decodebin ! videoconvert ! aasink
  * ]| This pipeline renders a video to ascii art into a separate window.
  * |[
  * gst-launch-1.0 filesrc location=test.avi ! decodebin ! videoconvert ! aasink driver=curses
  * ]| This pipeline renders a video to ascii art into the current terminal.
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -42,6 +42,7 @@
 
 #include <gst/video/gstvideometa.h>
 #include "gstaasink.h"
+#include "gstaatv.h"
 
 /* aasink signals and args */
 enum
@@ -224,6 +225,9 @@ gst_aasink_class_init (GstAASinkClass * klass)
       GST_DEBUG_FUNCPTR (gst_aasink_propose_allocation);
 
   gstvideosink_class->show_frame = GST_DEBUG_FUNCPTR (gst_aasink_show_frame);
+
+  gst_type_mark_as_plugin_api (GST_TYPE_AADRIVERS, 0);
+  gst_type_mark_as_plugin_api (GST_TYPE_AADITHER, 0);
 }
 
 static GstCaps *
@@ -585,11 +589,14 @@ plugin_init (GstPlugin * plugin)
   if (!gst_element_register (plugin, "aasink", GST_RANK_NONE, GST_TYPE_AASINK))
     return FALSE;
 
+  if (!gst_element_register (plugin, "aatv", GST_RANK_NONE, GST_TYPE_AATV))
+    return FALSE;
+
   return TRUE;
 }
 
 GST_PLUGIN_DEFINE (GST_VERSION_MAJOR,
     GST_VERSION_MINOR,
     aasink,
-    "ASCII Art video sink",
+    "ASCII Art video sink & filter",
     plugin_init, VERSION, "LGPL", GST_PACKAGE_NAME, GST_PACKAGE_ORIGIN);

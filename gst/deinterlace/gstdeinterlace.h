@@ -56,7 +56,8 @@ typedef enum
   GST_DEINTERLACE_SCALER_BOB,
   GST_DEINTERLACE_WEAVE,
   GST_DEINTERLACE_WEAVE_TFF,
-  GST_DEINTERLACE_WEAVE_BFF
+  GST_DEINTERLACE_WEAVE_BFF,
+  GST_DEINTERLACE_YADIF
 } GstDeinterlaceMethods;
 
 typedef enum
@@ -136,6 +137,7 @@ struct _GstDeinterlace
   GstDeinterlaceMethod *method;
 
   GstVideoInfo vinfo;
+  GstVideoInfo vinfo_out;
   GstBufferPool *pool;
   GstAllocator *allocator;
   GstAllocationParams params;

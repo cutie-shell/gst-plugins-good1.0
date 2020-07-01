@@ -38,12 +38,11 @@
  * When using #GstRtpBin, this element should be inserted through the
  * #GstRtpBin::request-fec-encoder signal.
  *
- * <refsect2>
- * <title>Example pipeline</title>
+ * ## Example pipeline
+ *
  * |[
  * gst-launch-1.0 videotestsrc ! x264enc ! video/x-h264, profile=baseline ! rtph264pay pt=96 ! rtpulpfecenc percentage=100 pt=122 ! rtpredenc pt=122 distance=2 ! identity drop-probability=0.05 ! udpsink port=8888
  * ]| This example will send a stream with RED and ULP FEC.
- * </refsect2>
  *
  * See also: #GstRtpRedDec, #GstWebRTCBin, #GstRtpBin
  * Since: 1.14
@@ -145,7 +144,7 @@ _alloc_red_packet_and_fill_headers (GstRtpRedEnc * self,
   guint red_header_size = rtp_red_block_header_get_length (FALSE) +
       (redundant_block ? rtp_red_block_header_get_length (TRUE) : 0);
 
-  guint32 timestmap = gst_rtp_buffer_get_timestamp (inp_rtp);
+  guint32 timestamp = gst_rtp_buffer_get_timestamp (inp_rtp);
   guint csrc_count = gst_rtp_buffer_get_csrc_count (inp_rtp);
   GstBuffer *red = gst_rtp_buffer_new_allocate (red_header_size, 0, csrc_count);
   guint8 *red_block_header;
@@ -162,7 +161,7 @@ _alloc_red_packet_and_fill_headers (GstRtpRedEnc * self,
   gst_rtp_buffer_set_marker (&red_rtp, gst_rtp_buffer_get_marker (inp_rtp));
   gst_rtp_buffer_set_payload_type (&red_rtp, self->pt);
   gst_rtp_buffer_set_seq (&red_rtp, gst_rtp_buffer_get_seq (inp_rtp));
-  gst_rtp_buffer_set_timestamp (&red_rtp, timestmap);
+  gst_rtp_buffer_set_timestamp (&red_rtp, timestamp);
   gst_rtp_buffer_set_ssrc (&red_rtp, gst_rtp_buffer_get_ssrc (inp_rtp));
   for (i = 0; i != csrc_count; ++i)
     gst_rtp_buffer_set_csrc (&red_rtp, i,
@@ -174,7 +173,7 @@ _alloc_red_packet_and_fill_headers (GstRtpRedEnc * self,
     rtp_red_block_set_is_redundant (red_block_header, TRUE);
     rtp_red_block_set_payload_type (red_block_header, redundant_block->pt);
     rtp_red_block_set_timestamp_offset (red_block_header,
-        timestmap - redundant_block->timestamp);
+        timestamp - redundant_block->timestamp);
     rtp_red_block_set_payload_length (red_block_header,
         gst_buffer_get_size (redundant_block->payload));
 

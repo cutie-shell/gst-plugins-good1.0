@@ -20,17 +20,17 @@
 
 /**
  * SECTION:element-imagefreeze
+ * @title: imagefreeze
  *
  * The imagefreeze element generates a still frame video stream from
  * the input. It duplicates the first frame with the framerate requested
  * by downstream, allows seeking and answers queries.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 -v filesrc location=some.png ! decodebin ! imagefreeze ! autovideosink
  * ]| This pipeline shows a still frame stream of a PNG file.
- * </refsect2>
+ *
  */
 
 /* This is based on the imagefreeze element from PiTiVi:
@@ -46,11 +46,13 @@
 #include "gstimagefreeze.h"
 
 #define DEFAULT_NUM_BUFFERS     -1
+#define DEFAULT_ALLOW_REPLACE   FALSE
 
 enum
 {
   PROP_0,
-  PROP_NUM_BUFFERS
+  PROP_NUM_BUFFERS,
+  PROP_ALLOW_REPLACE,
 };
 
 static void gst_image_freeze_finalize (GObject * object);
@@ -107,10 +109,15 @@ gst_image_freeze_class_init (GstImageFreezeClass * klass)
   gobject_class->get_property = gst_image_freeze_get_property;
 
   g_object_class_install_property (gobject_class, PROP_NUM_BUFFERS,
-      g_param_spec_int ("num-buffers", "num-buffers",
+      g_param_spec_int ("num-buffers", "Number of buffers",
           "Number of buffers to output before sending EOS (-1 = unlimited)",
           -1, G_MAXINT, DEFAULT_NUM_BUFFERS, G_PARAM_READWRITE |
           G_PARAM_STATIC_STRINGS));
+
+  g_object_class_install_property (gobject_class, PROP_ALLOW_REPLACE,
+      g_param_spec_boolean ("allow-replace", "Allow Replace",
+          "Allow replacing the input buffer and always output the latest",
+          DEFAULT_ALLOW_REPLACE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gstelement_class->change_state =
       GST_DEBUG_FUNCPTR (gst_image_freeze_change_state);
@@ -151,6 +158,7 @@ gst_image_freeze_init (GstImageFreeze * self)
   g_mutex_init (&self->lock);
 
   self->num_buffers = DEFAULT_NUM_BUFFERS;
+  self->allow_replace = DEFAULT_ALLOW_REPLACE;
 
   gst_image_freeze_reset (self);
 }
@@ -176,17 +184,19 @@ gst_image_freeze_reset (GstImageFreeze * self)
 
   g_mutex_lock (&self->lock);
   gst_buffer_replace (&self->buffer, NULL);
+  gst_caps_replace (&self->buffer_caps, NULL);
+  gst_caps_replace (&self->current_caps, NULL);
   self->num_buffers_left = self->num_buffers;
 
   gst_segment_init (&self->segment, GST_FORMAT_TIME);
   self->need_segment = TRUE;
+  self->flushing = TRUE;
 
+  self->negotiated_framerate = FALSE;
   self->fps_n = self->fps_d = 0;
   self->offset = 0;
   self->seqnum = 0;
   g_mutex_unlock (&self->lock);
-
-  g_atomic_int_set (&self->seeking, 0);
 }
 
 static gboolean
@@ -200,7 +210,21 @@ gst_image_freeze_sink_setcaps (GstImageFreeze * self, GstCaps * caps)
   GstPad *pad;
 
   pad = self->sinkpad;
+
   caps = gst_caps_copy (caps);
+
+  /* If we already negotiated a framerate then only update for the
+   * caps of the new buffer */
+  if (self->negotiated_framerate) {
+    gst_caps_set_simple (caps, "framerate", GST_TYPE_FRACTION, self->fps_n,
+        self->fps_d, NULL);
+    GST_DEBUG_OBJECT (pad, "Setting caps %" GST_PTR_FORMAT, caps);
+    gst_pad_set_caps (self->srcpad, caps);
+    gst_caps_unref (caps);
+    return TRUE;
+  }
+
+  /* Else negotiate a framerate with downstream */
 
   GST_DEBUG_OBJECT (pad, "Setting caps: %" GST_PTR_FORMAT, caps);
 
@@ -241,16 +265,16 @@ gst_image_freeze_sink_setcaps (GstImageFreeze * self, GstCaps * caps)
         gst_structure_fixate_field_nearest_fraction (s, "framerate", 25, 1)) {
       gst_structure_get_fraction (s, "framerate", &fps_n, &fps_d);
       if (fps_d != 0) {
-        if (gst_pad_set_caps (self->srcpad, candidate)) {
-          g_mutex_lock (&self->lock);
-          self->fps_n = fps_n;
-          self->fps_d = fps_d;
-          g_mutex_unlock (&self->lock);
-          GST_DEBUG_OBJECT (pad, "Setting caps %" GST_PTR_FORMAT, candidate);
-          ret = TRUE;
-          gst_caps_unref (candidate);
-          break;
-        }
+        gst_pad_set_caps (self->srcpad, candidate);
+        g_mutex_lock (&self->lock);
+        self->fps_n = fps_n;
+        self->fps_d = fps_d;
+        g_mutex_unlock (&self->lock);
+        self->negotiated_framerate = TRUE;
+        GST_DEBUG_OBJECT (pad, "Setting caps %" GST_PTR_FORMAT, candidate);
+        ret = TRUE;
+        gst_caps_unref (candidate);
+        break;
       } else {
         GST_WARNING_OBJECT (pad, "Invalid caps with framerate %d/%d", fps_n,
             fps_d);
@@ -540,8 +564,10 @@ gst_image_freeze_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
     {
       GstCaps *caps;
 
+      g_mutex_lock (&self->lock);
       gst_event_parse_caps (event, &caps);
-      gst_image_freeze_sink_setcaps (self, caps);
+      gst_caps_replace (&self->current_caps, caps);
+      g_mutex_unlock (&self->lock);
       gst_event_unref (event);
       ret = TRUE;
       break;
@@ -563,7 +589,10 @@ gst_image_freeze_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
       gst_image_freeze_reset (self);
       /* fall through */
     default:
-      ret = gst_pad_push_event (self->srcpad, event);
+      ret = gst_pad_push_event (self->srcpad, gst_event_ref (event));
+      if (GST_EVENT_IS_STICKY (event))
+        ret = TRUE;
+      gst_event_unref (event);
       break;
   }
 
@@ -629,7 +658,10 @@ gst_image_freeze_src_event (GstPad * pad, GstObject * parent, GstEvent * event)
       if (flush) {
         GstEvent *e;
 
-        g_atomic_int_set (&self->seeking, 1);
+        g_mutex_lock (&self->lock);
+        self->flushing = TRUE;
+        g_mutex_unlock (&self->lock);
+
         e = gst_event_new_flush_start ();
         gst_event_set_seqnum (e, seqnum);
         gst_pad_push_event (self->srcpad, e);
@@ -647,6 +679,7 @@ gst_image_freeze_src_event (GstPad * pad, GstObject * parent, GstEvent * event)
       last_stop = self->segment.position;
 
       start_task = self->buffer != NULL;
+      self->flushing = FALSE;
       g_mutex_unlock (&self->lock);
 
       if (flush) {
@@ -655,7 +688,6 @@ gst_image_freeze_src_event (GstPad * pad, GstObject * parent, GstEvent * event)
         e = gst_event_new_flush_stop (TRUE);
         gst_event_set_seqnum (e, seqnum);
         gst_pad_push_event (self->srcpad, e);
-        g_atomic_int_set (&self->seeking, 0);
       }
 
       if (flags & GST_SEEK_FLAG_SEGMENT) {
@@ -685,8 +717,18 @@ gst_image_freeze_src_event (GstPad * pad, GstObject * parent, GstEvent * event)
       break;
     }
     case GST_EVENT_FLUSH_START:
+      g_mutex_lock (&self->lock);
+      self->flushing = TRUE;
+      g_mutex_unlock (&self->lock);
+      ret = gst_pad_push_event (self->sinkpad, event);
+      break;
+    case GST_EVENT_FLUSH_STOP:
       gst_image_freeze_reset (self);
-      /* fall through */
+      g_mutex_lock (&self->lock);
+      self->flushing = FALSE;
+      g_mutex_unlock (&self->lock);
+      ret = gst_pad_push_event (self->sinkpad, event);
+      break;
     default:
       ret = gst_pad_push_event (self->sinkpad, event);
       break;
@@ -707,6 +749,9 @@ gst_image_freeze_set_property (GObject * object, guint prop_id,
     case PROP_NUM_BUFFERS:
       self->num_buffers = g_value_get_int (value);
       break;
+    case PROP_ALLOW_REPLACE:
+      self->allow_replace = g_value_get_boolean (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -725,6 +770,9 @@ gst_image_freeze_get_property (GObject * object, guint prop_id, GValue * value,
     case PROP_NUM_BUFFERS:
       g_value_set_int (value, self->num_buffers);
       break;
+    case PROP_ALLOW_REPLACE:
+      g_value_set_boolean (value, self->allow_replace);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -736,21 +784,34 @@ gst_image_freeze_sink_chain (GstPad * pad, GstObject * parent,
     GstBuffer * buffer)
 {
   GstImageFreeze *self = GST_IMAGE_FREEZE (parent);
+  GstFlowReturn flow_ret;
 
   g_mutex_lock (&self->lock);
-  if (self->buffer) {
+  if (self->buffer && !self->allow_replace) {
     GST_DEBUG_OBJECT (pad, "Already have a buffer, dropping");
     gst_buffer_unref (buffer);
     g_mutex_unlock (&self->lock);
     return GST_FLOW_EOS;
   }
 
-  self->buffer = buffer;
+  if (!self->current_caps) {
+    GST_ERROR_OBJECT (pad, "Not negotiated yet");
+    g_mutex_unlock (&self->lock);
+    return GST_FLOW_NOT_NEGOTIATED;
+  }
+
+  gst_buffer_replace (&self->buffer, buffer);
+  if (!self->buffer_caps
+      || !gst_caps_is_equal (self->buffer_caps, self->current_caps))
+    gst_pad_mark_reconfigure (self->srcpad);
+  gst_caps_replace (&self->buffer_caps, self->current_caps);
+  gst_buffer_unref (buffer);
 
   gst_pad_start_task (self->srcpad, (GstTaskFunction) gst_image_freeze_src_loop,
       self->srcpad, NULL);
+  flow_ret = self->allow_replace ? GST_FLOW_OK : GST_FLOW_EOS;
   g_mutex_unlock (&self->lock);
-  return GST_FLOW_EOS;
+  return flow_ret;
 }
 
 static void
@@ -763,20 +824,40 @@ gst_image_freeze_src_loop (GstPad * pad)
   guint64 cstart, cstop;
   gboolean in_seg, eos;
   GstFlowReturn flow_ret = GST_FLOW_OK;
+  gboolean first = FALSE;
 
   g_mutex_lock (&self->lock);
-  if (!gst_pad_has_current_caps (self->srcpad)) {
-    GST_ERROR_OBJECT (pad, "Not negotiated yet");
-    flow_ret = GST_FLOW_NOT_NEGOTIATED;
+  if (self->flushing) {
+    GST_DEBUG_OBJECT (pad, "Flushing");
+    flow_ret = GST_FLOW_FLUSHING;
     g_mutex_unlock (&self->lock);
     goto pause_task;
-  }
-
-  if (!self->buffer) {
+  } else if (!self->buffer) {
     GST_ERROR_OBJECT (pad, "Have no buffer yet");
     flow_ret = GST_FLOW_ERROR;
     g_mutex_unlock (&self->lock);
     goto pause_task;
+  }
+
+  g_assert (self->buffer);
+
+  /* Take a new reference of the buffer here so we're guaranteed to have one
+   * in all the following code even if it disappears while we temporarily
+   * unlock the mutex */
+  buffer = gst_buffer_ref (self->buffer);
+
+  if (gst_pad_check_reconfigure (self->srcpad)) {
+    GstCaps *buffer_caps = gst_caps_ref (self->buffer_caps);
+    g_mutex_unlock (&self->lock);
+    if (!gst_image_freeze_sink_setcaps (self, buffer_caps)) {
+      gst_caps_unref (buffer_caps);
+      gst_buffer_unref (buffer);
+      gst_pad_mark_reconfigure (self->srcpad);
+      flow_ret = GST_FLOW_NOT_NEGOTIATED;
+      goto pause_task;
+    }
+    gst_caps_unref (buffer_caps);
+    g_mutex_lock (&self->lock);
   }
 
   /* normally we don't count buffers */
@@ -784,14 +865,14 @@ gst_image_freeze_src_loop (GstPad * pad)
     GST_DEBUG_OBJECT (pad, "Buffers left %d", self->num_buffers_left);
     if (self->num_buffers_left == 0) {
       flow_ret = GST_FLOW_EOS;
+      gst_buffer_unref (buffer);
       g_mutex_unlock (&self->lock);
       goto pause_task;
     } else {
       self->num_buffers_left--;
     }
   }
-  buffer = gst_buffer_copy (self->buffer);
-
+  buffer = gst_buffer_make_writable (buffer);
   g_mutex_unlock (&self->lock);
 
   if (self->need_segment) {
@@ -817,6 +898,7 @@ gst_image_freeze_src_loop (GstPad * pad)
     g_mutex_unlock (&self->lock);
 
     self->need_segment = FALSE;
+    first = TRUE;
 
     gst_pad_push_event (self->srcpad, e);
   }
@@ -869,6 +951,10 @@ gst_image_freeze_src_loop (GstPad * pad)
     GST_BUFFER_DURATION (buffer) = cstop - cstart;
     GST_BUFFER_OFFSET (buffer) = offset;
     GST_BUFFER_OFFSET_END (buffer) = offset + 1;
+    if (first)
+      GST_BUFFER_FLAG_SET (buffer, GST_BUFFER_FLAG_DISCONT);
+    else
+      GST_BUFFER_FLAG_UNSET (buffer, GST_BUFFER_FLAG_DISCONT);
     flow_ret = gst_pad_push (self->srcpad, buffer);
     GST_DEBUG_OBJECT (pad, "Pushing buffer resulted in %s",
         gst_flow_get_name (flow_ret));
@@ -941,6 +1027,9 @@ gst_image_freeze_change_state (GstElement * element, GstStateChange transition)
   switch (transition) {
     case GST_STATE_CHANGE_READY_TO_PAUSED:
       gst_image_freeze_reset (self);
+      g_mutex_lock (&self->lock);
+      self->flushing = FALSE;
+      g_mutex_unlock (&self->lock);
       break;
     case GST_STATE_CHANGE_PAUSED_TO_READY:
       gst_pad_stop_task (self->srcpad);

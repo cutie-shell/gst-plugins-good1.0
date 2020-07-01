@@ -418,7 +418,7 @@ MakeHeaders (guint8 * p, int type, int width, int height, guint8 * qt,
   *p++ = 0x11;                  /* huffman table 1 */
   *p++ = 0;                     /* first DCT coeff */
   *p++ = 63;                    /* last DCT coeff */
-  *p++ = 0;                     /* sucessive approx. */
+  *p++ = 0;                     /* successive approx. */
 
   return (p - start);
 };
@@ -627,9 +627,10 @@ gst_rtp_jpeg_depay_process (GstRTPBaseDepayload * depayload, GstRTPBuffer * rtp)
       GstCaps *outcaps;
 
       outcaps =
-          gst_caps_new_simple ("image/jpeg", "framerate", GST_TYPE_FRACTION,
-          rtpjpegdepay->frate_num, rtpjpegdepay->frate_denom, "width",
-          G_TYPE_INT, width, "height", G_TYPE_INT, height, NULL);
+          gst_caps_new_simple ("image/jpeg", "parsed", G_TYPE_BOOLEAN, TRUE,
+          "framerate", GST_TYPE_FRACTION, rtpjpegdepay->frate_num,
+          rtpjpegdepay->frate_denom, "width", G_TYPE_INT, width,
+          "height", G_TYPE_INT, height, NULL);
       gst_pad_set_caps (depayload->srcpad, outcaps);
       gst_caps_unref (outcaps);
 

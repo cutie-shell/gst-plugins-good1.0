@@ -188,6 +188,8 @@ gst_vpx_dec_class_init (GstVPXDecClass * klass)
       GST_DEBUG_FUNCPTR (gst_vpx_dec_default_frame_format);
 
   GST_DEBUG_CATEGORY_INIT (gst_vpxdec_debug, "vpxdec", 0, "VPX Decoder");
+
+  gst_type_mark_as_plugin_api (GST_VPX_DEC_TYPE_POST_PROCESSING_FLAGS, 0);
 }
 
 static void
@@ -375,7 +377,6 @@ gst_vpx_dec_default_send_tags (GstVPXDec * dec)
       gst_event_new_tag (list));
 }
 
-#ifdef HAVE_VPX_1_4
 struct Frame
 {
   GstMapInfo info;
@@ -509,7 +510,6 @@ gst_vpx_dec_release_buffer_cb (gpointer priv, vpx_codec_frame_buffer_t * fb)
 
   return 0;
 }
-#endif
 
 static void
 gst_vpx_dec_image_to_buffer (GstVPXDec * dec, const vpx_image_t * img,
@@ -588,6 +588,14 @@ gst_vpx_dec_open_codec (GstVPXDec * dec, GstVideoCodecFrame * frame)
     GST_WARNING_OBJECT (dec, "No keyframe, skipping");
     return GST_FLOW_CUSTOM_SUCCESS_1;
   }
+  if (stream_info.w == 0 || stream_info.h == 0) {
+    /* For VP8 it's possible to signal width or height to be 0, but it does
+     * not make sense to do so. For VP9 it's impossible. Hence, we most likely
+     * have a corrupt stream if width or height is 0. */
+    GST_INFO_OBJECT (dec, "Invalid resolution %d x %d", stream_info.w,
+        stream_info.h);
+    return GST_FLOW_CUSTOM_SUCCESS_1;
+  }
 
   gst_vpx_dec_set_stream_info (dec, &stream_info);
   gst_vpx_dec_set_default_format (dec, GST_VIDEO_FORMAT_I420, stream_info.w,
@@ -633,10 +641,8 @@ gst_vpx_dec_open_codec (GstVPXDec * dec, GstVideoCodecFrame * frame)
           gst_vpx_error_name (status));
     }
   }
-#ifdef HAVE_VPX_1_4
   vpx_codec_set_frame_buffer_functions (&dec->decoder,
       gst_vpx_dec_get_buffer_cb, gst_vpx_dec_release_buffer_cb, dec);
-#endif
 
   dec->decoder_inited = TRUE;
 
@@ -717,13 +723,10 @@ gst_vpx_dec_handle_frame (GstVideoDecoder * decoder, GstVideoCodecFrame * frame)
       gst_video_decoder_drop_frame (decoder, frame);
     } else {
       gst_vpx_dec_handle_resolution_change (dec, img, fmt);
-#ifdef HAVE_VPX_1_4
       if (img->fb_priv && dec->have_video_meta) {
         frame->output_buffer = gst_vpx_dec_prepare_image (dec, img);
         ret = gst_video_decoder_finish_frame (decoder, frame);
-      } else
-#endif
-      {
+      } else {
         ret = gst_video_decoder_allocate_output_frame (decoder, frame);
 
         if (ret == GST_FLOW_OK) {

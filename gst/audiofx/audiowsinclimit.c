@@ -32,6 +32,7 @@
 
 /**
  * SECTION:element-audiowsinclimit
+ * @title: audiowsinclimit
  *
  * Attenuates all frequencies above the cutoff frequency (low-pass) or all frequencies below the
  * cutoff frequency (high-pass). The length parameter controls the rolloff, the window parameter
@@ -42,14 +43,13 @@
  * a much better rolloff when using a larger kernel size and almost linear phase. The only
  * disadvantage is the much slower execution time with larger kernels.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 audiotestsrc freq=1500 ! audioconvert ! audiowsinclimit mode=low-pass cutoff=1000 length=501 ! audioconvert ! alsasink
  * gst-launch-1.0 filesrc location="melo1.ogg" ! oggdemux ! vorbisdec ! audioconvert ! audiowsinclimit mode=high-pass cutoff=15000 length=501 ! audioconvert ! alsasink
  * gst-launch-1.0 audiotestsrc wave=white-noise ! audioconvert ! audiowsinclimit mode=low-pass cutoff=1000 length=10001 window=blackman ! audioconvert ! alsasink
  * ]|
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -201,6 +201,9 @@ gst_audio_wsinclimit_class_init (GstAudioWSincLimitClass * klass)
       "Sebastian Dröge <sebastian.droege@collabora.co.uk>");
 
   filter_class->setup = GST_DEBUG_FUNCPTR (gst_audio_wsinclimit_setup);
+
+  gst_type_mark_as_plugin_api (GST_TYPE_AUDIO_WSINC_LIMIT_MODE, 0);
+  gst_type_mark_as_plugin_api (GST_TYPE_AUDIO_WSINC_LIMIT_WINDOW, 0);
 }
 
 static void

@@ -19,18 +19,18 @@
 
 /**
  * SECTION:element-multipartmux
+ * @title: multipartmux
  *
  * MultipartMux uses the #GstCaps of the sink pad as the Content-type field for
- * incoming buffers when muxing them to a multipart stream. Most of the time 
+ * incoming buffers when muxing them to a multipart stream. Most of the time
  * multipart streams are sequential JPEG frames.
  *
- * <refsect2>
- * <title>Sample pipelines</title>
+ * ## Sample pipelines
  * |[
  * gst-launch-1.0 videotestsrc ! video/x-raw, framerate='(fraction)'5/1 ! jpegenc ! multipartmux ! filesink location=/tmp/test.multipart
  * ]| a pipeline to mux 5 JPEG frames per second into a multipart stream
  * stored to a file.
- * </refsect2>
+ *
  */
 
 /* FIXME: drop/merge tag events, or at least send them delayed after stream-start */
@@ -639,7 +639,7 @@ gst_multipart_mux_set_property (GObject * object,
   switch (prop_id) {
     case PROP_BOUNDARY:
       g_free (mux->boundary);
-      mux->boundary = g_strdup (g_value_get_string (value));
+      mux->boundary = g_value_dup_string (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

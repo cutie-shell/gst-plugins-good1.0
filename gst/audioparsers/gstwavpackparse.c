@@ -20,17 +20,17 @@
  */
 /**
  * SECTION:element-wavpackparse
+ * @title: wavpackparse
  * @short_description: Wavpack parser
  * @see_also: #GstAmrParse, #GstAACParse
  *
  * This is an Wavpack parser.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 filesrc location=abc.wavpack ! wavpackparse ! wavpackdec ! audioresample ! audioconvert ! autoaudiosink
  * ]|
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -703,6 +703,8 @@ gst_wavpack_parse_pre_push_frame (GstBaseParse * parse,
     /* also signals the end of first-frame processing */
     wavpackparse->sent_codec_tag = TRUE;
   }
+
+  frame->flags |= GST_BASE_PARSE_FRAME_FLAG_CLIP;
 
   return GST_FLOW_OK;
 }

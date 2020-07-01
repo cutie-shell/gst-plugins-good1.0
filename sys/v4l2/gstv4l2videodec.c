@@ -32,6 +32,13 @@
 #include "gstv4l2object.h"
 #include "gstv4l2videodec.h"
 
+#include "gstv4l2h264codec.h"
+#include "gstv4l2h265codec.h"
+#include "gstv4l2mpeg2codec.h"
+#include "gstv4l2mpeg4codec.h"
+#include "gstv4l2vp8codec.h"
+#include "gstv4l2vp9codec.h"
+
 #include <string.h>
 #include <gst/gst-i18n-plugin.h>
 
@@ -45,6 +52,7 @@ typedef struct
   GstCaps *src_caps;
   const gchar *longname;
   const gchar *description;
+  const GstV4l2Codec *codec;
 } GstV4l2VideoDecCData;
 
 enum
@@ -303,6 +311,9 @@ gst_v4l2_video_dec_flush (GstVideoDecoder * decoder)
     GST_VIDEO_DECODER_STREAM_LOCK (decoder);
   }
 
+  if (G_UNLIKELY (!g_atomic_int_get (&self->active)))
+    return TRUE;
+
   self->output_flow = GST_FLOW_OK;
 
   gst_v4l2_object_unlock_stop (self->v4l2output);
@@ -325,7 +336,7 @@ gst_v4l2_video_dec_negotiate (GstVideoDecoder * decoder)
 {
   GstV4l2VideoDec *self = GST_V4L2_VIDEO_DEC (decoder);
 
-  /* We don't allow renegotiation without carefull disabling the pool */
+  /* We don't allow renegotiation without careful disabling the pool */
   if (self->v4l2capture->pool &&
       gst_buffer_pool_is_active (GST_BUFFER_POOL (self->v4l2capture->pool)))
     return TRUE;
@@ -402,7 +413,7 @@ gst_v4l2_video_dec_finish (GstVideoDecoder * decoder)
   }
 
   /* and ensure the processing thread has stopped in case another error
-   * occured. */
+   * occurred. */
   gst_v4l2_object_unlock (self->v4l2capture);
   gst_pad_stop_task (decoder->srcpad);
   GST_VIDEO_DECODER_STREAM_LOCK (decoder);
@@ -598,7 +609,7 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
 
     /* We are running in byte-stream mode, so we don't know the headers, but
      * we need to send something, otherwise the decoder will refuse to
-     * intialize.
+     * initialize.
      */
     if (codec_data) {
       gst_buffer_ref (codec_data);
@@ -610,8 +621,12 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
     /* Ensure input internal pool is active */
     if (!gst_buffer_pool_is_active (pool)) {
       GstStructure *config = gst_buffer_pool_get_config (pool);
+      guint min = MAX (self->v4l2output->min_buffers,
+          GST_V4L2_MIN_BUFFERS (self->v4l2output));
+      guint max = VIDEO_MAX_FRAME;
+
       gst_buffer_pool_config_set_params (config, self->input_state->caps,
-          self->v4l2output->info.size, 2, 2);
+          self->v4l2output->info.size, min, max);
 
       /* There is no reason to refuse this config */
       if (!gst_buffer_pool_set_config (pool, config))
@@ -734,7 +749,7 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
     }
   }
 
-  /* No need to keep input arround */
+  /* No need to keep input around */
   tmp = frame->input_buffer;
   frame->input_buffer = gst_buffer_new ();
   gst_buffer_copy_into (frame->input_buffer, tmp,
@@ -1028,7 +1043,6 @@ gst_v4l2_video_dec_subclass_init (gpointer g_class, gpointer data)
 
   klass->default_device = cdata->device;
 
-  /* Note: gst_pad_template_new() take the floating ref from the caps */
   gst_element_class_add_pad_template (element_class,
       gst_pad_template_new ("sink", GST_PAD_SINK, GST_PAD_ALWAYS,
           cdata->sink_caps));
@@ -1036,7 +1050,7 @@ gst_v4l2_video_dec_subclass_init (gpointer g_class, gpointer data)
       gst_pad_template_new ("src", GST_PAD_SRC, GST_PAD_ALWAYS,
           cdata->src_caps));
 
-  gst_element_class_set_static_metadata (element_class, cdata->longname,
+  gst_element_class_set_metadata (element_class, cdata->longname,
       "Codec/Decoder/Video/Hardware", cdata->description,
       "Nicolas Dufresne <nicolas.dufresne@collabora.com>");
 
@@ -1080,8 +1094,10 @@ G_STMT_START { \
 
     if (mpegversion == 2) {
       SET_META ("MPEG2");
+      cdata->codec = gst_v4l2_mpeg2_get_codec ();
     } else {
       SET_META ("MPEG4");
+      cdata->codec = gst_v4l2_mpeg4_get_codec ();
     }
   } else if (gst_structure_has_name (s, "video/x-h263")) {
     SET_META ("H263");
@@ -1089,14 +1105,18 @@ G_STMT_START { \
     SET_META ("FWHT");
   } else if (gst_structure_has_name (s, "video/x-h264")) {
     SET_META ("H264");
+    cdata->codec = gst_v4l2_h264_get_codec ();
   } else if (gst_structure_has_name (s, "video/x-h265")) {
     SET_META ("H265");
+    cdata->codec = gst_v4l2_h265_get_codec ();
   } else if (gst_structure_has_name (s, "video/x-wmv")) {
     SET_META ("VC1");
   } else if (gst_structure_has_name (s, "video/x-vp8")) {
     SET_META ("VP8");
+    cdata->codec = gst_v4l2_vp8_get_codec ();
   } else if (gst_structure_has_name (s, "video/x-vp9")) {
     SET_META ("VP9");
+    cdata->codec = gst_v4l2_vp9_get_codec ();
   } else if (gst_structure_has_name (s, "video/x-bayer")) {
     SET_META ("BAYER");
   } else if (gst_structure_has_name (s, "video/x-sonix")) {
@@ -1107,7 +1127,7 @@ G_STMT_START { \
     SET_META ("PWC2");
   } else {
     /* This code should be kept on sync with the exposed CODEC type of format
-     * from gstv4l2object.c. This warning will only occure in case we forget
+     * from gstv4l2object.c. This warning will only occur in case we forget
      * to also add a format here. */
     gchar *s_str = gst_structure_to_string (s);
     g_warning ("Missing fixed name mapping for caps '%s', this is a GStreamer "
@@ -1131,7 +1151,8 @@ G_STMT_START { \
 
 void
 gst_v4l2_video_dec_register (GstPlugin * plugin, const gchar * basename,
-    const gchar * device_path, GstCaps * sink_caps, GstCaps * src_caps)
+    const gchar * device_path, gint video_fd, GstCaps * sink_caps,
+    GstCaps * src_caps)
 {
   gint i;
 
@@ -1156,6 +1177,20 @@ gst_v4l2_video_dec_register (GstPlugin * plugin, const gchar * basename,
     if (!type_name) {
       g_free (cdata);
       continue;
+    }
+
+    if (cdata->codec != NULL) {
+      GValue value = G_VALUE_INIT;
+
+      if (gst_v4l2_codec_probe_levels (cdata->codec, video_fd, &value)) {
+        gst_caps_set_value (cdata->sink_caps, "level", &value);
+        g_value_unset (&value);
+      }
+
+      if (gst_v4l2_codec_probe_profiles (cdata->codec, video_fd, &value)) {
+        gst_caps_set_value (cdata->sink_caps, "profile", &value);
+        g_value_unset (&value);
+      }
     }
 
     type = gst_v4l2_video_dec_get_type ();

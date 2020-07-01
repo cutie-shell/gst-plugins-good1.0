@@ -19,6 +19,7 @@
 
 /**
  * SECTION:element-rtpbin
+ * @title: rtpbin
  * @see_also: rtpjitterbuffer, rtpsession, rtpptdemux, rtpssrcdemux
  *
  * RTP bin combines the functions of #GstRtpSession, #GstRtpSsrcDemux,
@@ -50,7 +51,7 @@
  * To use #GstRtpBin as a sender, request a send_rtp_sink_\%u pad, which will
  * automatically create a send_rtp_src_\%u pad. If the session number is not provided,
  * the pad from the lowest available session will be returned. The session manager will modify the
- * SSRC in the RTP packets to its own SSRC and wil forward the packets on the
+ * SSRC in the RTP packets to its own SSRC and will forward the packets on the
  * send_rtp_src_\%u pad after updating its internal state.
  *
  * The session manager needs the clock-rate of the payload types it is handling
@@ -84,9 +85,12 @@
  * An AUX receiver has 1 src_\%u pad that much match the sessionid in the signal
  * and 1 or more sink_\%u pads. A session will be made for each sink_\%u pad
  * when the corresponding recv_rtp_sink_\%u pad is requested on #GstRtpBin.
+ * The #GstRtpBin::request-jitterbuffer signal can be used to provide a custom
+ * element to perform arrival time smoothing, reordering and optionally packet
+ * loss detection and retransmission requests.
  *
- * <refsect2>
- * <title>Example pipelines</title>
+ * ## Example pipelines
+ *
  * |[
  * gst-launch-1.0 udpsrc port=5000 caps="application/x-rtp, ..." ! .recv_rtp_sink_0 \
  *     rtpbin ! rtptheoradepay ! theoradec ! xvimagesink
@@ -131,7 +135,7 @@
  * synchronisation.
  * Send RTCP reports for session 0 on port 5005 and RTCP reports for session 1
  * on port 5007.
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -274,6 +278,8 @@ enum
   SIGNAL_REQUEST_FEC_DECODER,
   SIGNAL_REQUEST_FEC_ENCODER,
 
+  SIGNAL_REQUEST_JITTERBUFFER,
+
   SIGNAL_NEW_JITTERBUFFER,
   SIGNAL_NEW_STORAGE,
 
@@ -383,10 +389,12 @@ complete_session_receiver (GstRtpBin * rtpbin, GstRtpBinSession * session,
     guint sessid);
 static GstPad *complete_session_rtcp (GstRtpBin * rtpbin,
     GstRtpBinSession * session, guint sessid);
+static GstElement *session_request_element (GstRtpBinSession * session,
+    guint signal);
 
 /* Manages the RTP stream for one SSRC.
  *
- * We pipe the stream (comming from the SSRC demuxer) into a jitterbuffer.
+ * We pipe the stream (coming from the SSRC demuxer) into a jitterbuffer.
  * If we see an SDES RTCP packet that links multiple SSRCs together based on a
  * common CNAME, we create a GstRtpBinClient structure to group the SSRCs
  * together (see below).
@@ -693,6 +701,7 @@ create_session (GstRtpBin * rtpbin, gint id)
 
   /* configure SDES items */
   GST_OBJECT_LOCK (rtpbin);
+  g_object_set (demux, "max-streams", rtpbin->max_streams, NULL);
   g_object_set (session, "sdes", rtpbin->sdes, "rtp-profile",
       rtpbin->rtp_profile, "rtcp-sync-send-time", rtpbin->rtcp_sync_send_time,
       NULL);
@@ -882,7 +891,7 @@ get_pt_map (GstRtpBinSession * session, guint pt)
 
   bin = session->bin;
 
-  GST_DEBUG ("emiting signal for pt %u in session %u", pt, session->id);
+  GST_DEBUG ("emitting signal for pt %u in session %u", pt, session->id);
 
   /* not in cache, send signal to request caps */
   g_value_init (&args[0], GST_TYPE_ELEMENT);
@@ -990,7 +999,8 @@ gst_rtp_bin_clear_pt_map (GstRtpBin * bin)
       GstRtpBinStream *stream = (GstRtpBinStream *) streams->data;
 
       GST_DEBUG_OBJECT (bin, "clearing stream %p", stream);
-      g_signal_emit_by_name (stream->buffer, "clear-pt-map", NULL);
+      if (g_signal_lookup ("clear-pt-map", G_OBJECT_TYPE (stream->buffer)) != 0)
+        g_signal_emit_by_name (stream->buffer, "clear-pt-map", NULL);
       if (stream->demux)
         g_signal_emit_by_name (stream->demux, "clear-pt-map", NULL);
     }
@@ -1089,6 +1099,12 @@ gst_rtp_bin_request_decoder (GstRtpBin * bin, guint session_id)
   return NULL;
 }
 
+static GstElement *
+gst_rtp_bin_request_jitterbuffer (GstRtpBin * bin, guint session_id)
+{
+  return gst_element_factory_make ("rtpjitterbuffer", NULL);
+}
+
 static void
 gst_rtp_bin_propagate_property_to_jitterbuffer (GstRtpBin * bin,
     const gchar * name, const GValue * value)
@@ -1102,8 +1118,14 @@ gst_rtp_bin_propagate_property_to_jitterbuffer (GstRtpBin * bin,
     GST_RTP_SESSION_LOCK (session);
     for (streams = session->streams; streams; streams = g_slist_next (streams)) {
       GstRtpBinStream *stream = (GstRtpBinStream *) streams->data;
+      GObjectClass *jb_class;
 
-      g_object_set_property (G_OBJECT (stream->buffer), name, value);
+      jb_class = G_OBJECT_GET_CLASS (G_OBJECT (stream->buffer));
+      if (g_object_class_find_property (jb_class, name))
+        g_object_set_property (G_OBJECT (stream->buffer), name, value);
+      else
+        GST_WARNING_OBJECT (bin,
+            "Stream jitterbuffer does not expose property %s", name);
     }
     GST_RTP_SESSION_UNLOCK (session);
   }
@@ -1193,11 +1215,8 @@ get_current_times (GstRtpBin * bin, GstClockTime * running_time,
       switch (bin->ntp_time_source) {
         case GST_RTP_NTP_TIME_SOURCE_NTP:
         case GST_RTP_NTP_TIME_SOURCE_UNIX:{
-          GTimeVal current;
-
           /* get current NTP time */
-          g_get_current_time (&current);
-          ntpns = GST_TIMEVAL_TO_TIME (current);
+          ntpns = g_get_real_time () * GST_USECOND;
 
           /* add constant to convert from 1970 based time to 1900 based time */
           if (bin->ntp_time_source == GST_RTP_NTP_TIME_SOURCE_NTP)
@@ -1235,6 +1254,15 @@ stream_set_ts_offset (GstRtpBin * bin, GstRtpBinStream * stream,
     gboolean allow_positive_ts_offset)
 {
   gint64 prev_ts_offset;
+  GObjectClass *jb_class;
+
+  jb_class = G_OBJECT_GET_CLASS (G_OBJECT (stream->buffer));
+
+  if (!g_object_class_find_property (jb_class, "ts-offset")) {
+    GST_LOG_OBJECT (bin,
+        "stream's jitterbuffer does not expose ts-offset property");
+    return;
+  }
 
   g_object_get (stream->buffer, "ts-offset", &prev_ts_offset, NULL);
 
@@ -1383,7 +1411,7 @@ gst_rtp_bin_associate (GstRtpBin * bin, GstRtpBinStream * stream, guint8 len,
     /* For NTP sync we need to first get a snapshot of running_time and NTP
      * time. We know at what running_time we play a certain RTP time, we also
      * calculated when we would play the RTP time in the SR packet. Now we need
-     * to know how the running_time and the NTP time relate to eachother. */
+     * to know how the running_time and the NTP time relate to each other. */
     get_current_times (bin, &local_running_time, &local_ntpnstime);
 
     /* see how far away the NTP time is. This is the difference between the
@@ -1424,9 +1452,9 @@ gst_rtp_bin_associate (GstRtpBin * bin, GstRtpBinStream * stream, guint8 len,
     /* calculate the min of all deltas, ignoring streams that did not yet have a
      * valid rt_delta because we did not yet receive an SR packet for those
      * streams.
-     * We calculate the mininum because we would like to only apply positive
+     * We calculate the minimum because we would like to only apply positive
      * offsets to streams, delaying their playback instead of trying to speed up
-     * other streams (which might be imposible when we have to create negative
+     * other streams (which might be impossible when we have to create negative
      * latencies).
      * The stream that has the smallest diff is selected as the reference stream,
      * all other streams will have a positive offset to this difference. */
@@ -1439,7 +1467,7 @@ gst_rtp_bin_associate (GstRtpBin * bin, GstRtpBinStream * stream, guint8 len,
       guint64 ext_base;
 
       use_rtp = TRUE;
-      /* signed version for convienience */
+      /* signed version for convenience */
       clock_base = base_rtptime;
       /* deal with possible wrap-around */
       ext_base = base_rtptime;
@@ -1693,13 +1721,15 @@ create_stream (GstRtpBinSession * session, guint32 ssrc)
   GstRtpBinStream *stream;
   GstRtpBin *rtpbin;
   GstState target;
+  GObjectClass *jb_class;
 
   rtpbin = session->bin;
 
   if (g_slist_length (session->streams) >= rtpbin->max_streams)
     goto max_streams;
 
-  if (!(buffer = gst_element_factory_make ("rtpjitterbuffer", NULL)))
+  if (!(buffer =
+          session_request_element (session, SIGNAL_REQUEST_JITTERBUFFER)))
     goto no_jitterbuffer;
 
   if (!rtpbin->ignore_pt) {
@@ -1711,7 +1741,7 @@ create_stream (GstRtpBinSession * session, guint32 ssrc)
   stream->ssrc = ssrc;
   stream->bin = rtpbin;
   stream->session = session;
-  stream->buffer = buffer;
+  stream->buffer = gst_object_ref (buffer);
   stream->demux = demux;
 
   stream->have_sync = FALSE;
@@ -1721,28 +1751,44 @@ create_stream (GstRtpBinSession * session, guint32 ssrc)
   stream->clock_base = -100 * GST_SECOND;
   session->streams = g_slist_prepend (session->streams, stream);
 
-  /* provide clock_rate to the jitterbuffer when needed */
-  stream->buffer_ptreq_sig = g_signal_connect (buffer, "request-pt-map",
-      (GCallback) pt_map_requested, session);
-  stream->buffer_ntpstop_sig = g_signal_connect (buffer, "on-npt-stop",
-      (GCallback) on_npt_stop, stream);
+  jb_class = G_OBJECT_GET_CLASS (G_OBJECT (buffer));
+
+  if (g_signal_lookup ("request-pt-map", G_OBJECT_TYPE (buffer)) != 0) {
+    /* provide clock_rate to the jitterbuffer when needed */
+    stream->buffer_ptreq_sig = g_signal_connect (buffer, "request-pt-map",
+        (GCallback) pt_map_requested, session);
+  }
+  if (g_signal_lookup ("on-npt-stop", G_OBJECT_TYPE (buffer)) != 0) {
+    stream->buffer_ntpstop_sig = g_signal_connect (buffer, "on-npt-stop",
+        (GCallback) on_npt_stop, stream);
+  }
 
   g_object_set_data (G_OBJECT (buffer), "GstRTPBin.session", session);
   g_object_set_data (G_OBJECT (buffer), "GstRTPBin.stream", stream);
 
   /* configure latency and packet lost */
   g_object_set (buffer, "latency", rtpbin->latency_ms, NULL);
-  g_object_set (buffer, "drop-on-latency", rtpbin->drop_on_latency, NULL);
-  g_object_set (buffer, "do-lost", rtpbin->do_lost, NULL);
-  g_object_set (buffer, "mode", rtpbin->buffer_mode, NULL);
-  g_object_set (buffer, "do-retransmission", rtpbin->do_retransmission, NULL);
-  g_object_set (buffer, "max-rtcp-rtp-time-diff",
-      rtpbin->max_rtcp_rtp_time_diff, NULL);
-  g_object_set (buffer, "max-dropout-time", rtpbin->max_dropout_time,
-      "max-misorder-time", rtpbin->max_misorder_time, NULL);
-  g_object_set (buffer, "rfc7273-sync", rtpbin->rfc7273_sync, NULL);
-  g_object_set (buffer, "max-ts-offset-adjustment",
-      rtpbin->max_ts_offset_adjustment, NULL);
+
+  if (g_object_class_find_property (jb_class, "drop-on-latency"))
+    g_object_set (buffer, "drop-on-latency", rtpbin->drop_on_latency, NULL);
+  if (g_object_class_find_property (jb_class, "do-lost"))
+    g_object_set (buffer, "do-lost", rtpbin->do_lost, NULL);
+  if (g_object_class_find_property (jb_class, "mode"))
+    g_object_set (buffer, "mode", rtpbin->buffer_mode, NULL);
+  if (g_object_class_find_property (jb_class, "do-retransmission"))
+    g_object_set (buffer, "do-retransmission", rtpbin->do_retransmission, NULL);
+  if (g_object_class_find_property (jb_class, "max-rtcp-rtp-time-diff"))
+    g_object_set (buffer, "max-rtcp-rtp-time-diff",
+        rtpbin->max_rtcp_rtp_time_diff, NULL);
+  if (g_object_class_find_property (jb_class, "max-dropout-time"))
+    g_object_set (buffer, "max-dropout-time", rtpbin->max_dropout_time, NULL);
+  if (g_object_class_find_property (jb_class, "max-misorder-time"))
+    g_object_set (buffer, "max-misorder-time", rtpbin->max_misorder_time, NULL);
+  if (g_object_class_find_property (jb_class, "rfc7273-sync"))
+    g_object_set (buffer, "rfc7273-sync", rtpbin->rfc7273_sync, NULL);
+  if (g_object_class_find_property (jb_class, "max-ts-offset-adjustment"))
+    g_object_set (buffer, "max-ts-offset-adjustment",
+        rtpbin->max_ts_offset_adjustment, NULL);
 
   /* need to sink the jitterbufer or otherwise signal handlers from bindings will
    * take ownership of it and we don't own it anymore */
@@ -1752,7 +1798,6 @@ create_stream (GstRtpBinSession * session, guint32 ssrc)
 
   if (!rtpbin->ignore_pt)
     gst_bin_add (GST_BIN_CAST (rtpbin), demux);
-  gst_bin_add (GST_BIN_CAST (rtpbin), buffer);
 
   /* unref the jitterbuffer again, the bin has a reference now and
    * we don't need it anymore */
@@ -1766,9 +1811,12 @@ create_stream (GstRtpBinSession * session, guint32 ssrc)
   if (rtpbin->buffering) {
     guint64 last_out;
 
-    GST_INFO_OBJECT (rtpbin,
-        "bin is buffering, set jitterbuffer as not active");
-    g_signal_emit_by_name (buffer, "set-active", FALSE, (gint64) 0, &last_out);
+    if (g_signal_lookup ("set-active", G_OBJECT_TYPE (buffer)) != 0) {
+      GST_INFO_OBJECT (rtpbin,
+          "bin is buffering, set jitterbuffer as not active");
+      g_signal_emit_by_name (buffer, "set-active", FALSE, (gint64) 0,
+          &last_out);
+    }
   }
 
 
@@ -1787,7 +1835,7 @@ create_stream (GstRtpBinSession * session, guint32 ssrc)
   /* ERRORS */
 max_streams:
   {
-    GST_WARNING_OBJECT (rtpbin, "stream exeeds maximum (%d)",
+    GST_WARNING_OBJECT (rtpbin, "stream exceeds maximum (%d)",
         rtpbin->max_streams);
     return NULL;
   }
@@ -1812,29 +1860,29 @@ free_stream (GstRtpBinStream * stream, GstRtpBin * bin)
 
   GST_DEBUG_OBJECT (bin, "freeing stream %p", stream);
 
+  gst_element_set_locked_state (stream->buffer, TRUE);
+  if (stream->demux)
+    gst_element_set_locked_state (stream->demux, TRUE);
+
+  gst_element_set_state (stream->buffer, GST_STATE_NULL);
+  if (stream->demux)
+    gst_element_set_state (stream->demux, GST_STATE_NULL);
+
   if (stream->demux) {
     g_signal_handler_disconnect (stream->demux, stream->demux_newpad_sig);
     g_signal_handler_disconnect (stream->demux, stream->demux_ptreq_sig);
     g_signal_handler_disconnect (stream->demux, stream->demux_ptchange_sig);
-  }
-  g_signal_handler_disconnect (stream->buffer, stream->buffer_handlesync_sig);
-  g_signal_handler_disconnect (stream->buffer, stream->buffer_ptreq_sig);
-  g_signal_handler_disconnect (stream->buffer, stream->buffer_ntpstop_sig);
-
-  if (stream->demux)
-    gst_element_set_locked_state (stream->demux, TRUE);
-  gst_element_set_locked_state (stream->buffer, TRUE);
-
-  if (stream->demux)
-    gst_element_set_state (stream->demux, GST_STATE_NULL);
-  gst_element_set_state (stream->buffer, GST_STATE_NULL);
-
-  /* now remove this signal, we need this while going to NULL because it to
-   * do some cleanups */
-  if (stream->demux)
     g_signal_handler_disconnect (stream->demux, stream->demux_padremoved_sig);
+  }
 
-  gst_bin_remove (GST_BIN_CAST (bin), stream->buffer);
+  if (stream->buffer_handlesync_sig)
+    g_signal_handler_disconnect (stream->buffer, stream->buffer_handlesync_sig);
+  if (stream->buffer_ptreq_sig)
+    g_signal_handler_disconnect (stream->buffer, stream->buffer_ptreq_sig);
+  if (stream->buffer_ntpstop_sig)
+    g_signal_handler_disconnect (stream->buffer, stream->buffer_ntpstop_sig);
+
+  gst_object_unref (stream->buffer);
   if (stream->demux)
     gst_bin_remove (GST_BIN_CAST (bin), stream->demux);
 
@@ -1954,8 +2002,8 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_REQUEST_PT_MAP] =
       g_signal_new ("request-pt-map", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass, request_pt_map),
-      _gst_caps_accumulator, NULL, g_cclosure_marshal_generic, GST_TYPE_CAPS,
-      2, G_TYPE_UINT, G_TYPE_UINT);
+      _gst_caps_accumulator, NULL, NULL, GST_TYPE_CAPS, 2, G_TYPE_UINT,
+      G_TYPE_UINT);
 
     /**
    * GstRtpBin::payload-type-change:
@@ -1968,8 +2016,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_PAYLOAD_TYPE_CHANGE] =
       g_signal_new ("payload-type-change", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass, payload_type_change),
-      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 2, G_TYPE_UINT,
-      G_TYPE_UINT);
+      NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_UINT);
 
   /**
    * GstRtpBin::clear-pt-map:
@@ -1981,8 +2028,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_CLEAR_PT_MAP] =
       g_signal_new ("clear-pt-map", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (GstRtpBinClass,
-          clear_pt_map), NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE,
-      0, G_TYPE_NONE);
+          clear_pt_map), NULL, NULL, NULL, G_TYPE_NONE, 0, G_TYPE_NONE);
 
   /**
    * GstRtpBin::reset-sync:
@@ -1994,8 +2040,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_RESET_SYNC] =
       g_signal_new ("reset-sync", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (GstRtpBinClass,
-          reset_sync), NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE,
-      0, G_TYPE_NONE);
+          reset_sync), NULL, NULL, NULL, G_TYPE_NONE, 0, G_TYPE_NONE);
 
   /**
    * GstRtpBin::get-session:
@@ -2009,8 +2054,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_GET_SESSION] =
       g_signal_new ("get-session", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (GstRtpBinClass,
-          get_session), NULL, NULL, g_cclosure_marshal_generic,
-      GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
+          get_session), NULL, NULL, NULL, GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
 
   /**
    * GstRtpBin::get-internal-session:
@@ -2022,38 +2066,40 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_GET_INTERNAL_SESSION] =
       g_signal_new ("get-internal-session", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (GstRtpBinClass,
-          get_internal_session), NULL, NULL, g_cclosure_marshal_generic,
-      RTP_TYPE_SESSION, 1, G_TYPE_UINT);
+          get_internal_session), NULL, NULL, NULL, RTP_TYPE_SESSION, 1,
+      G_TYPE_UINT);
 
   /**
    * GstRtpBin::get-internal-storage:
    * @rtpbin: the object which received the signal
    * @id: the session id
    *
-   * Request the internal RTPStorage object as #GObject in session @id.
+   * Request the internal RTPStorage object as #GObject in session @id. This
+   * is the internal storage used by the RTPStorage element, which is used to
+   * keep a backlog of received RTP packets for the session @id.
    *
    * Since: 1.14
    */
   gst_rtp_bin_signals[SIGNAL_GET_INTERNAL_STORAGE] =
       g_signal_new ("get-internal-storage", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (GstRtpBinClass,
-          get_internal_storage), NULL, NULL, g_cclosure_marshal_generic,
-      G_TYPE_OBJECT, 1, G_TYPE_UINT);
+          get_internal_storage), NULL, NULL, NULL, G_TYPE_OBJECT, 1,
+      G_TYPE_UINT);
 
   /**
    * GstRtpBin::get-storage:
    * @rtpbin: the object which received the signal
    * @id: the session id
    *
-   * Request the RTPStorage element as #GObject in session @id.
+   * Request the RTPStorage element as #GObject in session @id. This element
+   * is used to keep a backlog of received RTP packets for the session @id.
    *
    * Since: 1.16
    */
   gst_rtp_bin_signals[SIGNAL_GET_STORAGE] =
       g_signal_new ("get-storage", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (GstRtpBinClass,
-          get_storage), NULL, NULL, g_cclosure_marshal_generic,
-      GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
+          get_storage), NULL, NULL, NULL, GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
 
   /**
    * GstRtpBin::on-new-ssrc:
@@ -2066,8 +2112,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_ON_NEW_SSRC] =
       g_signal_new ("on-new-ssrc", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass, on_new_ssrc),
-      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 2, G_TYPE_UINT,
-      G_TYPE_UINT);
+      NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_UINT);
   /**
    * GstRtpBin::on-ssrc-collision:
    * @rtpbin: the object which received the signal
@@ -2079,8 +2124,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_ON_SSRC_COLLISION] =
       g_signal_new ("on-ssrc-collision", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass, on_ssrc_collision),
-      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 2, G_TYPE_UINT,
-      G_TYPE_UINT);
+      NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_UINT);
   /**
    * GstRtpBin::on-ssrc-validated:
    * @rtpbin: the object which received the signal
@@ -2092,8 +2136,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_ON_SSRC_VALIDATED] =
       g_signal_new ("on-ssrc-validated", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass, on_ssrc_validated),
-      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 2, G_TYPE_UINT,
-      G_TYPE_UINT);
+      NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_UINT);
   /**
    * GstRtpBin::on-ssrc-active:
    * @rtpbin: the object which received the signal
@@ -2105,8 +2148,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_ON_SSRC_ACTIVE] =
       g_signal_new ("on-ssrc-active", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass, on_ssrc_active),
-      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 2, G_TYPE_UINT,
-      G_TYPE_UINT);
+      NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_UINT);
   /**
    * GstRtpBin::on-ssrc-sdes:
    * @rtpbin: the object which received the signal
@@ -2118,8 +2160,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_ON_SSRC_SDES] =
       g_signal_new ("on-ssrc-sdes", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass, on_ssrc_sdes),
-      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 2, G_TYPE_UINT,
-      G_TYPE_UINT);
+      NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_UINT);
 
   /**
    * GstRtpBin::on-bye-ssrc:
@@ -2132,8 +2173,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_ON_BYE_SSRC] =
       g_signal_new ("on-bye-ssrc", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass, on_bye_ssrc),
-      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 2, G_TYPE_UINT,
-      G_TYPE_UINT);
+      NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_UINT);
   /**
    * GstRtpBin::on-bye-timeout:
    * @rtpbin: the object which received the signal
@@ -2145,8 +2185,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_ON_BYE_TIMEOUT] =
       g_signal_new ("on-bye-timeout", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass, on_bye_timeout),
-      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 2, G_TYPE_UINT,
-      G_TYPE_UINT);
+      NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_UINT);
   /**
    * GstRtpBin::on-timeout:
    * @rtpbin: the object which received the signal
@@ -2158,8 +2197,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_ON_TIMEOUT] =
       g_signal_new ("on-timeout", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass, on_timeout),
-      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 2, G_TYPE_UINT,
-      G_TYPE_UINT);
+      NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_UINT);
   /**
    * GstRtpBin::on-sender-timeout:
    * @rtpbin: the object which received the signal
@@ -2171,8 +2209,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_ON_SENDER_TIMEOUT] =
       g_signal_new ("on-sender-timeout", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass, on_sender_timeout),
-      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 2, G_TYPE_UINT,
-      G_TYPE_UINT);
+      NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_UINT);
 
   /**
    * GstRtpBin::on-npt-stop:
@@ -2185,8 +2222,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_ON_NPT_STOP] =
       g_signal_new ("on-npt-stop", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass, on_npt_stop),
-      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 2, G_TYPE_UINT,
-      G_TYPE_UINT);
+      NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_UINT);
 
   /**
    * GstRtpBin::request-rtp-encoder:
@@ -2203,8 +2239,8 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_REQUEST_RTP_ENCODER] =
       g_signal_new ("request-rtp-encoder", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass,
-          request_rtp_encoder), _gst_element_accumulator, NULL,
-      g_cclosure_marshal_generic, GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
+          request_rtp_encoder), _gst_element_accumulator, NULL, NULL,
+      GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
 
   /**
    * GstRtpBin::request-rtp-decoder:
@@ -2222,7 +2258,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
       g_signal_new ("request-rtp-decoder", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass,
           request_rtp_decoder), _gst_element_accumulator, NULL,
-      g_cclosure_marshal_generic, GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
+      NULL, GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
 
   /**
    * GstRtpBin::request-rtcp-encoder:
@@ -2239,8 +2275,8 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_REQUEST_RTCP_ENCODER] =
       g_signal_new ("request-rtcp-encoder", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass,
-          request_rtcp_encoder), _gst_element_accumulator, NULL,
-      g_cclosure_marshal_generic, GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
+          request_rtcp_encoder), _gst_element_accumulator, NULL, NULL,
+      GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
 
   /**
    * GstRtpBin::request-rtcp-decoder:
@@ -2257,7 +2293,35 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_REQUEST_RTCP_DECODER] =
       g_signal_new ("request-rtcp-decoder", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass,
-          request_rtcp_decoder), _gst_element_accumulator, NULL,
+          request_rtcp_decoder), _gst_element_accumulator, NULL, NULL,
+      GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
+
+  /**
+   * GstRtpBin::request-jitterbuffer:
+   * @rtpbin: the object which received the signal
+   * @session: the session
+   *
+   * Request a jitterbuffer element for the given @session.
+   *
+   * If no handler is connected, the default jitterbuffer will be used.
+   *
+   * Note: The provided element is expected to conform to the API exposed
+   * by the standard #GstRtpJitterBuffer. Runtime checks will be made to
+   * determine whether it exposes properties and signals before attempting
+   * to set, call or connect to them, and some functionalities of #GstRtpBin
+   * may not be available when that is not the case.
+   *
+   * This should be considered experimental API, as the standard jitterbuffer
+   * API is susceptible to change, provided elements will have to update their
+   * custom jitterbuffer's API to match the API of #GstRtpJitterBuffer if and
+   * when it changes.
+   *
+   * Since: 1.18
+   */
+  gst_rtp_bin_signals[SIGNAL_REQUEST_JITTERBUFFER] =
+      g_signal_new ("request-jitterbuffer", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass,
+          request_jitterbuffer), _gst_element_accumulator, NULL,
       g_cclosure_marshal_generic, GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
 
   /**
@@ -2275,7 +2339,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_NEW_JITTERBUFFER] =
       g_signal_new ("new-jitterbuffer", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass,
-          new_jitterbuffer), NULL, NULL, g_cclosure_marshal_generic,
+          new_jitterbuffer), NULL, NULL, NULL,
       G_TYPE_NONE, 3, GST_TYPE_ELEMENT, G_TYPE_UINT, G_TYPE_UINT);
 
   /**
@@ -2292,7 +2356,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_NEW_STORAGE] =
       g_signal_new ("new-storage", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass,
-          new_storage), NULL, NULL, g_cclosure_marshal_generic,
+          new_storage), NULL, NULL, NULL,
       G_TYPE_NONE, 2, GST_TYPE_ELEMENT, G_TYPE_UINT);
 
   /**
@@ -2310,8 +2374,8 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_REQUEST_AUX_SENDER] =
       g_signal_new ("request-aux-sender", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass,
-          request_aux_sender), _gst_element_accumulator, NULL,
-      g_cclosure_marshal_generic, GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
+          request_aux_sender), _gst_element_accumulator, NULL, NULL,
+      GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
 
   /**
    * GstRtpBin::request-aux-receiver:
@@ -2328,8 +2392,8 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_REQUEST_AUX_RECEIVER] =
       g_signal_new ("request-aux-receiver", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass,
-          request_aux_receiver), _gst_element_accumulator, NULL,
-      g_cclosure_marshal_generic, GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
+          request_aux_receiver), _gst_element_accumulator, NULL, NULL,
+      GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
 
   /**
    * GstRtpBin::request-fec-decoder:
@@ -2346,8 +2410,8 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_REQUEST_FEC_DECODER] =
       g_signal_new ("request-fec-decoder", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass,
-          request_fec_decoder), _gst_element_accumulator, NULL,
-      g_cclosure_marshal_generic, GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
+          request_fec_decoder), _gst_element_accumulator, NULL, NULL,
+      GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
 
   /**
    * GstRtpBin::request-fec-encoder:
@@ -2364,8 +2428,8 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_REQUEST_FEC_ENCODER] =
       g_signal_new ("request-fec-encoder", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass,
-          request_fec_encoder), _gst_element_accumulator, NULL,
-      g_cclosure_marshal_generic, GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
+          request_fec_encoder), _gst_element_accumulator, NULL, NULL,
+      GST_TYPE_ELEMENT, 1, G_TYPE_UINT);
 
   /**
    * GstRtpBin::on-new-sender-ssrc:
@@ -2380,8 +2444,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_ON_NEW_SENDER_SSRC] =
       g_signal_new ("on-new-sender-ssrc", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass, on_new_sender_ssrc),
-      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 2, G_TYPE_UINT,
-      G_TYPE_UINT);
+      NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_UINT);
   /**
    * GstRtpBin::on-sender-ssrc-active:
    * @rtpbin: the object which received the signal
@@ -2395,13 +2458,14 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   gst_rtp_bin_signals[SIGNAL_ON_SENDER_SSRC_ACTIVE] =
       g_signal_new ("on-sender-ssrc-active", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpBinClass,
-          on_sender_ssrc_active), NULL, NULL, g_cclosure_marshal_generic,
+          on_sender_ssrc_active), NULL, NULL, NULL,
       G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_UINT);
 
   g_object_class_install_property (gobject_class, PROP_SDES,
       g_param_spec_boxed ("sdes", "SDES",
           "The SDES items of this session",
-          GST_TYPE_STRUCTURE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          GST_TYPE_STRUCTURE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS
+          | GST_PARAM_DOC_SHOW_DEFAULT));
 
   g_object_class_install_property (gobject_class, PROP_DO_LOST,
       g_param_spec_boolean ("do-lost", "Do Lost",
@@ -2479,7 +2543,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
    *
    * Enables RTP retransmission on all streams. To control retransmission on
    * a per-SSRC basis, connect to the #GstRtpBin::new-jitterbuffer signal and
-   * set the #GstRtpJitterBuffer::do-retransmission property on the
+   * set the #GstRtpJitterBuffer:do-retransmission property on the
    * #GstRtpJitterBuffer object instead.
    */
   g_object_class_install_property (gobject_class, PROP_DO_RETRANSMISSION,
@@ -2618,8 +2682,12 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   klass->request_rtp_decoder = GST_DEBUG_FUNCPTR (gst_rtp_bin_request_decoder);
   klass->request_rtcp_encoder = GST_DEBUG_FUNCPTR (gst_rtp_bin_request_encoder);
   klass->request_rtcp_decoder = GST_DEBUG_FUNCPTR (gst_rtp_bin_request_decoder);
+  klass->request_jitterbuffer =
+      GST_DEBUG_FUNCPTR (gst_rtp_bin_request_jitterbuffer);
 
   GST_DEBUG_CATEGORY_INIT (gst_rtp_bin_debug, "rtpbin", 0, "RTP bin");
+
+  gst_type_mark_as_plugin_api (GST_RTP_BIN_RTCP_SYNC_TYPE, 0);
 }
 
 static void
@@ -3151,10 +3219,12 @@ gst_rtp_bin_handle_message (GstBin * bin, GstMessage * message)
                 streams = g_slist_next (streams)) {
               GstRtpBinStream *stream = (GstRtpBinStream *) streams->data;
               GstElement *element = stream->buffer;
-              guint64 last_out;
+              guint64 last_out = -1;
 
-              g_signal_emit_by_name (element, "set-active", active, offset,
-                  &last_out);
+              if (g_signal_lookup ("set-active", G_OBJECT_TYPE (element)) != 0) {
+                g_signal_emit_by_name (element, "set-active", active, offset,
+                    &last_out);
+              }
 
               if (!active) {
                 g_object_get (element, "percent", &stream->percent, NULL);
@@ -3363,7 +3433,7 @@ fec_decoder_link_failed:
   }
 }
 
-/* a new pad (SSRC) was created in @session. This signal is emited from the
+/* a new pad (SSRC) was created in @session. This signal is emitted from the
  * payload demuxer. */
 static void
 new_payload_found (GstElement * element, guint pt, GstPad * pad,
@@ -3458,7 +3528,7 @@ static void
 payload_type_change (GstElement * element, guint pt, GstRtpBinSession * session)
 {
   GST_DEBUG_OBJECT (session->bin,
-      "emiting signal for pt type changed to %u in session %u", pt,
+      "emitting signal for pt type changed to %u in session %u", pt,
       session->id);
 
   g_signal_emit (session->bin, gst_rtp_bin_signals[SIGNAL_PAYLOAD_TYPE_CHANGE],
@@ -3531,19 +3601,23 @@ new_ssrc_pad_found (GstElement * element, guint ssrc, GstPad * pad,
   gst_object_unref (sinkpad);
   gst_object_unref (srcpad);
 
-  GST_DEBUG_OBJECT (rtpbin, "linking jitterbuffer RTCP");
-  padname = g_strdup_printf ("rtcp_src_%u", ssrc);
-  srcpad = gst_element_get_static_pad (element, padname);
-  g_free (padname);
   sinkpad = gst_element_get_request_pad (stream->buffer, "sink_rtcp");
-  gst_pad_link_full (srcpad, sinkpad, GST_PAD_LINK_CHECK_NOTHING);
-  gst_object_unref (sinkpad);
-  gst_object_unref (srcpad);
+  if (sinkpad) {
+    GST_DEBUG_OBJECT (rtpbin, "linking jitterbuffer RTCP");
+    padname = g_strdup_printf ("rtcp_src_%u", ssrc);
+    srcpad = gst_element_get_static_pad (element, padname);
+    g_free (padname);
+    gst_pad_link_full (srcpad, sinkpad, GST_PAD_LINK_CHECK_NOTHING);
+    gst_object_unref (sinkpad);
+    gst_object_unref (srcpad);
+  }
 
-  /* connect to the RTCP sync signal from the jitterbuffer */
-  GST_DEBUG_OBJECT (rtpbin, "connecting sync signal");
-  stream->buffer_handlesync_sig = g_signal_connect (stream->buffer,
-      "handle-sync", (GCallback) gst_rtp_bin_handle_sync, stream);
+  if (g_signal_lookup ("handle-sync", G_OBJECT_TYPE (stream->buffer)) != 0) {
+    /* connect to the RTCP sync signal from the jitterbuffer */
+    GST_DEBUG_OBJECT (rtpbin, "connecting sync signal");
+    stream->buffer_handlesync_sig = g_signal_connect (stream->buffer,
+        "handle-sync", (GCallback) gst_rtp_bin_handle_sync, stream);
+  }
 
   if (stream->demux) {
     /* connect to the new-pad signal of the payload demuxer, this will expose the
@@ -3817,7 +3891,8 @@ create_recv_rtp (GstRtpBin * rtpbin, GstPadTemplate * templ, const gchar * name)
   /* ERRORS */
 no_name:
   {
-    g_warning ("rtpbin: invalid name given");
+    g_warning ("rtpbin: cannot find session id for pad: %s",
+        GST_STR_NULL (name));
     return NULL;
   }
 create_error:
@@ -3992,7 +4067,8 @@ create_recv_rtcp (GstRtpBin * rtpbin, GstPadTemplate * templ,
   /* ERRORS */
 no_name:
   {
-    g_warning ("rtpbin: invalid name given");
+    g_warning ("rtpbin: cannot find session id for pad: %s",
+        GST_STR_NULL (name));
     return NULL;
   }
 create_error:
@@ -4321,7 +4397,8 @@ create_send_rtp (GstRtpBin * rtpbin, GstPadTemplate * templ, const gchar * name)
   /* ERRORS */
 no_name:
   {
-    g_warning ("rtpbin: invalid name given");
+    g_warning ("rtpbin: cannot find session id for pad: %s",
+        GST_STR_NULL (name));
     return NULL;
   }
 create_error:
@@ -4475,7 +4552,8 @@ create_send_rtcp (GstRtpBin * rtpbin, GstPadTemplate * templ,
   /* ERRORS */
 no_name:
   {
-    g_warning ("rtpbin: invalid name given");
+    g_warning ("rtpbin: cannot find session id for pad: %s",
+        GST_STR_NULL (name));
     return NULL;
   }
 create_error:
@@ -4524,7 +4602,7 @@ remove_rtcp (GstRtpBin * rtpbin, GstRtpBinSession * session)
 }
 
 /* If the requested name is NULL we should create a name with
- * the session number assuming we want the lowest posible session
+ * the session number assuming we want the lowest possible session
  * with a free pad like the template */
 static gchar *
 gst_rtp_bin_get_free_pad_name (GstElement * element, GstPadTemplate * templ)

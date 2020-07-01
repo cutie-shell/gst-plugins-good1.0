@@ -59,7 +59,7 @@ GST_STATIC_PAD_TEMPLATE ("sink",
     GST_STATIC_CAPS ("application/x-rtp, "
         "media = (string) \"video\", "
         "clock-rate = (int) 90000, " "encoding-name = (string) \"H264\"")
-        /** optional parameters **/
+    /* optional parameters */
     /* "profile-level-id = (string) ANY, " */
     /* "max-mbps = (string) ANY, " */
     /* "max-fs = (string) ANY, " */
@@ -1114,7 +1114,7 @@ gst_rtp_h264_depay_process (GstRTPBaseDepayload * depayload, GstRTPBuffer * rtp)
            */
           nalu_size = (payload[0] << 8) | payload[1];
 
-          /* dont include nalu_size */
+          /* don't include nalu_size */
           if (nalu_size > (payload_len - 2))
             nalu_size = payload_len - 2;
 

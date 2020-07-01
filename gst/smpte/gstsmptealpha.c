@@ -19,33 +19,32 @@
 
 /**
  * SECTION:element-smptealpha
+ * @title: smptealpha
  *
  * smptealpha can accept an I420 or AYUV video stream. An alpha channel is added
  * using an effect specific SMPTE mask in the I420 input case. In the AYUV case,
  * the alpha channel is modified using the effect specific SMPTE mask.
  *
- * The #GstSmpteAlpha:position property is a controllabe double between 0.0 and
+ * The #GstSMPTEAlpha:position property is a controllabe double between 0.0 and
  * 1.0 that specifies the position in the transition. 0.0 is the start of the
  * transition with the alpha channel to complete opaque where 1.0 has the alpha
  * channel set to completely transparent.
  *
- * The #GstSmpteAlpha:depth property defines the precision in bits of the mask.
+ * The #GstSMPTEAlpha:depth property defines the precision in bits of the mask.
  * A higher presision will create a mask with smoother gradients in order to
  * avoid banding.
  *
- * <refsect2>
- * <title>Sample pipelines</title>
- * <para>
+ * ## Sample pipelines
+ *
  * Here is a pipeline to demonstrate the smpte transition :
- * <programlisting>
+ * |[
  * gst-launch-1.0 -v videotestsrc ! smptealpha border=20000 type=44
  * position=0.5 ! videomixer ! videoconvert ! ximagesink
- * </programlisting>
+ * ]|
  * This shows a midway bowtie-h transition a from a videotestsrc to a
  * transparent image. The edges of the transition are smoothed with a
  * 20000 big border.
- * </para>
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -213,6 +212,8 @@ gst_smpte_alpha_class_init (GstSMPTEAlphaClass * klass)
       "Filter/Editor/Video",
       "Apply the standard SMPTE transitions as alpha on video images",
       "Wim Taymans <wim.taymans@gmail.com>");
+
+  gst_type_mark_as_plugin_api (GST_TYPE_SMPTE_TRANSITION_TYPE, 0);
 }
 
 static gboolean

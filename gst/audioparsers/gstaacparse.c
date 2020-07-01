@@ -21,6 +21,7 @@
 
 /**
  * SECTION:element-aacparse
+ * @title: aacparse
  * @short_description: AAC parser
  * @see_also: #GstAmrParse
  *
@@ -30,12 +31,11 @@
  * be determined either. However, ADTS format AAC clips can be seeked, and parser
  * can also estimate playback position and clip duration.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 filesrc location=abc.aac ! aacparse ! faad ! audioresample ! audioconvert ! alsasink
  * ]|
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -1479,6 +1479,8 @@ gst_aac_parse_pre_push_frame (GstBaseParse * parse, GstBaseParseFrame * frame)
     gst_buffer_resize (frame->out_buffer, header_size,
         gst_buffer_get_size (frame->out_buffer) - header_size);
   }
+
+  frame->flags |= GST_BASE_PARSE_FRAME_FLAG_CLIP;
 
   return GST_FLOW_OK;
 }

@@ -31,6 +31,7 @@
 
 /**
  * SECTION:element-dvdemux
+ * @title: dvdemux
  *
  * dvdemux splits raw DV into its audio and video components. The audio will be
  * decoded raw samples and the video will be encoded DV video.
@@ -38,12 +39,11 @@
  * This element can operate in both push and pull mode depending on the
  * capabilities of the upstream peer.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 filesrc location=test.dv ! dvdemux name=demux ! queue ! audioconvert ! alsasink demux. ! queue ! dvdec ! xvimagesink
  * ]| This pipeline decodes and renders the raw DV stream to an audio and a videosink.
- * </refsect2>
+ *
  */
 
 /* DV output has two modes, normal and wide. The resolution is the same in both
@@ -1121,7 +1121,7 @@ gst_dvdemux_handle_pull_seek (GstDVDemux * demux, GstPad * pad,
     gst_dvdemux_push_event (demux, new_event);
   }
 
-  /* if successfull seek, we update our real segment and push
+  /* if successful seek, we update our real segment and push
    * out the new segment. */
   if (res) {
     memcpy (&demux->time_segment, &seeksegment, sizeof (GstSegment));
@@ -1149,7 +1149,7 @@ gst_dvdemux_handle_pull_seek (GstDVDemux * demux, GstPad * pad,
     demux->need_segment = FALSE;
   }
 
-  /* and restart the task in case it got paused explicitely or by
+  /* and restart the task in case it got paused explicitly or by
    * the FLUSH_START event we pushed out. */
   gst_pad_start_task (demux->sinkpad, (GstTaskFunction) gst_dvdemux_loop,
       demux->sinkpad, NULL);
@@ -1800,7 +1800,7 @@ gst_dvdemux_loop (GstPad * pad)
         if (!gst_dvdemux_handle_pull_seek (dvdemux, dvdemux->videosrcpad,
                 event)) {
           GST_ELEMENT_WARNING (dvdemux, STREAM, DECODE, (NULL),
-              ("Error perfoming initial seek"));
+              ("Error performing initial seek"));
         }
         gst_event_unref (event);
 

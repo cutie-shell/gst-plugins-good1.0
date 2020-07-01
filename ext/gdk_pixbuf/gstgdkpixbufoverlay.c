@@ -19,6 +19,7 @@
 
 /**
  * SECTION:element-gdkpixbufoverlay
+ * @title: gdkpixbufoverlay
  *
  * The gdkpixbufoverlay element overlays an image loaded from file onto
  * a video stream.
@@ -32,14 +33,13 @@
  *
  * Negative offsets are also not yet supported.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 -v videotestsrc ! gdkpixbufoverlay location=image.png ! autovideosink
  * ]|
  * Overlays the image in image.png onto the test video picture produced by
  * videotestsrc.
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -93,13 +93,6 @@ enum
   PROP_ALPHA
 };
 
-#define VIDEO_FORMATS "{ RGBx, RGB, BGR, BGRx, xRGB, xBGR, " \
-    "RGBA, BGRA, ARGB, ABGR, I420, YV12, AYUV, YUY2, UYVY, " \
-    "v308, v210, v216, Y41B, Y42B, Y444, YVYU, NV12, NV21, UYVP, " \
-    "RGB16, BGR16, RGB15, BGR15, UYVP, A420, YUV9, YVU9, " \
-    "IYU1, ARGB64, AYUV64, r210, I420_10LE, I420_10BE, " \
-    "GRAY8, GRAY16_BE, GRAY16_LE }"
-
 /* FIXME 2.0: change to absolute positioning */
 #define DEFAULT_POSITIONING_MODE \
     GST_GDK_PIXBUF_POSITIONING_PIXELS_RELATIVE_TO_EDGES
@@ -107,13 +100,15 @@ enum
 static GstStaticPadTemplate sink_template = GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS (GST_VIDEO_CAPS_MAKE (VIDEO_FORMATS))
+    GST_STATIC_CAPS (GST_VIDEO_CAPS_MAKE
+        (GST_VIDEO_OVERLAY_COMPOSITION_BLEND_FORMATS))
     );
 
 static GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS (GST_VIDEO_CAPS_MAKE (VIDEO_FORMATS))
+    GST_STATIC_CAPS (GST_VIDEO_CAPS_MAKE
+        (GST_VIDEO_OVERLAY_COMPOSITION_BLEND_FORMATS))
     );
 
 G_DEFINE_TYPE (GstGdkPixbufOverlay, gst_gdk_pixbuf_overlay,
@@ -292,6 +287,8 @@ gst_gdk_pixbuf_overlay_class_init (GstGdkPixbufOverlayClass * klass)
       "Tim-Philipp Müller <tim centricular net>");
   GST_DEBUG_CATEGORY_INIT (gdkpixbufoverlay_debug, "gdkpixbufoverlay", 0,
       "debug category for gdkpixbufoverlay element");
+
+  gst_type_mark_as_plugin_api (GST_TYPE_GDK_PIXBUF_POSITIONING_MODE, 0);
 }
 
 static void

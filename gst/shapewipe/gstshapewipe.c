@@ -19,6 +19,7 @@
 
 /**
  * SECTION:element-shapewipe
+ * @title: shapewipe
  *
  * The shapewipe element provides custom transitions on video streams
  * based on a grayscale bitmap. The state of the transition can be
@@ -26,15 +27,13 @@
  * can be added by the border property.
  *
  * Transition bitmaps can be downloaded from the
- * <ulink url="http://cinelerra.org/transitions.php">Cinelerra transition</ulink>
- * page.
+ * [Cinelerra transition](http://cinelerra.org/transitions.php) page.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 -v videotestsrc ! video/x-raw,format=AYUV,width=640,height=480 ! shapewipe position=0.5 name=shape ! videomixer name=mixer ! videoconvert ! autovideosink     filesrc location=mask.png ! typefind ! decodebin ! videoconvert ! videoscale ! queue ! shape.mask_sink    videotestsrc pattern=snow ! video/x-raw,format=AYUV,width=640,height=480 ! queue ! mixer.
  * ]| This pipeline adds the transition from mask.png with position 0.5 to an SMPTE test screen and snow.
- * </refsect2>
+ *
  */
 
 

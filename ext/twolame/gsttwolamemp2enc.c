@@ -30,8 +30,8 @@
  *
  * This element encodes raw integer audio into an MPEG-1 layer 2 (MP2) stream.
  *
- * <refsect2>
- * <title>Example pipelines</title>
+ * ## Example pipelines
+ *
  * |[
  * gst-launch-1.0 -v audiotestsrc wave=sine num-buffers=100 ! audioconvert ! twolame ! filesink location=sine.mp2
  * ]| Encode a test sine signal to MP2.
@@ -44,7 +44,6 @@
  * |[
  * gst-launch-1.0 -v cdda://5 ! audioconvert ! twolame bitrate=192 ! filesink location=track5.mp2
  * ]| Encode Audio CD track 5 to MP2
- * </refsect2>
  *
  */
 
@@ -336,6 +335,10 @@ gst_two_lame_class_init (GstTwoLameClass * klass)
       "TwoLAME mp2 encoder", "Codec/Encoder/Audio",
       "High-quality free MP2 encoder",
       "Sebastian Dröge <sebastian.droege@collabora.co.uk>");
+
+  gst_type_mark_as_plugin_api (GST_TYPE_TWO_LAME_MODE, 0);
+  gst_type_mark_as_plugin_api (GST_TYPE_TWO_LAME_PADDING, 0);
+  gst_type_mark_as_plugin_api (GST_TYPE_TWO_LAME_EMPHASIS, 0);
 }
 
 static gboolean

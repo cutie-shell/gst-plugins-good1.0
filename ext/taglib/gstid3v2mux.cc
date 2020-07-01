@@ -31,8 +31,8 @@
  * Tags sent by upstream elements will be picked up automatically (and merged
  * according to the merge mode set via the tag setter interface).
  *
- * <refsect2>
- * <title>Example pipelines</title>
+ * ## Example pipelines
+ *
  * |[
  * gst-launch-1.0 -v filesrc location=foo.ogg ! decodebin ! audioconvert ! lame ! id3v2mux ! filesink location=foo.mp3
  * ]| A pipeline that transcodes a file from Ogg/Vorbis to mp3 format with an
@@ -41,7 +41,6 @@
  * |[
  * gst-launch-1.0 -m filesrc location=foo.mp3 ! id3demux ! fakesink silent=TRUE 2&gt; /dev/null | grep taglist
  * ]| Verify that tags have been written.
- * </refsect2>
  */
 
 #ifdef HAVE_CONFIG_H
@@ -742,7 +741,7 @@ foreach_add_tag (const GstTagList * list, const gchar * tag, gpointer userdata)
   GST_LOG ("Processing tag %s (num=%u)", tag, num_tags);
 
   if (num_tags > 1 && gst_tag_is_fixed (tag)) {
-    GST_WARNING ("Multiple occurences of fixed tag '%s', ignoring some", tag);
+    GST_WARNING ("Multiple occurrences of fixed tag '%s', ignoring some", tag);
     num_tags = 1;
   }
 

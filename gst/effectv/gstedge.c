@@ -26,16 +26,16 @@
 
 /**
  * SECTION:element-edgetv
+ * @title: edgetv
  *
  * EdgeTV detects edges and display it in good old low resolution
  * computer way.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 -v videotestsrc ! edgetv ! videoconvert ! autovideosink
  * ]| This pipeline shows the effect of edgetv on a test stream.
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -132,7 +132,7 @@ gst_edgetv_transform_frame (GstVideoFilter * vfilter, GstVideoFrame * in_frame,
       g *= g;
       b *= b;
       r = r >> 5;               /* To lack the lower bit for saturated addition,  */
-      g = g >> 5;               /* devide the value with 32, instead of 16. It is */
+      g = g >> 5;               /* divide the value with 32, instead of 16. It is */
       b = b >> 4;               /* same as `v2 &= 0xfefeff' */
       if (r > 127)
         r = 127;

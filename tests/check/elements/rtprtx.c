@@ -243,7 +243,7 @@ GST_START_TEST (test_rtxsend_rtxreceive_with_packet_loss)
   gst_event_unref (gst_harness_pull_upstream_event (hrecv));
   fail_unless_equals_int (gst_harness_upstream_events_in_queue (hrecv), 0);
 
-  /* Push 'packets_num' packets through rtxsend to rtxreceive loosing every
+  /* Push 'packets_num' packets through rtxsend to rtxreceive losing every
      'drop_every_n_packets' packet. When we loose the packet we send RTX event
      through rtxreceive to rtxsend, and verify the packet was retransmitted */
   for (drop_nth_packet = 2; drop_nth_packet < 10; ++drop_nth_packet) {
@@ -539,14 +539,14 @@ test_rtxsender_packet_retention (gboolean test_with_time)
       gst_harness_push_upstream_event (h,
           create_rtx_event (master_ssrc, master_pt, rtx_seqnum));
 
-      /* Pull only the ones supposed to be retransmited */
+      /* Pull only the ones supposed to be retransmitted */
       if (j >= i - half_buffers)
         pull_and_verify (h, TRUE, rtx_ssrc, rtx_pt, rtx_seqnum);
     }
     /* Check there no extra buffers in the harness queue */
     fail_unless_equals_int (gst_harness_buffers_in_queue (h), 0);
 
-    /* We create RTP buffers with timestamps that will eventualy wrap around 0
+    /* We create RTP buffers with timestamps that will eventually wrap around 0
        to be sure, rtprtxsend can handle it properly */
     push_pull_and_verify (h,
         create_rtp_buffer_with_timestamp (master_ssrc, master_pt, 0x100 + i,
@@ -652,6 +652,70 @@ GST_START_TEST (test_rtxqueue_max_size_time)
 
 GST_END_TEST;
 
+/* In this test, we verify the behaviour of rtprtxsend when
+ * generic caps are provided to its sink pad, this is useful
+ * when connected to an rtp funnel.
+ */
+GST_START_TEST (test_rtxsender_clock_rate_map)
+{
+  GstBuffer *inbuf, *outbuf;
+  guint master_ssrc = 1234567;
+  guint master_pt = 96;
+  guint rtx_pt = 99;
+  guint master_clock_rate = 90000;
+  GstStructure *pt_map;
+  GstStructure *clock_rate_map;
+  GstHarness *hsend = gst_harness_new ("rtprtxsend");
+
+  pt_map = gst_structure_new ("application/x-rtp-pt-map",
+      "96", G_TYPE_UINT, rtx_pt, NULL);
+  clock_rate_map = gst_structure_new ("application/x-rtp-clock-rate-map",
+      "96", G_TYPE_UINT, master_clock_rate, NULL);
+  g_object_set (hsend->element, "payload-type-map", pt_map,
+      "clock-rate-map", clock_rate_map, "max-size-time", 1000, NULL);
+  gst_structure_free (pt_map);
+  gst_structure_free (clock_rate_map);
+
+  gst_harness_set_src_caps_str (hsend, "application/x-rtp");
+
+  inbuf = create_rtp_buffer (master_ssrc, master_pt, 100);
+  gst_harness_push (hsend, inbuf);
+
+  outbuf = gst_harness_pull (hsend);
+  fail_unless (outbuf == inbuf);
+  gst_buffer_unref (outbuf);
+
+  gst_harness_push_upstream_event (hsend, create_rtx_event (master_ssrc,
+          master_pt, 100));
+
+  outbuf = gst_harness_pull (hsend);
+  fail_unless (outbuf);
+  gst_buffer_unref (outbuf);
+
+  fail_unless_equals_int (gst_harness_buffers_in_queue (hsend), 0);
+
+  /* Thanks to the provided clock rate, rtprtxsend should be able to
+   * determine that the previously pushed buffer should be cleared from
+   * its rtx queue */
+  inbuf = create_rtp_buffer (master_ssrc, master_pt, 131);
+  gst_harness_push (hsend, inbuf);
+
+  outbuf = gst_harness_pull (hsend);
+  fail_unless (outbuf == inbuf);
+  gst_buffer_unref (outbuf);
+
+  fail_unless_equals_int (gst_harness_buffers_in_queue (hsend), 0);
+
+  gst_harness_push_upstream_event (hsend, create_rtx_event (master_ssrc,
+          master_pt, 100));
+
+  fail_unless_equals_int (gst_harness_buffers_in_queue (hsend), 0);
+
+  gst_harness_teardown (hsend);
+}
+
+GST_END_TEST;
+
 static Suite *
 rtprtx_suite (void)
 {
@@ -669,6 +733,7 @@ rtprtx_suite (void)
   tcase_add_test (tc_chain, test_rtxsender_max_size_time);
   tcase_add_test (tc_chain, test_rtxqueue_max_size_packets);
   tcase_add_test (tc_chain, test_rtxqueue_max_size_time);
+  tcase_add_test (tc_chain, test_rtxsender_clock_rate_map);
 
   return s;
 }

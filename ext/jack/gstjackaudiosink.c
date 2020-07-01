@@ -21,36 +21,36 @@
 
 /**
  * SECTION:element-jackaudiosink
+ * @title: jackaudiosink
  * @see_also: #GstAudioBaseSink, #GstAudioRingBuffer
  *
  * A Sink that outputs data to Jack ports.
- * 
- * It will create N Jack ports named out_&lt;name&gt;_&lt;num&gt; where 
+ *
+ * It will create N Jack ports named out_&lt;name&gt;_&lt;num&gt; where
  * &lt;name&gt; is the element name and &lt;num&gt; is starting from 1.
  * Each port corresponds to a gstreamer channel.
- * 
+ *
  * The samplerate as exposed on the caps is always the same as the samplerate of
  * the jack server.
- * 
+ *
  * When the #GstJackAudioSink:connect property is set to auto, this element
  * will try to connect each output port to a random physical jack input pin. In
  * this mode, the sink will expose the number of physical channels on its pad
  * caps.
- * 
+ *
  * When the #GstJackAudioSink:connect property is set to none, the element will
  * accept any number of input channels and will create (but not connect) an
  * output port for each channel.
- * 
+ *
  * The element will generate an error when the Jack server is shut down when it
  * was PAUSED or PLAYING. This element does not support dynamic rate and buffer
  * size changes at runtime.
- * 
- * <refsect2>
- * <title>Example launch line</title>
+ *
+ * ## Example launch line
  * |[
  * gst-launch-1.0 audiotestsrc ! jackaudiosink
  * ]| Play a sine wave to using jack.
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -177,6 +177,9 @@ gst_jack_ring_buffer_class_init (GstJackRingBufferClass * klass)
   gstringbuffer_class->stop = GST_DEBUG_FUNCPTR (gst_jack_ring_buffer_stop);
 
   gstringbuffer_class->delay = GST_DEBUG_FUNCPTR (gst_jack_ring_buffer_delay);
+
+  gst_type_mark_as_plugin_api (GST_TYPE_JACK_CONNECT, 0);
+  gst_type_mark_as_plugin_api (GST_TYPE_JACK_TRANSPORT, 0);
 }
 
 /* this is the callback of jack. This should RT-safe.
@@ -488,7 +491,7 @@ gst_jack_ring_buffer_acquire (GstAudioRingBuffer * buf,
       if (res != 0 && res != EEXIST)
         goto cannot_connect;
     }
-    free (ports);
+    jack_free (ports);
   }
 done:
 
@@ -523,7 +526,7 @@ cannot_connect:
     GST_ELEMENT_ERROR (sink, RESOURCE, SETTINGS, (NULL),
         ("Could not connect output ports to physical ports (%d:%s)",
             res, g_strerror (res)));
-    free (ports);
+    jack_free (ports);
     return FALSE;
   }
 }
@@ -927,7 +930,7 @@ gst_jack_audio_sink_getcaps (GstBaseSink * bsink, GstCaps * filter)
     max = 0;
     if (ports != NULL) {
       for (; ports[max]; max++);
-      free (ports);
+      jack_free (ports);
     } else
       max = 0;
   } else {

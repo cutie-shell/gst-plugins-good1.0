@@ -22,21 +22,21 @@
 
 /**
  * SECTION:element-avidemux
+ * @title: avidemux
  *
  * Demuxes an .avi file into raw or compressed audio and/or video streams.
  *
  * This element supports both push and pull-based scheduling, depending on the
  * capabilities of the upstream elements.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 filesrc location=test.avi ! avidemux name=demux  demux.audio_00 ! decodebin ! audioconvert ! audioresample ! autoaudiosink   demux.video_00 ! queue ! decodebin ! videoconvert ! videoscale ! autovideosink
  * ]| Play (parse and decode) an .avi file and try to output it to
  * an automatically detected soundcard and videosink. If the AVI file contains
  * compressed audio or video data, this will only work if you have the
  * right decoder elements/plugins installed.
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -2227,7 +2227,8 @@ gst_avi_demux_parse_stream (GstAviDemux * avi, GstBuffer * buf)
         }
         break;
       case GST_RIFF_TAG_strn:
-        g_free (stream->name);
+      {
+        gchar *stream_name = NULL;
 
         gst_buffer_map (sub, &map, GST_MAP_READ);
 
@@ -2237,12 +2238,16 @@ gst_avi_demux_parse_stream (GstAviDemux * avi, GstBuffer * buf)
             map.data, map.size);
 
         if (gst_tag_list_get_string (avi->globaltags, GST_TAG_TITLE,
-                &stream->name))
-          GST_DEBUG_OBJECT (avi, "stream name: %s", stream->name);
+                &stream_name)) {
+          GST_DEBUG_OBJECT (avi, "stream name: %s", stream_name);
+          g_free (stream->name);
+          stream->name = stream_name;
+        }
 
         gst_buffer_unmap (sub, &map);
         gst_buffer_unref (sub);
         sub = NULL;
+      }
         break;
       case GST_RIFF_IDIT:
         gst_avi_demux_parse_idit (avi, sub);
@@ -2864,7 +2869,7 @@ gst_avi_demux_stream_index (GstAviDemux * avi)
   if (map.size < 8)
     goto too_small;
 
-  /* check tag first before blindy trying to read 'size' bytes */
+  /* check tag first before blindly trying to read 'size' bytes */
   tag = GST_READ_UINT32_LE (map.data);
   size = GST_READ_UINT32_LE (map.data + 4);
   if (tag == GST_RIFF_TAG_LIST) {
@@ -3377,7 +3382,7 @@ gst_avi_demux_stream_header_push (GstAviDemux * avi)
         if (!gst_avi_demux_parse_avih (avi, sub, &avi->avih))
           goto header_wrong_avih;
 
-        GST_DEBUG_OBJECT (avi, "AVI header ok, reading elemnts from header");
+        GST_DEBUG_OBJECT (avi, "AVI header ok, reading elements from header");
 
         /* now, read the elements from the header until the end */
         while (gst_riff_parse_chunk (GST_ELEMENT_CAST (avi), buf, &offset, &tag,
@@ -5267,7 +5272,7 @@ gst_avi_demux_loop_data (GstAviDemux * avi)
     }
 
     if (avi->segment.rate > 0.0) {
-      /* only check this for fowards playback for now */
+      /* only check this for forwards playback for now */
       if (keyframe && GST_CLOCK_TIME_IS_VALID (avi->segment.stop)
           && (timestamp > avi->segment.stop)) {
         goto eos_stop;

@@ -23,6 +23,7 @@
 
 /**
  * SECTION:element-flactag
+ * @title: flactag
  * @see_also: #flacenc, #flacdec, #GstTagSetter
  *
  * The flactag element can change the tag contained within a raw
@@ -30,18 +31,17 @@
  * of the FLAC stream.
  *
  * Applications can set the tags to write using the #GstTagSetter interface.
- * Tags contained withing the FLAC bitstream will be picked up
+ * Tags contained within the FLAC bitstream will be picked up
  * automatically (and merged according to the merge mode set via the tag
  * setter interface).
  *
- * <refsect2>
- * <title>Example pipelines</title>
+ * ## Example pipelines
  * |[
  * gst-launch-1.0 -v filesrc location=foo.flac ! flactag ! filesink location=bar.flac
  * ]| This element is not useful with gst-launch, because it does not support
  * setting the tags on a #GstTagSetter interface. Conceptually, the element
  * will usually be used in this order though.
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H

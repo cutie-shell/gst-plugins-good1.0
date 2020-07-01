@@ -21,82 +21,32 @@
 
 /**
  * SECTION:element-level
+ * @title: level
  *
  * Level analyses incoming audio buffers and, if the #GstLevel:message property
  * is %TRUE, generates an element message named
- * <classname>&quot;level&quot;</classname>:
- * after each interval of time given by the #GstLevel:interval property.
+ * `level`: after each interval of time given by the #GstLevel:interval property.
  * The message's structure contains these fields:
- * <itemizedlist>
- * <listitem>
- *   <para>
- *   #GstClockTime
- *   <classname>&quot;timestamp&quot;</classname>:
- *   the timestamp of the buffer that triggered the message.
- *   </para>
- * </listitem>
- * <listitem>
- *   <para>
- *   #GstClockTime
- *   <classname>&quot;stream-time&quot;</classname>:
- *   the stream time of the buffer.
- *   </para>
- * </listitem>
- * <listitem>
- *   <para>
- *   #GstClockTime
- *   <classname>&quot;running-time&quot;</classname>:
- *   the running_time of the buffer.
- *   </para>
- * </listitem>
- * <listitem>
- *   <para>
- *   #GstClockTime
- *   <classname>&quot;duration&quot;</classname>:
- *   the duration of the buffer.
- *   </para>
- * </listitem>
- * <listitem>
- *   <para>
- *   #GstClockTime
- *   <classname>&quot;endtime&quot;</classname>:
- *   the end time of the buffer that triggered the message as stream time (this
- *   is deprecated, as it can be calculated from stream-time + duration)
- *   </para>
- * </listitem>
- * <listitem>
- *   <para>
- *   #GValueArray of #gdouble
- *   <classname>&quot;peak&quot;</classname>:
- *   the peak power level in dB for each channel
- *   </para>
- * </listitem>
- * <listitem>
- *   <para>
- *   #GValueArray of #gdouble
- *   <classname>&quot;decay&quot;</classname>:
- *   the decaying peak power level in dB for each channel
+ *
+ * * #GstClockTime `timestamp`: the timestamp of the buffer that triggered the message.
+ * * #GstClockTime `stream-time`: the stream time of the buffer.
+ * * #GstClockTime `running-time`: the running_time of the buffer.
+ * * #GstClockTime `duration`: the duration of the buffer.
+ * * #GstClockTime `endtime`: the end time of the buffer that triggered the message as
+ *   stream time (this is deprecated, as it can be calculated from stream-time + duration)
+ * * #GValueArray of #gdouble `peak`: the peak power level in dB for each channel
+ * * #GValueArray of #gdouble `decay`: the decaying peak power level in dB for each channel
  *   The decaying peak level follows the peak level, but starts dropping if no
  *   new peak is reached after the time given by the #GstLevel:peak-ttl.
  *   When the decaying peak level drops, it does so at the decay rate as
  *   specified by the #GstLevel:peak-falloff.
- *   </para>
- * </listitem>
- * <listitem>
- *   <para>
- *   #GValueArray of #gdouble
- *   <classname>&quot;rms&quot;</classname>:
- *   the Root Mean Square (or average power) level in dB for each channel
- *   </para>
- * </listitem>
- * </itemizedlist>
+ * * #GValueArray of #gdouble `rms`: the Root Mean Square (or average power) level in dB
+ *   for each channel
  *
- * <refsect2>
- * <title>Example application</title>
- * <informalexample><programlisting language="C">
- * <xi:include xmlns:xi="http://www.w3.org/2003/XInclude" parse="text" href="../../../../tests/examples/level/level-example.c" />
- * </programlisting></informalexample>
- * </refsect2>
+ * ## Example application
+ *
+ * {{ tests/examples/level/level-example.c }}
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -358,7 +308,7 @@ gst_level_get_property (GObject * object, guint prop_id,
  * input sample data enters in *in_data and is not modified
  * this filter only accepts signed audio data, so mid level is always 0
  *
- * for integers, this code considers the non-existant positive max value to be
+ * for integers, this code considers the non-existent positive max value to be
  * full-scale; so max-1 will not map to 1.0
  */
 

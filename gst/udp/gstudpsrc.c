@@ -24,6 +24,7 @@
 
 /**
  * SECTION:element-udpsrc
+ * @title: udpsrc
  * @see_also: udpsink, multifdsink
  *
  * udpsrc is a network source that reads UDP packets from the network.
@@ -42,7 +43,7 @@
  *
  * The #GstUDPSrc:caps property is mainly used to give a type to the UDP packet
  * so that they can be autoplugged in GStreamer pipelines. This is very useful
- * for RTP implementations where the contents of the UDP packets is transfered
+ * for RTP implementations where the contents of the UDP packets is transferred
  * out-of-bounds using SDP or other means.
  *
  * The #GstUDPSrc:buffer-size property is used to change the default kernel
@@ -65,30 +66,23 @@
  * type URIs.
  *
  * If the #GstUDPSrc:timeout property is set to a value bigger than 0, udpsrc
- * will generate an element message named
- * <classname>&quot;GstUDPSrcTimeout&quot;</classname>
+ * will generate an element message named `GstUDPSrcTimeout`
  * if no data was received in the given timeout.
+ * 
  * The message's structure contains one field:
- * <itemizedlist>
- * <listitem>
- *   <para>
- *   #guint64
- *   <classname>&quot;timeout&quot;</classname>: the timeout in microseconds that
- *   expired when waiting for data.
- *   </para>
- * </listitem>
- * </itemizedlist>
+ *
+ * * #guint64 `timeout`: the timeout in microseconds that expired when waiting for data.
+ *
  * The message is typically used to detect that no UDP arrives in the receiver
  * because it is blocked by a firewall.
  *
  * A custom file descriptor can be configured with the
  * #GstUDPSrc:socket property. The socket will be closed when setting
- * the element to READY by default. This behaviour can be overriden
+ * the element to READY by default. This behaviour can be overridden
  * with the #GstUDPSrc:close-socket property, in which case the
  * application is responsible for closing the file descriptor.
  *
- * <refsect2>
- * <title>Examples</title>
+ * ## Examples
  * |[
  * gst-launch-1.0 -v udpsrc ! fakesink dump=1
  * ]| A pipeline to read from the default port and dump the udp packets.
@@ -101,7 +95,7 @@
  * |[
  * gst-launch-1.0 -v udpsrc port=0 ! fakesink
  * ]| read udp packets from a free port.
- * </refsect2>
+ *
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -561,7 +555,7 @@ gst_udpsrc_class_init (GstUDPSrcClass * klass)
   g_object_class_install_property (gobject_class, PROP_MULTICAST_IFACE,
       g_param_spec_string ("multicast-iface", "Multicast Interface",
           "The network interface on which to join the multicast group."
-          "This allows multiple interfaces seperated by comma. (\"eth0,eth1\")",
+          "This allows multiple interfaces separated by comma. (\"eth0,eth1\")",
           UDP_DEFAULT_MULTICAST_IFACE,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (gobject_class, PROP_URI,
@@ -903,12 +897,8 @@ retry:
      * with udpsink generated a "port unreachable" ICMP response. We ignore
      * that and try again.
      * On Windows we get G_IO_ERROR_CONNECTION_CLOSED instead */
-#if GLIB_CHECK_VERSION(2,44,0)
     if (g_error_matches (err, G_IO_ERROR, G_IO_ERROR_HOST_UNREACHABLE) ||
         g_error_matches (err, G_IO_ERROR, G_IO_ERROR_CONNECTION_CLOSED)) {
-#else
-    if (g_error_matches (err, G_IO_ERROR, G_IO_ERROR_HOST_UNREACHABLE)) {
-#endif
       g_clear_error (&err);
       goto retry;
     }

@@ -26,15 +26,15 @@
  */
 /**
  * SECTION:element-videoflip
+ * @title: videoflip
  *
  * Flips and rotates video.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 videotestsrc ! videoflip method=clockwise ! videoconvert ! ximagesink
  * ]| This pipeline flips the test image 90 degrees clockwise.
- * </refsect2>
+ *
  */
 
 
@@ -169,7 +169,7 @@ gst_video_flip_transform_caps (GstBaseTransform * trans,
               "height", G_TYPE_INT, height, NULL);
           break;
         case GST_VIDEO_ORIENTATION_CUSTOM:
-          GST_WARNING_OBJECT (videoflip, "unsuported custom orientation");
+          GST_WARNING_OBJECT (videoflip, "unsupported custom orientation");
           break;
         default:
           g_assert_not_reached ();
@@ -1335,6 +1335,8 @@ gst_video_flip_class_init (GstVideoFlipClass * klass)
   vfilter_class->set_info = GST_DEBUG_FUNCPTR (gst_video_flip_set_info);
   vfilter_class->transform_frame =
       GST_DEBUG_FUNCPTR (gst_video_flip_transform_frame);
+
+  gst_type_mark_as_plugin_api (GST_TYPE_VIDEO_FLIP_METHOD, 0);
 }
 
 static void

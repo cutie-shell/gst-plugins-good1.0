@@ -161,14 +161,15 @@ rtp_source_class_init (RTPSourceClass * klass)
    * The following fields make sense for internal sources and will only increase
    * when "is-sender" is TRUE.
    *
-   *  "octets-sent"  G_TYPE_UINT64   number of bytes we sent
+   *  "octets-sent"  G_TYPE_UINT64   number of payload bytes we sent
    *  "packets-sent" G_TYPE_UINT64   number of packets we sent
    *
    * The following fields make sense for non-internal sources and will only
    * increase when "is-sender" is TRUE.
    *
-   *  "octets-received"  G_TYPE_UINT64  total number of bytes received
+   *  "octets-received"  G_TYPE_UINT64  total number of payload bytes received
    *  "packets-received" G_TYPE_UINT64  total number of packets received
+   *  "bytes-received"   G_TYPE_UINT64  total number of bytes received including lower level headers overhead
    *
    * Following fields are updated when "is-sender" is TRUE.
    *
@@ -415,6 +416,7 @@ rtp_source_create_stats (RTPSource * src)
       "packets-sent", G_TYPE_UINT64, src->stats.packets_sent,
       "octets-received", G_TYPE_UINT64, src->stats.octets_received,
       "packets-received", G_TYPE_UINT64, src->stats.packets_received,
+      "bytes-received", G_TYPE_UINT64, src->stats.bytes_received,
       "bitrate", G_TYPE_UINT64, src->bitrate,
       "packets-lost", G_TYPE_INT,
       (gint) rtp_stats_get_packets_lost (&src->stats), "jitter", G_TYPE_UINT,
@@ -424,7 +426,9 @@ rtp_source_create_stats (RTPSource * src)
       "sent-fir-count", G_TYPE_UINT, src->stats.sent_fir_count,
       "recv-fir-count", G_TYPE_UINT, src->stats.recv_fir_count,
       "sent-nack-count", G_TYPE_UINT, src->stats.sent_nack_count,
-      "recv-nack-count", G_TYPE_UINT, src->stats.recv_nack_count, NULL);
+      "recv-nack-count", G_TYPE_UINT, src->stats.recv_nack_count,
+      "recv-packet-rate", G_TYPE_UINT,
+      gst_rtp_packet_rate_ctx_get (&src->packet_rate_ctx), NULL);
 
   /* get the last SR. */
   have_sr = rtp_source_get_last_sr (src, &time, &ntptime, &rtptime,
@@ -916,8 +920,8 @@ push_packet (RTPSource * src, GstBuffer * buffer)
   return ret;
 }
 
-static gint
-get_clock_rate (RTPSource * src, guint8 payload)
+static void
+fetch_clock_rate_from_payload (RTPSource * src, guint8 payload)
 {
   if (src->payload == -1) {
     /* first payload received, nothing was in the caps, lock on to this payload */
@@ -942,7 +946,6 @@ get_clock_rate (RTPSource * src, guint8 payload)
     src->clock_rate = clock_rate;
     gst_rtp_packet_rate_ctx_reset (&src->packet_rate_ctx, clock_rate);
   }
-  return src->clock_rate;
 }
 
 /* Jitter is the variation in the delay of received packets in a flow. It is
@@ -956,26 +959,23 @@ calculate_jitter (RTPSource * src, RTPPacketInfo * pinfo)
   GstClockTime running_time;
   guint32 rtparrival, transit, rtptime;
   gint32 diff;
-  gint clock_rate;
-  guint8 pt;
 
   /* get arrival time */
   if ((running_time = pinfo->running_time) == GST_CLOCK_TIME_NONE)
     goto no_time;
 
-  pt = pinfo->pt;
+  GST_LOG ("SSRC %08x got payload %d", src->ssrc, pinfo->pt);
 
-  GST_LOG ("SSRC %08x got payload %d", src->ssrc, pt);
-
-  /* get clockrate */
-  if ((clock_rate = get_clock_rate (src, pt)) == -1)
+  /* check if clock-rate is valid */
+  if (src->clock_rate == -1)
     goto no_clock_rate;
 
   rtptime = pinfo->rtptime;
 
   /* convert arrival time to RTP timestamp units, truncate to 32 bits, we don't
    * care about the absolute value, just the difference. */
-  rtparrival = gst_util_uint64_scale_int (running_time, clock_rate, GST_SECOND);
+  rtparrival =
+      gst_util_uint64_scale_int (running_time, src->clock_rate, GST_SECOND);
 
   /* transit time is difference with RTP timestamp */
   transit = rtparrival - rtptime;
@@ -998,7 +998,7 @@ calculate_jitter (RTPSource * src, RTPPacketInfo * pinfo)
   src->stats.last_rtptime = rtparrival;
 
   GST_LOG ("rtparrival %u, rtptime %u, clock-rate %d, diff %d, jitter: %f",
-      rtparrival, rtptime, clock_rate, diff, (src->stats.jitter) / 16.0);
+      rtparrival, rtptime, src->clock_rate, diff, (src->stats.jitter) / 16.0);
 
   return;
 
@@ -1010,9 +1010,31 @@ no_time:
   }
 no_clock_rate:
   {
-    GST_WARNING ("cannot get clock-rate for pt %d", pt);
+    GST_WARNING ("cannot get clock-rate for pt %d", pinfo->pt);
     return;
   }
+}
+
+static void
+update_queued_stats (GstBuffer * buffer, RTPSource * src)
+{
+  GstRTPBuffer rtp = { NULL };
+  guint payload_len;
+  guint64 bytes;
+
+  /* no need to check the return value, a queued packet is a valid RTP one */
+  gst_rtp_buffer_map (buffer, GST_MAP_READ, &rtp);
+  payload_len = gst_rtp_buffer_get_payload_len (&rtp);
+
+  bytes = gst_buffer_get_size (buffer) + UDP_IP_HEADER_OVERHEAD;
+
+  src->stats.octets_received += payload_len;
+  src->stats.bytes_received += bytes;
+  src->stats.packets_received++;
+  /* for the bitrate estimation consider all lower level headers */
+  src->bytes_received += bytes;
+
+  gst_rtp_buffer_unmap (&rtp);
 }
 
 static void
@@ -1029,6 +1051,9 @@ init_seq (RTPSource * src, guint16 seq)
   src->stats.prev_expected = 0;
   src->stats.recv_pli_count = 0;
   src->stats.recv_fir_count = 0;
+
+  /* if there are queued packets, consider them too in the stats */
+  g_queue_foreach (src->packets, (GFunc) update_queued_stats, src);
 
   GST_DEBUG ("base_seq %d", seq);
 }
@@ -1188,8 +1213,8 @@ update_receiver_stats (RTPSource * src, RTPPacketInfo * pinfo,
   src->stats.octets_received += pinfo->payload_len;
   src->stats.bytes_received += pinfo->bytes;
   src->stats.packets_received += pinfo->packets;
-  /* for the bitrate estimation */
-  src->bytes_received += pinfo->payload_len;
+  /* for the bitrate estimation consider all lower level headers */
+  src->bytes_received += pinfo->bytes;
 
   GST_LOG ("seq %u, PC: %" G_GUINT64_FORMAT ", OC: %" G_GUINT64_FORMAT,
       seqnr, src->stats.packets_received, src->stats.octets_received);
@@ -1236,6 +1261,8 @@ rtp_source_process_rtp (RTPSource * src, RTPPacketInfo * pinfo)
   g_return_val_if_fail (RTP_IS_SOURCE (src), GST_FLOW_ERROR);
   g_return_val_if_fail (pinfo != NULL, GST_FLOW_ERROR);
 
+  fetch_clock_rate_from_payload (src, pinfo->pt);
+
   if (!update_receiver_stats (src, pinfo, TRUE))
     return GST_FLOW_OK;
 
@@ -1261,7 +1288,7 @@ rtp_source_process_rtp (RTPSource * src, RTPPacketInfo * pinfo)
  * @reason: the reason for leaving
  *
  * Mark @src in the BYE state. This can happen when the source wants to
- * leave the sesssion or when a BYE packets has been received.
+ * leave the session or when a BYE packets has been received.
  *
  * This will make the source inactive.
  */
@@ -1319,7 +1346,7 @@ rtp_source_send_rtp (RTPSource * src, RTPPacketInfo * pinfo)
   /* update stats for the SR */
   src->stats.packets_sent += pinfo->packets;
   src->stats.octets_sent += pinfo->payload_len;
-  src->bytes_sent += pinfo->payload_len;
+  src->bytes_sent += pinfo->bytes;
 
   running_time = pinfo->running_time;
 
@@ -1524,7 +1551,7 @@ rtp_source_get_new_sr (RTPSource * src, guint64 ntpnstime,
   if (src->clock_rate == -1 && src->pt_set) {
     GST_INFO ("no clock-rate, getting for pt %u and SSRC %u", src->pt,
         src->ssrc);
-    get_clock_rate (src, src->pt);
+    fetch_clock_rate_from_payload (src, src->pt);
   }
 
   if (src->clock_rate != -1) {

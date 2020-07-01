@@ -22,18 +22,18 @@
 
 /**
  * SECTION:element-amrparse
+ * @title: amrparse
  * @short_description: AMR parser
  * @see_also: #GstAmrnbDec, #GstAmrnbEnc
  *
  * This is an AMR parser capable of handling both narrow-band and wideband
  * formats.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 filesrc location=abc.amr ! amrparse ! amrdec ! audioresample ! audioconvert ! alsasink
  * ]|
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -447,6 +447,8 @@ gst_amr_parse_pre_push_frame (GstBaseParse * parse, GstBaseParseFrame * frame)
     /* also signals the end of first-frame processing */
     amrparse->sent_codec_tag = TRUE;
   }
+
+  frame->flags |= GST_BASE_PARSE_FRAME_FLAG_CLIP;
 
   return GST_FLOW_OK;
 }

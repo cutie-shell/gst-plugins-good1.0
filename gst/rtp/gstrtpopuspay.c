@@ -39,8 +39,7 @@ static GstStaticPadTemplate gst_rtp_opus_pay_sink_template =
 GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS
-    ("audio/x-opus, channels = (int) [1, 2], channel-mapping-family = (int) 0")
+    GST_STATIC_CAPS ("audio/x-opus, channel-mapping-family = (int) 0")
     );
 
 static GstStaticPadTemplate gst_rtp_opus_pay_src_template =
@@ -181,7 +180,7 @@ gst_rtp_opus_pay_handle_buffer (GstRTPBasePayload * basepayload,
   dts = GST_BUFFER_DTS (buffer);
   duration = GST_BUFFER_DURATION (buffer);
 
-  outbuf = gst_rtp_buffer_new_allocate (0, 0, 0);
+  outbuf = gst_rtp_base_payload_allocate_output_buffer (basepayload, 0, 0, 0);
 
   gst_rtp_copy_audio_meta (basepayload, outbuf, buffer);
 

@@ -21,29 +21,28 @@
  */
 /**
  * SECTION:element-vp9enc
+ * @title: vp9enc
  * @see_also: vp9dec, webmmux, oggmux
  *
  * This element encodes raw video into a VP9 stream.
- * <ulink url="http://www.webmproject.org">VP9</ulink> is a royalty-free
- * video codec maintained by <ulink url="http://www.google.com/">Google
- * </ulink>. It's the successor of On2 VP3, which was the base of the
- * Theora video codec.
+ * [VP9](http://www.webmproject.org) is a royalty-free video codec maintained by
+ * [Google](http://www.google.com/). It's the successor of On2 VP3, which was
+ * the base of the Theora video codec.
  *
- * To control the quality of the encoding, the #GstVP9Enc::target-bitrate,
- * #GstVP9Enc::min-quantizer, #GstVP9Enc::max-quantizer or #GstVP9Enc::cq-level
+ * To control the quality of the encoding, the #GstVP9Enc:target-bitrate,
+ * #GstVP9Enc:min-quantizer, #GstVP9Enc:max-quantizer or #GstVP9Enc:cq-level
  * properties can be used. Which one is used depends on the mode selected by
- * the #GstVP9Enc::end-usage property.
- * See <ulink url="http://www.webmproject.org/docs/encoder-parameters/">Encoder Parameters</ulink>
+ * the #GstVP9Enc:end-usage property.
+ * See [Encoder Parameters](http://www.webmproject.org/docs/encoder-parameters/)
  * for explanation, examples for useful encoding parameters and more details
  * on the encoding parameters.
  *
- * <refsect2>
- * <title>Example pipeline</title>
+ * ## Example pipeline
  * |[
  * gst-launch-1.0 -v videotestsrc num-buffers=1000 ! vp9enc ! webmmux ! filesink location=videotestsrc.webm
  * ]| This example pipeline will encode a test video source to VP9 muxed in an
  * WebM container.
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -102,6 +101,8 @@ static GstFlowReturn gst_vp9_enc_handle_invisible_frame_buffer (GstVPXEnc * enc,
 static void gst_vp9_enc_set_frame_user_data (GstVPXEnc * enc,
     GstVideoCodecFrame * frame, vpx_image_t * image);
 
+#define DEFAULT_BITS_PER_PIXEL 0.0289
+
 static void
 gst_vp9_enc_class_init (GstVP9EncClass * klass)
 {
@@ -153,6 +154,7 @@ gst_vp9_enc_init (GstVP9Enc * gst_vp9_enc)
   } else {
     gst_vpx_enc->have_default_config = TRUE;
   }
+  gst_vpx_enc->bits_per_pixel = DEFAULT_BITS_PER_PIXEL;
 }
 
 static vpx_codec_iface_t *

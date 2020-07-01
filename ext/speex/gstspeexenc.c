@@ -19,19 +19,18 @@
 
 /**
  * SECTION:element-speexenc
+ * @title: speexenc
  * @see_also: speexdec, oggmux
  *
  * This element encodes audio as a Speex stream.
- * <ulink url="http://www.speex.org/">Speex</ulink> is a royalty-free
- * audio codec maintained by the <ulink url="http://www.xiph.org/">Xiph.org
- * Foundation</ulink>.
+ * [Speex](http://www.speex.org/) is a royalty-free
+ * audio codec maintained by the [Xiph.org Foundation](http://www.xiph.org/).
  *
- * <refsect2>
- * <title>Example pipelines</title>
+ * ## Example pipelines
  * |[
  * gst-launch-1.0 audiotestsrc num-buffers=100 ! speexenc ! oggmux ! filesink location=beep.ogg
  * ]| Encode an Ogg/Speex file.
- * </refsect2>
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -218,6 +217,8 @@ gst_speex_enc_class_init (GstSpeexEncClass * klass)
       "Encodes audio in Speex format", "Wim Taymans <wim@fluendo.com>");
 
   GST_DEBUG_CATEGORY_INIT (speexenc_debug, "speexenc", 0, "Speex encoder");
+
+  gst_type_mark_as_plugin_api (GST_TYPE_SPEEX_ENC_MODE, 0);
 }
 
 static void
@@ -719,7 +720,8 @@ gst_speex_enc_handle_frame (GstAudioEncoder * benc, GstBuffer * buf)
 
     /* create header buffer */
     data = (guint8 *) speex_header_to_packet (&enc->header, &data_len);
-    buf1 = gst_buffer_new_wrapped (data, data_len);
+    buf1 = gst_buffer_new_wrapped_full (0,
+        data, data_len, 0, data_len, data, (GDestroyNotify) speex_header_free);
     GST_BUFFER_OFFSET_END (buf1) = 0;
     GST_BUFFER_OFFSET (buf1) = 0;
 

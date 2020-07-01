@@ -22,7 +22,8 @@
 
 /**
  * SECTION:element-alpha
- * 
+ * @title: alpha
+ *
  * The alpha element adds an alpha channel to a video stream. The values
  * of the alpha channel can be either be set to a constant or can be
  * dynamically calculated via chroma keying, e.g. blue can be set as
@@ -285,6 +286,8 @@ gst_alpha_class_init (GstAlphaClass * klass)
   vfilter_class->set_info = GST_DEBUG_FUNCPTR (gst_alpha_set_info);
   vfilter_class->transform_frame =
       GST_DEBUG_FUNCPTR (gst_alpha_transform_frame);
+
+  gst_type_mark_as_plugin_api (GST_TYPE_ALPHA_METHOD, 0);
 }
 
 static void

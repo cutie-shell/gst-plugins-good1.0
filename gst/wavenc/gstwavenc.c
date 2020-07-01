@@ -21,18 +21,17 @@
  */
 /**
  * SECTION:element-wavenc
+ * @title: wavenc
  *
  * Format an audio stream into the wav format.
  *
- * <refsect2>
- * <title>Example launch line</title>
+ * ## Example launch line
  * |[
  * gst-launch-1.0 cdparanoiasrc mode=continuous ! queue ! audioconvert ! wavenc ! filesink location=cd.wav
  * ]| Rip a whole audio CD into a single wav file, with the track table written into a CUE sheet inside the file
  * |[
  * gst-launch-1.0 cdparanoiasrc track=5 ! queue ! audioconvert ! wavenc ! filesink location=track5.wav
  * ]| Rip track 5 of an audio CD into a single wav file containing unencoded raw audio samples.
- * </refsect2>
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -251,7 +250,7 @@ gstmask_to_wavmask (guint64 gstmask, GstAudioChannelPosition * pos)
     return 0;
 
   for (k = 0; k < G_N_ELEMENTS (wav_pos); ++k) {
-    if (gstmask & wav_pos[k]) {
+    if (gstmask & (G_GUINT64_CONSTANT (1) << wav_pos[k])) {
       ret |= mask;
       pos[chan++] = wav_pos[k];
     }
@@ -1090,7 +1089,7 @@ gst_wavenc_change_state (GstElement * element, GstStateChange transition)
       wavenc->audio_length = 0x7FFF0000;
       wavenc->meta_length = 0;
       wavenc->sent_header = FALSE;
-      /* its true because we haven't writen anything */
+      /* its true because we haven't written anything */
       wavenc->finished_properly = TRUE;
       break;
     default:

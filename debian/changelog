@@ -1,3 +1,10 @@
+gst-plugins-good1.0 (1.17.1-1) experimental; urgency=medium
+
+  * New upstream development release.
+  * Completely redo and modernize the packaging.
+
+ -- Sebastian Dröge <slomo@debian.org>  Wed, 01 Jul 2020 11:38:35 +0300
+
 gst-plugins-good1.0 (1.16.2-3) unstable; urgency=medium
 
   [ Debian Janitor ]

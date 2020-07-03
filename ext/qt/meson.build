@@ -46,7 +46,7 @@ qt5qml_dep = dependency('qt5', modules : ['Core', 'Gui', 'Qml', 'Quick'],
 # that it's installed.
 # We don't do this check on other OSes because they need to be able to simply
 # point the `QMAKE` env var to `qmake` to build against a particular Qt5.
-if host_system == 'linux'
+if host_system == 'linux' and not meson.is_cross_build()
   moc = find_program('moc-qt5', 'moc', required : qt5_option)
 else
   # We only check if `moc` was found, and then discard it, so we can fake it.
@@ -63,40 +63,14 @@ qt_defines = []
 have_qpa_include = false
 have_qt_windowing = false
 
-# Attempt to find the QPA header either through pkg-config (preferred) or qmake
-# This semi-matches what meson does internally with the qt5 module
-# FIXME Add a way to get some of this information out of the qt5 module
-if not have_qpa_include
-  # FIXME: automagic
-  qt5core_dep = dependency('Qt5Core', required: false)
-  if qt5core_dep.found() and qt5core_dep.type_name() == 'pkgconfig'
-    qt_version = qt5core_dep.version()
-    qt_include_dir = qt5core_dep.get_pkgconfig_variable('includedir')
-    qpa_include_path = join_paths(qt_include_dir, 'QtGui', qt_version, 'QtGui')
-    if cxx.has_header('qpa/qplatformnativeinterface.h',
-            dependencies : qt5core_dep,
-            args : '-I' + qpa_include_path)
-      qt_defines += '-DHAVE_QT_QPA_HEADER'
-      qt_defines += '-I' + qpa_include_path
-      have_qpa_include = true
-      message('Found QPA header using pkg-config')
-    endif
-  endif
-endif
-if not have_qpa_include
-  qmake = find_program('qmake-qt5', 'qmake')
-  if qmake.found()
-    qt_version = run_command(qmake, '-query', 'QT_VERSION').stdout().strip()
-    qt_include_dir = run_command(qmake, '-query', 'QT_INSTALL_HEADERS').stdout().strip()
-    qpa_include_path = join_paths(qt_include_dir, 'QtGui', qt_version, 'QtGui')
-    if cxx.has_header('qpa/qplatformnativeinterface.h',
-            args : '-I' + qpa_include_path)
-      qt_defines += '-DHAVE_QT_QPA_HEADER'
-      qt_defines += '-I' + qpa_include_path
-      have_qpa_include = true
-      message('Found QPA header using qmake')
-    endif
-  endif
+# Look for the QPA platform native interface header
+qpa_header_path = join_paths(qt5qml_dep.version(), 'QtGui')
+qpa_header = join_paths(qpa_header_path, 'qpa/qplatformnativeinterface.h')
+if cxx.has_header(qpa_header, dependencies : qt5qml_dep)
+  qt_defines += '-DHAVE_QT_QPA_HEADER'
+  qt_defines += '-DQT_QPA_HEADER=' + '<@0@>'.format(qpa_header)
+  have_qpa_include = true
+  message('Found QtGui QPA header in ' + qpa_header_path)
 endif
 
 # Try to come up with all the platform/winsys combinations that will work

@@ -530,6 +530,9 @@ gst_v4l2_video_enc_negotiate (GstVideoEncoder * encoder)
   if (self->input_state)
     return TRUE;
 
+  if (!codec)
+    goto done;
+
   allowed_caps = gst_pad_get_allowed_caps (GST_VIDEO_ENCODER_SRC_PAD (encoder));
 
   if (allowed_caps) {
@@ -545,6 +548,9 @@ gst_v4l2_video_enc_negotiate (GstVideoEncoder * encoder)
     if (gst_caps_foreach (allowed_caps, negotiate_profile_and_level, &ctx)) {
       goto no_profile_level;
     }
+
+    gst_caps_unref (allowed_caps);
+    allowed_caps = NULL;
   }
 
   if (codec->profile_cid && !ctx.profile) {
@@ -581,6 +587,7 @@ gst_v4l2_video_enc_negotiate (GstVideoEncoder * encoder)
   if (codec->level_cid)
     gst_structure_set (s, "level", G_TYPE_STRING, ctx.level, NULL);
 
+done:
   if (!GST_VIDEO_ENCODER_CLASS (parent_class)->negotiate (encoder))
     return FALSE;
 

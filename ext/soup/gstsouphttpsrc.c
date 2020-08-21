@@ -1173,8 +1173,9 @@ gst_soup_http_src_got_headers (GstSoupHTTPSrc * src, SoupMessage * msg)
   gst_event_unref (http_headers_event);
 
   /* Parse Content-Length. */
-  if (soup_message_headers_get_encoding (msg->response_headers) ==
-      SOUP_ENCODING_CONTENT_LENGTH) {
+  if (SOUP_STATUS_IS_SUCCESSFUL (msg->status_code) &&
+      (soup_message_headers_get_encoding (msg->response_headers) ==
+          SOUP_ENCODING_CONTENT_LENGTH)) {
     newsize = src->request_position +
         soup_message_headers_get_content_length (msg->response_headers);
     if (!src->have_size || (src->content_size != newsize)) {
@@ -1416,7 +1417,8 @@ gst_soup_http_src_parse_status (SoupMessage * msg, GstSoupHTTPSrc * src)
      * a body message, requests that go beyond the content limits will result
      * in an error. Here we convert those to EOS */
     if (msg->status_code == SOUP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE &&
-        src->have_body && !src->have_size) {
+        src->have_body && (!src->have_size ||
+            (src->request_position >= src->content_size))) {
       GST_DEBUG_OBJECT (src, "Requested range out of limits and received full "
           "body, returning EOS");
       return GST_FLOW_EOS;

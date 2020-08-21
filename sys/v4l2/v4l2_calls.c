@@ -330,7 +330,8 @@ gst_v4l2_fill_lists (GstV4l2Object * v4l2object)
       case V4L2_CTRL_TYPE_MENU:
       case V4L2_CTRL_TYPE_INTEGER_MENU:
       case V4L2_CTRL_TYPE_BITMASK:
-      case V4L2_CTRL_TYPE_BUTTON:{
+      case V4L2_CTRL_TYPE_BUTTON:
+      case V4L2_CTRL_TYPE_STRING:{
         control.name[31] = '\0';
         gst_v4l2_normalise_control_name ((gchar *) control.name);
         g_datalist_id_set_data (&v4l2object->controls,
@@ -515,7 +516,7 @@ gst_v4l2_adjust_buf_type (GstV4l2Object * v4l2object)
  * return value: TRUE on success, FALSE on error
  ******************************************************/
 gboolean
-gst_v4l2_open (GstV4l2Object * v4l2object)
+gst_v4l2_open (GstV4l2Object * v4l2object, GstV4l2Error * error)
 {
   struct stat st;
   int libv4l2_fd = -1;
@@ -604,46 +605,43 @@ gst_v4l2_open (GstV4l2Object * v4l2object)
   /* ERRORS */
 stat_failed:
   {
-    GST_ELEMENT_ERROR (v4l2object->element, RESOURCE, NOT_FOUND,
+    GST_V4L2_ERROR (error, RESOURCE, NOT_FOUND,
         (_("Cannot identify device '%s'."), v4l2object->videodev),
         GST_ERROR_SYSTEM);
     goto error;
   }
 no_device:
   {
-    GST_ELEMENT_ERROR (v4l2object->element, RESOURCE, NOT_FOUND,
+    GST_V4L2_ERROR (error, RESOURCE, NOT_FOUND,
         (_("This isn't a device '%s'."), v4l2object->videodev),
         GST_ERROR_SYSTEM);
     goto error;
   }
 not_open:
   {
-    GST_ELEMENT_ERROR (v4l2object->element, RESOURCE, OPEN_READ_WRITE,
+    GST_V4L2_ERROR (error, RESOURCE, OPEN_READ_WRITE,
         (_("Could not open device '%s' for reading and writing."),
             v4l2object->videodev), GST_ERROR_SYSTEM);
     goto error;
   }
 not_capture:
   {
-    GST_ELEMENT_ERROR (v4l2object->element, RESOURCE, NOT_FOUND,
-        (_("Device '%s' is not a capture device."),
-            v4l2object->videodev),
+    GST_V4L2_ERROR (error, RESOURCE, NOT_FOUND,
+        (_("Device '%s' is not a capture device."), v4l2object->videodev),
         ("Capabilities: 0x%x", v4l2object->device_caps));
     goto error;
   }
 not_output:
   {
-    GST_ELEMENT_ERROR (v4l2object->element, RESOURCE, NOT_FOUND,
-        (_("Device '%s' is not a output device."),
-            v4l2object->videodev),
+    GST_V4L2_ERROR (error, RESOURCE, NOT_FOUND,
+        (_("Device '%s' is not a output device."), v4l2object->videodev),
         ("Capabilities: 0x%x", v4l2object->device_caps));
     goto error;
   }
 not_m2m:
   {
-    GST_ELEMENT_ERROR (v4l2object->element, RESOURCE, NOT_FOUND,
-        (_("Device '%s' is not a M2M device."),
-            v4l2object->videodev),
+    GST_V4L2_ERROR (error, RESOURCE, NOT_FOUND,
+        (_("Device '%s' is not a M2M device."), v4l2object->videodev),
         ("Capabilities: 0x%x", v4l2object->device_caps));
     goto error;
   }
@@ -970,6 +968,67 @@ ctrl_failed:
   }
 }
 
+/******************************************************
+ * gst_v4l2_set_string_attribute():
+ *   try to set the string value of one specific attribute
+ * return value: TRUE on success, FALSE on error
+ ******************************************************/
+gboolean
+gst_v4l2_set_string_attribute (GstV4l2Object * v4l2object,
+    int attribute_num, const char *value)
+{
+  struct v4l2_ext_controls ctrls = { {0}, 1 };
+  struct v4l2_ext_control ctrl;
+  struct v4l2_queryctrl control = { 0, };
+
+  if (!GST_V4L2_IS_OPEN (v4l2object))
+    return FALSE;
+
+  control.id = attribute_num;
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_QUERYCTRL, &control) < 0) {
+    GST_WARNING_OBJECT (v4l2object,
+        "Failed to find control %d on device '%s'.",
+        attribute_num, v4l2object->videodev);
+    return TRUE;
+  }
+
+  if (control.type != V4L2_CTRL_TYPE_STRING) {
+    GST_WARNING_OBJECT (v4l2object,
+        "control %d is not string type on device '%s'.",
+        attribute_num, v4l2object->videodev);
+    return TRUE;
+  }
+
+  ctrl.id = attribute_num;
+  ctrl.size = strlen (value) + 1;
+  ctrl.string = g_malloc (ctrl.size);
+  strcpy (ctrl.string, value);
+
+  ctrls.which = V4L2_CTRL_ID2WHICH (attribute_num);
+  ctrls.count = 1;
+  ctrls.controls = &ctrl;
+
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "setting value of attribute %d to %s",
+      attribute_num, value);
+
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_S_EXT_CTRLS, &ctrls) < 0)
+    goto ctrl_failed;
+
+  g_free (ctrl.string);
+
+  return TRUE;
+
+  /* ERRORS */
+ctrl_failed:
+  {
+    GST_WARNING_OBJECT (v4l2object,
+        _("Failed to set value %s for control %d on device '%s'."),
+        value, attribute_num, v4l2object->videodev);
+    g_free (ctrl.string);
+    return FALSE;
+  }
+}
+
 static gboolean
 set_control (GQuark field_id, const GValue * value, gpointer user_data)
 {
@@ -1002,13 +1061,18 @@ set_control (GQuark field_id, const GValue * value, gpointer user_data)
         g_quark_to_string (field_id));
     return TRUE;
   }
-  if (!G_VALUE_HOLDS (value, G_TYPE_INT)) {
+  if (G_VALUE_HOLDS (value, G_TYPE_INT)) {
+    gst_v4l2_set_attribute (v4l2object, GPOINTER_TO_INT (d),
+        g_value_get_int (value));
+  } else if (G_VALUE_HOLDS (value, G_TYPE_STRING)) {
+    gst_v4l2_set_string_attribute (v4l2object, GPOINTER_TO_INT (d),
+        g_value_get_string (value));
+  } else {
     GST_WARNING_OBJECT (v4l2object,
-        "'int' value expected for control '%s'.", g_quark_to_string (field_id));
+        "no compatible value expected for control '%s'.",
+        g_quark_to_string (field_id));
     return TRUE;
   }
-  gst_v4l2_set_attribute (v4l2object, GPOINTER_TO_INT (d),
-      g_value_get_int (value));
   return TRUE;
 }
 

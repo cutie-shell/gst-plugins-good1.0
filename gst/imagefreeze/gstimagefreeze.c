@@ -282,8 +282,10 @@ gst_image_freeze_sink_setcaps (GstImageFreeze * self, GstCaps * caps)
   for (i = 0; i < n; i++) {
     GstCaps *candidate = gst_caps_new_empty ();
     GstStructure *s = gst_structure_copy (gst_caps_get_structure (caps, i));
+    GstCapsFeatures *f =
+        gst_caps_features_copy (gst_caps_get_features (caps, i));
 
-    gst_caps_append_structure (candidate, s);
+    gst_caps_append_structure_full (candidate, s, f);
     if (gst_structure_has_field_typed (s, "framerate", GST_TYPE_FRACTION) ||
         gst_structure_fixate_field_nearest_fraction (s, "framerate", 25, 1)) {
       gst_structure_get_fraction (s, "framerate", &fps_n, &fps_d);
@@ -960,19 +962,24 @@ gst_image_freeze_src_loop (GstPad * pad)
     GstClockReturn clock_ret;
     GstClock *clock;
 
+    clock = gst_element_get_clock (GST_ELEMENT (self));
+
     /* Wait until the element went to PLAYING or flushing */
-    while (self->blocked && !self->flushing)
+    while ((!clock || self->blocked) && !self->flushing) {
       g_cond_wait (&self->blocked_cond, &self->lock);
+      gst_clear_object (&clock);
+      clock = gst_element_get_clock (GST_ELEMENT (self));
+    }
 
     if (self->flushing) {
       g_mutex_unlock (&self->lock);
       gst_buffer_unref (buffer);
       flow_ret = GST_FLOW_FLUSHING;
+      gst_clear_object (&clock);
       goto pause_task;
     }
 
     /* Wait on the clock until the time for our current frame is reached */
-    clock = gst_element_get_clock (GST_ELEMENT (self));
     base_time = gst_element_get_base_time (GST_ELEMENT (self));
     if (self->fps_n != 0) {
       clock_time =

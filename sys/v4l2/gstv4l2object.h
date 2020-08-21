@@ -274,7 +274,7 @@ gboolean     gst_v4l2_object_get_property_helper       (GstV4l2Object *v4l2objec
                                                         guint prop_id, GValue * value,
                                                         GParamSpec * pspec);
 /* open/close */
-gboolean     gst_v4l2_object_open            (GstV4l2Object * v4l2object);
+gboolean     gst_v4l2_object_open            (GstV4l2Object * v4l2object, GstV4l2Error * error);
 gboolean     gst_v4l2_object_open_shared     (GstV4l2Object * v4l2object, GstV4l2Object * other);
 gboolean     gst_v4l2_object_close           (GstV4l2Object * v4l2object);
 
@@ -317,7 +317,7 @@ GstStructure * gst_v4l2_object_v4l2fourcc_to_structure (guint32 fourcc);
 
 /* TODO Move to proper namespace */
 /* open/close the device */
-gboolean     gst_v4l2_open           (GstV4l2Object * v4l2object);
+gboolean     gst_v4l2_open           (GstV4l2Object * v4l2object, GstV4l2Error * error);
 gboolean     gst_v4l2_dup            (GstV4l2Object * v4l2object, GstV4l2Object * other);
 gboolean     gst_v4l2_close          (GstV4l2Object * v4l2object);
 
@@ -337,6 +337,7 @@ gboolean     gst_v4l2_signal_strength (GstV4l2Object * v4l2object, gint tunernum
 /* attribute control */
 gboolean     gst_v4l2_get_attribute   (GstV4l2Object * v4l2object, int attribute, int * value);
 gboolean     gst_v4l2_set_attribute   (GstV4l2Object * v4l2object, int attribute, const int value);
+gboolean     gst_v4l2_set_string_attribute (GstV4l2Object * v4l2object, int attribute_num, const char *value);
 gboolean     gst_v4l2_set_controls    (GstV4l2Object * v4l2object, GstStructure * controls);
 
 G_END_DECLS

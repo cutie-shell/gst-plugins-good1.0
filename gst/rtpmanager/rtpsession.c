@@ -508,12 +508,13 @@ rtp_session_class_init (RTPSessionClass * klass)
           DEFAULT_NUM_ACTIVE_SOURCES,
           G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
   /**
-   * RTPSource::sources
+   * RTPSource:sources
    *
    * Get a GValue Array of all sources in the session.
    *
    * ## Getting the #RTPSources of a session
-   * |[
+   *
+   * ``` C
    * {
    *   GValueArray *arr;
    *   GValue *val;
@@ -529,7 +530,7 @@ rtp_session_class_init (RTPSessionClass * klass)
    *   }
    *   g_value_array_free (arr);
    * }
-   * ]|
+   * ```
    */
   g_object_class_install_property (gobject_class, PROP_SOURCES,
       g_param_spec_boxed ("sources", "Sources",
@@ -583,16 +584,16 @@ rtp_session_class_init (RTPSessionClass * klass)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * RTPSession::stats:
+   * RTPSession:stats:
    *
    * Various session statistics. This property returns a GstStructure
    * with name application/x-rtp-session-stats with the following fields:
    *
-   *  "rtx-drop-count"  G_TYPE_UINT   The number of retransmission events
+   * * "rtx-drop-count"  G_TYPE_UINT   The number of retransmission events
    *      dropped (due to bandwidth constraints)
-   *  "sent-nack-count" G_TYPE_UINT   Number of NACKs sent
-   *  "recv-nack-count" G_TYPE_UINT   Number of NACKs received
-   *  "source-stats"    G_TYPE_BOXED  GValueArray of #RTPSource::stats for all
+   * *  "sent-nack-count" G_TYPE_UINT   Number of NACKs sent
+   * *  "recv-nack-count" G_TYPE_UINT   Number of NACKs received
+   * *  "source-stats"    G_TYPE_BOXED  GValueArray of #RTPSource:stats for all
    *      RTP sources (Since 1.8)
    *
    * Since: 1.4
@@ -614,7 +615,7 @@ rtp_session_class_init (RTPSessionClass * klass)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * RTPSession::disable-sr-timestamp:
+   * RTPSession:disable-sr-timestamp:
    *
    * Whether sender reports should be timestamped.
    *

@@ -1925,6 +1925,16 @@ gst_qtdemux_setcaps (GstQTDemux * demux, GstCaps * caps)
             &CUR_STREAM (stream)->n_channels);
         gst_structure_get_int (structure, "rate", &rate);
         CUR_STREAM (stream)->rate = rate;
+      } else if (gst_structure_has_name (structure, "application/x-cenc")) {
+        if (gst_structure_has_field (structure, "original-media-type")) {
+          const gchar *media_type =
+              gst_structure_get_string (structure, "original-media-type");
+          if (g_str_has_prefix (media_type, "video")) {
+            stream->subtype = FOURCC_vide;
+          } else if (g_str_has_prefix (media_type, "audio")) {
+            stream->subtype = FOURCC_soun;
+          }
+        }
       }
     }
     gst_caps_replace (&demux->media_caps, (GstCaps *) mediacaps);
@@ -7918,6 +7928,8 @@ qtdemux_parse_node (GstQTDemux * qtdemux, GNode * node, const guint8 * buffer,
       case FOURCC_H265:
       case FOURCC_hvc1:
       case FOURCC_hev1:
+      case FOURCC_dvh1:
+      case FOURCC_dvhe:
       case FOURCC_mjp2:
       case FOURCC_encv:
       {
@@ -10654,6 +10666,12 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
   }
 
   stream->stsd_entries_length = stsd_entry_count = QT_UINT32 (stsd_data + 12);
+  /* each stsd entry must contain at least 8 bytes */
+  if (stream->stsd_entries_length == 0
+      || stream->stsd_entries_length > stsd_len / 8) {
+    stream->stsd_entries_length = 0;
+    goto corrupt_file;
+  }
   stream->stsd_entries = g_new0 (QtDemuxStreamStsdEntry, stsd_entry_count);
   GST_LOG_OBJECT (qtdemux, "stsd len:           %d", stsd_len);
   GST_LOG_OBJECT (qtdemux, "stsd entry count:   %u", stsd_entry_count);
@@ -11058,6 +11076,8 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
           case FOURCC_H265:
           case FOURCC_hvc1:
           case FOURCC_hev1:
+          case FOURCC_dvh1:
+          case FOURCC_dvhe:
           {
             gint len = QT_UINT32 (stsd_entry_data) - 0x56;
             const guint8 *hevc_data = stsd_entry_data + 0x56;
@@ -12364,6 +12384,7 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
                 entry->bytes_per_frame = QT_UINT32 (alac_data + 12);
                 entry->n_channels = QT_UINT8 (alac_data + 21);
                 entry->rate = QT_UINT32 (alac_data + 32);
+                samplesize = QT_UINT8 (alac_data + 16 + 1);
               }
             }
             gst_caps_set_simple (entry->caps,
@@ -14160,12 +14181,14 @@ qtdemux_video_caps (GstQTDemux * qtdemux, QtDemuxStream * stream,
       break;
     case FOURCC_H264:
     case FOURCC_avc1:
+    case FOURCC_dva1:
       _codec ("H.264 / AVC");
       caps = gst_caps_new_simple ("video/x-h264",
           "stream-format", G_TYPE_STRING, "avc",
           "alignment", G_TYPE_STRING, "au", NULL);
       break;
     case FOURCC_avc3:
+    case FOURCC_dvav:
       _codec ("H.264 / AVC");
       caps = gst_caps_new_simple ("video/x-h264",
           "stream-format", G_TYPE_STRING, "avc3",
@@ -14173,12 +14196,14 @@ qtdemux_video_caps (GstQTDemux * qtdemux, QtDemuxStream * stream,
       break;
     case FOURCC_H265:
     case FOURCC_hvc1:
+    case FOURCC_dvh1:
       _codec ("H.265 / HEVC");
       caps = gst_caps_new_simple ("video/x-h265",
           "stream-format", G_TYPE_STRING, "hvc1",
           "alignment", G_TYPE_STRING, "au", NULL);
       break;
     case FOURCC_hev1:
+    case FOURCC_dvhe:
       _codec ("H.265 / HEVC");
       caps = gst_caps_new_simple ("video/x-h265",
           "stream-format", G_TYPE_STRING, "hev1",

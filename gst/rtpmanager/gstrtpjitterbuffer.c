@@ -731,7 +731,7 @@ gst_rtp_jitter_buffer_class_init (GstRtpJitterBufferClass * klass)
           -1, G_MAXINT, DEFAULT_RTX_DELAY_REORDER,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   /**
-   * GstRtpJitterBuffer::rtx-retry-timeout:
+   * GstRtpJitterBuffer:rtx-retry-timeout:
    *
    * When no packet has been received after sending a retransmission event
    * for this time, retry sending a retransmission event.
@@ -747,7 +747,7 @@ gst_rtp_jitter_buffer_class_init (GstRtpJitterBufferClass * klass)
           "ms (-1 automatic)", -1, G_MAXINT, DEFAULT_RTX_RETRY_TIMEOUT,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   /**
-   * GstRtpJitterBuffer::rtx-min-retry-timeout:
+   * GstRtpJitterBuffer:rtx-min-retry-timeout:
    *
    * The minimum amount of time between retry timeouts. When
    * GstRtpJitterBuffer::rtx-retry-timeout is -1, this value ensures a
@@ -809,7 +809,7 @@ gst_rtp_jitter_buffer_class_init (GstRtpJitterBufferClass * klass)
           "(-1 automatic)", -1, G_MAXINT, DEFAULT_RTX_DEADLINE,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 /**
-   * GstRtpJitterBuffer::rtx-stats-timeout:
+   * GstRtpJitterBuffer:rtx-stats-timeout:
    *
    * The time to wait for a retransmitted packet after it has been
    * considered lost in order to collect RTX statistics.
@@ -844,6 +844,7 @@ gst_rtp_jitter_buffer_class_init (GstRtpJitterBufferClass * klass)
    * * #guint64 `num-lost`: the number of packets considered lost.
    * * #guint64 `num-late`: the number of packets arriving too late.
    * * #guint64 `num-duplicates`: the number of duplicate packets.
+   * * #guint64 `avg-jitter`: the average jitter in nanoseconds.
    * * #guint64 `rtx-count`: the number of retransmissions requested.
    * * #guint64 `rtx-success-count`: the number of successful retransmissions.
    * * #gdouble `rtx-per-packet`: average number of RTX per packet.

@@ -1,5 +1,5 @@
 project('gst-plugins-good', 'c',
-  version : '1.17.90',
+  version : '1.18.0',
   meson_version : '>= 0.48',
   default_options : [ 'warning_level=1',
                       'buildtype=debugoptimized' ])
@@ -438,7 +438,7 @@ subdir('ext')
 subdir('tests')
 subdir('docs')
 
-if have_orcc
+if have_orcc and orc_targets.length() > 0
   update_orc_dist_files = find_program('scripts/update-orc-dist-files.py')
 
   orc_update_targets = []
@@ -466,6 +466,8 @@ if find_program('xgettext', required : get_option('nls')).found()
   cdata.set('ENABLE_NLS', 1)
   subdir('po')
 endif
+
+subdir('scripts')
 
 # Set release date
 if gst_version_nano == 0

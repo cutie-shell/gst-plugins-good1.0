@@ -1,3 +1,11 @@
+gst-plugins-good1.0 (1.18.0-1) unstable; urgency=medium
+
+  * New upstream stable release.
+  * Upload to unstable.
+  * Move PulseAudio plugin into the gstreamer1.0-plugins-good package (Closes: #840359).
+
+ -- Sebastian Dröge <slomo@debian.org>  Tue, 08 Sep 2020 11:38:39 +0300
+
 gst-plugins-good1.0 (1.17.90-1) experimental; urgency=medium
 
   * New upstream release candidate.

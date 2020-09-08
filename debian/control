@@ -12,9 +12,9 @@ Build-Depends: debhelper,
                xvfb,
                xauth,
                libglib2.0-dev (>= 2.44),
-               libgstreamer1.0-dev (>= 1.17.90),
-               libgstreamer-plugins-base1.0-dev (>= 1.17.90),
-               gstreamer1.0-plugins-base (>= 1.17.90),
+               libgstreamer1.0-dev (>= 1.18.0),
+               libgstreamer-plugins-base1.0-dev (>= 1.18.0),
+               gstreamer1.0-plugins-base (>= 1.18.0),
                liborc-0.4-dev (>= 1:0.4.17),
                libcairo2-dev (>= 1.10.0),
                libcaca-dev,
@@ -60,16 +60,8 @@ Package: gstreamer1.0-pulseaudio
 Architecture: any
 Multi-Arch: same
 Section: sound
-Depends: ${misc:Depends},
-         ${shlibs:Depends}
-XB-GStreamer-Version: ${gstreamer:Version}
-XB-GStreamer-Elements: ${gstreamer:Elements}
-XB-GStreamer-URI-Sources: ${gstreamer:URISources}
-XB-GStreamer-URI-Sinks: ${gstreamer:URISinks}
-XB-GStreamer-Encoders: ${gstreamer:Encoders}
-XB-GStreamer-Decoders: ${gstreamer:Decoders}
-Provides: ${gstreamer:Provides}
-Description: GStreamer plugin for PulseAudio
+Depends: gstreamer1.0-plugins-good (>= 1.18.0)
+Description: GStreamer plugin for PulseAudio (transitional package)
  GStreamer is a streaming media framework, based on graphs of filters
  which operate on media data.  Applications using this library can do
  anything from real-time sound processing to playing videos, and just
@@ -79,6 +71,8 @@ Description: GStreamer plugin for PulseAudio
  .
  This package contains the GStreamer plugin for PulseAudio, a sound server
  for POSIX and WIN32 systems.
+ .
+ This is a transitional package.
 
 Package: gstreamer1.0-qt5
 #Architecture: any
@@ -137,13 +131,15 @@ Multi-Arch: same
 Section: libs
 Depends: ${misc:Depends},
          ${shlibs:Depends},
-         gstreamer1.0-pulseaudio | gstreamer1.0-audiosink,
+         gstreamer1.0-audiosink,
          gstreamer1.0-plugins-base,
 Recommends: gstreamer1.0-x
 Replaces: gstreamer1.0-plugins-bad (<< 1.15.1),
-          gstreamer1.0-plugins-ugly (<< 1.13.1)
+          gstreamer1.0-plugins-ugly (<< 1.13.1),
+          gstreamer1.0-pulseaudio (<< 1.18.0)
 Breaks: gstreamer1.0-plugins-bad (<< 1.15.1),
-        gstreamer1.0-plugins-ugly (<< 1.13.1)
+        gstreamer1.0-plugins-ugly (<< 1.13.1),
+        gstreamer1.0-pulseaudio (<< 1.18.0)
 XB-GStreamer-Version: ${gstreamer:Version}
 XB-GStreamer-Elements: ${gstreamer:Elements}
 XB-GStreamer-URI-Sources: ${gstreamer:URISources}

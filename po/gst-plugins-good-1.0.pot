@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good-1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-09-08 00:05+0100\n"
+"POT-Creation-Date: 2020-10-26 11:12+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -23,12 +23,12 @@ msgstr ""
 
 #: ext/jpeg/gstjpegdec.c:944 ext/jpeg/gstjpegdec.c:1114
 #: ext/jpeg/gstjpegdec.c:1123 ext/jpeg/gstjpegdec.c:1133
-#: ext/jpeg/gstjpegdec.c:1142 ext/jpeg/gstjpegdec.c:1417
-#: ext/jpeg/gstjpegdec.c:1445
+#: ext/jpeg/gstjpegdec.c:1142 ext/jpeg/gstjpegdec.c:1419
+#: ext/jpeg/gstjpegdec.c:1447
 msgid "Failed to decode JPEG image"
 msgstr ""
 
-#: ext/jpeg/gstjpegdec.c:1405
+#: ext/jpeg/gstjpegdec.c:1407
 msgid "Failed to read memory"
 msgstr ""
 

@@ -859,6 +859,7 @@ free_session (GstRtpBinSession * sess, GstRtpBin * bin)
 
   g_slist_foreach (sess->elements, (GFunc) remove_bin_element, bin);
   g_slist_free (sess->elements);
+  sess->elements = NULL;
 
   g_slist_foreach (sess->streams, (GFunc) free_stream, bin);
   g_slist_free (sess->streams);
@@ -1790,18 +1791,11 @@ create_stream (GstRtpBinSession * session, guint32 ssrc)
     g_object_set (buffer, "max-ts-offset-adjustment",
         rtpbin->max_ts_offset_adjustment, NULL);
 
-  /* need to sink the jitterbufer or otherwise signal handlers from bindings will
-   * take ownership of it and we don't own it anymore */
-  gst_object_ref_sink (buffer);
   g_signal_emit (rtpbin, gst_rtp_bin_signals[SIGNAL_NEW_JITTERBUFFER], 0,
       buffer, session->id, ssrc);
 
   if (!rtpbin->ignore_pt)
     gst_bin_add (GST_BIN_CAST (rtpbin), demux);
-
-  /* unref the jitterbuffer again, the bin has a reference now and
-   * we don't need it anymore */
-  gst_object_unref (buffer);
 
   /* link stuff */
   if (demux)
@@ -1856,6 +1850,7 @@ no_demux:
 static void
 free_stream (GstRtpBinStream * stream, GstRtpBin * bin)
 {
+  GstRtpBinSession *sess = stream->session;
   GSList *clients, *next_client;
 
   GST_DEBUG_OBJECT (bin, "freeing stream %p", stream);
@@ -1882,7 +1877,10 @@ free_stream (GstRtpBinStream * stream, GstRtpBin * bin)
   if (stream->buffer_ntpstop_sig)
     g_signal_handler_disconnect (stream->buffer, stream->buffer_ntpstop_sig);
 
+  sess->elements = g_slist_remove (sess->elements, stream->buffer);
+  remove_bin_element (stream->buffer, bin);
   gst_object_unref (stream->buffer);
+
   if (stream->demux)
     gst_bin_remove (GST_BIN_CAST (bin), stream->demux);
 

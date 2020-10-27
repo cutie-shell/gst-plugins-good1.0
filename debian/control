@@ -69,8 +69,8 @@ Description: GStreamer plugin for PulseAudio (transitional package)
  that new data types or processing capabilities can be added simply by
  installing new plug-ins.
  .
- This package contains the GStreamer plugin for PulseAudio, a sound server
- for POSIX and WIN32 systems.
+ This package used to contain the GStreamer plugin for PulseAudio, a
+ sound server for POSIX and WIN32 systems.
  .
  This is a transitional package.
 

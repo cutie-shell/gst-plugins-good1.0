@@ -1,5 +1,5 @@
 project('gst-plugins-good', 'c',
-  version : '1.18.1',
+  version : '1.18.2',
   meson_version : '>= 0.48',
   default_options : [ 'warning_level=1',
                       'buildtype=debugoptimized' ])
@@ -363,9 +363,7 @@ have_nasm = false
 # FIXME: nasm path needs testing on non-Linux, esp. Windows
 host_cpu = host_machine.cpu_family()
 if host_cpu == 'x86_64'
-  if cc.get_id() == 'msvc'
-    message('Nasm disabled on MSVC')
-  elif cc.get_define('__ILP32__') == '1'
+  if cc.get_define('__ILP32__') == '1'
     message('Nasm disabled on x32')
   else
     asm_option = get_option('asm')

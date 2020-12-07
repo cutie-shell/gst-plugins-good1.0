@@ -50,6 +50,7 @@ typedef enum _SplitMuxOutputState
   SPLITMUX_OUTPUT_STATE_AWAITING_COMMAND,       /* Waiting first command packet from input */
   SPLITMUX_OUTPUT_STATE_OUTPUT_GOP,     /* Outputting a collected GOP */
   SPLITMUX_OUTPUT_STATE_ENDING_FILE,    /* Finishing the current fragment */
+  SPLITMUX_OUTPUT_STATE_ENDING_STREAM,  /* Finishing up the entire stream due to input EOS */
   SPLITMUX_OUTPUT_STATE_START_NEXT_FILE /* Restarting after ENDING_FILE */
 } SplitMuxOutputState;
 
@@ -105,7 +106,11 @@ struct _GstSplitMuxSink
 {
   GstBin parent;
 
+  GMutex state_lock;
+  gboolean shutdown;
+
   GMutex lock;
+
   GCond input_cond;
   GCond output_cond;
 
@@ -144,6 +149,10 @@ struct _GstSplitMuxSink
   /* Number of bytes sent to the
    * current fragment */
   guint64 fragment_total_bytes;
+  /* Number of bytes for the reference
+   * stream in this fragment */
+  guint64 fragment_reference_bytes;
+
   /* Number of bytes we've collected into
    * the GOP that's being collected */
   guint64 gop_total_bytes;

@@ -85,6 +85,7 @@ typedef struct _MqStreamCtx
   gboolean out_eos_async_done;
   gboolean need_unblock;
   gboolean caps_change;
+  gboolean is_releasing;
 
   GstSegment in_segment;
   GstSegment out_segment;
@@ -156,6 +157,9 @@ struct _GstSplitMuxSink
   /* Number of bytes we've collected into
    * the GOP that's being collected */
   guint64 gop_total_bytes;
+  /* Number of bytes from the reference context
+   * that we've collected into the current GOP */
+  guint64 gop_reference_bytes;
   /* Start time of the current fragment */
   GstClockTimeDiff fragment_start_time;
   /* Start time of the current GOP */

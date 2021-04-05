@@ -2024,8 +2024,8 @@ gst_v4l2_object_get_interlace_mode (enum v4l2_field field,
 }
 
 static gboolean
-gst_v4l2_object_get_colorspace (struct v4l2_format *fmt,
-    GstVideoColorimetry * cinfo)
+gst_v4l2_object_get_colorspace (GstV4l2Object * v4l2object,
+    struct v4l2_format *fmt, GstVideoColorimetry * cinfo)
 {
   gboolean is_rgb =
       gst_v4l2_object_v4l2fourcc_is_rgb (fmt->fmt.pix.pixelformat);
@@ -2052,7 +2052,7 @@ gst_v4l2_object_get_colorspace (struct v4l2_format *fmt,
     case V4L2_COLORSPACE_SMPTE170M:
       cinfo->range = GST_VIDEO_COLOR_RANGE_16_235;
       cinfo->matrix = GST_VIDEO_COLOR_MATRIX_BT601;
-      cinfo->transfer = GST_VIDEO_TRANSFER_BT709;
+      cinfo->transfer = GST_VIDEO_TRANSFER_BT601;
       cinfo->primaries = GST_VIDEO_COLOR_PRIMARIES_SMPTE170M;
       break;
     case V4L2_COLORSPACE_REC709:
@@ -2181,8 +2181,13 @@ gst_v4l2_object_get_colorspace (struct v4l2_format *fmt,
     case V4L2_XFER_FUNC_709:
       if (colorspace == V4L2_COLORSPACE_BT2020 && fmt->fmt.pix.height >= 2160)
         cinfo->transfer = GST_VIDEO_TRANSFER_BT2020_12;
+      else if (colorspace == V4L2_COLORSPACE_SMPTE170M)
+        cinfo->transfer = GST_VIDEO_TRANSFER_BT601;
       else
         cinfo->transfer = GST_VIDEO_TRANSFER_BT709;
+
+      if (v4l2object->transfer)
+        cinfo->transfer = v4l2object->transfer;
       break;
     case V4L2_XFER_FUNC_SRGB:
       cinfo->transfer = GST_VIDEO_TRANSFER_SRGB;
@@ -2356,7 +2361,7 @@ gst_v4l2_object_add_colorspace (GstV4l2Object * v4l2object, GstStructure * s,
   /* step 1: get device default colorspace and insert it first as
    * it should be the preferred one */
   if (gst_v4l2_object_try_fmt (v4l2object, &fmt) == 0) {
-    if (gst_v4l2_object_get_colorspace (&fmt, &cinfo))
+    if (gst_v4l2_object_get_colorspace (v4l2object, &fmt, &cinfo))
       gst_v4l2_object_fill_colorimetry_list (&list, &cinfo);
   }
 
@@ -2384,7 +2389,7 @@ gst_v4l2_object_add_colorspace (GstV4l2Object * v4l2object, GstStructure * s,
         colorspace = fmt.fmt.pix.colorspace;
 
       if (colorspace == req_cspace) {
-        if (gst_v4l2_object_get_colorspace (&fmt, &cinfo))
+        if (gst_v4l2_object_get_colorspace (v4l2object, &fmt, &cinfo))
           gst_v4l2_object_fill_colorimetry_list (&list, &cinfo);
       }
     }
@@ -3460,6 +3465,7 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
 
   gst_video_info_init (&info);
   gst_video_alignment_reset (&align);
+  v4l2object->transfer = GST_VIDEO_TRANSFER_UNKNOWN;
 
   if (!gst_v4l2_object_get_caps_info (v4l2object, caps, &fmtdesc, &info))
     goto invalid_caps;
@@ -3573,8 +3579,11 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
     case GST_VIDEO_TRANSFER_GAMMA10:
       transfer = V4L2_XFER_FUNC_NONE;
       break;
+    case GST_VIDEO_TRANSFER_BT601:
     case GST_VIDEO_TRANSFER_BT2020_12:
+    case GST_VIDEO_TRANSFER_BT2020_10:
     case GST_VIDEO_TRANSFER_BT709:
+      v4l2object->transfer = info.colorimetry.transfer;
       transfer = V4L2_XFER_FUNC_709;
       break;
     case GST_VIDEO_TRANSFER_SMPTE240M:
@@ -3775,7 +3784,7 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
       goto invalid_field;
   }
 
-  if (gst_v4l2_object_get_colorspace (&format, &info.colorimetry)) {
+  if (gst_v4l2_object_get_colorspace (v4l2object, &format, &info.colorimetry)) {
     if (gst_structure_has_field (s, "colorimetry")) {
       if (!gst_v4l2_video_colorimetry_matches (&info.colorimetry,
               gst_structure_get_string (s, "colorimetry")))
@@ -4170,7 +4179,7 @@ gst_v4l2_object_acquire_format (GstV4l2Object * v4l2object, GstVideoInfo * info)
   gst_video_info_set_interlaced_format (info, format, interlace_mode, width,
       height);
 
-  gst_v4l2_object_get_colorspace (&fmt, &info->colorimetry);
+  gst_v4l2_object_get_colorspace (v4l2object, &fmt, &info->colorimetry);
 
   gst_v4l2_object_save_format (v4l2object, fmtdesc, &fmt, info, &align);
 

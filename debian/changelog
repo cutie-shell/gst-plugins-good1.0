@@ -1,3 +1,11 @@
+gst-plugins-good1.0 (1.18.4-2) unstable; urgency=medium
+
+  * Upload to unstable:
+    + Fixes CVE-2021-3497 (Closes: #986910).
+    + Fixes CVE-2021-3498 (Closes: #986911).
+
+ -- Sebastian Dröge <slomo@debian.org>  Thu, 22 Apr 2021 20:48:09 +0300
+
 gst-plugins-good1.0 (1.18.4-1) experimental; urgency=medium
 
   [ Marc Leeman ]

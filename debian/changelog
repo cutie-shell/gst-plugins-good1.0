@@ -1,3 +1,11 @@
+gst-plugins-good1.0 (1.18.4-3) UNRELEASED; urgency=medium
+
+  * debian/control:
+    + Depend on qtbase5-private-dev, libqt5waylandclient5-dev to enable the
+      Wayland support in the Qt/QML plugin.
+
+ -- Sebastian Dröge <slomo@debian.org>  Tue, 04 May 2021 09:10:29 +0300
+
 gst-plugins-good1.0 (1.18.4-2) unstable; urgency=medium
 
   * Upload to unstable:

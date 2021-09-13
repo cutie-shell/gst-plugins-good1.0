@@ -234,6 +234,8 @@ enum
 } G_STMT_END
 
 #define JBUF_WAIT_EVENT(priv,label) G_STMT_START {       \
+  if (G_UNLIKELY (priv->srcresult != GST_FLOW_OK))       \
+    goto label;                                          \
   GST_DEBUG ("waiting event");                           \
   (priv)->waiting_event = TRUE;                          \
   g_cond_wait (&(priv)->jbuf_event, &(priv)->jbuf_lock); \
@@ -250,6 +252,8 @@ enum
 } G_STMT_END
 
 #define JBUF_WAIT_QUERY(priv,label) G_STMT_START {       \
+  if (G_UNLIKELY (priv->srcresult != GST_FLOW_OK))       \
+    goto label;                                          \
   GST_DEBUG ("waiting query");                           \
   (priv)->waiting_query = TRUE;                          \
   g_cond_wait (&(priv)->jbuf_query, &(priv)->jbuf_lock); \
@@ -1534,7 +1538,7 @@ gst_jitter_buffer_sink_parse_caps (GstRtpJitterBuffer * jitterbuffer,
       GST_DEBUG_OBJECT (jitterbuffer, "Got media clock %s", mediaclk);
 
       if (!g_str_has_prefix (mediaclk, "direct=") ||
-          !g_ascii_string_to_unsigned (&mediaclk[8], 10, 0, G_MAXUINT64,
+          !g_ascii_string_to_unsigned (&mediaclk[7], 10, 0, G_MAXUINT64,
               &clock_offset, NULL))
         GST_FIXME_OBJECT (jitterbuffer, "Unsupported media clock");
       if (strstr (mediaclk, "rate=") != NULL) {
@@ -2084,6 +2088,27 @@ get_pts_timeout (const RtpTimer * timer)
   return timer->timeout - timer->offset;
 }
 
+static inline gboolean
+safe_add (guint64 * res, guint64 val, gint64 offset)
+{
+  if (val <= G_MAXINT64) {
+    gint64 tmp = (gint64) val + offset;
+    if (tmp >= 0) {
+      *res = tmp;
+      return TRUE;
+    }
+    return FALSE;
+  }
+  /* From here, val > G_MAXINT64 */
+
+  /* Negative value */
+  if (offset < 0 && val < -offset)
+    return FALSE;
+
+  *res = val + offset;
+  return TRUE;
+}
+
 static void
 update_timer_offsets (GstRtpJitterBuffer * jitterbuffer)
 {
@@ -2093,8 +2118,15 @@ update_timer_offsets (GstRtpJitterBuffer * jitterbuffer)
 
   while (test) {
     if (test->type != RTP_TIMER_EXPECTED) {
-      test->timeout = get_pts_timeout (test) + new_offset;
-      test->offset = new_offset;
+      GstClockTime pts = get_pts_timeout (test);
+      if (safe_add (&test->timeout, pts, new_offset)) {
+        test->offset = new_offset;
+      } else {
+        GST_DEBUG_OBJECT (jitterbuffer,
+            "Invalidating timeout (pts lower than new offset)");
+        test->timeout = GST_CLOCK_TIME_NONE;
+        test->offset = 0;
+      }
       /* as we apply the offset on all timers, the order of timers won't
        * change and we can skip updating the timer queue */
     }
@@ -2142,7 +2174,8 @@ apply_offset (GstRtpJitterBuffer * jitterbuffer, GstClockTime timestamp)
     return -1;
 
   /* apply the timestamp offset, this is used for inter stream sync */
-  timestamp += priv->ts_offset;
+  if (!safe_add (&timestamp, timestamp, priv->ts_offset))
+    timestamp = 0;
   /* add the offset, this is used when buffering */
   timestamp += priv->out_offset;
 

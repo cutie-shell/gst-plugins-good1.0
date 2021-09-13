@@ -2005,7 +2005,7 @@ gst_v4l2_object_get_interlace_mode (enum v4l2_field field,
     case V4L2_FIELD_ANY:
       GST_ERROR
           ("Driver bug detected - check driver with v4l2-compliance from http://git.linuxtv.org/v4l-utils.git\n");
-      /* fallthrough */
+      return FALSE;
     case V4L2_FIELD_NONE:
       *interlace_mode = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
       return TRUE;
@@ -2200,6 +2200,9 @@ gst_v4l2_object_get_colorspace (GstV4l2Object * v4l2object,
       break;
     case V4L2_XFER_FUNC_NONE:
       cinfo->transfer = GST_VIDEO_TRANSFER_GAMMA10;
+      break;
+    case V4L2_XFER_FUNC_SMPTE2084:
+      cinfo->transfer = GST_VIDEO_TRANSFER_SMPTE2084;
       break;
     case V4L2_XFER_FUNC_DEFAULT:
       /* nothing, just use defaults for colorspace */
@@ -3376,9 +3379,9 @@ get_v4l2_field_for_info (GstVideoInfo * info)
 
 static gboolean
 gst_v4l2_video_colorimetry_matches (const GstVideoColorimetry * cinfo,
-    const gchar * color)
+    GstCaps * caps)
 {
-  GstVideoColorimetry ci;
+  GstVideoInfo info;
   static const GstVideoColorimetry ci_likely_jpeg = {
     GST_VIDEO_COLOR_RANGE_0_255, GST_VIDEO_COLOR_MATRIX_BT601,
     GST_VIDEO_TRANSFER_UNKNOWN, GST_VIDEO_COLOR_PRIMARIES_UNKNOWN
@@ -3388,14 +3391,24 @@ gst_v4l2_video_colorimetry_matches (const GstVideoColorimetry * cinfo,
     GST_VIDEO_TRANSFER_SRGB, GST_VIDEO_COLOR_PRIMARIES_BT709
   };
 
-  if (!gst_video_colorimetry_from_string (&ci, color))
+  if (!gst_video_info_from_caps (&info, caps))
     return FALSE;
 
-  if (gst_video_colorimetry_is_equal (&ci, cinfo))
+  /* if colorimetry in caps is unknown, use the default one */
+  if (info.colorimetry.primaries == GST_VIDEO_COLOR_PRIMARIES_UNKNOWN)
+    info.colorimetry.primaries = cinfo->primaries;
+  if (info.colorimetry.range == GST_VIDEO_COLOR_RANGE_UNKNOWN)
+    info.colorimetry.range = cinfo->range;
+  if (info.colorimetry.matrix == GST_VIDEO_COLOR_MATRIX_UNKNOWN)
+    info.colorimetry.matrix = cinfo->matrix;
+  if (info.colorimetry.transfer == GST_VIDEO_TRANSFER_UNKNOWN)
+    info.colorimetry.transfer = cinfo->transfer;
+
+  if (gst_video_colorimetry_is_equal (&info.colorimetry, cinfo))
     return TRUE;
 
   /* Allow 1:4:0:0 (produced by jpegdec) if the device expects 1:4:7:1 */
-  if (gst_video_colorimetry_is_equal (&ci, &ci_likely_jpeg)
+  if (gst_video_colorimetry_is_equal (&info.colorimetry, &ci_likely_jpeg)
       && gst_video_colorimetry_is_equal (cinfo, &ci_jpeg))
     return TRUE;
 
@@ -3452,6 +3465,7 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
   enum v4l2_ycbcr_encoding matrix = 0;
   enum v4l2_xfer_func transfer = 0;
   GstStructure *s;
+  gboolean disable_interlacing = FALSE;
   gboolean disable_colorimetry = FALSE;
 
   g_return_val_if_fail (!v4l2object->skip_try_fmt_probes ||
@@ -3578,6 +3592,9 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
       /* fallthrough */
     case GST_VIDEO_TRANSFER_GAMMA10:
       transfer = V4L2_XFER_FUNC_NONE;
+      break;
+    case GST_VIDEO_TRANSFER_SMPTE2084:
+      transfer = V4L2_XFER_FUNC_SMPTE2084;
       break;
     case GST_VIDEO_TRANSFER_BT601:
     case GST_VIDEO_TRANSFER_BT2020_12:
@@ -3776,18 +3793,23 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
   /* used to check colorimetry and interlace mode fields presence */
   s = gst_caps_get_structure (caps, 0);
 
-  if (!gst_v4l2_object_get_interlace_mode (format.fmt.pix.field,
-          &info.interlace_mode))
-    goto invalid_field;
-  if (gst_structure_has_field (s, "interlace-mode")) {
-    if (format.fmt.pix.field != field)
-      goto invalid_field;
+  if (gst_v4l2_object_get_interlace_mode (format.fmt.pix.field,
+          &info.interlace_mode)) {
+    if (gst_structure_has_field (s, "interlace-mode")) {
+      if (format.fmt.pix.field != field)
+        goto invalid_field;
+    }
+  } else {
+    /* The driver (or libv4l2) is miss-behaving, just ignore interlace-mode from
+     * the TRY_FMT */
+    disable_interlacing = TRUE;
+    if (gst_structure_has_field (s, "interlace-mode"))
+      gst_structure_remove_field (s, "interlace-mode");
   }
 
   if (gst_v4l2_object_get_colorspace (v4l2object, &format, &info.colorimetry)) {
     if (gst_structure_has_field (s, "colorimetry")) {
-      if (!gst_v4l2_video_colorimetry_matches (&info.colorimetry,
-              gst_structure_get_string (s, "colorimetry")))
+      if (!gst_v4l2_video_colorimetry_matches (&info.colorimetry, caps))
         goto invalid_colorimetry;
     }
   } else {
@@ -3799,8 +3821,12 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
   }
 
   /* In case we have skipped the try_fmt probes, we'll need to set the
-   * colorimetry back into the caps. */
+   * interlace-mode and colorimetry back into the caps. */
   if (v4l2object->skip_try_fmt_probes) {
+    if (!disable_interlacing && !gst_structure_has_field (s, "interlace-mode")) {
+      gst_structure_set (s, "interlace-mode", G_TYPE_STRING,
+          gst_video_interlace_mode_to_string (info.interlace_mode), NULL);
+    }
     if (!disable_colorimetry && !gst_structure_has_field (s, "colorimetry")) {
       gchar *str = gst_video_colorimetry_to_string (&info.colorimetry);
       gst_structure_set (s, "colorimetry", G_TYPE_STRING, str, NULL);

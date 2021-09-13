@@ -397,9 +397,9 @@ gst_deinterlace_set_method (GstDeinterlace * self, GstDeinterlaceMethods method)
 #if 0
     gst_child_proxy_child_removed (GST_OBJECT (self),
         GST_OBJECT (self->method));
+#endif
     gst_object_unparent (GST_OBJECT (self->method));
     self->method = NULL;
-#endif
   }
 
   method_type =
@@ -2524,11 +2524,18 @@ gst_deinterlace_getcaps (GstDeinterlace * self, GstPad * pad, GstCaps * filter)
   for (len = gst_caps_get_size (tmp2); len > 0; len--) {
     GstStructure *s = gst_caps_get_structure (tmp2, len - 1);
 
-    if (pad == self->sinkpad)
+    /* Drop fields which can be converted by us.
+     * Specifically "field-order" here.
+     * "field-order" with "progressive" and/or
+     * unspecified "interlace-mode" would cause negotiation issue */
+    gst_structure_remove_field (s, "field-order");
+
+    if (pad == self->sinkpad) {
       gst_structure_remove_field (s, "interlace-mode");
-    else
+    } else {
       gst_structure_set (s, "interlace-mode", G_TYPE_STRING, "progressive",
           NULL);
+    }
   }
 
   if (self->user_set_fields == GST_DEINTERLACE_ALL) {
@@ -2935,6 +2942,11 @@ gst_deinterlace_setcaps (GstDeinterlace * self, GstPad * pad, GstCaps * caps,
     /* If not passthrough, we are going to output progressive content */
     gst_caps_set_simple (srccaps, "interlace-mode", G_TYPE_STRING,
         "progressive", NULL);
+
+    {
+      GstStructure *s = gst_caps_get_structure (srccaps, 0);
+      gst_structure_remove_field (s, "field-order");
+    }
 
     gst_deinterlace_set_method (self, self->method_id);
     gst_deinterlace_method_setup (self->method, &self->vinfo);

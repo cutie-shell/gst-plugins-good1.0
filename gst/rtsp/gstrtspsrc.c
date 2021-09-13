@@ -85,6 +85,14 @@
  * ]| Establish a connection to an RTSP server and send the raw RTP packets to a
  * fakesink.
  *
+ * NOTE: rtspsrc will send a PAUSE command to the server if you set the
+ * element to the PAUSED state, and will send a PLAY command if you set it to
+ * the PLAYING state.
+ *
+ * Unfortunately, going to the NULL state involves going through PAUSED, so
+ * rtspsrc does not know the difference and will send a PAUSE when you wanted
+ * a TEARDOWN. The workaround is to hook into the `before-send` signal and
+ * return FALSE in this case.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -1052,7 +1060,7 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
    */
   gst_rtspsrc_signals[SIGNAL_SELECT_STREAM] =
       g_signal_new_class_handler ("select-stream", G_TYPE_FROM_CLASS (klass),
-      G_SIGNAL_RUN_FIRST | G_SIGNAL_RUN_CLEANUP,
+      G_SIGNAL_RUN_LAST,
       (GCallback) default_select_stream, select_stream_accum, NULL, NULL,
       G_TYPE_BOOLEAN, 2, G_TYPE_UINT, GST_TYPE_CAPS);
   /**
@@ -1067,8 +1075,7 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
    */
   gst_rtspsrc_signals[SIGNAL_NEW_MANAGER] =
       g_signal_new_class_handler ("new-manager", G_TYPE_FROM_CLASS (klass),
-      G_SIGNAL_RUN_FIRST | G_SIGNAL_RUN_CLEANUP, 0, NULL, NULL, NULL,
-      G_TYPE_NONE, 1, GST_TYPE_ELEMENT);
+      0, 0, NULL, NULL, NULL, G_TYPE_NONE, 1, GST_TYPE_ELEMENT);
 
   /**
    * GstRTSPSrc::request-rtcp-key:
@@ -1083,7 +1090,7 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
    */
   gst_rtspsrc_signals[SIGNAL_REQUEST_RTCP_KEY] =
       g_signal_new ("request-rtcp-key", G_TYPE_FROM_CLASS (klass),
-      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL, GST_TYPE_CAPS, 1, G_TYPE_UINT);
+      0, 0, NULL, NULL, NULL, GST_TYPE_CAPS, 1, G_TYPE_UINT);
 
   /**
    * GstRTSPSrc::accept-certificate:
@@ -1106,8 +1113,8 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
       G_TYPE_BOOLEAN, 3, G_TYPE_TLS_CONNECTION, G_TYPE_TLS_CERTIFICATE,
       G_TYPE_TLS_CERTIFICATE_FLAGS);
 
-  /*
-   * GstRTSPSrc::before-send
+  /**
+   * GstRTSPSrc::before-send:
    * @rtspsrc: a #GstRTSPSrc
    * @num: the stream number
    *
@@ -1124,7 +1131,7 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
    */
   gst_rtspsrc_signals[SIGNAL_BEFORE_SEND] =
       g_signal_new_class_handler ("before-send", G_TYPE_FROM_CLASS (klass),
-      G_SIGNAL_RUN_FIRST | G_SIGNAL_RUN_CLEANUP,
+      G_SIGNAL_RUN_LAST,
       (GCallback) default_before_send, before_send_accum, NULL, NULL,
       G_TYPE_BOOLEAN, 1, GST_TYPE_RTSP_MESSAGE | G_SIGNAL_TYPE_STATIC_SCOPE);
 
@@ -2840,20 +2847,14 @@ gst_rtspsrc_perform_seek (GstRTSPSrc * src, GstEvent * event)
 
   /* copy segment, we need this because we still need the old
    * segment when we close the current segment. */
-  memcpy (&seeksegment, &src->segment, sizeof (GstSegment));
+  seeksegment = src->segment;
 
   /* configure the seek parameters in the seeksegment. We will then have the
    * right values in the segment to perform the seek */
   GST_DEBUG_OBJECT (src, "configuring seek");
-  seeksegment.duration = GST_CLOCK_TIME_NONE;
   rate_change_same_direction = (rate * seeksegment.rate) > 0;
   gst_segment_do_seek (&seeksegment, rate, format, flags,
       cur_type, cur, stop_type, stop, &update);
-
-  /* figure out the last position we need to play. If it's configured (stop !=
-   * -1), use that, else we play until the total duration of the file */
-  if ((stop = seeksegment.stop) == -1)
-    stop = seeksegment.duration;
 
   /* if we were playing, pause first */
   playing = (src->state == GST_RTSP_STATE_PLAYING);
@@ -2869,6 +2870,11 @@ gst_rtspsrc_perform_seek (GstRTSPSrc * src, GstEvent * event)
   /* PLAY will add the range header now. */
   src->need_range = TRUE;
 
+  /* If an accurate seek was requested, we want to clip the segment we
+   * output in ONVIF mode to the requested bounds */
+  src->clip_out_segment = ! !(flags & GST_SEEK_FLAG_ACCURATE);
+  src->seek_seqnum = gst_event_get_seqnum (event);
+
   /* prepare for streaming again */
   if (flush) {
     /* if we started flush, we stop now */
@@ -2877,7 +2883,7 @@ gst_rtspsrc_perform_seek (GstRTSPSrc * src, GstEvent * event)
   }
 
   /* now we did the seek and can activate the new segment values */
-  memcpy (&src->segment, &seeksegment, sizeof (GstSegment));
+  src->segment = seeksegment;
 
   /* if we're doing a segment seek, post a SEGMENT_START message */
   if (src->segment.flags & GST_SEEK_FLAG_SEGMENT) {
@@ -2885,10 +2891,6 @@ gst_rtspsrc_perform_seek (GstRTSPSrc * src, GstEvent * event)
         gst_message_new_segment_start (GST_OBJECT_CAST (src),
             src->segment.format, src->segment.position));
   }
-
-  /* now create the newsegment */
-  GST_DEBUG_OBJECT (src, "Creating newsegment from %" G_GINT64_FORMAT
-      " to %" G_GINT64_FORMAT, src->segment.position, stop);
 
   /* mark discont when needed */
   if (!(rate_change_only && rate_change_same_direction)) {
@@ -2920,11 +2922,6 @@ gst_rtspsrc_perform_seek (GstRTSPSrc * src, GstEvent * event)
     else if (flags & GST_SEEK_FLAG_KEY_UNIT && flags & GST_SEEK_FLAG_SNAP_AFTER)
       seek_style = "Next";
   }
-
-  /* If an accurate seek was requested, we want to clip the segment we
-   * output in ONVIF mode to the requested bounds */
-  src->clip_out_segment = ! !(flags & GST_SEEK_FLAG_ACCURATE);
-  src->seek_seqnum = gst_event_get_seqnum (event);
 
   if (playing)
     gst_rtspsrc_play (src, &seeksegment, FALSE, seek_style);
@@ -2966,7 +2963,15 @@ gst_rtspsrc_handle_src_event (GstPad * pad, GstObject * parent,
 
   switch (GST_EVENT_TYPE (event)) {
     case GST_EVENT_SEEK:
-      res = gst_rtspsrc_perform_seek (src, event);
+    {
+      guint32 seqnum = gst_event_get_seqnum (event);
+      if (seqnum == src->seek_seqnum) {
+        GST_LOG_OBJECT (pad, "Drop duplicated SEEK event seqnum %"
+            G_GUINT32_FORMAT, seqnum);
+      } else {
+        res = gst_rtspsrc_perform_seek (src, event);
+      }
+    }
       forward = FALSE;
       break;
     case GST_EVENT_QOS:
@@ -3156,8 +3161,7 @@ gst_rtspsrc_handle_src_query (GstPad * pad, GstObject * parent,
 
       gst_query_parse_seeking (query, &format, NULL, NULL, NULL);
       if (format == GST_FORMAT_TIME) {
-        gboolean seekable =
-            src->cur_protocols != GST_RTSP_LOWER_TRANS_UDP_MCAST;
+        gboolean seekable = TRUE;
         GstClockTime start = 0, duration = src->segment.duration;
 
         /* seeking without duration is unlikely */
@@ -3174,7 +3178,9 @@ gst_rtspsrc_handle_src_query (GstPad * pad, GstObject * parent,
           }
         }
 
-        GST_LOG_OBJECT (src, "seekable : %d", seekable);
+        GST_LOG_OBJECT (src, "seekable: %d, duration: %" GST_TIME_FORMAT
+            ", src->seekable: %f", seekable,
+            GST_TIME_ARGS (src->segment.duration), src->seekable);
 
         gst_query_set_seeking (query, GST_FORMAT_TIME, seekable, start,
             duration);
@@ -7677,6 +7683,12 @@ gst_rtspsrc_parse_range (GstRTSPSrc * src, const gchar * range,
    * don't update duration in that case */
   if (update_duration && seconds != -1) {
     segment->duration = seconds;
+    GST_DEBUG_OBJECT (src, "set duration from range as %" GST_TIME_FORMAT,
+        GST_TIME_ARGS (seconds));
+  } else {
+    GST_DEBUG_OBJECT (src, "not updating existing duration %" GST_TIME_FORMAT
+        " from range %" GST_TIME_FORMAT, GST_TIME_ARGS (segment->duration),
+        GST_TIME_ARGS (seconds));
   }
 
   if (segment->rate > 0.0)
@@ -8723,7 +8735,7 @@ restart:
       break;
   }
 
-  memcpy (&src->out_segment, segment, sizeof (GstSegment));
+  src->out_segment = *segment;
 
   if (src->clip_out_segment) {
     /* Only clip the output segment when the server has answered with valid

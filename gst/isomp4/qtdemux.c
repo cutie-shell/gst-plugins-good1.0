@@ -12957,8 +12957,9 @@ qtdemux_reuse_and_configure_stream (GstQTDemux * qtdemux,
   newstream->pad = oldstream->pad;
   oldstream->pad = NULL;
 
-  /* unset new_stream to prevent stream-start event */
-  newstream->new_stream = FALSE;
+  /* unset new_stream to prevent stream-start event, unless we are EOS in which
+   * case we need to force one through */
+  newstream->new_stream = GST_PAD_IS_EOS (newstream->pad);
 
   return gst_qtdemux_configure_stream (qtdemux, newstream);
 }
@@ -14328,12 +14329,24 @@ qtdemux_video_caps (GstQTDemux * qtdemux, QtDemuxStream * stream,
       caps =
           gst_caps_new_simple ("video/x-prores", "variant", G_TYPE_STRING,
           "4444", NULL);
+
+      /* 24 bits per sample = an alpha channel is coded but image is always opaque */
+      if (entry->bits_per_sample > 0) {
+        gst_caps_set_simple (caps, "depth", G_TYPE_INT, entry->bits_per_sample,
+            NULL);
+      }
       break;
     case FOURCC_ap4x:
       _codec ("Apple ProRes 4444 XQ");
       caps =
           gst_caps_new_simple ("video/x-prores", "variant", G_TYPE_STRING,
           "4444xq", NULL);
+
+      /* 24 bits per sample = an alpha channel is coded but image is always opaque */
+      if (entry->bits_per_sample > 0) {
+        gst_caps_set_simple (caps, "depth", G_TYPE_INT, entry->bits_per_sample,
+            NULL);
+      }
       break;
     case FOURCC_cfhd:
       _codec ("GoPro CineForm");

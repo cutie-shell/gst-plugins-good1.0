@@ -832,9 +832,8 @@ gst_wavparse_labl_chunk (GstWavParse * wav, const guint8 * data, guint32 size)
   labl = g_new0 (GstWavParseLabl, 1);
 
   /* parse data */
-  data += 8;
   labl->cue_point_id = GST_READ_UINT32_LE (data);
-  labl->text = g_memdup (data + 4, size - 4);
+  labl->text = g_strndup ((const gchar *) data + 4, size - 4);
 
   wav->labls = g_list_append (wav->labls, labl);
 
@@ -862,9 +861,8 @@ gst_wavparse_note_chunk (GstWavParse * wav, const guint8 * data, guint32 size)
   note = g_new0 (GstWavParseNote, 1);
 
   /* parse data */
-  data += 8;
   note->cue_point_id = GST_READ_UINT32_LE (data);
-  note->text = g_memdup (data + 4, size - 4);
+  note->text = g_strndup ((const gchar *) data + 4, size - 4);
 
   wav->notes = g_list_append (wav->notes, note);
 
@@ -926,17 +924,17 @@ gst_wavparse_adtl_chunk (GstWavParse * wav, const guint8 * data, guint32 size)
     ltag = GST_READ_UINT32_LE (data + offset);
     lsize = GST_READ_UINT32_LE (data + offset + 4);
 
-    if (lsize + 8 > size) {
+    if (lsize > (G_MAXUINT - 8) || lsize + 8 > size) {
       GST_WARNING_OBJECT (wav, "Invalid adtl size: %u + 8 > %u", lsize, size);
       return FALSE;
     }
 
     switch (ltag) {
       case GST_RIFF_TAG_labl:
-        gst_wavparse_labl_chunk (wav, data + offset, size);
+        gst_wavparse_labl_chunk (wav, data + offset + 8, lsize);
         break;
       case GST_RIFF_TAG_note:
-        gst_wavparse_note_chunk (wav, data + offset, size);
+        gst_wavparse_note_chunk (wav, data + offset + 8, lsize);
         break;
       default:
         GST_WARNING_OBJECT (wav, "Unknowm adtl %" GST_FOURCC_FORMAT,

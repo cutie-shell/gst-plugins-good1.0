@@ -79,6 +79,14 @@ struct _QtGLVideoItemPrivate
   QOpenGLContext *qt_context;
   GstGLContext *other_context;
   GstGLContext *context;
+
+  /* buffers with textures that were bound by QML */
+  GQueue bound_buffers;
+  /* buffers that were previously bound but in the meantime a new one was
+   * bound so this one is most likely not used anymore
+   * FIXME: Ideally we would use fences for this but there seems to be no
+   * way to reliably "try wait" on a fence */
+  GQueue potentially_unbound_buffers;
 };
 
 class InitializeSceneGraph : public QRunnable
@@ -104,7 +112,7 @@ void InitializeSceneGraph::run()
 
 QtGLVideoItem::QtGLVideoItem()
 {
-  static volatile gsize _debug;
+  static gsize _debug;
 
   if (g_once_init_enter (&_debug)) {
     GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT, "qtglwidget", 0, "Qt GL Widget");
@@ -133,6 +141,8 @@ QtGLVideoItem::QtGLVideoItem()
 
 QtGLVideoItem::~QtGLVideoItem()
 {
+  GstBuffer *tmp_buffer;
+
   /* Before destroying the priv info, make sure
    * no qmlglsink's will call in again, and that
    * any ongoing calls are done by invalidating the proxy
@@ -148,6 +158,15 @@ QtGLVideoItem::~QtGLVideoItem()
     gst_object_unref(this->priv->other_context);
   if (this->priv->display)
     gst_object_unref(this->priv->display);
+
+  while ((tmp_buffer = (GstBuffer*) g_queue_pop_head (&this->priv->potentially_unbound_buffers))) {
+    GST_TRACE ("old buffer %p should be unbound now, unreffing", tmp_buffer);
+    gst_buffer_unref (tmp_buffer);
+  }
+  while ((tmp_buffer = (GstBuffer*) g_queue_pop_head (&this->priv->bound_buffers))) {
+    GST_TRACE ("old buffer %p should be unbound now, unreffing", tmp_buffer);
+    gst_buffer_unref (tmp_buffer);
+  }
 
   gst_buffer_replace (&this->priv->buffer, NULL);
 
@@ -194,6 +213,9 @@ QSGNode *
 QtGLVideoItem::updatePaintNode(QSGNode * oldNode,
     UpdatePaintNodeData * updatePaintNodeData)
 {
+  GstBuffer *old_buffer;
+  gboolean was_bound = FALSE;
+
   if (!m_openGlContextInitialized) {
     return oldNode;
   }
@@ -221,6 +243,38 @@ QtGLVideoItem::updatePaintNode(QSGNode * oldNode,
   }
 
   tex = static_cast<GstQSGTexture *> (texNode->texture());
+
+  if ((old_buffer = tex->getBuffer(&was_bound))) {
+    if (old_buffer == this->priv->buffer) {
+      /* same buffer */
+      gst_buffer_unref (old_buffer);
+    } else if (!was_bound) {
+      GST_TRACE ("old buffer %p was not bound yet, unreffing", old_buffer);
+      gst_buffer_unref (old_buffer);
+    } else {
+      GstBuffer *tmp_buffer;
+
+      GST_TRACE ("old buffer %p was bound, queueing up for later", old_buffer);
+      /* Unref all buffers that were previously not bound anymore. At least
+       * one more buffer was bound in the meantime so this one is most likely
+       * not in use anymore. */
+      while ((tmp_buffer = (GstBuffer*) g_queue_pop_head (&this->priv->potentially_unbound_buffers))) {
+        GST_TRACE ("old buffer %p should be unbound now, unreffing", tmp_buffer);
+        gst_buffer_unref (tmp_buffer);
+      }
+
+      /* Move previous bound buffers to the next queue. We now know that
+       * another buffer was bound in the meantime and will free them on
+       * the next iteration above. */
+      while ((tmp_buffer = (GstBuffer*) g_queue_pop_head (&this->priv->bound_buffers))) {
+        GST_TRACE ("old buffer %p is potentially unbound now", tmp_buffer);
+        g_queue_push_tail (&this->priv->potentially_unbound_buffers, tmp_buffer);
+      }
+      g_queue_push_tail (&this->priv->bound_buffers, old_buffer);
+    }
+    old_buffer = NULL;
+  }
+
   tex->setCaps (this->priv->caps);
   tex->setBuffer (this->priv->buffer);
   texNode->markDirty(QSGNode::DirtyMaterial);
@@ -252,12 +306,23 @@ QtGLVideoItem::updatePaintNode(QSGNode * oldNode,
 static void
 _reset (QtGLVideoItem * qt_item)
 {
+  GstBuffer *tmp_buffer;
+
   gst_buffer_replace (&qt_item->priv->buffer, NULL);
 
   gst_caps_replace (&qt_item->priv->caps, NULL);
 
   qt_item->priv->negotiated = FALSE;
   qt_item->priv->initted = FALSE;
+
+  while ((tmp_buffer = (GstBuffer*) g_queue_pop_head (&qt_item->priv->potentially_unbound_buffers))) {
+    GST_TRACE ("old buffer %p should be unbound now, unreffing", tmp_buffer);
+    gst_buffer_unref (tmp_buffer);
+  }
+  while ((tmp_buffer = (GstBuffer*) g_queue_pop_head (&qt_item->priv->bound_buffers))) {
+    GST_TRACE ("old buffer %p should be unbound now, unreffing", tmp_buffer);
+    gst_buffer_unref (tmp_buffer);
+  }
 }
 
 void

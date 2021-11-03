@@ -37,13 +37,6 @@ ifeq ($(DEB_HOST_ARCH_OS),hurd)
 conf_flags += -Doss4=disabled
 endif
 
-# workaround for mesa headers being broken (#894076)
-ifeq ($(DEB_HOST_ARCH),armel)
-conf_flags += -Dqt5=disabled
-endif
-ifeq ($(DEB_HOST_ARCH),armhf)
-conf_flags += -Dqt5=disabled
-endif
 
 %:
 	dh $@ --buildsystem=meson

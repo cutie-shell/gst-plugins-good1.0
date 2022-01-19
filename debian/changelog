@@ -1,3 +1,19 @@
+gst-plugins-good1.0 (1.18.5-2) unstable; urgency=medium
+
+  [ Adrian Bunk ]
+  * debian/rules,
+    debian/control:
+    + With #894076 fixed, gstreamer1.0-qt5 builds again on armel/armhf (Closes: #998383).
+
+  [ Samuel Thibault ]
+  * debian/control:
+    + Build Qt5/Wayland support only on Linux (Closes: #998210).
+
+  [ Sebastian Dröge ]
+  * Upload to unstable.
+
+ -- Sebastian Dröge <slomo@debian.org>  Wed, 19 Jan 2022 11:55:09 +0200
+
 gst-plugins-good1.0 (1.18.5-1) unstable; urgency=medium
 
   * debian/control:

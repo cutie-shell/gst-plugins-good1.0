@@ -73,12 +73,25 @@ enum
   PROP_DROP_ORPHANS
 };
 
+/* P is progressive, meaning the top and bottom fields belong to
+ * the same frame, i.e. they were sampled at the same time */
 #define GST_DEINTERLACE_BUFFER_STATE_P    (1<<0)
+/* I is interlaced meaning that the two fields were sampled at
+ * different times, usually equidistant in time so one at 1/60,
+ * the other at 2/60 */
 #define GST_DEINTERLACE_BUFFER_STATE_I    (1<<1)
+/* TC is telecine, B means bottom, T means top */
 #define GST_DEINTERLACE_BUFFER_STATE_TC_B (1<<2)
 #define GST_DEINTERLACE_BUFFER_STATE_TC_T (1<<3)
+/* TC_P means telecine progressive meaning that the two fields
+ * in the frame were sampled at the same time */
 #define GST_DEINTERLACE_BUFFER_STATE_TC_P (1<<4)
+/* TC_M i think means telecine mixed, meaning that the two fields
+ * are sampled at different times so you need to find the other field
+ * in the previous or next frame */
 #define GST_DEINTERLACE_BUFFER_STATE_TC_M (1<<5)
+/* RFF means repeat field flag and indicates a field that has
+ * previously been seen */
 #define GST_DEINTERLACE_BUFFER_STATE_RFF  (1<<6)
 
 #define GST_ONE \
@@ -329,6 +342,7 @@ static void gst_deinterlace_update_qos (GstDeinterlace * self,
 static void gst_deinterlace_reset_qos (GstDeinterlace * self);
 static void gst_deinterlace_read_qos (GstDeinterlace * self,
     gdouble * proportion, GstClockTime * time);
+static gboolean deinterlace_element_init (GstPlugin * plugin);
 
 #define IS_TELECINE(m) ((m) == GST_VIDEO_INTERLACE_MODE_MIXED && self->pattern > 1)
 
@@ -352,9 +366,9 @@ _do_init (GType object_type)
 }
 #endif
 
-G_DEFINE_TYPE (GstDeinterlace, gst_deinterlace, GST_TYPE_ELEMENT);
-
 #define parent_class gst_deinterlace_parent_class
+G_DEFINE_TYPE (GstDeinterlace, gst_deinterlace, GST_TYPE_ELEMENT);
+GST_ELEMENT_REGISTER_DEFINE_CUSTOM (deinterlace, deinterlace_element_init);
 
 static const struct
 {
@@ -1029,7 +1043,8 @@ gst_deinterlace_get_buffer_state (GstDeinterlace * self, GstVideoFrame * frame,
     interlacing_mode = GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
 
   if (state) {
-    if (interlacing_mode == GST_VIDEO_INTERLACE_MODE_MIXED) {
+    if (interlacing_mode == GST_VIDEO_INTERLACE_MODE_MIXED ||
+        interlacing_mode == GST_VIDEO_INTERLACE_MODE_ALTERNATE) {
       if (GST_VIDEO_FRAME_IS_RFF (frame)) {
         *state = GST_DEINTERLACE_BUFFER_STATE_RFF;
       } else if (GST_VIDEO_FRAME_IS_ONEFIELD (frame)) {
@@ -2987,7 +3002,7 @@ invalid_caps:
   }
 set_caps_failed:
   {
-    GST_ERROR_OBJECT (pad, "Failed to set caps: %" GST_PTR_FORMAT, srccaps);
+    GST_INFO_OBJECT (pad, "Failed to set caps: %" GST_PTR_FORMAT, srccaps);
     if (peercaps)
       gst_caps_unref (peercaps);
     gst_caps_unref (srccaps);
@@ -3312,8 +3327,9 @@ gst_deinterlace_src_query (GstPad * pad, GstObject * parent, GstQuery * query)
   return res;
 }
 
+
 static gboolean
-plugin_init (GstPlugin * plugin)
+deinterlace_element_init (GstPlugin * plugin)
 {
   GST_DEBUG_CATEGORY_INIT (deinterlace_debug, "deinterlace", 0, "Deinterlacer");
 
@@ -3321,12 +3337,14 @@ plugin_init (GstPlugin * plugin)
   orc_init ();
 #endif
 
-  if (!gst_element_register (plugin, "deinterlace", GST_RANK_NONE,
-          GST_TYPE_DEINTERLACE)) {
-    return FALSE;
-  }
+  return gst_element_register (plugin, "deinterlace", GST_RANK_NONE,
+      GST_TYPE_DEINTERLACE);
+}
 
-  return TRUE;
+static gboolean
+plugin_init (GstPlugin * plugin)
+{
+  return GST_ELEMENT_REGISTER (deinterlace, plugin);
 }
 
 GST_PLUGIN_DEFINE (GST_VERSION_MAJOR,

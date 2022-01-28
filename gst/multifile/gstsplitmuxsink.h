@@ -34,7 +34,6 @@ typedef struct _GstSplitMuxSink GstSplitMuxSink;
 typedef struct _GstSplitMuxSinkClass GstSplitMuxSinkClass;
 
 GType gst_splitmux_sink_get_type (void);
-gboolean register_splitmuxsink (GstPlugin * plugin);
 
 typedef enum _SplitMuxInputState
 {
@@ -67,6 +66,26 @@ typedef struct _MqStreamBuf
   guint64 buf_size;
   GstClockTime duration;
 } MqStreamBuf;
+
+typedef struct {
+  /* For the very first GOP if it was created from a GAP event */
+  gboolean from_gap;
+
+  /* Minimum start time (PTS or DTS) of the GOP */
+  GstClockTimeDiff start_time;
+  /* Start time (PTS) of the GOP */
+  GstClockTimeDiff start_time_pts;
+  /* Minimum start timecode of the GOP */
+  GstVideoTimeCode *start_tc;
+
+  /* Number of bytes we've collected into the GOP */
+  guint64 total_bytes;
+  /* Number of bytes from the reference context
+   * that we've collected into the GOP */
+  guint64 reference_bytes;
+
+  gboolean sent_fku;
+} InputGop;
 
 typedef struct _MqStreamCtx
 {
@@ -147,6 +166,8 @@ struct _GstSplitMuxSink
 
   SplitMuxInputState input_state;
   GstClockTimeDiff max_in_running_time;
+  GstClockTimeDiff max_in_running_time_dts;
+
   /* Number of bytes sent to the
    * current fragment */
   guint64 fragment_total_bytes;
@@ -154,22 +175,16 @@ struct _GstSplitMuxSink
    * stream in this fragment */
   guint64 fragment_reference_bytes;
 
-  /* Number of bytes we've collected into
-   * the GOP that's being collected */
-  guint64 gop_total_bytes;
-  /* Number of bytes from the reference context
-   * that we've collected into the current GOP */
-  guint64 gop_reference_bytes;
-  /* Start time of the current fragment */
+  /* Minimum start time (PTS or DTS) of the current fragment */
   GstClockTimeDiff fragment_start_time;
-  /* Start time of the current GOP */
-  GstClockTimeDiff gop_start_time;
-  /* The last timecode we have */
-  GstVideoTimeCode *in_tc;
-  /* Start timecode of the current fragment */
+  /* Start time (PTS) of the current fragment */
+  GstClockTimeDiff fragment_start_time_pts;
+  /* Minimum start timecode of the current fragment */
   GstVideoTimeCode *fragment_start_tc;
-  /* Start timecode of the current GOP */
-  GstVideoTimeCode *gop_start_tc;
+
+  /* Oldest GOP at head, newest GOP at tail */
+  GQueue pending_input_gops;
+
   /* expected running time of next fragment in timecode mode */
   GstClockTime next_fragment_start_tc_time;
 
@@ -219,6 +234,8 @@ struct _GstSplitMuxSinkClass
   void     (*split_after) (GstSplitMuxSink * splitmux);
   void     (*split_at_running_time)   (GstSplitMuxSink * splitmux, GstClockTime split_time);
 };
+
+GST_ELEMENT_REGISTER_DECLARE (splitmuxsink);
 
 G_END_DECLS
 #endif /* __GST_SPLITMUXSINK_H__ */

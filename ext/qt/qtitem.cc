@@ -29,7 +29,6 @@
 #include "gstqsgtexture.h"
 #include "gstqtglutility.h"
 
-#include <QtCore/QRunnable>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QPointer>
 #include <QtGui/QGuiApplication>
@@ -37,9 +36,8 @@
 #include <QtQuick/QSGSimpleTextureNode>
 
 /**
- * SECTION:gtkgstglwidget
- * @short_description: a #GtkGLArea that renders GStreamer video #GstBuffers
- * @see_also: #GtkGLArea, #GstBuffer
+ * SECTION:QtGLVideoItem
+ * @short_description: a Qt5 QtQuick item that renders GStreamer video #GstBuffers
  *
  * #QtGLVideoItem is an #QQuickItem that renders GStreamer video buffers.
  */
@@ -66,12 +64,15 @@ struct _QtGLVideoItemPrivate
   gboolean force_aspect_ratio;
   gint par_n, par_d;
 
+  GWeakRef sink;
+
   gint display_width;
   gint display_height;
 
-  gboolean negotiated;
   GstBuffer *buffer;
+  GstCaps *new_caps;
   GstCaps *caps;
+  GstVideoInfo new_v_info;
   GstVideoInfo v_info;
 
   gboolean initted;
@@ -89,27 +90,6 @@ struct _QtGLVideoItemPrivate
   GQueue potentially_unbound_buffers;
 };
 
-class InitializeSceneGraph : public QRunnable
-{
-public:
-  InitializeSceneGraph(QtGLVideoItem *item);
-  void run();
-
-private:
-  QPointer<QtGLVideoItem> item_;
-};
-
-InitializeSceneGraph::InitializeSceneGraph(QtGLVideoItem *item) :
-  item_(item)
-{
-}
-
-void InitializeSceneGraph::run()
-{
-  if(item_)
-    item_->onSceneGraphInitialized();
-}
-
 QtGLVideoItem::QtGLVideoItem()
 {
   static gsize _debug;
@@ -118,7 +98,7 @@ QtGLVideoItem::QtGLVideoItem()
     GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT, "qtglwidget", 0, "Qt GL Widget");
     g_once_init_leave (&_debug, 1);
   }
-  this->m_openGlContextInitialized = false;
+
   this->setFlag (QQuickItem::ItemHasContents, true);
 
   this->priv = g_new0 (QtGLVideoItemPrivate, 1);
@@ -127,14 +107,22 @@ QtGLVideoItem::QtGLVideoItem()
   this->priv->par_n = DEFAULT_PAR_N;
   this->priv->par_d = DEFAULT_PAR_D;
 
+  this->priv->initted = FALSE;
+
   g_mutex_init (&this->priv->lock);
 
-  this->priv->display = gst_qt_get_gl_display();
+  g_weak_ref_init (&priv->sink, NULL);
+
+  this->priv->display = gst_qt_get_gl_display(TRUE);
 
   connect(this, SIGNAL(windowChanged(QQuickWindow*)), this,
           SLOT(handleWindowChanged(QQuickWindow*)));
 
   this->proxy = QSharedPointer<QtGLVideoItemInterface>(new QtGLVideoItemInterface(this));
+
+  setFlag(ItemHasContents, true);
+  setAcceptedMouseButtons(Qt::AllButtons);
+  setAcceptHoverEvents(true);
 
   GST_DEBUG ("%p init Qt Video Item", this);
 }
@@ -171,6 +159,10 @@ QtGLVideoItem::~QtGLVideoItem()
   gst_buffer_replace (&this->priv->buffer, NULL);
 
   gst_caps_replace (&this->priv->caps, NULL);
+  gst_caps_replace (&this->priv->new_caps, NULL);
+
+  g_weak_ref_clear (&this->priv->sink);
+
   g_free (this->priv);
   this->priv = NULL;
 }
@@ -195,6 +187,8 @@ void
 QtGLVideoItem::setForceAspectRatio(bool force_aspect_ratio)
 {
   this->priv->force_aspect_ratio = !!force_aspect_ratio;
+
+  emit forceAspectRatioChanged(force_aspect_ratio);
 }
 
 bool
@@ -206,7 +200,71 @@ QtGLVideoItem::getForceAspectRatio()
 bool
 QtGLVideoItem::itemInitialized()
 {
-  return m_openGlContextInitialized;
+  return this->priv->initted;
+}
+
+static gboolean
+_calculate_par (QtGLVideoItem * widget, GstVideoInfo * info)
+{
+  gboolean ok;
+  gint width, height;
+  gint par_n, par_d;
+  gint display_par_n, display_par_d;
+  guint display_ratio_num, display_ratio_den;
+
+  width = GST_VIDEO_INFO_WIDTH (info);
+  height = GST_VIDEO_INFO_HEIGHT (info);
+
+  par_n = GST_VIDEO_INFO_PAR_N (info);
+  par_d = GST_VIDEO_INFO_PAR_D (info);
+
+  if (!par_n)
+    par_n = 1;
+
+  /* get display's PAR */
+  if (widget->priv->par_n != 0 && widget->priv->par_d != 0) {
+    display_par_n = widget->priv->par_n;
+    display_par_d = widget->priv->par_d;
+  } else {
+    display_par_n = 1;
+    display_par_d = 1;
+  }
+
+  ok = gst_video_calculate_display_ratio (&display_ratio_num,
+      &display_ratio_den, width, height, par_n, par_d, display_par_n,
+      display_par_d);
+
+  if (!ok)
+    return FALSE;
+
+  widget->setImplicitWidth (width);
+  widget->setImplicitHeight (height);
+
+  GST_LOG ("%p PAR: %u/%u DAR:%u/%u", widget, par_n, par_d, display_par_n,
+      display_par_d);
+
+  if (height % display_ratio_den == 0) {
+    GST_DEBUG ("%p keeping video height", widget);
+    widget->priv->display_width = (guint)
+        gst_util_uint64_scale_int (height, display_ratio_num,
+        display_ratio_den);
+    widget->priv->display_height = height;
+  } else if (width % display_ratio_num == 0) {
+    GST_DEBUG ("%p keeping video width", widget);
+    widget->priv->display_width = width;
+    widget->priv->display_height = (guint)
+        gst_util_uint64_scale_int (width, display_ratio_den, display_ratio_num);
+  } else {
+    GST_DEBUG ("%p approximating while keeping video height", widget);
+    widget->priv->display_width = (guint)
+        gst_util_uint64_scale_int (height, display_ratio_num,
+        display_ratio_den);
+    widget->priv->display_height = height;
+  }
+  GST_DEBUG ("%p scaling to %dx%d", widget, widget->priv->display_width,
+      widget->priv->display_height);
+
+  return TRUE;
 }
 
 QSGNode *
@@ -216,9 +274,8 @@ QtGLVideoItem::updatePaintNode(QSGNode * oldNode,
   GstBuffer *old_buffer;
   gboolean was_bound = FALSE;
 
-  if (!m_openGlContextInitialized) {
+  if (!this->priv->initted)
     return oldNode;
-  }
 
   QSGSimpleTextureNode *texNode = static_cast<QSGSimpleTextureNode *> (oldNode);
   GstVideoRectangle src, dst, result;
@@ -226,15 +283,16 @@ QtGLVideoItem::updatePaintNode(QSGNode * oldNode,
 
   g_mutex_lock (&this->priv->lock);
 
-  if (gst_gl_context_get_current() == NULL)
-    gst_gl_context_activate (this->priv->other_context, TRUE);
-
   GST_TRACE ("%p updatePaintNode", this);
 
   if (!this->priv->caps) {
+    GST_LOG ("%p no caps yet", this);
     g_mutex_unlock (&this->priv->lock);
     return NULL;
   }
+
+  if (gst_gl_context_get_current() == NULL)
+    gst_gl_context_activate (this->priv->other_context, TRUE);
 
   if (!texNode) {
     texNode = new QSGSimpleTextureNode ();
@@ -303,26 +361,193 @@ QtGLVideoItem::updatePaintNode(QSGNode * oldNode,
   return texNode;
 }
 
-static void
-_reset (QtGLVideoItem * qt_item)
+/* This method has to be invoked with the the priv->lock taken */
+void
+QtGLVideoItem::fitStreamToAllocatedSize(GstVideoRectangle * result)
 {
-  GstBuffer *tmp_buffer;
+  if (this->priv->force_aspect_ratio) {
+    GstVideoRectangle src, dst;
 
-  gst_buffer_replace (&qt_item->priv->buffer, NULL);
+    src.x = 0;
+    src.y = 0;
+    src.w = this->priv->display_width;
+    src.h = this->priv->display_height;
 
-  gst_caps_replace (&qt_item->priv->caps, NULL);
+    dst.x = 0;
+    dst.y = 0;
+    dst.w = width();
+    dst.h = height();
 
-  qt_item->priv->negotiated = FALSE;
-  qt_item->priv->initted = FALSE;
-
-  while ((tmp_buffer = (GstBuffer*) g_queue_pop_head (&qt_item->priv->potentially_unbound_buffers))) {
-    GST_TRACE ("old buffer %p should be unbound now, unreffing", tmp_buffer);
-    gst_buffer_unref (tmp_buffer);
+    gst_video_sink_center_rect (src, dst, result, TRUE);
+  } else {
+    result->x = 0;
+    result->y = 0;
+    result->w = width();
+    result->h = height();
   }
-  while ((tmp_buffer = (GstBuffer*) g_queue_pop_head (&qt_item->priv->bound_buffers))) {
-    GST_TRACE ("old buffer %p should be unbound now, unreffing", tmp_buffer);
-    gst_buffer_unref (tmp_buffer);
+}
+
+/* This method has to be invoked with the the priv->lock taken */
+QPointF
+QtGLVideoItem::mapPointToStreamSize(QPointF pos)
+{
+  gdouble stream_width, stream_height;
+  GstVideoRectangle result;
+  double stream_x, stream_y;
+  double x, y;
+
+  fitStreamToAllocatedSize(&result);
+
+  stream_width = (gdouble) GST_VIDEO_INFO_WIDTH (&this->priv->v_info);
+  stream_height = (gdouble) GST_VIDEO_INFO_HEIGHT (&this->priv->v_info);
+  x = pos.x();
+  y = pos.y();
+
+  /* from display coordinates to stream coordinates */
+  if (result.w > 0)
+    stream_x = (x - result.x) / result.w * stream_width;
+  else
+    stream_x = 0.;
+
+  /* clip to stream size */
+  stream_x = CLAMP(stream_x, 0., stream_width);
+
+  /* same for y-axis */
+  if (result.h > 0)
+    stream_y = (y - result.y) / result.h * stream_height;
+  else
+    stream_y = 0.;
+
+  stream_y = CLAMP(stream_y, 0., stream_height);
+  GST_TRACE ("transform %fx%f into %fx%f", x, y, stream_x, stream_y);
+
+  return QPointF(stream_x, stream_y);
+}
+
+void
+QtGLVideoItem::wheelEvent(QWheelEvent * event)
+{
+  g_mutex_lock (&this->priv->lock);
+  QPoint delta = event->angleDelta();
+  GstElement *element = GST_ELEMENT_CAST (g_weak_ref_get (&this->priv->sink));
+
+  if (element != NULL) {
+#if (QT_VERSION >= QT_VERSION_CHECK (5, 14, 0))
+    auto position = event->position();
+#else
+    auto position = *event;
+#endif
+    gst_navigation_send_mouse_scroll_event (GST_NAVIGATION (element),
+                                            position.x(), position.y(), delta.x(), delta.y());
+    g_object_unref (element);
   }
+  g_mutex_unlock (&this->priv->lock);
+}
+
+void
+QtGLVideoItem::hoverEnterEvent(QHoverEvent *)
+{
+  mouseHovering = true;
+}
+
+void
+QtGLVideoItem::hoverLeaveEvent(QHoverEvent *)
+{
+  mouseHovering = false;
+}
+
+void
+QtGLVideoItem::hoverMoveEvent(QHoverEvent * event)
+{
+  if (!mouseHovering)
+    return;
+
+  quint32 button = !!mousePressedButton;
+
+  g_mutex_lock (&this->priv->lock);
+
+  /* can't do anything when we don't have input format */
+  if (!this->priv->caps) {
+    g_mutex_unlock (&this->priv->lock);
+    return;
+  }
+
+  if (event->pos() != event->oldPos()) {
+    QPointF pos = mapPointToStreamSize(event->pos());
+    GstElement *element = GST_ELEMENT_CAST (g_weak_ref_get (&this->priv->sink));
+
+    if (element != NULL) {
+      gst_navigation_send_mouse_event (GST_NAVIGATION (element), "mouse-move",
+                                       button, pos.x(), pos.y());
+      g_object_unref (element);
+    }
+  }
+  g_mutex_unlock (&this->priv->lock);
+}
+
+void
+QtGLVideoItem::sendMouseEvent(QMouseEvent * event, const gchar * type)
+{
+  quint32 button = 0;
+
+  switch (event->button()) {
+  case Qt::LeftButton:
+    button = 1;
+    break;
+  case Qt::RightButton:
+    button = 2;
+    break;
+  default:
+    break;
+  }
+
+  mousePressedButton = button;
+
+  g_mutex_lock (&this->priv->lock);
+
+  /* can't do anything when we don't have input format */
+  if (!this->priv->caps) {
+    g_mutex_unlock (&this->priv->lock);
+    return;
+  }
+
+  QPointF pos = mapPointToStreamSize(event->pos());
+  gchar* event_type = g_strconcat ("mouse-button-", type, NULL);
+  GstElement *element = GST_ELEMENT_CAST (g_weak_ref_get (&this->priv->sink));
+
+  if (element != NULL) {
+    gst_navigation_send_mouse_event (GST_NAVIGATION (element), event_type,
+                                     button, pos.x(), pos.y());
+    g_object_unref (element);
+  }
+
+  g_free (event_type);
+  g_mutex_unlock (&this->priv->lock);
+}
+
+void
+QtGLVideoItem::mousePressEvent(QMouseEvent * event)
+{
+  forceActiveFocus();
+  sendMouseEvent(event, "press");
+}
+
+void
+QtGLVideoItem::mouseReleaseEvent(QMouseEvent * event)
+{
+  sendMouseEvent(event, "release");
+}
+
+void
+QtGLVideoItemInterface::setSink (GstElement * sink)
+{
+  QMutexLocker locker(&lock);
+  if (qt_item == NULL)
+    return;
+
+  g_mutex_lock (&qt_item->priv->lock);
+  g_weak_ref_set (&qt_item->priv->sink, sink);
+  g_mutex_unlock (&qt_item->priv->lock);
 }
 
 void
@@ -335,12 +560,25 @@ QtGLVideoItemInterface::setBuffer (GstBuffer * buffer)
     return;
   }
 
-  if (!qt_item->priv->negotiated) {
+  if (!qt_item->priv->caps && !qt_item->priv->new_caps) {
     GST_WARNING ("%p Got buffer on unnegotiated QtGLVideoItem. Dropping", this);
     return;
   }
 
   g_mutex_lock (&qt_item->priv->lock);
+
+  if (qt_item->priv->new_caps) {
+    GST_DEBUG ("%p caps change from %" GST_PTR_FORMAT " to %" GST_PTR_FORMAT,
+        this, qt_item->priv->caps, qt_item->priv->new_caps);
+    gst_caps_take (&qt_item->priv->caps, qt_item->priv->new_caps);
+    qt_item->priv->new_caps = NULL;
+    qt_item->priv->v_info = qt_item->priv->new_v_info;
+
+    if (!_calculate_par (qt_item, &qt_item->priv->v_info)) {
+      g_mutex_unlock (&qt_item->priv->lock);
+      return;
+    }
+  }
 
   gst_buffer_replace (&qt_item->priv->buffer, buffer);
 
@@ -367,7 +605,7 @@ QtGLVideoItem::onSceneGraphInitialized ()
     return;
   }
 
-  m_openGlContextInitialized = gst_qt_get_gl_wrapcontext (this->priv->display,
+  this->priv->initted = gst_qt_get_gl_wrapcontext (this->priv->display,
       &this->priv->other_context, &this->priv->context);
 
   GST_DEBUG ("%p created wrapped GL context %" GST_PTR_FORMAT, this,
@@ -438,79 +676,23 @@ QtGLVideoItemInterface::initWinSys ()
 }
 
 void
-QtGLVideoItem::handleWindowChanged(QQuickWindow *win)
+QtGLVideoItem::handleWindowChanged (QQuickWindow * win)
 {
   if (win) {
-    if (win->isSceneGraphInitialized())
-      win->scheduleRenderJob(new InitializeSceneGraph(this), QQuickWindow::BeforeSynchronizingStage);
+    if (win->isSceneGraphInitialized ())
+      win->scheduleRenderJob (new RenderJob (std::
+              bind (&QtGLVideoItem::onSceneGraphInitialized, this)),
+          QQuickWindow::BeforeSynchronizingStage);
     else
-      connect(win, SIGNAL(sceneGraphInitialized()), this, SLOT(onSceneGraphInitialized()), Qt::DirectConnection);
+      connect (win, SIGNAL (sceneGraphInitialized ()), this,
+          SLOT (onSceneGraphInitialized ()), Qt::DirectConnection);
 
-    connect(win, SIGNAL(sceneGraphInvalidated()), this, SLOT(onSceneGraphInvalidated()), Qt::DirectConnection);
+    connect (win, SIGNAL (sceneGraphInvalidated ()), this,
+        SLOT (onSceneGraphInvalidated ()), Qt::DirectConnection);
   } else {
     this->priv->qt_context = NULL;
+    this->priv->initted = FALSE;
   }
-}
-
-static gboolean
-_calculate_par (QtGLVideoItem * widget, GstVideoInfo * info)
-{
-  gboolean ok;
-  gint width, height;
-  gint par_n, par_d;
-  gint display_par_n, display_par_d;
-  guint display_ratio_num, display_ratio_den;
-
-  width = GST_VIDEO_INFO_WIDTH (info);
-  height = GST_VIDEO_INFO_HEIGHT (info);
-
-  par_n = GST_VIDEO_INFO_PAR_N (info);
-  par_d = GST_VIDEO_INFO_PAR_D (info);
-
-  if (!par_n)
-    par_n = 1;
-
-  /* get display's PAR */
-  if (widget->priv->par_n != 0 && widget->priv->par_d != 0) {
-    display_par_n = widget->priv->par_n;
-    display_par_d = widget->priv->par_d;
-  } else {
-    display_par_n = 1;
-    display_par_d = 1;
-  }
-
-  ok = gst_video_calculate_display_ratio (&display_ratio_num,
-      &display_ratio_den, width, height, par_n, par_d, display_par_n,
-      display_par_d);
-
-  if (!ok)
-    return FALSE;
-
-  GST_LOG ("%p PAR: %u/%u DAR:%u/%u", widget, par_n, par_d, display_par_n,
-      display_par_d);
-
-  if (height % display_ratio_den == 0) {
-    GST_DEBUG ("%p keeping video height", widget);
-    widget->priv->display_width = (guint)
-        gst_util_uint64_scale_int (height, display_ratio_num,
-        display_ratio_den);
-    widget->priv->display_height = height;
-  } else if (width % display_ratio_num == 0) {
-    GST_DEBUG ("%p keeping video width", widget);
-    widget->priv->display_width = width;
-    widget->priv->display_height = (guint)
-        gst_util_uint64_scale_int (width, display_ratio_den, display_ratio_num);
-  } else {
-    GST_DEBUG ("%p approximating while keeping video height", widget);
-    widget->priv->display_width = (guint)
-        gst_util_uint64_scale_int (height, display_ratio_num,
-        display_ratio_den);
-    widget->priv->display_height = height;
-  }
-  GST_DEBUG ("%p scaling to %dx%d", widget, widget->priv->display_width,
-      widget->priv->display_height);
-
-  return TRUE;
 }
 
 gboolean
@@ -533,17 +715,11 @@ QtGLVideoItemInterface::setCaps (GstCaps * caps)
 
   g_mutex_lock (&qt_item->priv->lock);
 
-  _reset (qt_item);
+  GST_DEBUG ("%p set caps %" GST_PTR_FORMAT, qt_item, caps);
 
-  gst_caps_replace (&qt_item->priv->caps, caps);
+  gst_caps_replace (&qt_item->priv->new_caps, caps);
 
-  if (!_calculate_par (qt_item, &v_info)) {
-    g_mutex_unlock (&qt_item->priv->lock);
-    return FALSE;
-  }
-
-  qt_item->priv->v_info = v_info;
-  qt_item->priv->negotiated = TRUE;
+  qt_item->priv->new_v_info = v_info;
 
   g_mutex_unlock (&qt_item->priv->lock);
 

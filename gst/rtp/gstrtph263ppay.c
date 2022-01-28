@@ -28,6 +28,7 @@
 #include <gst/rtp/gstrtpbuffer.h>
 #include <gst/video/video.h>
 
+#include "gstrtpelements.h"
 #include "gstrtph263ppay.h"
 #include "gstrtputils.h"
 
@@ -112,6 +113,8 @@ static GstFlowReturn gst_rtp_h263p_pay_handle_buffer (GstRTPBasePayload *
 
 #define gst_rtp_h263p_pay_parent_class parent_class
 G_DEFINE_TYPE (GstRtpH263PPay, gst_rtp_h263p_pay, GST_TYPE_RTP_BASE_PAYLOAD);
+GST_ELEMENT_REGISTER_DEFINE_WITH_CODE (rtph263ppay, "rtph263ppay",
+    GST_RANK_SECONDARY, GST_TYPE_RTP_H263P_PAY, rtp_element_init (plugin));
 
 static void
 gst_rtp_h263p_pay_class_init (GstRtpH263PPayClass * klass)
@@ -732,7 +735,9 @@ gst_rtp_h263p_pay_flush (GstRtpH263PPay * rtph263ppay)
     if (next_gop > 0)
       towrite = MIN (next_gop, towrite);
 
-    outbuf = gst_rtp_buffer_new_allocate (header_len, 0, 0);
+    outbuf =
+        gst_rtp_base_payload_allocate_output_buffer (GST_RTP_BASE_PAYLOAD
+        (rtph263ppay), header_len, 0, 0);
 
     gst_rtp_buffer_map (outbuf, GST_MAP_WRITE, &rtp);
     /* last fragment gets the marker bit set */
@@ -806,11 +811,4 @@ gst_rtp_h263p_pay_handle_buffer (GstRTPBasePayload * payload,
   ret = gst_rtp_h263p_pay_flush (rtph263ppay);
 
   return ret;
-}
-
-gboolean
-gst_rtp_h263p_pay_plugin_init (GstPlugin * plugin)
-{
-  return gst_element_register (plugin, "rtph263ppay",
-      GST_RANK_SECONDARY, GST_TYPE_RTP_H263P_PAY);
 }

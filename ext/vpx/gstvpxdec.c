@@ -197,6 +197,7 @@ static void
 gst_vpx_dec_init (GstVPXDec * gst_vpx_dec)
 {
   GstVideoDecoder *decoder = (GstVideoDecoder *) gst_vpx_dec;
+  GstVPXDecClass *vpxclass = GST_VPX_DEC_GET_CLASS (gst_vpx_dec);
 
   GST_DEBUG_OBJECT (gst_vpx_dec, "gst_vpx_dec_init");
   gst_video_decoder_set_packetized (decoder, TRUE);
@@ -204,6 +205,11 @@ gst_vpx_dec_init (GstVPXDec * gst_vpx_dec)
   gst_vpx_dec->post_processing_flags = DEFAULT_POST_PROCESSING_FLAGS;
   gst_vpx_dec->deblocking_level = DEFAULT_DEBLOCKING_LEVEL;
   gst_vpx_dec->noise_level = DEFAULT_NOISE_LEVEL;
+
+  if (vpxclass->get_needs_sync_point) {
+    gst_video_decoder_set_needs_sync_point (GST_VIDEO_DECODER (gst_vpx_dec),
+        vpxclass->get_needs_sync_point (gst_vpx_dec));
+  }
 
   gst_video_decoder_set_needs_format (decoder, TRUE);
   gst_video_decoder_set_use_default_pad_acceptcaps (decoder, TRUE);
@@ -280,6 +286,7 @@ gst_vpx_dec_start (GstVideoDecoder * decoder)
 
   GST_DEBUG_OBJECT (gst_vpx_dec, "start");
   gst_vpx_dec->decoder_inited = FALSE;
+  gst_vpx_dec->safe_remap = FALSE;
 
   return TRUE;
 }
@@ -395,6 +402,15 @@ gst_vpx_dec_prepare_image (GstVPXDec * dec, const vpx_image_t * img)
 
   buffer = gst_buffer_ref (frame->buffer);
 
+  /* FIXME: an atomic remap would be preferable, for now we simply
+   * remap the buffer from RW to RO when using a sysmem allocator,
+   * in order to avoid a useless memcpy in GstVideoDecoder.
+   */
+  if (dec->safe_remap) {
+    gst_buffer_unmap (buffer, &frame->info);
+    gst_buffer_map (buffer, &frame->info, GST_MAP_READ);
+  }
+
   vmeta = gst_buffer_get_video_meta (buffer);
   vmeta->format = GST_VIDEO_INFO_FORMAT (info);
   vmeta->width = GST_VIDEO_INFO_WIDTH (info);
@@ -443,6 +459,9 @@ gst_vpx_dec_get_buffer_cb (gpointer priv, gsize min_size,
       gst_object_unref (allocator);
       allocator = NULL;
     }
+
+    dec->safe_remap = (allocator == NULL
+        || !g_strcmp0 (allocator->mem_type, GST_ALLOCATOR_SYSMEM));
 
     pool = gst_buffer_pool_new ();
     config = gst_buffer_pool_get_config (pool);
@@ -581,14 +600,11 @@ gst_vpx_dec_open_codec (GstVPXDec * dec, GstVideoCodecFrame * frame)
   gst_buffer_unmap (frame->input_buffer, &minfo);
 
   if (status != VPX_CODEC_OK) {
-    GST_WARNING_OBJECT (dec, "VPX preprocessing error: %s",
+    GST_INFO_OBJECT (dec, "VPX preprocessing error: %s",
         gst_vpx_error_name (status));
     return GST_FLOW_CUSTOM_SUCCESS_1;
   }
-  if (!stream_info.is_kf) {
-    GST_WARNING_OBJECT (dec, "No keyframe, skipping");
-    return GST_FLOW_CUSTOM_SUCCESS_1;
-  }
+
   if (stream_info.w == 0 || stream_info.h == 0) {
     /* For VP8 it's possible to signal width or height to be 0, but it does
      * not make sense to do so. For VP9 it's impossible. Hence, we most likely
@@ -672,6 +688,12 @@ gst_vpx_dec_handle_frame (GstVideoDecoder * decoder, GstVideoCodecFrame * frame)
   if (!dec->decoder_inited) {
     ret = vpxclass->open_codec (dec, frame);
     if (ret == GST_FLOW_CUSTOM_SUCCESS_1) {
+      GstVideoDecoderRequestSyncPointFlags flags = 0;
+
+      if (gst_video_decoder_get_needs_sync_point (decoder))
+        flags |= GST_VIDEO_DECODER_REQUEST_SYNC_POINT_DISCARD_INPUT;
+
+      gst_video_decoder_request_sync_point (decoder, frame, flags);
       gst_video_decoder_drop_frame (decoder, frame);
       return GST_FLOW_OK;
     } else if (ret != GST_FLOW_OK) {
@@ -701,8 +723,15 @@ gst_vpx_dec_handle_frame (GstVideoDecoder * decoder, GstVideoCodecFrame * frame)
   gst_buffer_unmap (frame->input_buffer, &minfo);
 
   if (status) {
+    GstVideoDecoderRequestSyncPointFlags flags = 0;
+
     GST_VIDEO_DECODER_ERROR (decoder, 1, LIBRARY, ENCODE,
         ("Failed to decode frame"), ("%s", gst_vpx_error_name (status)), ret);
+
+    if (gst_video_decoder_get_needs_sync_point (decoder))
+      flags |= GST_VIDEO_DECODER_REQUEST_SYNC_POINT_DISCARD_INPUT;
+
+    gst_video_decoder_request_sync_point (decoder, frame, flags);
     gst_video_codec_frame_unref (frame);
     return ret;
   }

@@ -67,13 +67,12 @@
 #endif
 
 #include <gst/rtp/gstrtpbuffer.h>
+#include <gst/rtp/gstrtphdrext.h>
 
 #include "gstrtpfunnel.h"
 
 GST_DEBUG_CATEGORY_STATIC (gst_rtp_funnel_debug);
 #define GST_CAT_DEFAULT gst_rtp_funnel_debug
-
-#define TWCC_EXTMAP_STR "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
 
 /**************** GstRTPFunnelPad ****************/
 
@@ -90,6 +89,8 @@ struct _GstRtpFunnelPad
 };
 
 G_DEFINE_TYPE (GstRtpFunnelPad, gst_rtp_funnel_pad, GST_TYPE_PAD);
+GST_ELEMENT_REGISTER_DEFINE (rtpfunnel, "rtpfunnel", GST_RANK_NONE,
+    GST_TYPE_RTP_FUNNEL);
 
 static void
 gst_rtp_funnel_pad_class_init (G_GNUC_UNUSED GstRtpFunnelPadClass * klass)
@@ -127,9 +128,8 @@ struct _GstRtpFunnel
   /* The last pad data was chained on */
   GstPad *current_pad;
 
-  guint8 twcc_ext_id;           /* the negotiated twcc extmap id */
-  guint16 twcc_seqnum;          /* our internal twcc seqnum */
   guint twcc_pads;              /* numer of sinkpads with negotiated twcc */
+  GstRTPHeaderExtension *twcc_ext;
 
   /* properties */
   gint common_ts_offset;
@@ -189,16 +189,26 @@ done:
 static void
 gst_rtp_funnel_forward_segment (GstRtpFunnel * funnel, GstPad * pad)
 {
-  GstEvent *segment;
+  GstEvent *event;
+  guint i;
 
   if (pad == funnel->current_pad) {
     goto done;
   }
 
-  segment = gst_pad_get_sticky_event (pad, GST_EVENT_SEGMENT, 0);
-  if (segment && !gst_pad_push_event (funnel->srcpad, segment)) {
+  event = gst_pad_get_sticky_event (pad, GST_EVENT_SEGMENT, 0);
+  if (event && !gst_pad_push_event (funnel->srcpad, event)) {
     GST_ERROR_OBJECT (funnel, "Could not push segment");
     goto done;
+  }
+
+  for (i = 0;; i++) {
+    event = gst_pad_get_sticky_event (pad, GST_EVENT_CUSTOM_DOWNSTREAM_STICKY,
+        i);
+    if (event == NULL)
+      break;
+    if (!gst_pad_push_event (funnel->srcpad, event))
+      GST_ERROR_OBJECT (funnel, "Could not push custom event");
   }
 
   funnel->current_pad = pad;
@@ -212,36 +222,40 @@ gst_rtp_funnel_set_twcc_seqnum (GstRtpFunnel * funnel,
     GstPad * pad, GstBuffer ** buf)
 {
   GstRtpFunnelPad *fpad = GST_RTP_FUNNEL_PAD_CAST (pad);
+  guint8 twcc_seq[2] = { 0, };
   GstRTPBuffer rtp = GST_RTP_BUFFER_INIT;
+  guint ext_id = gst_rtp_header_extension_get_id (funnel->twcc_ext);
+  guint8 *existing;
+  guint size;
 
-  if (!funnel->twcc_ext_id || !fpad->has_twcc)
+  if (!funnel->twcc_ext || !fpad->has_twcc)
     return;
 
   *buf = gst_buffer_make_writable (*buf);
 
-  if (gst_rtp_buffer_map (*buf, GST_MAP_READWRITE, &rtp)) {
-    gpointer data;
+  gst_rtp_header_extension_write (funnel->twcc_ext, *buf,
+      GST_RTP_HEADER_EXTENSION_ONE_BYTE, *buf, twcc_seq, sizeof (twcc_seq));
 
-    /* if there already is a twcc-seqnum inside the packet */
-    if (gst_rtp_buffer_get_extension_onebyte_header (&rtp, funnel->twcc_ext_id,
-            0, &data, NULL)) {
+  if (!gst_rtp_buffer_map (*buf, GST_MAP_READWRITE, &rtp))
+    goto map_failed;
 
-      /* with only one pad, we read the twcc-seqnum instead of writing it */
-      if (funnel->twcc_pads == 1) {
-        funnel->twcc_seqnum = GST_READ_UINT16_BE (data);
-      } else {
-        GST_WRITE_UINT16_BE (data, funnel->twcc_seqnum);
-      }
-    } else {
-      guint16 seq_be;
-      GST_WRITE_UINT16_BE (&seq_be, funnel->twcc_seqnum);
-      gst_rtp_buffer_add_extension_onebyte_header (&rtp, funnel->twcc_ext_id,
-          &seq_be, 2);
+  if (gst_rtp_buffer_get_extension_onebyte_header (&rtp, ext_id,
+          0, (gpointer) & existing, &size)) {
+    if (size >= gst_rtp_header_extension_get_max_size (funnel->twcc_ext, *buf)) {
+      existing[0] = twcc_seq[0];
+      existing[1] = twcc_seq[1];
     }
   }
+  /* TODO: two-byte variant */
+
   gst_rtp_buffer_unmap (&rtp);
 
-  funnel->twcc_seqnum++;
+  return;
+
+map_failed:
+  {
+    GST_ERROR ("failed to map buffer %p", *buf);
+  }
 }
 
 static GstFlowReturn
@@ -292,24 +306,25 @@ static void
 gst_rtp_funnel_set_twcc_ext_id (GstRtpFunnel * funnel, guint8 twcc_ext_id)
 {
   gchar *name;
+  guint current_ext_id;
 
-  if (funnel->twcc_ext_id == twcc_ext_id)
+  current_ext_id = gst_rtp_header_extension_get_id (funnel->twcc_ext);
+  g_object_set (funnel->twcc_ext, "n-streams", funnel->twcc_pads, NULL);
+
+  if (current_ext_id == twcc_ext_id)
     return;
 
   name = g_strdup_printf ("extmap-%u", twcc_ext_id);
 
-  GST_OBJECT_LOCK (funnel);
-  gst_caps_set_simple (funnel->srccaps, name, G_TYPE_STRING, TWCC_EXTMAP_STR,
-      NULL);
-  GST_OBJECT_UNLOCK (funnel);
+  gst_caps_set_simple (funnel->srccaps, name, G_TYPE_STRING,
+      gst_rtp_header_extension_get_uri (funnel->twcc_ext), NULL);
 
   g_free (name);
 
   /* make sure we update the sticky with the new caps */
   funnel->send_sticky_events = TRUE;
 
-  GST_INFO_OBJECT (funnel, "Setting twcc-ext-id to %u", twcc_ext_id);
-  funnel->twcc_ext_id = twcc_ext_id;
+  gst_rtp_header_extension_set_id (funnel->twcc_ext, twcc_ext_id);
 }
 
 static guint8
@@ -335,6 +350,8 @@ _get_extmap_id_for_attribute (const GstStructure * s, const gchar * ext_name)
   return extmap_id;
 }
 
+#define TWCC_EXTMAP_STR "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
+
 static gboolean
 gst_rtp_funnel_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
 {
@@ -357,31 +374,37 @@ gst_rtp_funnel_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
       GstStructure *s;
       guint ssrc;
       guint8 ext_id;
+      GstCaps *rtpcaps = gst_caps_new_empty_simple (RTP_CAPS);
 
       gst_event_parse_caps (event, &caps);
 
       GST_OBJECT_LOCK (funnel);
-      if (!gst_caps_can_intersect (funnel->srccaps, caps)) {
+      if (!gst_caps_can_intersect (rtpcaps, caps)) {
         GST_ERROR_OBJECT (funnel, "Can't intersect with caps %" GST_PTR_FORMAT,
             caps);
         g_assert_not_reached ();
       }
-      GST_OBJECT_UNLOCK (funnel);
+
+      gst_caps_unref (rtpcaps);
 
       s = gst_caps_get_structure (caps, 0);
       if (gst_structure_get_uint (s, "ssrc", &ssrc)) {
         fpad->ssrc = ssrc;
         GST_DEBUG_OBJECT (pad, "Got ssrc: %u", ssrc);
-        GST_OBJECT_LOCK (funnel);
         g_hash_table_insert (funnel->ssrc_to_pad, GUINT_TO_POINTER (ssrc), pad);
-        GST_OBJECT_UNLOCK (funnel);
       }
+
+      if (!funnel->twcc_ext)
+        funnel->twcc_ext =
+            gst_rtp_header_extension_create_from_uri (TWCC_EXTMAP_STR);
+
       ext_id = _get_extmap_id_for_attribute (s, TWCC_EXTMAP_STR);
       if (ext_id > 0) {
         fpad->has_twcc = TRUE;
         funnel->twcc_pads++;
         gst_rtp_funnel_set_twcc_ext_id (funnel, ext_id);
       }
+      GST_OBJECT_UNLOCK (funnel);
 
       forward = FALSE;
       break;
@@ -410,15 +433,17 @@ gst_rtp_funnel_sink_query (GstPad * pad, GstObject * parent, GstQuery * query)
     {
       GstCaps *filter_caps;
       GstCaps *new_caps;
+      GstCaps *rtpcaps = gst_caps_new_empty_simple (RTP_CAPS);
 
       gst_query_parse_caps (query, &filter_caps);
 
       GST_OBJECT_LOCK (funnel);
       if (filter_caps) {
-        new_caps = gst_caps_intersect_full (funnel->srccaps, filter_caps,
+        new_caps = gst_caps_intersect_full (rtpcaps, filter_caps,
             GST_CAPS_INTERSECT_FIRST);
+        gst_caps_unref (rtpcaps);
       } else {
-        new_caps = gst_caps_copy (funnel->srccaps);
+        new_caps = rtpcaps;
       }
       GST_OBJECT_UNLOCK (funnel);
 
@@ -440,7 +465,7 @@ gst_rtp_funnel_sink_query (GstPad * pad, GstObject * parent, GstQuery * query)
       gst_query_parse_accept_caps (query, &caps);
 
       GST_OBJECT_LOCK (funnel);
-      result = gst_caps_is_subset (caps, funnel->srccaps);
+      result = gst_caps_can_intersect (caps, funnel->srccaps);
       if (!result) {
         GST_ERROR_OBJECT (pad,
             "caps: %" GST_PTR_FORMAT " were not compatible with: %"
@@ -614,6 +639,8 @@ gst_rtp_funnel_finalize (GObject * object)
 
   gst_caps_unref (funnel->srccaps);
   g_hash_table_destroy (funnel->ssrc_to_pad);
+
+  gst_clear_object (&funnel->twcc_ext);
 
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }

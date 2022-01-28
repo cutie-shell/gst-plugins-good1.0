@@ -135,6 +135,7 @@
 #define GST_MATROSKA_ID_VIDEOFIELDORDER            0x9D
 /* semi-draft */
 #define GST_MATROSKA_ID_VIDEOSTEREOMODE            0x53B8
+#define GST_MATROSKA_ID_VIDEOALPHAMODE             0x53C0
 #define GST_MATROSKA_ID_VIDEOASPECTRATIOTYPE       0x54B3
 #define GST_MATROSKA_ID_VIDEOCOLOURSPACE           0x2EB524
 /* semi-draft */
@@ -379,6 +380,7 @@
 #define GST_MATROSKA_CODEC_ID_VIDEO_AV1          "V_AV1"
 #define GST_MATROSKA_CODEC_ID_VIDEO_MPEGH_HEVC   "V_MPEGH/ISO/HEVC"
 #define GST_MATROSKA_CODEC_ID_VIDEO_PRORES       "V_PRORES"
+#define GST_MATROSKA_CODEC_ID_VIDEO_FFV1         "V_FFV1"
 
 #define GST_MATROSKA_CODEC_ID_AUDIO_MPEG1_L1       "A_MPEG/L1"
 #define GST_MATROSKA_CODEC_ID_AUDIO_MPEG1_L2       "A_MPEG/L2"
@@ -637,6 +639,8 @@ typedef struct _GstMatroskaTrackVideoContext {
 
   GstVideoMultiviewMode multiview_mode;
   GstVideoMultiviewFlags multiview_flags;
+
+  gboolean alpha_mode;
 
   /* QoS */
   GstClockTime  earliest_time;

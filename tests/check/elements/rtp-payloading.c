@@ -17,10 +17,15 @@
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA 02110-1301, USA.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <gst/check/gstcheck.h>
 #include <gst/check/gstharness.h>
 #include <gst/audio/audio.h>
 #include <gst/base/base.h>
+#include <gst/rtp/gstrtpbuffer.h>
 #include <stdlib.h>
 
 #define RELEASE_ELEMENT(x) if(x) {gst_object_unref(x); x = NULL;}
@@ -700,7 +705,7 @@ rtp_h264depay_run (const gchar * stream_format)
   gst_harness_play (h);
 
   size = sizeof (h264_16x16_black_bs);
-  buf = gst_buffer_new_wrapped (g_memdup (h264_16x16_black_bs, size), size);
+  buf = gst_buffer_new_memdup (h264_16x16_black_bs, size);
   fail_unless_equals_int (gst_harness_push (h, buf), GST_FLOW_OK);
   fail_unless (gst_harness_push_event (h, gst_event_new_eos ()));
 
@@ -1623,7 +1628,7 @@ GST_START_TEST (rtp_vorbis_renegotiate)
   gst_audio_info_from_caps (&info, caps);
   buffer = gst_buffer_new_and_alloc (44100 * info.bpf);
   gst_buffer_map (buffer, &map, GST_MAP_WRITE);
-  gst_audio_format_fill_silence (info.finfo, map.data, map.size);
+  gst_audio_format_info_fill_silence (info.finfo, map.data, map.size);
   gst_buffer_unmap (buffer, &map);
   GST_BUFFER_PTS (buffer) = 0;
   GST_BUFFER_DURATION (buffer) = 1 * GST_SECOND;
@@ -1647,7 +1652,7 @@ GST_START_TEST (rtp_vorbis_renegotiate)
   gst_audio_info_from_caps (&info, caps);
   buffer = gst_buffer_new_and_alloc (48000 * info.bpf);
   gst_buffer_map (buffer, &map, GST_MAP_WRITE);
-  gst_audio_format_fill_silence (info.finfo, map.data, map.size);
+  gst_audio_format_info_fill_silence (info.finfo, map.data, map.size);
   gst_buffer_unmap (buffer, &map);
   GST_BUFFER_PTS (buffer) = 0;
   GST_BUFFER_DURATION (buffer) = 1 * GST_SECOND;
@@ -1666,6 +1671,92 @@ GST_START_TEST (rtp_vorbis_renegotiate)
   gst_object_unref (srcpad);
   gst_element_set_state (pipeline, GST_STATE_NULL);
   gst_object_unref (pipeline);
+}
+
+GST_END_TEST;
+
+static guint16
+pull_rtp_buffer (GstHarness * h, gboolean has_marker)
+{
+  gint16 seq;
+  GstBuffer *buf;
+  GstRTPBuffer rtp = GST_RTP_BUFFER_INIT;
+
+  buf = gst_harness_try_pull (h);
+  fail_unless (buf);
+
+  fail_unless (gst_rtp_buffer_map (buf, GST_MAP_READ, &rtp));
+  seq = gst_rtp_buffer_get_seq (&rtp);
+  gst_rtp_buffer_unmap (&rtp);
+
+  if (has_marker)
+    fail_unless (GST_BUFFER_FLAG_IS_SET (buf, GST_BUFFER_FLAG_MARKER));
+  else
+    fail_if (GST_BUFFER_FLAG_IS_SET (buf, GST_BUFFER_FLAG_MARKER));
+
+  gst_buffer_unref (buf);
+  return seq;
+}
+
+static void
+test_rtp_opus_dtx (gboolean dtx)
+{
+  GstHarness *h;
+  GstBuffer *buf;
+  /* generated with a muted mic using:
+   * gst-launch-1.0 pulsesrc ! opusenc dtx=true bitrate-type=vbr ! fakesink silent=false dump=true -v
+   */
+  static const guint8 opus_empty[] = { 0xf8 };
+  static const guint8 opus_frame[] = { 0xf8, 0xff, 0xfe };
+  guint16 seq, expected_seq;
+
+  h = gst_harness_new_parse ("rtpopuspay");
+  fail_unless (h);
+
+  gst_harness_set (h, "rtpopuspay", "dtx", dtx, NULL);
+
+  gst_harness_set_caps_str (h,
+      "audio/x-opus, rate=48000, channels=1, channel-mapping-family=0",
+      "application/x-rtp, media=audio, clock-rate=48000, encoding-name=OPUS, sprop-stereo=(string)0, encoding-params=(string)2, sprop-maxcapturerate=(string)48000, payload=96");
+
+  /* push first opus frame */
+  buf = gst_buffer_new_memdup (opus_frame, sizeof (opus_frame));
+  fail_unless_equals_int (gst_harness_push (h, buf), GST_FLOW_OK);
+  seq = pull_rtp_buffer (h, TRUE);
+  expected_seq = seq + 1;
+
+  /* push empty frame */
+  buf = gst_buffer_new_memdup (opus_empty, sizeof (opus_empty));
+  fail_unless_equals_int (gst_harness_push (h, buf), GST_FLOW_OK);
+  if (dtx) {
+    /* buffer is not transmitted if dtx is enabled */
+    buf = gst_harness_try_pull (h);
+    fail_if (buf);
+  } else {
+    seq = pull_rtp_buffer (h, FALSE);
+    fail_unless_equals_int (seq, expected_seq);
+    expected_seq++;
+  }
+
+  /* push second opus frame */
+  buf = gst_buffer_new_memdup (opus_frame, sizeof (opus_frame));
+  fail_unless_equals_int (gst_harness_push (h, buf), GST_FLOW_OK);
+  seq = pull_rtp_buffer (h, dtx);
+  fail_unless_equals_int (seq, expected_seq);
+
+  gst_harness_teardown (h);
+}
+
+GST_START_TEST (rtp_opus_dtx_disabled)
+{
+  test_rtp_opus_dtx (FALSE);
+}
+
+GST_END_TEST;
+
+GST_START_TEST (rtp_opus_dtx_enabled)
+{
+  test_rtp_opus_dtx (TRUE);
 }
 
 GST_END_TEST;
@@ -1734,6 +1825,8 @@ rtp_payloading_suite (void)
   tcase_add_test (tc_chain, rtp_g729);
   tcase_add_test (tc_chain, rtp_gst_custom_event);
   tcase_add_test (tc_chain, rtp_vorbis_renegotiate);
+  tcase_add_test (tc_chain, rtp_opus_dtx_disabled);
+  tcase_add_test (tc_chain, rtp_opus_dtx_enabled);
   return s;
 }
 

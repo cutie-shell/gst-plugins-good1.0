@@ -1,6 +1,6 @@
 project('gst-plugins-good', 'c',
-  version : '1.18.5',
-  meson_version : '>= 0.48',
+  version : '1.19.90',
+  meson_version : '>= 0.59',
   default_options : [ 'warning_level=1',
                       'buildtype=debugoptimized' ])
 
@@ -14,13 +14,19 @@ gst_version_micro = version_arr[2].to_int()
 else
   gst_version_nano = 0
 endif
-gst_version_is_dev = gst_version_minor % 2 == 1 and gst_version_micro < 90
+gst_version_is_stable = gst_version_minor.is_even()
+gst_version_is_dev = gst_version_minor.is_odd() and gst_version_micro < 90
 
 have_cxx = add_languages('cpp', native: false, required: false)
 
-glib_req = '>= 2.44.0'
+glib_req = '>= 2.56.0'
 orc_req = '>= 0.4.17'
-gst_req = '>= @0@.@1@.0'.format(gst_version_major, gst_version_minor)
+
+if gst_version_is_stable
+  gst_req = '>= @0@.@1@.0'.format(gst_version_major, gst_version_minor)
+else
+  gst_req = '>= ' + gst_version
+endif
 
 api_version = '1.0'
 
@@ -31,17 +37,27 @@ cc = meson.get_compiler('c')
 host_system = host_machine.system()
 
 if cc.get_id() == 'msvc'
-  # Ignore several spurious warnings for things gstreamer does very commonly
-  # If a warning is completely useless and spammy, use '/wdXXXX' to suppress it
-  # If a warning is harmless but hard to fix, use '/woXXXX' so it's shown once
-  # NOTE: Only add warnings here if you are sure they're spurious
-  add_project_arguments(
+  msvc_args = [
+      # Ignore several spurious warnings for things gstreamer does very commonly
+      # If a warning is completely useless and spammy, use '/wdXXXX' to suppress it
+      # If a warning is harmless but hard to fix, use '/woXXXX' so it's shown once
+      # NOTE: Only add warnings here if you are sure they're spurious
       '/wd4018', # implicit signed/unsigned conversion
       '/wd4146', # unary minus on unsigned (beware INT_MIN)
       '/wd4244', # lossy type conversion (e.g. double -> int)
       '/wd4305', # truncating type conversion (e.g. double -> float)
       cc.get_supported_arguments(['/utf-8']), # set the input encoding to utf-8
-      language : 'c')
+
+      # Enable some warnings on MSVC to match GCC/Clang behaviour
+      '/w14062', # enumerator 'identifier' in switch of enum 'enumeration' is not handled
+      '/w14101', # 'identifier' : unreferenced local variable
+      '/w14189', # 'identifier' : local variable is initialized but not referenced
+  ]
+  if have_cxx
+    add_project_arguments(msvc_args, language: ['c', 'cpp'])
+  else
+    add_project_arguments(msvc_args, language: 'c')
+  endif
   # Disable SAFESEH with MSVC for plugins and libs that use external deps that
   # are built with MinGW
   noseh_link_args = ['/SAFESEH:NO']
@@ -170,6 +186,9 @@ cdata.set('SIZEOF_SHORT', cc.sizeof('short'))
 cdata.set('SIZEOF_VOIDP', cc.sizeof('void*'))
 cdata.set('SIZEOF_OFF_T', cc.sizeof('off_t'))
 
+have_rtld_noload = cc.has_header_symbol('dlfcn.h', 'RTLD_NOLOAD')
+cdata.set('HAVE_RTLD_NOLOAD', have_rtld_noload)
+
 # Here be fixmes.
 # FIXME: check if this is correct
 cdata.set('HAVE_CPU_X86_64', host_machine.cpu() == 'amd64')
@@ -280,9 +299,9 @@ have_gstgl = gstgl_dep.found()
 
 if have_gstgl
   if gstgl_dep.type_name() == 'pkgconfig'
-    gst_gl_apis = gstgl_dep.get_pkgconfig_variable('gl_apis').split()
-    gst_gl_winsys = gstgl_dep.get_pkgconfig_variable('gl_winsys').split()
-    gst_gl_platforms = gstgl_dep.get_pkgconfig_variable('gl_platforms').split()
+    gst_gl_apis = gstgl_dep.get_variable('gl_apis').split()
+    gst_gl_winsys = gstgl_dep.get_variable('gl_winsys').split()
+    gst_gl_platforms = gstgl_dep.get_variable('gl_platforms').split()
   else
     gstbase = subproject('gst-plugins-base')
     gst_gl_apis = gstbase.get_variable('enabled_gl_apis')
@@ -371,7 +390,7 @@ if host_cpu == 'x86_64'
     if nasm.found()
       # We can't use the version: kwarg for find_program because old versions
       # of nasm don't support --version
-      ret = run_command(nasm, '-v')
+      ret = run_command(nasm, '-v', check: false)
       if ret.returncode() == 0
         nasm_version = ret.stdout().strip().split()[2]
         nasm_req = '>=2.13'
@@ -454,7 +473,7 @@ if have_orcc and orc_targets.length() > 0
     ]
   endforeach
 
-  if meson.version().version_compare('>= 0.52')
+  if orc_update_targets.length() > 0
     update_orc_dist_target = alias_target('update-orc-dist', orc_update_targets)
   endif
 endif
@@ -470,32 +489,27 @@ subdir('scripts')
 # Set release date
 if gst_version_nano == 0
   extract_release_date = find_program('scripts/extract-release-date-from-doap-file.py')
-  run_result = run_command(extract_release_date, gst_version, files('gst-plugins-good.doap'))
-  if run_result.returncode() == 0
-    release_date = run_result.stdout().strip()
-    cdata.set_quoted('GST_PACKAGE_RELEASE_DATETIME', release_date)
-    message('Package release date: ' + release_date)
-  else
-    # Error out if our release can't be found in the .doap file
-    error(run_result.stderr())
-  endif
+  run_result = run_command(extract_release_date, gst_version, files('gst-plugins-good.doap'), check: true)
+  release_date = run_result.stdout().strip()
+  cdata.set_quoted('GST_PACKAGE_RELEASE_DATETIME', release_date)
+  message('Package release date: ' + release_date)
+endif
+
+if gio_dep.version().version_compare('< 2.67.4')
+  cdata.set('g_memdup2(ptr,sz)', '(G_LIKELY(((guint64)(sz)) < G_MAXUINT)) ? g_memdup(ptr,sz) : (g_abort(),NULL)')
 endif
 
 configure_file(output : 'config.h', configuration : cdata)
 
-run_command(python3, '-c', 'import shutil; shutil.copy("hooks/pre-commit.hook", ".git/hooks/pre-commit")')
+plugin_names = []
+foreach plugin: plugins
+  if plugin.name().startswith('gst')
+    plugin_names += [plugin.name().substring(3)]
+  else
+    plugin_names += [plugin.name()]
+  endif
+endforeach
 
-if meson.version().version_compare('>= 0.54')
-  plugin_names = []
-  foreach plugin: plugins
-    # FIXME: Use str.subtring() when we can depend on Meson 0.56
-    split = plugin.name().split('gst')
-    if split.length() == 2
-      plugin_names += [split[1]]
-    else
-      warning('Need substring API in meson >= 0.56 to properly parse plugin name: ' + plugin.name())
-      plugin_names += [plugin.name()]
-    endif
-  endforeach
-  summary({'Plugins':plugin_names}, list_sep: ', ')
-endif
+summary({
+    'Plugins': plugin_names,
+}, list_sep: ', ')

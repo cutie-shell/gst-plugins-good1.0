@@ -926,7 +926,7 @@ gst_v4l2_get_attribute (GstV4l2Object * v4l2object,
   /* ERRORS */
 ctrl_failed:
   {
-    GST_WARNING_OBJECT (v4l2object,
+    GST_WARNING_OBJECT (v4l2object->dbg_obj,
         _("Failed to get value for control %d on device '%s'."),
         attribute_num, v4l2object->videodev);
     return FALSE;
@@ -1064,6 +1064,9 @@ set_control (GQuark field_id, const GValue * value, gpointer user_data)
   if (G_VALUE_HOLDS (value, G_TYPE_INT)) {
     gst_v4l2_set_attribute (v4l2object, GPOINTER_TO_INT (d),
         g_value_get_int (value));
+  } else if (G_VALUE_HOLDS (value, G_TYPE_BOOLEAN)) {
+    gst_v4l2_set_attribute (v4l2object, GPOINTER_TO_INT (d),
+        g_value_get_boolean (value));
   } else if (G_VALUE_HOLDS (value, G_TYPE_STRING)) {
     gst_v4l2_set_string_attribute (v4l2object, GPOINTER_TO_INT (d),
         g_value_get_string (value));
@@ -1083,9 +1086,9 @@ gst_v4l2_set_controls (GstV4l2Object * v4l2object, GstStructure * controls)
 }
 
 gboolean
-gst_v4l2_get_input (GstV4l2Object * v4l2object, gint * input)
+gst_v4l2_get_input (GstV4l2Object * v4l2object, guint32 * input)
 {
-  gint n;
+  guint32 n;
 
   GST_DEBUG_OBJECT (v4l2object->dbg_obj, "trying to get input");
 
@@ -1097,7 +1100,7 @@ gst_v4l2_get_input (GstV4l2Object * v4l2object, gint * input)
 
   *input = n;
 
-  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "input: %d", n);
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "input: %u", n);
 
   return TRUE;
 
@@ -1114,9 +1117,9 @@ input_failed:
 }
 
 gboolean
-gst_v4l2_set_input (GstV4l2Object * v4l2object, gint input)
+gst_v4l2_set_input (GstV4l2Object * v4l2object, guint32 input)
 {
-  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "trying to set input to %d", input);
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "trying to set input to %u", input);
 
   if (!GST_V4L2_IS_OPEN (v4l2object))
     return FALSE;
@@ -1133,16 +1136,31 @@ input_failed:
      * support
      */
     GST_ELEMENT_WARNING (v4l2object->element, RESOURCE, SETTINGS,
-        (_("Failed to set input %d on device %s."),
+        (_("Failed to set input %u on device %s."),
             input, v4l2object->videodev), GST_ERROR_SYSTEM);
   }
   return FALSE;
 }
 
 gboolean
-gst_v4l2_get_output (GstV4l2Object * v4l2object, gint * output)
+gst_v4l2_query_input (GstV4l2Object * obj, struct v4l2_input * input)
 {
-  gint n;
+  gint ret;
+
+  ret = obj->ioctl (obj->video_fd, VIDIOC_ENUMINPUT, input);
+  if (ret < 0) {
+    GST_WARNING_OBJECT (obj->dbg_obj, "Failed to read input state: %s (%i)",
+        g_strerror (errno), errno);
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+gboolean
+gst_v4l2_get_output (GstV4l2Object * v4l2object, guint32 * output)
+{
+  guint32 n;
 
   GST_DEBUG_OBJECT (v4l2object->dbg_obj, "trying to get output");
 
@@ -1154,7 +1172,7 @@ gst_v4l2_get_output (GstV4l2Object * v4l2object, gint * output)
 
   *output = n;
 
-  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "output: %d", n);
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "output: %u", n);
 
   return TRUE;
 
@@ -1171,9 +1189,9 @@ output_failed:
 }
 
 gboolean
-gst_v4l2_set_output (GstV4l2Object * v4l2object, gint output)
+gst_v4l2_set_output (GstV4l2Object * v4l2object, guint32 output)
 {
-  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "trying to set output to %d", output);
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "trying to set output to %u", output);
 
   if (!GST_V4L2_IS_OPEN (v4l2object))
     return FALSE;
@@ -1190,8 +1208,160 @@ output_failed:
      * support
      */
     GST_ELEMENT_WARNING (v4l2object->element, RESOURCE, SETTINGS,
-        (_("Failed to set output %d on device %s."),
+        (_("Failed to set output %u on device %s."),
             output, v4l2object->videodev), GST_ERROR_SYSTEM);
   }
   return FALSE;
+}
+
+static const gchar *
+gst_v4l2_event_to_string (guint32 event)
+{
+  switch (event) {
+    case V4L2_EVENT_ALL:
+      return "ALL";
+    case V4L2_EVENT_VSYNC:
+      return "VSYNC";
+    case V4L2_EVENT_EOS:
+      return "EOS";
+    case V4L2_EVENT_CTRL:
+      return "CTRL";
+    case V4L2_EVENT_FRAME_SYNC:
+      return "FRAME_SYNC";
+    case V4L2_EVENT_SOURCE_CHANGE:
+      return "SOURCE_CHANGE";
+    case V4L2_EVENT_MOTION_DET:
+      return "MOTION_DET";
+    default:
+      break;
+  }
+
+  return "UNKNOWN";
+}
+
+gboolean
+gst_v4l2_subscribe_event (GstV4l2Object * v4l2object, guint32 event, guint32 id)
+{
+  struct v4l2_event_subscription sub = {.type = event,.id = id, };
+  gint ret;
+
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "Subscribing to '%s' event",
+      gst_v4l2_event_to_string (event));
+
+  if (!GST_V4L2_IS_OPEN (v4l2object))
+    return FALSE;
+
+  ret = v4l2object->ioctl (v4l2object->video_fd, VIDIOC_SUBSCRIBE_EVENT, &sub);
+  if (ret < 0)
+    goto failed;
+
+  return TRUE;
+
+  /* ERRORS */
+failed:
+  {
+    if (errno == ENOTTY || errno == EINVAL) {
+      GST_DEBUG_OBJECT (v4l2object->dbg_obj,
+          "Cannot subscribe to '%s' event: %s",
+          gst_v4l2_event_to_string (event), "not supported");
+    } else {
+      GST_ERROR_OBJECT (v4l2object->dbg_obj,
+          "Cannot subscribe to '%s' event: %s",
+          gst_v4l2_event_to_string (event), g_strerror (errno));
+    }
+    return FALSE;
+  }
+}
+
+gboolean
+gst_v4l2_dequeue_event (GstV4l2Object * v4l2object, struct v4l2_event * event)
+{
+  gint ret;
+
+  if (!GST_V4L2_IS_OPEN (v4l2object))
+    return FALSE;
+
+  ret = v4l2object->ioctl (v4l2object->video_fd, VIDIOC_DQEVENT, event);
+
+  if (ret < 0) {
+    GST_ERROR_OBJECT (v4l2object->dbg_obj, "DQEVENT failed: %s",
+        g_strerror (errno));
+    return FALSE;
+  }
+
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "Dequeued a '%s' event.",
+      gst_v4l2_event_to_string (event->type));
+
+  return TRUE;
+}
+
+gboolean
+gst_v4l2_set_dv_timings (GstV4l2Object * v4l2object,
+    struct v4l2_dv_timings * timings)
+{
+  gint ret;
+
+  if (!GST_V4L2_IS_OPEN (v4l2object))
+    return FALSE;
+
+  ret = v4l2object->ioctl (v4l2object->video_fd, VIDIOC_S_DV_TIMINGS, timings);
+
+  if (ret < 0) {
+    GST_ERROR_OBJECT (v4l2object->dbg_obj, "S_DV_TIMINGS failed: %s (%i)",
+        g_strerror (errno), errno);
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+gboolean
+gst_v4l2_query_dv_timings (GstV4l2Object * v4l2object,
+    struct v4l2_dv_timings * timings)
+{
+  gint ret;
+
+  if (!GST_V4L2_IS_OPEN (v4l2object))
+    return FALSE;
+
+  ret = v4l2object->ioctl (v4l2object->video_fd, VIDIOC_QUERY_DV_TIMINGS,
+      timings);
+
+  if (ret < 0) {
+    switch (errno) {
+      case ENODATA:
+        GST_DEBUG_OBJECT (v4l2object->dbg_obj,
+            "QUERY_DV_TIMINGS not supported for this input/output");
+        break;
+      case ENOLINK:
+        GST_DEBUG_OBJECT (v4l2object->dbg_obj,
+            "No timings could be detected because no signal was found.");
+        break;
+      case ENOLCK:
+        GST_INFO_OBJECT (v4l2object->dbg_obj,
+            "The signal was unstable and the hardware could not lock on to it.");
+        break;
+      case ERANGE:
+        GST_INFO_OBJECT (v4l2object->dbg_obj,
+            "Timings were found, but they are out of range of the hardware capabilities.");
+        break;
+      default:
+        GST_ERROR_OBJECT (v4l2object->dbg_obj,
+            "QUERY_DV_TIMINGS failed: %s (%i)", g_strerror (errno), errno);
+        break;
+    }
+
+    return FALSE;
+  }
+
+  if (timings->type != V4L2_DV_BT_656_1120) {
+    GST_FIXME_OBJECT (v4l2object->dbg_obj, "Unsupported DV Timings type (%i)",
+        timings->type);
+    return FALSE;
+  }
+
+  GST_DEBUG_OBJECT (v4l2object->dbg_obj, "Detected DV Timings (%i x %i)",
+      timings->bt.width, timings->bt.height);
+
+  return TRUE;
 }

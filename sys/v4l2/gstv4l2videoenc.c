@@ -612,35 +612,20 @@ not_negotiated:
   return FALSE;
 }
 
-static GstVideoCodecFrame *
-gst_v4l2_video_enc_get_oldest_frame (GstVideoEncoder * encoder)
+static gboolean
+check_system_frame_number_too_old (guint32 current, guint32 old)
 {
-  GstVideoCodecFrame *frame = NULL;
-  GList *frames, *l;
-  gint count = 0;
+  guint32 absdiff = current > old ? current - old : old - current;
 
-  frames = gst_video_encoder_get_frames (encoder);
-
-  for (l = frames; l != NULL; l = l->next) {
-    GstVideoCodecFrame *f = l->data;
-
-    if (!frame || frame->pts > f->pts)
-      frame = f;
-
-    count++;
+  /* More than 100 frames in the past, or current wrapped around */
+  if (absdiff > 100) {
+    /* Wraparound and difference is actually smaller than 100 */
+    if (absdiff > G_MAXUINT32 - 100)
+      return FALSE;
+    return TRUE;
   }
 
-  if (frame) {
-    GST_LOG_OBJECT (encoder,
-        "Oldest frame is %d %" GST_TIME_FORMAT
-        " and %d frames left",
-        frame->system_frame_number, GST_TIME_ARGS (frame->pts), count - 1);
-    gst_video_codec_frame_ref (frame);
-  }
-
-  g_list_free_full (frames, (GDestroyNotify) gst_video_codec_frame_unref);
-
-  return frame;
+  return FALSE;
 }
 
 static void
@@ -661,20 +646,45 @@ gst_v4l2_video_enc_loop (GstVideoEncoder * encoder)
     goto beach;
   }
 
-
   /* FIXME Check if buffer isn't the last one here */
 
   GST_LOG_OBJECT (encoder, "Process output buffer");
   ret =
       gst_v4l2_buffer_pool_process (GST_V4L2_BUFFER_POOL
-      (self->v4l2capture->pool), &buffer);
+      (self->v4l2capture->pool), &buffer, NULL);
 
   if (ret != GST_FLOW_OK)
     goto beach;
 
-  frame = gst_v4l2_video_enc_get_oldest_frame (encoder);
+  if (GST_BUFFER_TIMESTAMP (buffer) % GST_SECOND != 0)
+    GST_ERROR_OBJECT (encoder,
+        "Driver bug detected - check driver with v4l2-compliance from http://git.linuxtv.org/v4l-utils.git");
+  GST_LOG_OBJECT (encoder, "Got buffer for frame number %u",
+      (guint32) (GST_BUFFER_PTS (buffer) / GST_SECOND));
+  frame =
+      gst_video_encoder_get_frame (encoder,
+      GST_BUFFER_TIMESTAMP (buffer) / GST_SECOND);
 
   if (frame) {
+    GstVideoCodecFrame *oldest_frame;
+    gboolean warned = FALSE;
+
+    /* Garbage collect old frames in case of codec bugs */
+    while ((oldest_frame = gst_video_encoder_get_oldest_frame (encoder)) &&
+        check_system_frame_number_too_old (frame->system_frame_number,
+            oldest_frame->system_frame_number)) {
+      gst_video_encoder_finish_frame (encoder, oldest_frame);
+      oldest_frame = NULL;
+
+      if (!warned) {
+        g_warning ("%s: Too old frames, bug in encoder -- please file a bug",
+            GST_ELEMENT_NAME (encoder));
+        warned = TRUE;
+      }
+    }
+    if (oldest_frame)
+      gst_video_codec_frame_unref (oldest_frame);
+
     /* At this point, the delta unit buffer flag is already correctly set by
      * gst_v4l2_buffer_pool_process. Since gst_video_encoder_finish_frame
      * will overwrite it from GST_VIDEO_CODEC_FRAME_IS_SYNC_POINT (frame),
@@ -784,9 +794,12 @@ gst_v4l2_video_enc_handle_frame (GstVideoEncoder * encoder,
 
   if (frame->input_buffer) {
     GST_VIDEO_ENCODER_STREAM_UNLOCK (encoder);
+    GST_LOG_OBJECT (encoder, "Passing buffer with frame number %u",
+        frame->system_frame_number);
     ret =
-        gst_v4l2_buffer_pool_process (GST_V4L2_BUFFER_POOL
-        (self->v4l2output->pool), &frame->input_buffer);
+        gst_v4l2_buffer_pool_process (GST_V4L2_BUFFER_POOL (self->
+            v4l2output->pool), &frame->input_buffer,
+        &frame->system_frame_number);
     GST_VIDEO_ENCODER_STREAM_LOCK (encoder);
 
     if (ret == GST_FLOW_FLUSHING) {
@@ -873,8 +886,12 @@ gst_v4l2_video_enc_decide_allocation (GstVideoEncoder *
    * more work to explicitly expressed the decoder / encoder latency. This
    * value will then become max latency, and the reported driver latency would
    * become the min latency. */
+  if (!GST_CLOCK_TIME_IS_VALID (self->v4l2capture->duration))
+    self->v4l2capture->duration = gst_util_uint64_scale_int (GST_SECOND, 1, 25);
   latency = self->v4l2capture->min_buffers * self->v4l2capture->duration;
   gst_video_encoder_set_latency (encoder, latency, latency);
+  GST_DEBUG_OBJECT (self, "Setting latency: %" GST_TIME_FORMAT,
+      GST_TIME_ARGS (latency));
 
 done:
   gst_video_codec_state_unref (state);

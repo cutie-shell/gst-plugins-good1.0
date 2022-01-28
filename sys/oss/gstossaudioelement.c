@@ -1,7 +1,5 @@
-/* GStreamer interleave plugin
- * Copyright (C) 2004,2007 Andy Wingo <wingo at pobox.com>
- *
- * plugin.h: the stubs for the interleave plugin
+/* GStreamer
+ * Copyright (C) <1999> Erik Walthinsen <omega@cse.ogi.edu>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -19,13 +17,31 @@
  * Boston, MA 02110-1301, USA.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#ifndef __GST_PLUGIN_INTERLEAVE_H__
-#define __GST_PLUGIN_INTERLEAVE_H__
+#include "gst/gst-i18n-plugin.h"
 
+#include "common.h"
+#include "gstossaudioelements.h"
 
-#include <gst/gst.h>
-#include "interleave.h"
-#include "deinterleave.h"
+GST_DEBUG_CATEGORY (oss_debug);
+#define GST_CAT_DEFAULT oss_debug
 
-#endif /* __GST_PLUGIN_INTERLEAVE_H__ */
+void
+oss_element_init (GstPlugin * plugin)
+{
+  static gsize res = FALSE;
+  if (g_once_init_enter (&res)) {
+    GST_DEBUG_CATEGORY_INIT (oss_debug, "oss", 0, "OSS elements");
+
+#ifdef ENABLE_NLS
+    GST_DEBUG ("binding text domain %s to locale dir %s", GETTEXT_PACKAGE,
+        LOCALEDIR);
+    bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
+    bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+#endif /* ENABLE_NLS */
+    g_once_init_leave (&res, TRUE);
+  }
+}

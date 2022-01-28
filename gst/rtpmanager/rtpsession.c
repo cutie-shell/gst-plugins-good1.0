@@ -78,6 +78,7 @@ enum
 #define DEFAULT_RTP_PROFILE          GST_RTP_PROFILE_AVP
 #define DEFAULT_RTCP_REDUCED_SIZE    FALSE
 #define DEFAULT_RTCP_DISABLE_SR_TIMESTAMP FALSE
+#define DEFAULT_TWCC_FEEDBACK_INTERVAL GST_CLOCK_TIME_NONE
 
 enum
 {
@@ -103,7 +104,8 @@ enum
   PROP_STATS,
   PROP_RTP_PROFILE,
   PROP_RTCP_REDUCED_SIZE,
-  PROP_RTCP_DISABLE_SR_TIMESTAMP
+  PROP_RTCP_DISABLE_SR_TIMESTAMP,
+  PROP_TWCC_FEEDBACK_INTERVAL,
 };
 
 /* update average packet size */
@@ -114,9 +116,6 @@ enum
    (avg) = (val);                       \
   else                                  \
    (avg) = ((val) + (15 * (avg))) >> 4;
-
-
-#define TWCC_EXTMAP_STR "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
 
 /* GObject vmethods */
 static void rtp_session_finalize (GObject * object);
@@ -629,6 +628,23 @@ rtp_session_class_init (RTPSessionClass * klass)
           DEFAULT_RTCP_DISABLE_SR_TIMESTAMP,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+  /**
+   * RTPSession:twcc-feedback-interval:
+   *
+   * The interval to send TWCC reports on.
+   * This overrides the default behavior of sending reports
+   * based on marker-bits.
+   *
+   * Since: 1.20
+   */
+  g_object_class_install_property (gobject_class,
+      PROP_TWCC_FEEDBACK_INTERVAL,
+      g_param_spec_uint64 ("twcc-feedback-interval",
+          "TWCC Feedback Interval",
+          "The interval to send TWCC reports on",
+          0, G_MAXUINT64, DEFAULT_TWCC_FEEDBACK_INTERVAL,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
   klass->get_source_by_ssrc =
       GST_DEBUG_FUNCPTR (rtp_session_get_source_by_ssrc);
   klass->send_rtcp = GST_DEBUG_FUNCPTR (rtp_session_send_rtcp);
@@ -907,6 +923,10 @@ rtp_session_set_property (GObject * object, guint prop_id,
     case PROP_RTCP_DISABLE_SR_TIMESTAMP:
       sess->timestamp_sender_reports = !g_value_get_boolean (value);
       break;
+    case PROP_TWCC_FEEDBACK_INTERVAL:
+      rtp_twcc_manager_set_feedback_interval (sess->twcc,
+          g_value_get_uint64 (value));
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -988,6 +1008,10 @@ rtp_session_get_property (GObject * object, guint prop_id,
       break;
     case PROP_RTCP_DISABLE_SR_TIMESTAMP:
       g_value_set_boolean (value, !sess->timestamp_sender_reports);
+      break;
+    case PROP_TWCC_FEEDBACK_INTERVAL:
+      g_value_set_uint64 (value,
+          rtp_twcc_manager_get_feedback_interval (sess->twcc));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -2148,9 +2172,11 @@ update_packet_info (RTPSession * sess, RTPPacketInfo * pinfo,
     res =
         gst_buffer_list_foreach (list, (GstBufferListFunc) update_packet,
         pinfo);
+    pinfo->arrival_time = GST_CLOCK_TIME_NONE;
   } else {
     GstBuffer *buffer = GST_BUFFER_CAST (data);
     res = update_packet (&buffer, 0, pinfo);
+    pinfo->arrival_time = GST_BUFFER_DTS (buffer);
   }
 
   return res;
@@ -2167,22 +2193,6 @@ clean_packet_info (RTPPacketInfo * pinfo)
   }
   if (pinfo->header_ext)
     g_bytes_unref (pinfo->header_ext);
-}
-
-static gint32
-packet_info_get_twcc_seqnum (RTPPacketInfo * pinfo, guint8 ext_id)
-{
-  gint32 val = -1;
-  gpointer data;
-  guint size;
-
-  if (pinfo->header_ext &&
-      gst_rtp_buffer_get_extension_onebyte_header_from_bytes (pinfo->header_ext,
-          pinfo->header_ext_bit_pattern, ext_id, 0, &data, &size)) {
-    if (size == 2)
-      val = GST_READ_UINT16_BE (data);
-  }
-  return val;
 }
 
 static gboolean
@@ -2210,16 +2220,7 @@ source_update_active (RTPSession * sess, RTPSource * source,
 static void
 process_twcc_packet (RTPSession * sess, RTPPacketInfo * pinfo)
 {
-  gint32 twcc_seqnum;
-
-  if (sess->twcc_recv_ext_id == 0)
-    return;
-
-  twcc_seqnum = packet_info_get_twcc_seqnum (pinfo, sess->twcc_recv_ext_id);
-  if (twcc_seqnum == -1)
-    return;
-
-  if (rtp_twcc_manager_recv_packet (sess->twcc, twcc_seqnum, pinfo)) {
+  if (rtp_twcc_manager_recv_packet (sess->twcc, pinfo)) {
     RTP_SESSION_UNLOCK (sess);
 
     /* TODO: find a better rational for this number, and possibly tune it based
@@ -2393,7 +2394,7 @@ rtp_session_process_rb (RTPSession * sess, RTPSource * source,
        * the sender of the RTCP message. We could also compare our stats against
        * the other sender to see if we are better or worse. */
       /* FIXME, need to keep track who the RB block is from */
-      rtp_source_process_rb (source, pinfo->ntpnstime, fractionlost,
+      rtp_source_process_rb (source, ssrc, pinfo->ntpnstime, fractionlost,
           packetslost, exthighestseq, jitter, lsr, dlsr);
     }
   }
@@ -2726,7 +2727,8 @@ rtp_session_request_local_key_unit (RTPSession * sess, RTPSource * src,
 {
   guint32 round_trip = 0;
 
-  rtp_source_get_last_rb (src, NULL, NULL, NULL, NULL, NULL, NULL, &round_trip);
+  rtp_source_get_last_rb (src, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+      &round_trip);
 
   if (src->last_keyframe_request != GST_CLOCK_TIME_NONE && round_trip) {
     GstClockTime round_trip_in_ns = gst_util_uint64_scale (round_trip,
@@ -3123,29 +3125,6 @@ invalid_packet:
   }
 }
 
-static guint8
-_get_extmap_id_for_attribute (const GstStructure * s, const gchar * ext_name)
-{
-  guint i;
-  guint8 extmap_id = 0;
-  guint n_fields = gst_structure_n_fields (s);
-
-  for (i = 0; i < n_fields; i++) {
-    const gchar *field_name = gst_structure_nth_field_name (s, i);
-    if (g_str_has_prefix (field_name, "extmap-")) {
-      const gchar *str = gst_structure_get_string (s, field_name);
-      if (str && g_strcmp0 (str, ext_name) == 0) {
-        gint64 id = g_ascii_strtoll (field_name + 7, NULL, 10);
-        if (id > 0 && id < 15) {
-          extmap_id = id;
-          break;
-        }
-      }
-    }
-  }
-  return extmap_id;
-}
-
 /**
  * rtp_session_update_send_caps:
  * @sess: an #RTPSession
@@ -3201,28 +3180,8 @@ rtp_session_update_send_caps (RTPSession * sess, GstCaps * caps)
     sess->internal_ssrc_from_caps_or_property = FALSE;
   }
 
-  sess->twcc_send_ext_id = _get_extmap_id_for_attribute (s, TWCC_EXTMAP_STR);
-  if (sess->twcc_send_ext_id > 0) {
-    GST_INFO ("TWCC enabled for send using extension id: %u",
-        sess->twcc_send_ext_id);
-  }
+  rtp_twcc_manager_parse_send_ext_id (sess->twcc, s);
 }
-
-static void
-send_twcc_packet (RTPSession * sess, RTPPacketInfo * pinfo)
-{
-  gint32 twcc_seqnum;
-
-  if (sess->twcc_send_ext_id == 0)
-    return;
-
-  twcc_seqnum = packet_info_get_twcc_seqnum (pinfo, sess->twcc_send_ext_id);
-  if (twcc_seqnum == -1)
-    return;
-
-  rtp_twcc_manager_send_packet (sess->twcc, twcc_seqnum, pinfo);
-}
-
 
 /**
  * rtp_session_send_rtp:
@@ -3258,7 +3217,7 @@ rtp_session_send_rtp (RTPSession * sess, gpointer data, gboolean is_list,
           current_time, running_time, -1))
     goto invalid_packet;
 
-  send_twcc_packet (sess, &pinfo);
+  rtp_twcc_manager_send_packet (sess->twcc, &pinfo);
 
   source = obtain_internal_source (sess, pinfo.ssrc, &created, current_time);
   if (created)
@@ -3281,13 +3240,15 @@ rtp_session_send_rtp (RTPSession * sess, gpointer data, gboolean is_list,
         GST_DEBUG ("Collision for SSRC %x, change our sender ssrc", pinfo.ssrc);
 
         rtp_session_have_conflict (sess, source, from, current_time);
-
-        goto collision;
       }
     } else {
       GST_LOG ("Ignoring collision on sent SSRC %x because remote source"
           " doesn't have an address", pinfo.ssrc);
     }
+
+    /* the the sending source is not internal, we have to drop the packet,
+       or else we will end up receving it ourselves! */
+    goto collision;
   }
 
   prevsender = RTP_SOURCE_IS_SENDER (source);
@@ -3694,6 +3655,7 @@ session_report_blocks (const gchar * key, RTPSource * source, ReportData * data)
 
   /* store last generated RR packet */
   source->last_rr.is_valid = TRUE;
+  source->last_rr.ssrc = data->source->ssrc;
   source->last_rr.fractionlost = fractionlost;
   source->last_rr.packetslost = packetslost;
   source->last_rr.exthighestseq = exthighestseq;
@@ -4916,10 +4878,5 @@ void
 rtp_session_update_recv_caps_structure (RTPSession * sess,
     const GstStructure * s)
 {
-  guint8 ext_id = _get_extmap_id_for_attribute (s, TWCC_EXTMAP_STR);
-  if (ext_id > 0) {
-    sess->twcc_recv_ext_id = ext_id;
-    GST_INFO ("TWCC enabled for recv using extension id: %u",
-        sess->twcc_recv_ext_id);
-  }
+  rtp_twcc_manager_parse_recv_ext_id (sess->twcc, s);
 }

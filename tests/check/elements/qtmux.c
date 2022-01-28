@@ -27,6 +27,7 @@
 #include <glib/gstdio.h>
 
 #include <gst/check/gstcheck.h>
+#include <gst/check/gstharness.h>
 #include <gst/pbutils/encoding-profile.h>
 
 /* For ease of programming we use globals to keep refs for our floating
@@ -123,7 +124,7 @@ setup_src_pad (GstElement * element,
   ASSERT_OBJECT_REFCOUNT (srcpad, "srcpad", 1);
 
   if (!(sinkpad = gst_element_get_static_pad (element, sinkname)))
-    sinkpad = gst_element_get_request_pad (element, sinkname);
+    sinkpad = gst_element_request_pad_simple (element, sinkname);
   fail_if (sinkpad == NULL, "Could not get sink pad from %s",
       GST_ELEMENT_NAME (element));
   /* references are owned by: 1) us, 2) qtmux */
@@ -444,6 +445,158 @@ check_qtmux_pad_fragmented (GstStaticPadTemplate * srctemplate,
   buffers = NULL;
 }
 
+static void
+check_qtmux_pad_fragmented_finalise (GstStaticPadTemplate * srctemplate,
+    const gchar * sinkname, guint32 dts_method, gboolean streamable)
+{
+  GstElement *qtmux;
+  GstBuffer *inbuffer, *outbuffer;
+  GstCaps *caps;
+  int num_buffers;
+  int i;
+  guint8 data0[12] = "\000\000\000\024ftypqt  ";
+  guint8 data1[4] = "mdat";
+  guint8 data2[4] = "moov";
+  guint8 data3[4] = "moof";
+  GstSegment segment;
+
+  qtmux = setup_qtmux (srctemplate, sinkname, !streamable);
+  g_object_set (qtmux, "dts-method", dts_method, NULL);
+  g_object_set (qtmux, "fragment-duration", 40, NULL);
+  g_object_set (qtmux, "fragment-mode", 1, NULL);
+  g_object_set (qtmux, "streamable", streamable, NULL);
+  fail_unless (gst_element_set_state (qtmux,
+          GST_STATE_PLAYING) == GST_STATE_CHANGE_SUCCESS,
+      "could not set to playing");
+
+  gst_pad_push_event (mysrcpad, gst_event_new_stream_start ("test"));
+
+  caps = gst_pad_get_pad_template_caps (mysrcpad);
+  gst_pad_set_caps (mysrcpad, caps);
+  gst_caps_unref (caps);
+
+  /* ensure segment (format) properly setup */
+  gst_segment_init (&segment, GST_FORMAT_TIME);
+  fail_unless (gst_pad_push_event (mysrcpad, gst_event_new_segment (&segment)));
+
+  inbuffer = gst_buffer_new_and_alloc (1);
+  gst_buffer_memset (inbuffer, 0, 0, 1);
+  GST_BUFFER_TIMESTAMP (inbuffer) = 0 * 40 * GST_MSECOND;
+  GST_BUFFER_DURATION (inbuffer) = 40 * GST_MSECOND;
+  ASSERT_BUFFER_REFCOUNT (inbuffer, "inbuffer", 1);
+  fail_unless (gst_pad_push (mysrcpad, inbuffer) == GST_FLOW_OK);
+
+  inbuffer = gst_buffer_new_and_alloc (1);
+  gst_buffer_memset (inbuffer, 0, 0, 1);
+  GST_BUFFER_TIMESTAMP (inbuffer) = 1 * 40 * GST_MSECOND;
+  GST_BUFFER_DURATION (inbuffer) = 40 * GST_MSECOND;
+  ASSERT_BUFFER_REFCOUNT (inbuffer, "inbuffer", 1);
+  fail_unless (gst_pad_push (mysrcpad, inbuffer) == GST_FLOW_OK);
+
+  inbuffer = gst_buffer_new_and_alloc (1);
+  gst_buffer_memset (inbuffer, 0, 0, 1);
+  GST_BUFFER_TIMESTAMP (inbuffer) = 2 * 40 * GST_MSECOND;
+  GST_BUFFER_DURATION (inbuffer) = 40 * GST_MSECOND;
+  ASSERT_BUFFER_REFCOUNT (inbuffer, "inbuffer", 1);
+  fail_unless (gst_pad_push (mysrcpad, inbuffer) == GST_FLOW_OK);
+
+  /* send eos to have all written */
+  fail_unless (gst_pad_push_event (mysrcpad, gst_event_new_eos ()) == TRUE);
+
+  wait_for_eos ();
+
+  num_buffers = g_list_length (buffers);
+  fail_unless (num_buffers >= 13);
+
+  /* clean up first to clear any pending refs in sticky caps */
+  cleanup_qtmux (qtmux, sinkname);
+
+  for (i = 0; i < num_buffers; ++i) {
+    outbuffer = GST_BUFFER (buffers->data);
+    fail_if (outbuffer == NULL);
+    buffers = g_list_remove (buffers, outbuffer);
+
+    switch (i) {
+      case 0:
+      {
+        /* ftyp header */
+        fail_unless (gst_buffer_get_size (outbuffer) >= 20);
+        fail_unless (gst_buffer_memcmp (outbuffer, 0, data0,
+                sizeof (data0)) == 0);
+        fail_unless (gst_buffer_memcmp (outbuffer, 16, data0 + 8, 4) == 0);
+        break;
+      }
+      case 1:                  /* first moov mdat header */
+        fail_unless_equals_int (gst_buffer_get_size (outbuffer), 16);
+        fail_unless (gst_buffer_memcmp (outbuffer, 12, data1,
+                sizeof (data1)) == 0);
+        break;
+      case 2:                  /* buffer we put in */
+        fail_unless_equals_int (gst_buffer_get_size (outbuffer), 1);
+        break;
+      case 3:                  /* first moov mdat header rewrite */
+        fail_unless_equals_int (gst_buffer_get_size (outbuffer), 16);
+        fail_unless (gst_buffer_memcmp (outbuffer, 12, data1,
+                sizeof (data1)) == 0);
+        break;
+      case 4:                  /* moov */
+        fail_unless (gst_buffer_get_size (outbuffer) > 8);
+        fail_unless (gst_buffer_memcmp (outbuffer, 4, data2,
+                sizeof (data2)) == 0);
+        break;
+      case 5:                  /* fragment mdat header size == 0 */
+        fail_unless_equals_int (gst_buffer_get_size (outbuffer), 16);
+        fail_unless (gst_buffer_memcmp (outbuffer, 12, data1,
+                sizeof (data1)) == 0);
+        break;
+      case 6:                  /* buffer we put in */
+        fail_unless_equals_int (gst_buffer_get_size (outbuffer), 1);
+        break;
+      case 7:                  /* fragment mdat header size */
+        fail_unless_equals_int (gst_buffer_get_size (outbuffer), 16);
+        fail_unless (gst_buffer_memcmp (outbuffer, 12, data1,
+                sizeof (data1)) == 0);
+        break;
+      case 8:                  /* moof */
+        fail_unless (gst_buffer_get_size (outbuffer) > 8);
+        fail_unless (gst_buffer_memcmp (outbuffer, 4, data3,
+                sizeof (data3)) == 0);
+        break;
+      case 9:                  /* fragment mdat header size = 0 */
+        fail_unless_equals_int (gst_buffer_get_size (outbuffer), 16);
+        fail_unless (gst_buffer_memcmp (outbuffer, 12, data1,
+                sizeof (data1)) == 0);
+        break;
+      case 10:                 /* buffer we put in */
+        fail_unless_equals_int (gst_buffer_get_size (outbuffer), 1);
+        break;
+      case 11:                 /* initial moov->hoov */
+        fail_unless_equals_int (gst_buffer_get_size (outbuffer), 1);
+        fail_unless (gst_buffer_memcmp (outbuffer, 0, "h", 1) == 0);
+        break;
+      case 12:                 /* final moov mdat header size */
+        fail_unless_equals_int (gst_buffer_get_size (outbuffer), 16);
+        fail_unless (gst_buffer_memcmp (outbuffer, 12, data1,
+                sizeof (data1)) == 0);
+        break;
+      case 13:                 /* final moov */
+        fail_unless (gst_buffer_get_size (outbuffer) > 8);
+        fail_unless (gst_buffer_memcmp (outbuffer, 4, data2,
+                sizeof (data2)) == 0);
+        break;
+      default:
+        break;
+    }
+
+    ASSERT_BUFFER_REFCOUNT (outbuffer, "outbuffer", 1);
+    gst_buffer_unref (outbuffer);
+    outbuffer = NULL;
+  }
+
+  g_list_free (buffers);
+  buffers = NULL;
+}
+
 /* dts-method dd */
 
 GST_START_TEST (test_video_pad_dd)
@@ -475,7 +628,6 @@ GST_START_TEST (test_audio_pad_frag_dd)
 
 GST_END_TEST;
 
-
 GST_START_TEST (test_video_pad_frag_dd_streamable)
 {
   check_qtmux_pad_fragmented (&srcvideotemplate, "video_%u", 0, TRUE);
@@ -483,10 +635,16 @@ GST_START_TEST (test_video_pad_frag_dd_streamable)
 
 GST_END_TEST;
 
-
 GST_START_TEST (test_audio_pad_frag_dd_streamable)
 {
   check_qtmux_pad_fragmented (&srcaudiotemplate, "audio_%u", 0, TRUE);
+}
+
+GST_END_TEST;
+
+GST_START_TEST (test_video_pad_frag_dd_finalise)
+{
+  check_qtmux_pad_fragmented_finalise (&srcvideotemplate, "video_%u", 0, FALSE);
 }
 
 GST_END_TEST;
@@ -538,6 +696,13 @@ GST_START_TEST (test_audio_pad_frag_reorder_streamable)
 
 GST_END_TEST;
 
+GST_START_TEST (test_video_pad_frag_reorder_finalise)
+{
+  check_qtmux_pad_fragmented_finalise (&srcvideotemplate, "video_%u", 1, FALSE);
+}
+
+GST_END_TEST;
+
 /* dts-method asc */
 
 GST_START_TEST (test_video_pad_asc)
@@ -581,6 +746,13 @@ GST_END_TEST;
 GST_START_TEST (test_audio_pad_frag_asc_streamable)
 {
   check_qtmux_pad_fragmented (&srcaudiotemplate, "audio_%u", 2, TRUE);
+}
+
+GST_END_TEST;
+
+GST_START_TEST (test_video_pad_frag_asc_finalise)
+{
+  check_qtmux_pad_fragmented_finalise (&srcvideotemplate, "video_%u", 2, FALSE);
 }
 
 GST_END_TEST;
@@ -1635,6 +1807,52 @@ GST_START_TEST (test_muxing_initial_gap)
 
 GST_END_TEST;
 
+GST_START_TEST (test_caps_renego)
+{
+  GstHarness *h;
+  GstBuffer *buf;
+  GstCaps *caps;
+  GstSegment segment;
+  GstPad *pad;
+
+  h = gst_harness_new_with_padnames ("qtmux", "video_0", "src");
+  /* appease the harness */
+  pad = gst_element_get_static_pad (h->element, "video_0");
+
+  fail_unless (gst_harness_push_event (h,
+          gst_event_new_stream_start ("random")));
+
+  /* caps event with not enough information, should probably fail but
+   * currently only does from aggregate() */
+  caps = gst_caps_from_string
+      ("video/x-h264, stream-format=(string)avc, alignment=(string)au, width=(int)16, height=(int)16");
+  fail_unless (gst_harness_push_event (h, gst_event_new_caps (caps)));
+  gst_caps_unref (caps);
+  /* subsequent caps event with enough information should succeed */
+  caps = gst_caps_from_string
+      ("video/x-h264, width=(int)800, height=(int)600, "
+      "framerate=(fraction)1/1, stream-format=(string)avc, codec_data=(buffer)0000,"
+      " alignment=(string)au, level=(int)2, profile=(string)high");
+  fail_unless (gst_harness_push_event (h, gst_event_new_caps (caps)));
+  gst_caps_unref (caps);
+  gst_segment_init (&segment, GST_FORMAT_TIME);
+  fail_unless (gst_harness_push_event (h, gst_event_new_segment (&segment)));
+
+  buf = create_buffer (0 * GST_SECOND, 0, GST_SECOND, 4096);
+  fail_unless_equals_int (GST_FLOW_OK, gst_harness_push (h, buf));
+
+  fail_unless (gst_harness_push_event (h, gst_event_new_eos ()));
+
+  buf = gst_harness_pull (h);
+  fail_unless (buf != NULL);
+  gst_buffer_unref (buf);
+
+  gst_harness_teardown (h);
+  gst_object_unref (pad);
+}
+
+GST_END_TEST;
+
 static Suite *
 qtmux_suite (void)
 {
@@ -1651,6 +1869,7 @@ qtmux_suite (void)
   tcase_add_test (tc_chain, test_audio_pad_frag_dd);
   tcase_add_test (tc_chain, test_video_pad_frag_dd_streamable);
   tcase_add_test (tc_chain, test_audio_pad_frag_dd_streamable);
+  tcase_add_test (tc_chain, test_video_pad_frag_dd_finalise);
 
   tcase_add_test (tc_chain, test_video_pad_reorder);
   tcase_add_test (tc_chain, test_audio_pad_reorder);
@@ -1658,6 +1877,7 @@ qtmux_suite (void)
   tcase_add_test (tc_chain, test_audio_pad_frag_reorder);
   tcase_add_test (tc_chain, test_video_pad_frag_reorder_streamable);
   tcase_add_test (tc_chain, test_audio_pad_frag_reorder_streamable);
+  tcase_add_test (tc_chain, test_video_pad_frag_reorder_finalise);
 
   tcase_add_test (tc_chain, test_video_pad_asc);
   tcase_add_test (tc_chain, test_audio_pad_asc);
@@ -1665,6 +1885,7 @@ qtmux_suite (void)
   tcase_add_test (tc_chain, test_audio_pad_frag_asc);
   tcase_add_test (tc_chain, test_video_pad_frag_asc_streamable);
   tcase_add_test (tc_chain, test_audio_pad_frag_asc_streamable);
+  tcase_add_test (tc_chain, test_video_pad_frag_asc_finalise);
 
   tcase_add_test (tc_chain, test_average_bitrate);
 
@@ -1677,6 +1898,8 @@ qtmux_suite (void)
   tcase_add_test (tc_chain, test_muxing_non_zero_segment_different);
   tcase_add_test (tc_chain, test_muxing_dts_outside_segment);
   tcase_add_test (tc_chain, test_muxing_initial_gap);
+
+  tcase_add_test (tc_chain, test_caps_renego);
 
   return s;
 }

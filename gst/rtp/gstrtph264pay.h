@@ -65,7 +65,7 @@ struct _GstRtpH264Pay
 {
   GstRTPBasePayload payload;
 
-  guint profile;
+  guint profile_level;
   GPtrArray *sps, *pps;
 
   GstH264StreamFormat stream_format;
@@ -103,8 +103,6 @@ struct _GstRtpH264PayClass
 };
 
 GType gst_rtp_h264_pay_get_type (void);
-
-gboolean gst_rtp_h264_pay_plugin_init (GstPlugin * plugin);
 
 G_END_DECLS
 

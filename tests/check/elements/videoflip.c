@@ -238,8 +238,9 @@ GST_START_TEST (test_stress_change_method)
   g_value_init (&direction_identity, pspec->value_type);
   g_value_init (&direction_90r, pspec->value_type);
 
-  fail_unless (gst_value_deserialize (&direction_identity, "identity"));
-  fail_unless (gst_value_deserialize (&direction_90r, "90r"));
+  fail_unless (gst_value_deserialize_with_pspec (&direction_identity,
+          "identity", pspec));
+  fail_unless (gst_value_deserialize_with_pspec (&direction_90r, "90r", pspec));
 
   thread_identity =
       gst_harness_stress_property_start_full (flip, "video-direction",

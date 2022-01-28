@@ -591,10 +591,12 @@ gst_matroska_read_common_do_index_seek (GstMatroskaReadCommon * common,
   GArray *index;
 
   /* find entry just before or at the requested position */
-  if (track && track->index_table)
+  if (track && track->index_table) {
     index = track->index_table;
-  else
+  } else {
+    GST_DEBUG_OBJECT (common->sinkpad, "Missing track index table");
     index = common->index;
+  }
 
   if (!index || !index->len)
     return NULL;
@@ -797,7 +799,7 @@ gst_matroska_read_common_parse_attached_file (GstMatroskaReadCommon * common,
 
   DEBUG_ELEMENT_STOP (common, ebml, "AttachedFile", ret);
 
-  if (filename && mimetype && data && datalen > 0) {
+  if (filename && mimetype && data && datalen > 0 && datalen < G_MAXUINT) {
     GstTagImageType image_type = GST_TAG_IMAGE_TYPE_NONE;
     GstBuffer *tagbuffer = NULL;
     GstSample *tagsample = NULL;
@@ -843,7 +845,7 @@ gst_matroska_read_common_parse_attached_file (GstMatroskaReadCommon * common,
 
     /* if this failed create an attachment buffer */
     if (!tagbuffer) {
-      tagbuffer = gst_buffer_new_wrapped (g_memdup (data, datalen), datalen);
+      tagbuffer = gst_buffer_new_memdup (data, datalen);
 
       caps = gst_type_find_helper_for_buffer (NULL, tagbuffer, NULL);
       if (caps == NULL)
@@ -851,10 +853,13 @@ gst_matroska_read_common_parse_attached_file (GstMatroskaReadCommon * common,
     }
 
     /* Set filename and description in the info */
-    if (info == NULL)
-      info = gst_structure_new_empty ("GstTagImageInfo");
-
+    if (info == NULL) {
+      const gchar *structure_name = (image_type != GST_TAG_IMAGE_TYPE_NONE) ?
+          "GstTagImageInfo" : "GstTagAttachmentInfo";
+      info = gst_structure_new_empty (structure_name);
+    }
     gst_structure_set (info, "filename", G_TYPE_STRING, filename, NULL);
+    gst_structure_set (info, "mimetype", G_TYPE_STRING, mimetype, NULL);
     if (description)
       gst_structure_set (info, "description", G_TYPE_STRING, description, NULL);
 
@@ -1806,7 +1811,7 @@ gst_matroska_read_common_parse_index (GstMatroskaReadCommon * common,
   guint i;
 
   if (common->index)
-    g_array_free (common->index, TRUE);
+    g_array_unref (common->index);
   common->index =
       g_array_sized_new (FALSE, FALSE, sizeof (GstMatroskaIndex), 128);
 
@@ -1894,7 +1899,7 @@ gst_matroska_read_common_parse_index (GstMatroskaReadCommon * common,
 
   /* sanity check; empty index normalizes to no index */
   if (common->index->len == 0) {
-    g_array_free (common->index, TRUE);
+    g_array_unref (common->index);
     common->index = NULL;
   }
 
@@ -3316,7 +3321,7 @@ gst_matroska_read_common_reset (GstElement * element,
 
   /* reset indexes */
   if (ctx->index) {
-    g_array_free (ctx->index, TRUE);
+    g_array_unref (ctx->index);
     ctx->index = NULL;
   }
 

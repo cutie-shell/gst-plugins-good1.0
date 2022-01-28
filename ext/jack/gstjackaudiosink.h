@@ -55,6 +55,8 @@ struct _GstJackAudioSink {
   gchar           *client_name;
   gchar           *port_pattern;
   guint            transport;
+  gboolean         low_latency;
+  gchar           *port_names;
 
   /* our client */
   GstJackAudioClient *client;

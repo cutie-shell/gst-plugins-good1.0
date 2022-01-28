@@ -114,6 +114,7 @@
 
 #include "gst/gst-i18n-plugin.h"
 
+#include "gstrtspelements.h"
 #include "gstrtspsrc.h"
 
 GST_DEBUG_CATEGORY_STATIC (rtspsrc_debug);
@@ -159,6 +160,23 @@ enum _GstRtspSrcRtcpSyncMode
   RTCP_SYNC_INITIAL,
   RTCP_SYNC_RTP
 };
+
+#define GST_TYPE_RTSP_SRC_TIMEOUT_CAUSE (gst_rtsp_src_timeout_cause_get_type())
+static GType
+gst_rtsp_src_timeout_cause_get_type (void)
+{
+  static GType timeout_cause_type = 0;
+  static const GEnumValue timeout_causes[] = {
+    {GST_RTSP_SRC_TIMEOUT_CAUSE_RTCP, "timeout triggered by RTCP", "RTCP"},
+    {0, NULL, NULL},
+  };
+
+  if (!timeout_cause_type) {
+    timeout_cause_type =
+        g_enum_register_static ("GstRTSPSrcTimeoutCause", timeout_causes);
+  }
+  return timeout_cause_type;
+}
 
 enum _GstRtspSrcBufferMode
 {
@@ -291,6 +309,7 @@ gst_rtsp_backchannel_get_type (void)
 #define DEFAULT_ONVIF_MODE FALSE
 #define DEFAULT_ONVIF_RATE_CONTROL TRUE
 #define DEFAULT_IS_LIVE TRUE
+#define DEFAULT_IGNORE_X_SERVER_REPLY FALSE
 
 enum
 {
@@ -338,7 +357,8 @@ enum
   PROP_TEARDOWN_TIMEOUT,
   PROP_ONVIF_MODE,
   PROP_ONVIF_RATE_CONTROL,
-  PROP_IS_LIVE
+  PROP_IS_LIVE,
+  PROP_IGNORE_X_SERVER_REPLY
 };
 
 #define GST_TYPE_RTSP_NAT_METHOD (gst_rtsp_nat_method_get_type())
@@ -479,6 +499,8 @@ static guint gst_rtspsrc_signals[LAST_SIGNAL] = { 0 };
 #define gst_rtspsrc_parent_class parent_class
 G_DEFINE_TYPE_WITH_CODE (GstRTSPSrc, gst_rtspsrc, GST_TYPE_BIN,
     G_IMPLEMENT_INTERFACE (GST_TYPE_URI_HANDLER, gst_rtspsrc_uri_handler_init));
+GST_ELEMENT_REGISTER_DEFINE_WITH_CODE (rtspsrc, "rtspsrc", GST_RANK_NONE,
+    GST_TYPE_RTSPSRC, rtsp_element_init (plugin));
 
 #ifndef GST_DISABLE_GST_DEBUG
 static inline const char *
@@ -936,7 +958,7 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstRtspSrc:teardown-timeout
+   * GstRTSPSrc:teardown-timeout
    *
    * When transitioning PAUSED-READY, allow up to timeout (in nanoseconds)
    * delay in order to send teardown (0 = disabled)
@@ -951,13 +973,13 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstRtspSrc:onvif-mode
+   * GstRTSPSrc:onvif-mode
    *
    * Act as an ONVIF client. When set to %TRUE:
    *
    * - seeks will be interpreted as nanoseconds since prime epoch (1900-01-01)
    *
-   * - #GstRtspSrc:onvif-rate-control can be used to request that the server sends
+   * - #GstRTSPSrc:onvif-rate-control can be used to request that the server sends
    *   data as fast as it can
    *
    * - TCP is picked as the transport protocol
@@ -973,7 +995,7 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
           DEFAULT_ONVIF_MODE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstRtspSrc:onvif-rate-control
+   * GstRTSPSrc:onvif-rate-control
    *
    * When in onvif-mode, whether to set Rate-Control to yes or no. When set
    * to %FALSE, the server will deliver data as fast as the client can consume
@@ -988,10 +1010,10 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
-   * GstRtspSrc:is-live
+   * GstRTSPSrc:is-live
    *
    * Whether to act as a live source. This is useful in combination with
-   * #GstRtspSrc:onvif-rate-control set to %FALSE and usage of the TCP
+   * #GstRTSPSrc:onvif-rate-control set to %FALSE and usage of the TCP
    * protocol. In that situation, data delivery rate can be entirely
    * controlled from the client side, enabling features such as frame
    * stepping and instantaneous rate changes.
@@ -1002,6 +1024,41 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
       g_param_spec_boolean ("is-live", "Is live",
           "Whether to act as a live source",
           DEFAULT_IS_LIVE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GstRTSPSrc:ignore-x-server-reply
+   *
+   * When connecting to an RTSP server in tunneled mode (HTTP) the server
+   * usually replies with an x-server-ip-address header. This contains the
+   * address of the intended streaming server. However some servers return an
+   * "invalid" address. Here follows two examples when it might happen.
+   *
+   * 1. A server uses Apache combined with a separate RTSP process to handle
+   *    HTTPS requests on port 443. In this case Apache handles TLS and
+   *    connects to the local RTSP server, which results in a local
+   *    address 127.0.0.1 or ::1 in the header reply. This address is
+   *    returned to the actual RTSP client in the header. The client will
+   *    receive this address and try to connect to it and fail.
+   *
+   * 2. The client uses an IPv6 link local address with a specified scope id
+   *    fe80::aaaa:bbbb:cccc:dddd%eth0 and connects via HTTP on port 80.
+   *    The RTSP server receives the connection and returns the address
+   *    in the x-server-ip-address header. The client will receive this
+   *    address and try to connect to it "as is" without the scope id and
+   *    fail.
+   *
+   * In the case of streaming data from RTSP servers like 1 and 2, it's
+   * useful to have the option to simply ignore the x-server-ip-address
+   * header reply and continue using the original address.
+   *
+   * Since: 1.20
+   */
+  g_object_class_install_property (gobject_class, PROP_IGNORE_X_SERVER_REPLY,
+      g_param_spec_boolean ("ignore-x-server-reply",
+          "Ignore x-server-ip-address",
+          "Whether to ignore the x-server-ip-address server header reply",
+          DEFAULT_IGNORE_X_SERVER_REPLY,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstRTSPSrc::handle-request:
@@ -1021,7 +1078,9 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
    */
   gst_rtspsrc_signals[SIGNAL_HANDLE_REQUEST] =
       g_signal_new ("handle-request", G_TYPE_FROM_CLASS (klass), 0,
-      0, NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
+      0, NULL, NULL, NULL, G_TYPE_NONE, 2,
+      GST_TYPE_RTSP_MESSAGE | G_SIGNAL_TYPE_STATIC_SCOPE,
+      GST_TYPE_RTSP_MESSAGE | G_SIGNAL_TYPE_STATIC_SCOPE);
 
   /**
    * GstRTSPSrc::on-sdp:
@@ -1225,6 +1284,7 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
 
   gst_rtsp_ext_list_init ();
 
+  gst_type_mark_as_plugin_api (GST_TYPE_RTSP_SRC_TIMEOUT_CAUSE, 0);
   gst_type_mark_as_plugin_api (GST_TYPE_RTSP_SRC_BUFFER_MODE, 0);
   gst_type_mark_as_plugin_api (GST_TYPE_RTSP_SRC_NTP_TIME_SOURCE, 0);
   gst_type_mark_as_plugin_api (GST_TYPE_RTSP_BACKCHANNEL, 0);
@@ -1744,6 +1804,9 @@ gst_rtspsrc_set_property (GObject * object, guint prop_id, const GValue * value,
     case PROP_IS_LIVE:
       rtspsrc->is_live = g_value_get_boolean (value);
       break;
+    case PROP_IGNORE_X_SERVER_REPLY:
+      rtspsrc->ignore_x_server_reply = g_value_get_boolean (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -1910,6 +1973,9 @@ gst_rtspsrc_get_property (GObject * object, guint prop_id, GValue * value,
       break;
     case PROP_IS_LIVE:
       g_value_set_boolean (value, rtspsrc->is_live);
+      break;
+    case PROP_IGNORE_X_SERVER_REPLY:
+      g_value_set_boolean (value, rtspsrc->ignore_x_server_reply);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -3584,8 +3650,8 @@ on_timeout (GObject * session, GObject * source, GstRTSPStream * stream)
   /* timeout, post element message */
   gst_element_post_message (GST_ELEMENT_CAST (src),
       gst_message_new_element (GST_OBJECT_CAST (src),
-          gst_structure_new ("GstRTSPSrcTimeout",
-              "cause", G_TYPE_ENUM, GST_RTSP_SRC_TIMEOUT_CAUSE_RTCP,
+          gst_structure_new ("GstRTSPSrcTimeout", "cause",
+              GST_TYPE_RTSP_SRC_TIMEOUT_CAUSE, GST_RTSP_SRC_TIMEOUT_CAUSE_RTCP,
               "stream-number", G_TYPE_INT, stream->id, "ssrc", G_TYPE_UINT,
               stream->ssrc, NULL)));
 
@@ -3784,7 +3850,7 @@ request_rtcp_encoder (GstElement * rtpbin, guint session,
     }
   }
   name = g_strdup_printf ("rtcp_sink_%d", session);
-  pad = gst_element_get_request_pad (stream->srtpenc, name);
+  pad = gst_element_request_pad_simple (stream->srtpenc, name);
   g_free (name);
   gst_object_unref (pad);
 
@@ -4054,10 +4120,10 @@ gst_rtspsrc_stream_configure_manager (GstRTSPSrc * src, GstRTSPStream * stream,
     /* we stream directly to the manager, get some pads. Each RTSP stream goes
      * into a separate RTP session. */
     name = g_strdup_printf ("recv_rtp_sink_%u", stream->id);
-    stream->channelpad[0] = gst_element_get_request_pad (src->manager, name);
+    stream->channelpad[0] = gst_element_request_pad_simple (src->manager, name);
     g_free (name);
     name = g_strdup_printf ("recv_rtcp_sink_%u", stream->id);
-    stream->channelpad[1] = gst_element_get_request_pad (src->manager, name);
+    stream->channelpad[1] = gst_element_request_pad_simple (src->manager, name);
     g_free (name);
 
     /* now configure the bandwidth in the manager */
@@ -4243,7 +4309,7 @@ gst_rtspsrc_stream_configure_tcp (GstRTSPSrc * src, GstRTSPStream * stream,
 
     /* get session RTCP pad */
     name = g_strdup_printf ("send_rtcp_src_%u", stream->id);
-    pad = gst_element_get_request_pad (src->manager, name);
+    pad = gst_element_request_pad_simple (src->manager, name);
     g_free (name);
 
     /* and link */
@@ -4634,7 +4700,7 @@ gst_rtspsrc_stream_configure_udp_sinks (GstRTSPSrc * src,
 
     /* get session RTCP pad */
     name = g_strdup_printf ("send_rtcp_src_%u", stream->id);
-    pad = gst_element_get_request_pad (src->manager, name);
+    pad = gst_element_request_pad_simple (src->manager, name);
     g_free (name);
 
     /* and link */
@@ -5107,8 +5173,11 @@ gst_rtsp_conninfo_connect (GstRTSPSrc * src, GstRTSPConnInfo * info,
             accept_certificate_cb, src, NULL);
       }
 
-      if (info->url->transports & GST_RTSP_LOWER_TRANS_HTTP)
+      if (info->url->transports & GST_RTSP_LOWER_TRANS_HTTP) {
         gst_rtsp_connection_set_tunneled (info->connection, TRUE);
+        gst_rtsp_connection_set_ignore_x_server_reply (info->connection,
+            src->ignore_x_server_reply);
+      }
 
       if (src->proxy_host) {
         GST_DEBUG_OBJECT (src, "setting proxy %s:%d", src->proxy_host,
@@ -5600,11 +5669,15 @@ gst_rtspsrc_loop_interleaved (GstRTSPSrc * src)
   while (TRUE) {
     gst_rtsp_message_unset (&message);
 
-    /* protect the connection with the connection lock so that we can see when
-     * we are finished doing server communication */
-    res =
-        gst_rtspsrc_connection_receive (src, &src->conninfo,
-        &message, src->tcp_timeout);
+    if (src->conninfo.flushing) {
+      /* do not attempt to receive if flushing */
+      res = GST_RTSP_EINTR;
+    } else {
+      /* protect the connection with the connection lock so that we can see when
+       * we are finished doing server communication */
+      res = gst_rtspsrc_connection_receive (src, &src->conninfo, &message,
+          src->tcp_timeout);
+    }
 
     switch (res) {
       case GST_RTSP_OK:
@@ -5719,8 +5792,13 @@ gst_rtspsrc_loop_udp (GstRTSPSrc * src)
     /* we should continue reading the TCP socket because the server might
      * send us requests. When the session timeout expires, we need to send a
      * keep-alive request to keep the session open. */
-    res = gst_rtspsrc_connection_receive (src, &src->conninfo, &message,
-        timeout);
+    if (src->conninfo.flushing) {
+      /* do not attempt to receive if flushing */
+      res = GST_RTSP_EINTR;
+    } else {
+      res = gst_rtspsrc_connection_receive (src, &src->conninfo, &message,
+          timeout);
+    }
 
     switch (res) {
       case GST_RTSP_OK:
@@ -6367,8 +6445,13 @@ gst_rtsp_src_receive_response (GstRTSPSrc * src, GstRTSPConnInfo * conninfo,
   GstRTSPResult res;
 
 next:
-  res = gst_rtspsrc_connection_receive (src, conninfo, response,
-      src->tcp_timeout);
+  if (conninfo->flushing) {
+    /* do not attempt to receive if flushing */
+    res = GST_RTSP_EINTR;
+  } else {
+    res = gst_rtspsrc_connection_receive (src, conninfo, response,
+        src->tcp_timeout);
+  }
 
   if (res < 0)
     goto receive_error;
@@ -6693,6 +6776,16 @@ error_response:
       case GST_RTSP_STS_NOT_ACCEPTABLE:
       case GST_RTSP_STS_NOT_IMPLEMENTED:
       case GST_RTSP_STS_METHOD_NOT_ALLOWED:
+        /* Some cameras (e.g. HikVision DS-2CD2732F-IS) return "551
+         * Option not supported" when a command is sent that is not implemented
+         * (e.g. PAUSE). Instead; it should return "501 Not Implemented".
+         *
+         * This is wrong, as previously, the camera did announce support
+         * for PAUSE in the OPTIONS.
+         *
+         * In this case, handle the 551 as if it was 501 to avoid throwing
+         * errors to application level. */
+      case GST_RTSP_STS_OPTION_NOT_SUPPORTED:
         GST_WARNING_OBJECT (src, "got NOT IMPLEMENTED, disable method %s",
             gst_rtsp_method_as_text (method));
         src->methods &= ~method;

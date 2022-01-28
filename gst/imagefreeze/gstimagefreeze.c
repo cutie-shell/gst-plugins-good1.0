@@ -29,7 +29,7 @@
  *
  * ## Example launch line
  * |[
- * gst-launch-1.0 -v filesrc location=some.png ! decodebin ! imagefreeze ! autovideosink
+ * gst-launch-1.0 -v filesrc location=some.png ! decodebin ! videoconvert ! imagefreeze ! autovideosink
  * ]| This pipeline shows a still frame stream of a PNG file.
  *
  */
@@ -100,7 +100,11 @@ GST_DEBUG_CATEGORY_STATIC (gst_image_freeze_debug);
 
 #define gst_image_freeze_parent_class parent_class
 G_DEFINE_TYPE (GstImageFreeze, gst_image_freeze, GST_TYPE_ELEMENT);
-
+GST_ELEMENT_REGISTER_DEFINE_WITH_CODE (imagefreeze, "imagefreeze",
+    GST_RANK_NONE, GST_TYPE_IMAGE_FREEZE,
+    GST_DEBUG_CATEGORY_INIT (gst_image_freeze_debug, "imagefreeze", 0,
+        "imagefreeze element");
+    );
 
 static void
 gst_image_freeze_class_init (GstImageFreezeClass * klass)
@@ -228,7 +232,7 @@ gst_image_freeze_sink_setcaps (GstImageFreeze * self, GstCaps * caps)
   gboolean ret = FALSE;
   GstStructure *s;
   gint fps_n, fps_d;
-  GstCaps *othercaps, *intersection;
+  GstCaps *othercaps, *intersection, *pad_current_caps;
   guint i, n;
   GstPad *pad;
 
@@ -241,8 +245,12 @@ gst_image_freeze_sink_setcaps (GstImageFreeze * self, GstCaps * caps)
   if (self->negotiated_framerate) {
     gst_caps_set_simple (caps, "framerate", GST_TYPE_FRACTION, self->fps_n,
         self->fps_d, NULL);
-    GST_DEBUG_OBJECT (pad, "Setting caps %" GST_PTR_FORMAT, caps);
-    gst_pad_set_caps (self->srcpad, caps);
+    pad_current_caps = gst_pad_get_current_caps (self->srcpad);
+    if (pad_current_caps && !gst_caps_is_equal (caps, pad_current_caps)) {
+      GST_DEBUG_OBJECT (pad, "Setting caps %" GST_PTR_FORMAT, caps);
+      gst_pad_set_caps (self->srcpad, caps);
+    }
+    gst_caps_unref (pad_current_caps);
     gst_caps_unref (caps);
     return TRUE;
   }
@@ -1237,14 +1245,7 @@ gst_image_freeze_provide_clock (GstElement * element)
 static gboolean
 plugin_init (GstPlugin * plugin)
 {
-  GST_DEBUG_CATEGORY_INIT (gst_image_freeze_debug, "imagefreeze", 0,
-      "imagefreeze element");
-
-  if (!gst_element_register (plugin, "imagefreeze", GST_RANK_NONE,
-          GST_TYPE_IMAGE_FREEZE))
-    return FALSE;
-
-  return TRUE;
+  return GST_ELEMENT_REGISTER (imagefreeze, plugin);
 }
 
 GST_PLUGIN_DEFINE (GST_VERSION_MAJOR,

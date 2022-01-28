@@ -206,11 +206,15 @@ _do_init (void)
   PAD_CONTEXT = g_quark_from_static_string ("pad-context");
   EOS_FROM_US = g_quark_from_static_string ("eos-from-us");
   RUNNING_TIME = g_quark_from_static_string ("running-time");
+  GST_DEBUG_CATEGORY_INIT (splitmux_debug, "splitmuxsink", 0,
+      "Split File Muxing Sink");
 }
 
 #define gst_splitmux_sink_parent_class parent_class
 G_DEFINE_TYPE_EXTENDED (GstSplitMuxSink, gst_splitmux_sink, GST_TYPE_BIN, 0,
     _do_init ());
+GST_ELEMENT_REGISTER_DEFINE (splitmuxsink, "splitmuxsink", GST_RANK_NONE,
+    GST_TYPE_SPLITMUX_SINK);
 
 static gboolean create_muxer (GstSplitMuxSink * splitmux);
 static gboolean create_sink (GstSplitMuxSink * splitmux);
@@ -230,7 +234,8 @@ static GstStateChangeReturn gst_splitmux_sink_change_state (GstElement *
 
 static void bus_handler (GstBin * bin, GstMessage * msg);
 static void set_next_filename (GstSplitMuxSink * splitmux, MqStreamCtx * ctx);
-static void start_next_fragment (GstSplitMuxSink * splitmux, MqStreamCtx * ctx);
+static GstFlowReturn start_next_fragment (GstSplitMuxSink * splitmux,
+    MqStreamCtx * ctx);
 static void mq_stream_ctx_free (MqStreamCtx * ctx);
 static void grow_blocked_queues (GstSplitMuxSink * splitmux);
 
@@ -239,7 +244,10 @@ static GstElement *create_element (GstSplitMuxSink * splitmux,
     const gchar * factory, const gchar * name, gboolean locked);
 
 static void do_async_done (GstSplitMuxSink * splitmux);
-static void gst_splitmux_reset_timecode (GstSplitMuxSink * splitmux);
+
+static GstClockTime calculate_next_max_timecode (GstSplitMuxSink * splitmux,
+    const GstVideoTimeCode * cur_tc, GstClockTime running_time,
+    GstVideoTimeCode ** next_tc);
 
 static MqStreamBuf *
 mq_stream_buf_new (void)
@@ -263,6 +271,13 @@ static void
 out_cmd_buf_free (SplitMuxOutputCommand * data)
 {
   g_slice_free (SplitMuxOutputCommand, data);
+}
+
+static void
+input_gop_free (InputGop * gop)
+{
+  g_clear_pointer (&gop->start_tc, gst_video_time_code_free);
+  g_slice_free (InputGop, gop);
 }
 
 static void
@@ -595,7 +610,6 @@ gst_splitmux_sink_init (GstSplitMuxSink * splitmux)
   splitmux->reset_muxer = DEFAULT_RESET_MUXER;
 
   splitmux->threshold_timecode_str = NULL;
-  gst_splitmux_reset_timecode (splitmux);
 
   splitmux->async_finalize = DEFAULT_ASYNC_FINALIZE;
   splitmux->muxer_factory = g_strdup (DEFAULT_MUXER);
@@ -608,6 +622,8 @@ gst_splitmux_sink_init (GstSplitMuxSink * splitmux)
   splitmux->do_split_next_gop = FALSE;
   splitmux->times_to_split = gst_queue_array_new_for_struct (8, 8);
   splitmux->next_fku_time = GST_CLOCK_TIME_NONE;
+
+  g_queue_init (&splitmux->pending_input_gops);
 }
 
 static void
@@ -628,15 +644,6 @@ gst_splitmux_reset_elements (GstSplitMuxSink * splitmux)
 }
 
 static void
-gst_splitmux_reset_timecode (GstSplitMuxSink * splitmux)
-{
-  g_clear_pointer (&splitmux->in_tc, gst_video_time_code_free);
-  g_clear_pointer (&splitmux->fragment_start_tc, gst_video_time_code_free);
-  g_clear_pointer (&splitmux->gop_start_tc, gst_video_time_code_free);
-  splitmux->next_fragment_start_tc_time = GST_CLOCK_TIME_NONE;
-}
-
-static void
 gst_splitmux_sink_dispose (GObject * object)
 {
   GstSplitMuxSink *splitmux = GST_SPLITMUX_SINK (object);
@@ -651,12 +658,17 @@ static void
 gst_splitmux_sink_finalize (GObject * object)
 {
   GstSplitMuxSink *splitmux = GST_SPLITMUX_SINK (object);
+
   g_cond_clear (&splitmux->input_cond);
   g_cond_clear (&splitmux->output_cond);
   g_mutex_clear (&splitmux->lock);
   g_mutex_clear (&splitmux->state_lock);
   g_queue_foreach (&splitmux->out_cmd_q, (GFunc) out_cmd_buf_free, NULL);
   g_queue_clear (&splitmux->out_cmd_q);
+  g_queue_foreach (&splitmux->pending_input_gops, (GFunc) input_gop_free, NULL);
+  g_queue_clear (&splitmux->pending_input_gops);
+
+  g_clear_pointer (&splitmux->fragment_start_tc, gst_video_time_code_free);
 
   if (splitmux->muxerpad_map)
     gst_structure_free (splitmux->muxerpad_map);
@@ -693,7 +705,6 @@ gst_splitmux_sink_finalize (GObject * object)
    * because the dispose will have freed all request pads though */
   g_list_foreach (splitmux->contexts, (GFunc) mq_stream_ctx_free, NULL);
   g_list_free (splitmux->contexts);
-  gst_splitmux_reset_timecode (splitmux);
 
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -768,7 +779,6 @@ gst_splitmux_sink_set_property (GObject * object, guint prop_id,
       /* will be calculated later */
       g_clear_pointer (&splitmux->tc_interval,
           gst_video_time_code_interval_free);
-      gst_splitmux_reset_timecode (splitmux);
 
       splitmux->threshold_timecode_str = g_value_dup_string (value);
       if (splitmux->threshold_timecode_str) {
@@ -781,6 +791,14 @@ gst_splitmux_sink_set_property (GObject * object, guint prop_id,
           g_free (splitmux->threshold_timecode_str);
           splitmux->threshold_timecode_str = NULL;
         }
+      }
+      splitmux->next_fragment_start_tc_time =
+          calculate_next_max_timecode (splitmux, splitmux->fragment_start_tc,
+          splitmux->fragment_start_time, NULL);
+      if (splitmux->tc_interval && splitmux->fragment_start_tc
+          && !GST_CLOCK_TIME_IS_VALID (splitmux->next_fragment_start_tc_time)) {
+        GST_WARNING_OBJECT (splitmux,
+            "Couldn't calculate next fragment start time for timecode mode");
       }
       GST_OBJECT_UNLOCK (splitmux);
       break;
@@ -1222,11 +1240,11 @@ all_contexts_are_async_eos (GstSplitMuxSink * splitmux)
  * context needs to sleep to wait for the release of the
  * next GOP, or to send EOS to close out the current file
  */
-static void
+static GstFlowReturn
 complete_or_wait_on_out (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
 {
   if (ctx->caps_change)
-    return;
+    return GST_FLOW_OK;
 
   do {
     /* When first starting up, the reference stream has to output
@@ -1234,10 +1252,8 @@ complete_or_wait_on_out (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
     gboolean can_output = (ctx->is_reference || splitmux->ready_for_output);
     GstClockTimeDiff my_max_out_running_time = splitmux->max_out_running_time;
 
-    if (!(splitmux->max_out_running_time == 0 ||
-            splitmux->max_out_running_time == GST_CLOCK_STIME_NONE ||
-            splitmux->alignment_threshold == 0 ||
-            splitmux->max_out_running_time < splitmux->alignment_threshold)) {
+    if (my_max_out_running_time != GST_CLOCK_STIME_NONE
+        && my_max_out_running_time != G_MAXINT64) {
       my_max_out_running_time -= splitmux->alignment_threshold;
       GST_LOG_OBJECT (ctx->srcpad,
           "Max out running time currently %" GST_STIME_FORMAT
@@ -1248,7 +1264,7 @@ complete_or_wait_on_out (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
 
     if (ctx->flushing
         || splitmux->output_state == SPLITMUX_OUTPUT_STATE_STOPPED)
-      return;
+      return GST_FLOW_FLUSHING;
 
     GST_LOG_OBJECT (ctx->srcpad,
         "Checking running time %" GST_STIME_FORMAT " against max %"
@@ -1256,9 +1272,9 @@ complete_or_wait_on_out (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
         GST_STIME_ARGS (my_max_out_running_time));
 
     if (can_output) {
-      if (splitmux->max_out_running_time == GST_CLOCK_STIME_NONE ||
+      if (splitmux->max_out_running_time != GST_CLOCK_STIME_NONE &&
           ctx->out_running_time < my_max_out_running_time) {
-        return;
+        return GST_FLOW_OK;
       }
 
       switch (splitmux->output_state) {
@@ -1302,12 +1318,17 @@ complete_or_wait_on_out (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
           break;
         case SPLITMUX_OUTPUT_STATE_START_NEXT_FILE:
           if (ctx->is_reference) {
+            GstFlowReturn ret = GST_FLOW_OK;
+
             /* Special handling on the reference ctx to start new fragments
              * and collect commands from the command queue */
             /* drops the splitmux lock briefly: */
             /* We must have reference ctx in order for format-location-full to
              * have a sample */
-            start_next_fragment (splitmux, ctx);
+            ret = start_next_fragment (splitmux, ctx);
+            if (ret != GST_FLOW_OK)
+              return ret;
+
             continue;
           }
           break;
@@ -1334,7 +1355,12 @@ complete_or_wait_on_out (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
                     GST_STIME_ARGS (cmd->max_output_ts));
 
                 /* Extend the output range immediately */
-                splitmux->max_out_running_time = cmd->max_output_ts;
+                if (splitmux->max_out_running_time == GST_CLOCK_STIME_NONE
+                    || cmd->max_output_ts > splitmux->max_out_running_time)
+                  splitmux->max_out_running_time = cmd->max_output_ts;
+                GST_DEBUG_OBJECT (splitmux,
+                    "Max out running time now %" GST_STIME_FORMAT,
+                    GST_STIME_ARGS (splitmux->max_out_running_time));
                 splitmux->output_state = SPLITMUX_OUTPUT_STATE_OUTPUT_GOP;
               }
               GST_SPLITMUX_BROADCAST_OUTPUT (splitmux);
@@ -1350,7 +1376,7 @@ complete_or_wait_on_out (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
           continue;
         }
         case SPLITMUX_OUTPUT_STATE_STOPPED:
-          return;
+          return GST_FLOW_FLUSHING;
       }
     } else {
       GST_LOG_OBJECT (ctx->srcpad, "Not yet ready for output");
@@ -1367,6 +1393,8 @@ complete_or_wait_on_out (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
         GST_STIME_ARGS (splitmux->max_out_running_time));
   }
   while (1);
+
+  return GST_FLOW_OK;
 }
 
 static GstClockTime
@@ -1420,9 +1448,24 @@ calculate_next_max_timecode (GstSplitMuxSink * splitmux,
     next_max_tc_time = day_in_ns - cur_tc_time + target_tc_time + running_time;
   }
 
-  GST_INFO_OBJECT (splitmux, "Next max TC time: %" GST_TIME_FORMAT
-      " from ref TC: %" GST_TIME_FORMAT, GST_TIME_ARGS (next_max_tc_time),
-      GST_TIME_ARGS (cur_tc_time));
+#ifndef GST_DISABLE_GST_DEBUG
+  {
+    gchar *next_max_tc_str, *cur_tc_str;
+
+    cur_tc_str = gst_video_time_code_to_string (cur_tc);
+    next_max_tc_str = gst_video_time_code_to_string (target_tc);
+
+    GST_INFO_OBJECT (splitmux, "Next max timecode %s time: %" GST_TIME_FORMAT
+        " from ref timecode %s time: %" GST_TIME_FORMAT,
+        next_max_tc_str,
+        GST_TIME_ARGS (next_max_tc_time),
+        cur_tc_str, GST_TIME_ARGS (cur_tc_time));
+
+    g_free (next_max_tc_str);
+    g_free (cur_tc_str);
+  }
+#endif
+
   if (next_tc)
     *next_tc = target_tc;
   else
@@ -1433,7 +1476,7 @@ calculate_next_max_timecode (GstSplitMuxSink * splitmux,
 
 static gboolean
 request_next_keyframe (GstSplitMuxSink * splitmux, GstBuffer * buffer,
-    GstClockTime running_time)
+    GstClockTimeDiff running_time_dts)
 {
   GstEvent *ev;
   GstClockTime target_time;
@@ -1442,16 +1485,51 @@ request_next_keyframe (GstSplitMuxSink * splitmux, GstBuffer * buffer,
   GstClockTime next_max_tc_time = GST_CLOCK_TIME_NONE;
   GstClockTime next_fku_time = GST_CLOCK_TIME_NONE;
   GstClockTime tc_rounding_error = 5 * GST_USECOND;
+  InputGop *newest_gop = NULL;
+  GList *l;
 
   if (!splitmux->send_keyframe_requests)
     return TRUE;
 
+  /* Find the newest GOP where we passed in DTS the start PTS */
+  for (l = splitmux->pending_input_gops.tail; l; l = l->prev) {
+    InputGop *tmp = l->data;
+
+    GST_TRACE_OBJECT (splitmux,
+        "Having pending input GOP with start PTS %" GST_STIME_FORMAT
+        " and start time %" GST_STIME_FORMAT,
+        GST_STIME_ARGS (tmp->start_time_pts), GST_STIME_ARGS (tmp->start_time));
+
+    if (tmp->sent_fku) {
+      GST_DEBUG_OBJECT (splitmux,
+          "Already checked for a keyframe request for this GOP");
+      return TRUE;
+    }
+
+    if (running_time_dts == GST_CLOCK_STIME_NONE ||
+        tmp->start_time_pts == GST_CLOCK_STIME_NONE ||
+        running_time_dts >= tmp->start_time_pts) {
+      GST_DEBUG_OBJECT (splitmux,
+          "Using GOP with start PTS %" GST_STIME_FORMAT " and start time %"
+          GST_STIME_FORMAT, GST_STIME_ARGS (tmp->start_time_pts),
+          GST_STIME_ARGS (tmp->start_time));
+      newest_gop = tmp;
+      break;
+    }
+  }
+
+  if (!newest_gop) {
+    GST_DEBUG_OBJECT (splitmux, "Have no complete enough pending input GOP");
+    return TRUE;
+  }
+
   if (splitmux->tc_interval) {
-    if (splitmux->in_tc && gst_video_time_code_is_valid (splitmux->in_tc)) {
+    if (newest_gop->start_tc
+        && gst_video_time_code_is_valid (newest_gop->start_tc)) {
       GstVideoTimeCode *next_tc = NULL;
       max_tc_time =
-          calculate_next_max_timecode (splitmux, splitmux->in_tc,
-          running_time, &next_tc);
+          calculate_next_max_timecode (splitmux, newest_gop->start_tc,
+          newest_gop->start_time, &next_tc);
 
       /* calculate the next expected keyframe time to prevent too early fku
        * event */
@@ -1464,6 +1542,11 @@ request_next_keyframe (GstSplitMuxSink * splitmux, GstBuffer * buffer,
 
       timecode_based = GST_CLOCK_TIME_IS_VALID (max_tc_time) &&
           GST_CLOCK_TIME_IS_VALID (next_max_tc_time);
+
+      if (!timecode_based) {
+        GST_WARNING_OBJECT (splitmux,
+            "Couldn't calculate maximum fragment time for timecode mode");
+      }
     } else {
       /* This can happen in the presence of GAP events that trigger
        * a new fragment start */
@@ -1498,7 +1581,7 @@ request_next_keyframe (GstSplitMuxSink * splitmux, GstBuffer * buffer,
       next_fku_time = 0;
     }
   } else {
-    target_time = running_time + splitmux->threshold_time;
+    target_time = newest_gop->start_time + splitmux->threshold_time;
   }
 
   if (GST_CLOCK_TIME_IS_VALID (splitmux->next_fku_time)) {
@@ -1539,12 +1622,15 @@ request_next_keyframe (GstSplitMuxSink * splitmux, GstBuffer * buffer,
     next_fku_time = target_time + splitmux->threshold_time;
   }
 
-  splitmux->next_fku_time = next_fku_time;
-
-  ev = gst_video_event_new_upstream_force_key_unit (target_time, TRUE, 0);
   GST_INFO_OBJECT (splitmux, "Requesting keyframe at %" GST_TIME_FORMAT
-      ", the next expected keyframe is %" GST_TIME_FORMAT,
+      ", the next expected keyframe request time is %" GST_TIME_FORMAT,
       GST_TIME_ARGS (target_time), GST_TIME_ARGS (next_fku_time));
+
+  newest_gop->sent_fku = TRUE;
+
+  splitmux->next_fku_time = next_fku_time;
+  ev = gst_video_event_new_upstream_force_key_unit (target_time, TRUE, 0);
+
   return gst_pad_push_event (splitmux->reference_ctx->sinkpad, ev);
 }
 
@@ -1553,6 +1639,7 @@ handle_mq_output (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
 {
   GstSplitMuxSink *splitmux = ctx->splitmux;
   MqStreamBuf *buf_info = NULL;
+  GstFlowReturn ret = GST_FLOW_OK;
 
   GST_LOG_OBJECT (pad, "Fired probe type 0x%x", info->type);
 
@@ -1663,8 +1750,9 @@ handle_mq_output (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
           goto beach;
         ctx->out_running_time = ts;
         if (!ctx->is_reference)
-          complete_or_wait_on_out (splitmux, ctx);
+          ret = complete_or_wait_on_out (splitmux, ctx);
         GST_SPLITMUX_UNLOCK (splitmux);
+        GST_PAD_PROBE_INFO_FLOW_RETURN (info) = ret;
         return GST_PAD_PROBE_DROP;
       }
       case GST_EVENT_CAPS:{
@@ -1713,30 +1801,34 @@ handle_mq_output (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
     if (!locked)
       GST_SPLITMUX_LOCK (splitmux);
     if (wait)
-      complete_or_wait_on_out (splitmux, ctx);
+      ret = complete_or_wait_on_out (splitmux, ctx);
     GST_SPLITMUX_UNLOCK (splitmux);
 
     /* Don't try to forward sticky events before the next buffer is there
      * because it would cause a new file to be created without the first
      * buffer being available.
      */
+    GST_PAD_PROBE_INFO_FLOW_RETURN (info) = ret;
     if (ctx->caps_change && GST_EVENT_IS_STICKY (event)) {
       gst_event_unref (event);
       return GST_PAD_PROBE_HANDLED;
-    } else
+    } else {
       return GST_PAD_PROBE_PASS;
+    }
   }
 
   /* Allow everything through until the configured next stopping point */
   GST_SPLITMUX_LOCK (splitmux);
 
   buf_info = g_queue_pop_tail (&ctx->queued_bufs);
-  if (buf_info == NULL)
+  if (buf_info == NULL) {
     /* Can only happen due to a poorly timed flush */
+    ret = GST_FLOW_FLUSHING;
     goto beach;
+  }
 
   /* If we have popped a keyframe, decrement the queued_gop count */
-  if (buf_info->keyframe && splitmux->queued_keyframes > 0)
+  if (buf_info->keyframe && splitmux->queued_keyframes > 0 && ctx->is_reference)
     splitmux->queued_keyframes--;
 
   ctx->out_running_time = buf_info->run_ts;
@@ -1749,7 +1841,7 @@ handle_mq_output (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
 
   ctx->caps_change = FALSE;
 
-  complete_or_wait_on_out (splitmux, ctx);
+  ret = complete_or_wait_on_out (splitmux, ctx);
 
   splitmux->muxed_out_bytes += buf_info->buf_size;
 
@@ -1781,10 +1873,12 @@ handle_mq_output (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
 
   mq_stream_buf_free (buf_info);
 
+  GST_PAD_PROBE_INFO_FLOW_RETURN (info) = ret;
   return GST_PAD_PROBE_PASS;
 
 beach:
   GST_SPLITMUX_UNLOCK (splitmux);
+  GST_PAD_PROBE_INFO_FLOW_RETURN (info) = ret;
   return GST_PAD_PROBE_DROP;
 }
 
@@ -1903,7 +1997,7 @@ _send_event (const GValue * value, gpointer user_data)
  * reaches EOS and it is time to restart
  * a new fragment
  */
-static void
+static GstFlowReturn
 start_next_fragment (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
 {
   GstElement *muxer, *sink;
@@ -1924,8 +2018,11 @@ start_next_fragment (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
   if (splitmux->shutdown) {
     GST_DEBUG_OBJECT (splitmux,
         "Shutdown requested. Aborting fragment switch.");
+    GST_SPLITMUX_LOCK (splitmux);
     GST_SPLITMUX_STATE_UNLOCK (splitmux);
-    return;
+    gst_object_unref (muxer);
+    gst_object_unref (sink);
+    return GST_FLOW_FLUSHING;
   }
 
   if (splitmux->async_finalize) {
@@ -2028,8 +2125,24 @@ start_next_fragment (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
   splitmux->muxed_out_bytes = 0;
   GST_SPLITMUX_UNLOCK (splitmux);
 
-  gst_element_set_state (sink, GST_STATE_TARGET (splitmux));
-  gst_element_set_state (muxer, GST_STATE_TARGET (splitmux));
+  if (gst_element_set_state (sink,
+          GST_STATE_TARGET (splitmux)) == GST_STATE_CHANGE_FAILURE) {
+    gst_element_set_state (sink, GST_STATE_NULL);
+    gst_element_set_locked_state (muxer, FALSE);
+    gst_element_set_locked_state (sink, FALSE);
+
+    goto fail_output;
+  }
+
+  if (gst_element_set_state (muxer,
+          GST_STATE_TARGET (splitmux)) == GST_STATE_CHANGE_FAILURE) {
+    gst_element_set_state (muxer, GST_STATE_NULL);
+    gst_element_set_state (sink, GST_STATE_NULL);
+    gst_element_set_locked_state (muxer, FALSE);
+    gst_element_set_locked_state (sink, FALSE);
+    goto fail_muxer;
+  }
+
   gst_element_set_locked_state (muxer, FALSE);
   gst_element_set_locked_state (sink, FALSE);
 
@@ -2052,12 +2165,39 @@ start_next_fragment (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
   GST_LOG_OBJECT (splitmux, "Resetting state to AWAITING_COMMAND");
   splitmux->output_state = SPLITMUX_OUTPUT_STATE_AWAITING_COMMAND;
   GST_SPLITMUX_BROADCAST_OUTPUT (splitmux);
-  return;
+  return GST_FLOW_OK;
 
 fail:
+  gst_object_unref (sink);
+  gst_object_unref (muxer);
+
+  GST_SPLITMUX_LOCK (splitmux);
   GST_SPLITMUX_STATE_UNLOCK (splitmux);
   GST_ELEMENT_ERROR (splitmux, RESOURCE, SETTINGS,
       ("Could not create the new muxer/sink"), NULL);
+  return GST_FLOW_ERROR;
+
+fail_output:
+  GST_ELEMENT_ERROR (splitmux, RESOURCE, SETTINGS,
+      ("Could not start new output sink"), NULL);
+  gst_object_unref (sink);
+  gst_object_unref (muxer);
+
+  GST_SPLITMUX_LOCK (splitmux);
+  GST_SPLITMUX_STATE_UNLOCK (splitmux);
+  splitmux->switching_fragment = FALSE;
+  return GST_FLOW_ERROR;
+
+fail_muxer:
+  GST_ELEMENT_ERROR (splitmux, RESOURCE, SETTINGS,
+      ("Could not start new muxer"), NULL);
+  gst_object_unref (sink);
+  gst_object_unref (muxer);
+
+  GST_SPLITMUX_LOCK (splitmux);
+  GST_SPLITMUX_STATE_UNLOCK (splitmux);
+  splitmux->switching_fragment = FALSE;
+  return GST_FLOW_ERROR;
 }
 
 static void
@@ -2198,6 +2338,7 @@ need_new_fragment (GstSplitMuxSink * splitmux,
   gboolean check_robust_muxing;
   GstClockTime time_to_split = GST_CLOCK_TIME_NONE;
   GstClockTime *ptr_to_time;
+  const InputGop *gop, *next_gop;
 
   GST_OBJECT_LOCK (splitmux);
   thresh_bytes = splitmux->threshold_bytes;
@@ -2225,8 +2366,14 @@ need_new_fragment (GstSplitMuxSink * splitmux,
     return TRUE;
   }
 
+  gop = g_queue_peek_head (&splitmux->pending_input_gops);
+  /* We need a full GOP queued up at this point */
+  g_assert (gop != NULL);
+  next_gop = g_queue_peek_nth (&splitmux->pending_input_gops, 1);
+  /* And the beginning of the next GOP or otherwise EOS */
+
   /* User told us to split at this running time */
-  if (splitmux->gop_start_time >= time_to_split) {
+  if (gop->start_time >= time_to_split) {
     GST_OBJECT_LOCK (splitmux);
     /* Dequeue running time */
     gst_queue_array_pop_head_struct (splitmux->times_to_split);
@@ -2234,7 +2381,7 @@ need_new_fragment (GstSplitMuxSink * splitmux,
     ptr_to_time = gst_queue_array_peek_head_struct (splitmux->times_to_split);
     while (ptr_to_time) {
       time_to_split = *ptr_to_time;
-      if (splitmux->gop_start_time < time_to_split) {
+      if (gop->start_time < time_to_split) {
         break;
       }
       gst_queue_array_pop_head_struct (splitmux->times_to_split);
@@ -2242,7 +2389,7 @@ need_new_fragment (GstSplitMuxSink * splitmux,
     }
     GST_TRACE_OBJECT (splitmux,
         "GOP start time %" GST_STIME_FORMAT " is after requested split point %"
-        GST_STIME_FORMAT, GST_STIME_ARGS (splitmux->gop_start_time),
+        GST_STIME_FORMAT, GST_STIME_ARGS (gop->start_time),
         GST_STIME_ARGS (time_to_split));
     GST_OBJECT_UNLOCK (splitmux);
     return TRUE;
@@ -2261,16 +2408,20 @@ need_new_fragment (GstSplitMuxSink * splitmux,
     return TRUE;                /* Would overrun time limit */
   }
 
-  if (splitmux->tc_interval &&
-      GST_CLOCK_TIME_IS_VALID (splitmux->next_fragment_start_tc_time) &&
-      splitmux->reference_ctx->in_running_time >
-      splitmux->next_fragment_start_tc_time + 5 * GST_USECOND) {
-    GST_TRACE_OBJECT (splitmux,
-        "in running time %" GST_STIME_FORMAT " overruns time limit %"
-        GST_TIME_FORMAT,
-        GST_STIME_ARGS (splitmux->reference_ctx->in_running_time),
-        GST_TIME_ARGS (splitmux->next_fragment_start_tc_time));
-    return TRUE;
+  if (splitmux->tc_interval) {
+    GstClockTime next_gop_start_time =
+        next_gop ? next_gop->start_time : splitmux->max_in_running_time;
+
+    if (GST_CLOCK_TIME_IS_VALID (splitmux->next_fragment_start_tc_time) &&
+        GST_CLOCK_STIME_IS_VALID (next_gop_start_time) &&
+        next_gop_start_time >
+        splitmux->next_fragment_start_tc_time + 5 * GST_USECOND) {
+      GST_TRACE_OBJECT (splitmux,
+          "in running time %" GST_STIME_FORMAT " overruns time limit %"
+          GST_TIME_FORMAT, GST_STIME_ARGS (next_gop_start_time),
+          GST_TIME_ARGS (splitmux->next_fragment_start_tc_time));
+      return TRUE;
+    }
   }
 
   if (check_robust_muxing) {
@@ -2325,12 +2476,12 @@ video_time_code_replace (GstVideoTimeCode ** old_tc, GstVideoTimeCode * new_tc)
  *      go to COLLECTING_GOP_START state
  */
 static void
-handle_gathered_gop (GstSplitMuxSink * splitmux)
+handle_gathered_gop (GstSplitMuxSink * splitmux, const InputGop * gop,
+    GstClockTimeDiff next_gop_start_time, GstClockTimeDiff max_out_running_time)
 {
   guint64 queued_bytes;
   GstClockTimeDiff queued_time = 0;
   GstClockTimeDiff queued_gop_time = 0;
-  GstClockTimeDiff new_out_ts = splitmux->reference_ctx->in_running_time;
   SplitMuxOutputCommand *cmd;
 
   /* Assess if the multiqueue contents overflowed the current file */
@@ -2339,25 +2490,21 @@ handle_gathered_gop (GstSplitMuxSink * splitmux)
    * reference stream. Other streams might have run ahead a little bit,
    * but extra pieces won't be released to the muxer beyond the reference
    * stream cut-off anyway - so it forms the limit. */
-  queued_bytes = splitmux->fragment_total_bytes + splitmux->gop_total_bytes;
-  queued_time = splitmux->reference_ctx->in_running_time;
+  queued_bytes = splitmux->fragment_total_bytes + gop->total_bytes;
+  queued_time = next_gop_start_time;
   /* queued_gop_time tracks how much unwritten data there is waiting to
    * be written to this fragment including this GOP */
   if (splitmux->reference_ctx->out_running_time != GST_CLOCK_STIME_NONE)
-    queued_gop_time =
-        splitmux->reference_ctx->in_running_time -
-        splitmux->reference_ctx->out_running_time;
+    queued_gop_time = queued_time - splitmux->reference_ctx->out_running_time;
   else
-    queued_gop_time =
-        splitmux->reference_ctx->in_running_time - splitmux->gop_start_time;
+    queued_gop_time = queued_time - gop->start_time;
 
   GST_LOG_OBJECT (splitmux, " queued_bytes %" G_GUINT64_FORMAT, queued_bytes);
   GST_LOG_OBJECT (splitmux, "mq at TS %" GST_STIME_FORMAT
-      " bytes %" G_GUINT64_FORMAT " in running time %" GST_STIME_FORMAT
+      " bytes %" G_GUINT64_FORMAT " in next gop start time %" GST_STIME_FORMAT
       " gop start time %" GST_STIME_FORMAT,
       GST_STIME_ARGS (queued_time), queued_bytes,
-      GST_STIME_ARGS (splitmux->reference_ctx->in_running_time),
-      GST_STIME_ARGS (splitmux->gop_start_time));
+      GST_STIME_ARGS (next_gop_start_time), GST_STIME_ARGS (gop->start_time));
 
   if (queued_gop_time < 0)
     goto error_gop_duration;
@@ -2386,43 +2533,34 @@ handle_gathered_gop (GstSplitMuxSink * splitmux)
     GST_INFO_OBJECT (splitmux,
         "This GOP (dur %" GST_STIME_FORMAT
         ") would overflow the fragment, Sending start_new_fragment cmd",
-        GST_STIME_ARGS (splitmux->reference_ctx->in_running_time -
-            splitmux->gop_start_time));
+        GST_STIME_ARGS (queued_gop_time));
     cmd = out_cmd_buf_new ();
     cmd->start_new_fragment = TRUE;
     g_queue_push_head (&splitmux->out_cmd_q, cmd);
     GST_SPLITMUX_BROADCAST_OUTPUT (splitmux);
 
-    new_out_ts = splitmux->reference_ctx->in_running_time;
-    splitmux->fragment_start_time = splitmux->gop_start_time;
+    splitmux->fragment_start_time = gop->start_time;
+    splitmux->fragment_start_time_pts = gop->start_time_pts;
     splitmux->fragment_total_bytes = 0;
     splitmux->fragment_reference_bytes = 0;
 
-    if (splitmux->tc_interval) {
-      video_time_code_replace (&splitmux->fragment_start_tc,
-          splitmux->gop_start_tc);
-      splitmux->next_fragment_start_tc_time =
-          calculate_next_max_timecode (splitmux, splitmux->fragment_start_tc,
-          splitmux->fragment_start_time, NULL);
-      if (!GST_CLOCK_TIME_IS_VALID (splitmux->next_fragment_start_tc_time)) {
-        GST_WARNING_OBJECT (splitmux,
-            "Couldn't calculate next fragment start time for timecode mode");
-        /* shouldn't happen, but reset all and try again with next buffers */
-        gst_splitmux_reset_timecode (splitmux);
-      }
+    video_time_code_replace (&splitmux->fragment_start_tc, gop->start_tc);
+    splitmux->next_fragment_start_tc_time =
+        calculate_next_max_timecode (splitmux, splitmux->fragment_start_tc,
+        splitmux->fragment_start_time, NULL);
+    if (splitmux->tc_interval && splitmux->fragment_start_tc
+        && !GST_CLOCK_TIME_IS_VALID (splitmux->next_fragment_start_tc_time)) {
+      GST_WARNING_OBJECT (splitmux,
+          "Couldn't calculate next fragment start time for timecode mode");
     }
   }
 
   /* And set up to collect the next GOP */
-  if (!splitmux->reference_ctx->in_eos) {
+  if (max_out_running_time != G_MAXINT64) {
     splitmux->input_state = SPLITMUX_INPUT_STATE_COLLECTING_GOP_START;
-    splitmux->gop_start_time = new_out_ts;
-    if (splitmux->tc_interval)
-      video_time_code_replace (&splitmux->gop_start_tc, splitmux->in_tc);
   } else {
     /* This is probably already the current state, but just in case: */
     splitmux->input_state = SPLITMUX_INPUT_STATE_FINISHING_UP;
-    new_out_ts = GST_CLOCK_STIME_NONE;  /* EOS runs until forever */
   }
 
   /* And wake all input contexts to send a wake-up event */
@@ -2430,10 +2568,10 @@ handle_gathered_gop (GstSplitMuxSink * splitmux)
   GST_SPLITMUX_BROADCAST_INPUT (splitmux);
 
   /* Now either way - either there was no overflow, or we requested a new fragment: release this GOP */
-  splitmux->fragment_total_bytes += splitmux->gop_total_bytes;
-  splitmux->fragment_reference_bytes += splitmux->gop_reference_bytes;
+  splitmux->fragment_total_bytes += gop->total_bytes;
+  splitmux->fragment_reference_bytes += gop->reference_bytes;
 
-  if (splitmux->gop_total_bytes > 0) {
+  if (gop->total_bytes > 0) {
     GST_LOG_OBJECT (splitmux,
         "Releasing GOP to output. Bytes in fragment now %" G_GUINT64_FORMAT
         " time %" GST_STIME_FORMAT,
@@ -2442,16 +2580,14 @@ handle_gathered_gop (GstSplitMuxSink * splitmux)
     /* Send this GOP to the output command queue */
     cmd = out_cmd_buf_new ();
     cmd->start_new_fragment = FALSE;
-    cmd->max_output_ts = new_out_ts;
+    cmd->max_output_ts = max_out_running_time;
     GST_LOG_OBJECT (splitmux, "Sending GOP cmd to output for TS %"
-        GST_STIME_FORMAT, GST_STIME_ARGS (new_out_ts));
+        GST_STIME_FORMAT, GST_STIME_ARGS (max_out_running_time));
     g_queue_push_head (&splitmux->out_cmd_q, cmd);
 
     GST_SPLITMUX_BROADCAST_OUTPUT (splitmux);
   }
 
-  splitmux->gop_total_bytes = 0;
-  splitmux->gop_reference_bytes = 0;
   return;
 
 error_gop_duration:
@@ -2506,14 +2642,59 @@ check_completed_gop (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
   }
 
   do {
+    GstClockTimeDiff next_gop_start = GST_CLOCK_STIME_NONE;
+
     if (splitmux->input_state == SPLITMUX_INPUT_STATE_WAITING_GOP_COLLECT) {
+      GstClockTimeDiff max_out_running_time;
       gboolean ready = TRUE;
+      InputGop *gop;
+      const InputGop *next_gop;
+
+      gop = g_queue_peek_head (&splitmux->pending_input_gops);
+      next_gop = g_queue_peek_nth (&splitmux->pending_input_gops, 1);
+
+      /* If we have no GOP or no next GOP here then the reference context is
+       * at EOS, otherwise use the start time of the next GOP if we're far
+       * enough in the GOP to know it */
+      if (gop && next_gop) {
+        if (!splitmux->reference_ctx->in_eos
+            && splitmux->max_in_running_time_dts != GST_CLOCK_STIME_NONE
+            && splitmux->max_in_running_time_dts < next_gop->start_time_pts) {
+          GST_LOG_OBJECT (splitmux,
+              "No further GOPs finished collecting, waiting until current DTS %"
+              GST_STIME_FORMAT " has passed next GOP start PTS %"
+              GST_STIME_FORMAT,
+              GST_STIME_ARGS (splitmux->max_in_running_time_dts),
+              GST_STIME_ARGS (next_gop->start_time_pts));
+          break;
+        }
+
+        GST_LOG_OBJECT (splitmux,
+            "Finished collecting GOP with start time %" GST_STIME_FORMAT
+            ", next GOP start time %" GST_STIME_FORMAT,
+            GST_STIME_ARGS (gop->start_time),
+            GST_STIME_ARGS (next_gop->start_time));
+        next_gop_start = next_gop->start_time;
+        max_out_running_time =
+            splitmux->reference_ctx->in_eos ? G_MAXINT64 : next_gop->start_time;
+      } else if (!next_gop) {
+        GST_LOG_OBJECT (splitmux, "Reference context is EOS");
+        next_gop_start = splitmux->max_in_running_time;
+        max_out_running_time = G_MAXINT64;
+      } else if (!gop) {
+        GST_LOG_OBJECT (splitmux, "No further GOPs finished collecting");
+        break;
+      } else {
+        g_assert_not_reached ();
+      }
+
+      g_assert (gop != NULL);
 
       /* Iterate each pad, and check that the input running time is at least
-       * up to the reference running time, and if so handle the collected GOP */
-      GST_LOG_OBJECT (splitmux, "Checking GOP collected, Max in running time %"
-          GST_STIME_FORMAT " ctx %p",
-          GST_STIME_ARGS (splitmux->max_in_running_time), ctx);
+       * up to the start running time of the next GOP or EOS, and if so handle
+       * the collected GOP */
+      GST_LOG_OBJECT (splitmux, "Checking GOP collected, next GOP start %"
+          GST_STIME_FORMAT " ctx %p", GST_STIME_ARGS (next_gop_start), ctx);
       for (cur = g_list_first (splitmux->contexts); cur != NULL;
           cur = g_list_next (cur)) {
         MqStreamCtx *tmpctx = (MqStreamCtx *) (cur->data);
@@ -2523,9 +2704,8 @@ check_completed_gop (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
             " EOS %d", tmpctx, tmpctx->sinkpad,
             GST_STIME_ARGS (tmpctx->in_running_time), tmpctx->in_eos);
 
-        if (splitmux->max_in_running_time != GST_CLOCK_STIME_NONE &&
-            tmpctx->in_running_time < splitmux->max_in_running_time &&
-            !tmpctx->in_eos) {
+        if (next_gop_start != GST_CLOCK_STIME_NONE &&
+            tmpctx->in_running_time < next_gop_start && !tmpctx->in_eos) {
           GST_LOG_OBJECT (splitmux,
               "Context %p sink pad %" GST_PTR_FORMAT " not ready. We'll sleep",
               tmpctx, tmpctx->sinkpad);
@@ -2537,7 +2717,11 @@ check_completed_gop (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
         GST_DEBUG_OBJECT (splitmux,
             "Collected GOP is complete. Processing (ctx %p)", ctx);
         /* All pads have a complete GOP, release it into the multiqueue */
-        handle_gathered_gop (splitmux);
+        handle_gathered_gop (splitmux, gop, next_gop_start,
+            max_out_running_time);
+
+        g_queue_pop_head (&splitmux->pending_input_gops);
+        input_gop_free (gop);
 
         /* The user has requested a split, we can split now that the previous GOP
          * has been collected to the correct location */
@@ -2555,8 +2739,8 @@ check_completed_gop (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
 
     if (splitmux->input_state == SPLITMUX_INPUT_STATE_WAITING_GOP_COLLECT &&
         !ctx->flushing &&
-        (ctx->in_running_time >= splitmux->max_in_running_time) &&
-        (splitmux->max_in_running_time != GST_CLOCK_STIME_NONE)) {
+        ctx->in_running_time >= next_gop_start &&
+        next_gop_start != GST_CLOCK_STIME_NONE) {
       /* Some pad is not yet ready, or GOP is being pushed
        * either way, sleep and wait to get woken */
       GST_LOG_OBJECT (splitmux, "Sleeping for GOP collection (ctx %p)", ctx);
@@ -2574,9 +2758,11 @@ static GstPadProbeReturn
 handle_mq_input (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
 {
   GstSplitMuxSink *splitmux = ctx->splitmux;
+  GstFlowReturn ret = GST_FLOW_OK;
   GstBuffer *buf;
   MqStreamBuf *buf_info = NULL;
-  GstClockTime ts;
+  GstClockTime ts, pts, dts;
+  GstClockTimeDiff running_time, running_time_pts, running_time_dts;
   gboolean loop_again;
   gboolean keyframe = FALSE;
 
@@ -2608,8 +2794,10 @@ handle_mq_input (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
         GST_SPLITMUX_LOCK (splitmux);
         ctx->in_eos = TRUE;
 
-        if (splitmux->input_state == SPLITMUX_INPUT_STATE_STOPPED)
+        if (splitmux->input_state == SPLITMUX_INPUT_STATE_STOPPED) {
+          ret = GST_FLOW_FLUSHING;
           goto beach;
+        }
 
         if (ctx->is_reference) {
           GST_INFO_OBJECT (splitmux, "Got Reference EOS. Finishing up");
@@ -2638,22 +2826,46 @@ handle_mq_input (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
 
         GST_SPLITMUX_LOCK (splitmux);
 
-        if (splitmux->input_state == SPLITMUX_INPUT_STATE_STOPPED)
+        if (splitmux->input_state == SPLITMUX_INPUT_STATE_STOPPED) {
+          ret = GST_FLOW_FLUSHING;
           goto beach;
+        }
         rtime = my_segment_to_running_time (&ctx->in_segment, gap_ts);
 
         GST_LOG_OBJECT (pad, "Have GAP w/ ts %" GST_STIME_FORMAT,
             GST_STIME_ARGS (rtime));
 
-        if (ctx->is_reference
-            && splitmux->fragment_start_time == GST_CLOCK_STIME_NONE) {
-          splitmux->gop_start_time = splitmux->fragment_start_time = rtime;
-          GST_LOG_OBJECT (splitmux, "Mux start time now %" GST_STIME_FORMAT,
-              GST_STIME_ARGS (splitmux->fragment_start_time));
-          /* Also take this as the first start time when starting up,
-           * so that we start counting overflow from the first frame */
-          if (!GST_CLOCK_STIME_IS_VALID (splitmux->max_in_running_time))
-            splitmux->max_in_running_time = splitmux->fragment_start_time;
+        if (ctx->is_reference && GST_CLOCK_STIME_IS_VALID (rtime)) {
+          /* If this GAP event happens before the first fragment then
+           * initialize the fragment start time here. */
+          if (!GST_CLOCK_STIME_IS_VALID (splitmux->fragment_start_time)) {
+            splitmux->fragment_start_time = rtime;
+            GST_LOG_OBJECT (splitmux,
+                "Fragment start time now %" GST_STIME_FORMAT,
+                GST_STIME_ARGS (splitmux->fragment_start_time));
+
+            /* Also take this as the first start time when starting up,
+             * so that we start counting overflow from the first frame */
+            if (!GST_CLOCK_STIME_IS_VALID (splitmux->max_in_running_time))
+              splitmux->max_in_running_time = rtime;
+            if (!GST_CLOCK_STIME_IS_VALID (splitmux->max_in_running_time_dts))
+              splitmux->max_in_running_time_dts = rtime;
+          }
+
+          /* Similarly take it as fragment start PTS and GOP start time if
+           * these are not set */
+          if (!GST_CLOCK_STIME_IS_VALID (splitmux->fragment_start_time_pts))
+            splitmux->fragment_start_time_pts = rtime;
+
+          if (g_queue_is_empty (&splitmux->pending_input_gops)) {
+            InputGop *gop = g_slice_new0 (InputGop);
+
+            gop->from_gap = TRUE;
+            gop->start_time = rtime;
+            gop->start_time_pts = rtime;
+
+            g_queue_push_tail (&splitmux->pending_input_gops, gop);
+          }
         }
 
         GST_SPLITMUX_UNLOCK (splitmux);
@@ -2675,31 +2887,50 @@ handle_mq_input (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
   buf = gst_pad_probe_info_get_buffer (info);
   buf_info = mq_stream_buf_new ();
 
+  pts = GST_BUFFER_PTS (buf);
+  dts = GST_BUFFER_DTS (buf);
   if (GST_BUFFER_PTS_IS_VALID (buf))
     ts = GST_BUFFER_PTS (buf);
   else
     ts = GST_BUFFER_DTS (buf);
 
-  GST_LOG_OBJECT (pad, "Buffer TS is %" GST_TIME_FORMAT, GST_TIME_ARGS (ts));
+  GST_LOG_OBJECT (pad,
+      "Buffer TS is %" GST_TIME_FORMAT " (PTS %" GST_TIME_FORMAT ", DTS %"
+      GST_TIME_FORMAT ")", GST_TIME_ARGS (ts), GST_TIME_ARGS (pts),
+      GST_TIME_ARGS (dts));
 
   GST_SPLITMUX_LOCK (splitmux);
 
-  if (splitmux->input_state == SPLITMUX_INPUT_STATE_STOPPED)
+  if (splitmux->input_state == SPLITMUX_INPUT_STATE_STOPPED) {
+    ret = GST_FLOW_FLUSHING;
     goto beach;
+  }
 
   /* If this buffer has a timestamp, advance the input timestamp of the
    * stream */
   if (GST_CLOCK_TIME_IS_VALID (ts)) {
-    GstClockTimeDiff running_time =
-        my_segment_to_running_time (&ctx->in_segment, ts);
+    running_time = my_segment_to_running_time (&ctx->in_segment, ts);
 
     GST_LOG_OBJECT (pad, "Buffer running TS is %" GST_STIME_FORMAT,
         GST_STIME_ARGS (running_time));
 
+    /* in running time is always the maximum PTS (or DTS) that was observed so far */
     if (GST_CLOCK_STIME_IS_VALID (running_time)
         && running_time > ctx->in_running_time)
       ctx->in_running_time = running_time;
+  } else {
+    running_time = ctx->in_running_time;
   }
+
+  if (GST_CLOCK_TIME_IS_VALID (pts))
+    running_time_pts = my_segment_to_running_time (&ctx->in_segment, pts);
+  else
+    running_time_pts = GST_CLOCK_STIME_NONE;
+
+  if (GST_CLOCK_TIME_IS_VALID (dts))
+    running_time_dts = my_segment_to_running_time (&ctx->in_segment, dts);
+  else
+    running_time_dts = GST_CLOCK_STIME_NONE;
 
   /* Try to make sure we have a valid running time */
   if (!GST_CLOCK_STIME_IS_VALID (ctx->in_running_time)) {
@@ -2715,51 +2946,138 @@ handle_mq_input (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
   buf_info->duration = GST_BUFFER_DURATION (buf);
 
   if (ctx->is_reference) {
-    /* initialize fragment_start_time */
-    if (splitmux->fragment_start_time == GST_CLOCK_STIME_NONE) {
-      splitmux->gop_start_time = splitmux->fragment_start_time =
-          buf_info->run_ts;
-      GST_LOG_OBJECT (splitmux, "Mux start time now %" GST_STIME_FORMAT,
-          GST_STIME_ARGS (splitmux->fragment_start_time));
+    InputGop *gop = NULL;
+    GstVideoTimeCodeMeta *tc_meta = gst_buffer_get_video_time_code_meta (buf);
+
+    /* initialize fragment_start_time if it was not set yet (i.e. for the
+     * first fragment), or otherwise set it to the minimum observed time */
+    if (!GST_CLOCK_STIME_IS_VALID (splitmux->fragment_start_time)
+        || splitmux->fragment_start_time > running_time) {
+      if (!GST_CLOCK_STIME_IS_VALID (splitmux->fragment_start_time))
+        splitmux->fragment_start_time_pts = running_time_pts;
+      splitmux->fragment_start_time = running_time;
+
+      GST_LOG_OBJECT (splitmux,
+          "Fragment start time now %" GST_STIME_FORMAT " (initial PTS %"
+          GST_STIME_FORMAT ")", GST_STIME_ARGS (splitmux->fragment_start_time),
+          GST_STIME_ARGS (splitmux->fragment_start_time_pts));
 
       /* Also take this as the first start time when starting up,
        * so that we start counting overflow from the first frame */
-      if (!GST_CLOCK_STIME_IS_VALID (splitmux->max_in_running_time))
+      if (!GST_CLOCK_STIME_IS_VALID (splitmux->max_in_running_time)
+          || splitmux->max_in_running_time < splitmux->fragment_start_time)
         splitmux->max_in_running_time = splitmux->fragment_start_time;
+
+      if (!GST_CLOCK_STIME_IS_VALID (splitmux->max_in_running_time_dts))
+        splitmux->max_in_running_time_dts = running_time_dts;
+
+      if (tc_meta) {
+        video_time_code_replace (&splitmux->fragment_start_tc, &tc_meta->tc);
+
+        splitmux->next_fragment_start_tc_time =
+            calculate_next_max_timecode (splitmux, &tc_meta->tc,
+            running_time, NULL);
+        if (splitmux->tc_interval
+            && !GST_CLOCK_TIME_IS_VALID (splitmux->next_fragment_start_tc_time))
+        {
+          GST_WARNING_OBJECT (splitmux,
+              "Couldn't calculate next fragment start time for timecode mode");
+        }
+#ifndef GST_DISABLE_GST_DEBUG
+        {
+          gchar *tc_str;
+
+          tc_str = gst_video_time_code_to_string (&tc_meta->tc);
+          GST_DEBUG_OBJECT (splitmux,
+              "Initialize fragment start timecode %s, next fragment start timecode time %"
+              GST_TIME_FORMAT, tc_str,
+              GST_TIME_ARGS (splitmux->next_fragment_start_tc_time));
+          g_free (tc_str);
+        }
+#endif
+      }
     }
 
-    if (splitmux->tc_interval) {
-      GstVideoTimeCodeMeta *tc_meta = gst_buffer_get_video_time_code_meta (buf);
+
+    /* First check if we're at the very first GOP and the tracking was created
+     * from a GAP event. In that case don't start a new GOP on keyframes but
+     * just updated it as needed */
+    gop = g_queue_peek_tail (&splitmux->pending_input_gops);
+
+    if (!gop || (!gop->from_gap
+            && !GST_BUFFER_FLAG_IS_SET (buf, GST_BUFFER_FLAG_DELTA_UNIT))) {
+      gop = g_slice_new0 (InputGop);
+
+      gop->start_time = running_time;
+      gop->start_time_pts = running_time_pts;
+
+      GST_LOG_OBJECT (splitmux,
+          "Next GOP start time now %" GST_STIME_FORMAT " (initial PTS %"
+          GST_STIME_FORMAT ")", GST_STIME_ARGS (gop->start_time),
+          GST_STIME_ARGS (gop->start_time_pts));
+
       if (tc_meta) {
-        video_time_code_replace (&splitmux->in_tc, &tc_meta->tc);
+        video_time_code_replace (&gop->start_tc, &tc_meta->tc);
 
-        if (!splitmux->fragment_start_tc) {
-          /* also initialize fragment_start_tc */
-          video_time_code_replace (&splitmux->gop_start_tc, &tc_meta->tc);
-          video_time_code_replace (&splitmux->fragment_start_tc, &tc_meta->tc);
+#ifndef GST_DISABLE_GST_DEBUG
+        {
+          gchar *tc_str;
 
-          splitmux->next_fragment_start_tc_time =
-              calculate_next_max_timecode (splitmux, splitmux->in_tc,
-              ctx->in_running_time, NULL);
-          GST_DEBUG_OBJECT (splitmux, "Initialize next fragment start tc time %"
-              GST_TIME_FORMAT,
-              GST_TIME_ARGS (splitmux->next_fragment_start_tc_time));
+          tc_str = gst_video_time_code_to_string (&tc_meta->tc);
+          GST_DEBUG_OBJECT (splitmux, "Next GOP start timecode %s", tc_str);
+          g_free (tc_str);
+        }
+#endif
+      }
+
+      g_queue_push_tail (&splitmux->pending_input_gops, gop);
+    } else {
+      gop->from_gap = FALSE;
+
+      if (!GST_CLOCK_STIME_IS_VALID (gop->start_time)
+          || gop->start_time > running_time) {
+        gop->start_time = running_time;
+
+        GST_LOG_OBJECT (splitmux,
+            "GOP start time updated now %" GST_STIME_FORMAT " (initial PTS %"
+            GST_STIME_FORMAT ")", GST_STIME_ARGS (gop->start_time),
+            GST_STIME_ARGS (gop->start_time_pts));
+
+        if (tc_meta) {
+          video_time_code_replace (&gop->start_tc, &tc_meta->tc);
+
+#ifndef GST_DISABLE_GST_DEBUG
+          {
+            gchar *tc_str;
+
+            tc_str = gst_video_time_code_to_string (&tc_meta->tc);
+            GST_DEBUG_OBJECT (splitmux, "Next GOP start timecode updated %s",
+                tc_str);
+            g_free (tc_str);
+          }
+#endif
         }
       }
     }
 
     /* Check whether we need to request next keyframe depending on
      * current running time */
-    if (!GST_BUFFER_FLAG_IS_SET (buf, GST_BUFFER_FLAG_DELTA_UNIT) &&
-        request_next_keyframe (splitmux, buf, ctx->in_running_time) == FALSE) {
+    if (request_next_keyframe (splitmux, buf, running_time_dts) == FALSE) {
       GST_WARNING_OBJECT (splitmux,
           "Could not request a keyframe. Files may not split at the exact location they should");
     }
   }
 
-  GST_DEBUG_OBJECT (pad, "Buf TS %" GST_STIME_FORMAT
-      " total GOP bytes %" G_GUINT64_FORMAT,
-      GST_STIME_ARGS (buf_info->run_ts), splitmux->gop_total_bytes);
+  {
+    InputGop *gop = g_queue_peek_tail (&splitmux->pending_input_gops);
+
+    if (gop) {
+      GST_DEBUG_OBJECT (pad, "Buf TS %" GST_STIME_FORMAT
+          " total GOP bytes %" G_GUINT64_FORMAT ", total next GOP bytes %"
+          G_GUINT64_FORMAT, GST_STIME_ARGS (buf_info->run_ts),
+          gop->total_bytes, gop->total_bytes);
+    }
+  }
 
   loop_again = TRUE;
   do {
@@ -2774,6 +3092,8 @@ handle_mq_input (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
               "running. Data might not drain correctly");
           loop_again = FALSE;
         } else if (ctx->is_reference) {
+          const InputGop *gop, *next_gop;
+
           /* This is the reference context. If it's a keyframe,
            * it marks the start of a new GOP and we should wait in
            * check_completed_gop before continuing, but either way
@@ -2781,23 +3101,47 @@ handle_mq_input (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
            * so set loop_again to FALSE */
           loop_again = FALSE;
 
-          if (GST_BUFFER_FLAG_IS_SET (buf, GST_BUFFER_FLAG_DELTA_UNIT)) {
-            /* Allow other input pads to catch up to here too */
+          gop = g_queue_peek_head (&splitmux->pending_input_gops);
+          g_assert (gop != NULL);
+          next_gop = g_queue_peek_nth (&splitmux->pending_input_gops, 1);
+
+          if (ctx->in_running_time > splitmux->max_in_running_time)
             splitmux->max_in_running_time = ctx->in_running_time;
-            GST_LOG_OBJECT (splitmux,
-                "Max in running time now %" GST_TIME_FORMAT,
-                GST_TIME_ARGS (splitmux->max_in_running_time));
+          if (running_time_dts > splitmux->max_in_running_time_dts)
+            splitmux->max_in_running_time_dts = running_time_dts;
+
+          GST_LOG_OBJECT (splitmux,
+              "Max in running time now %" GST_STIME_FORMAT ", DTS %"
+              GST_STIME_FORMAT, GST_STIME_ARGS (splitmux->max_in_running_time),
+              GST_STIME_ARGS (splitmux->max_in_running_time_dts));
+
+          if (!next_gop) {
+            GST_DEBUG_OBJECT (pad, "Waiting for end of GOP");
+            /* Allow other input pads to catch up to here too */
             GST_SPLITMUX_BROADCAST_INPUT (splitmux);
             break;
           }
-          GST_INFO_OBJECT (pad,
-              "Have keyframe with running time %" GST_STIME_FORMAT,
-              GST_STIME_ARGS (ctx->in_running_time));
-          keyframe = TRUE;
+
+          if (!GST_BUFFER_FLAG_IS_SET (buf, GST_BUFFER_FLAG_DELTA_UNIT)) {
+            GST_INFO_OBJECT (pad,
+                "Have keyframe with running time %" GST_STIME_FORMAT,
+                GST_STIME_ARGS (ctx->in_running_time));
+            keyframe = TRUE;
+          }
+
+          if (running_time_dts != GST_CLOCK_STIME_NONE
+              && running_time_dts < next_gop->start_time_pts) {
+            GST_DEBUG_OBJECT (splitmux,
+                "Waiting until DTS (%" GST_STIME_FORMAT
+                ") has passed next GOP start PTS (%" GST_STIME_FORMAT ")",
+                GST_STIME_ARGS (running_time_dts),
+                GST_STIME_ARGS (next_gop->start_time_pts));
+            /* Allow other input pads to catch up to here too */
+            GST_SPLITMUX_BROADCAST_INPUT (splitmux);
+            break;
+          }
+
           splitmux->input_state = SPLITMUX_INPUT_STATE_WAITING_GOP_COLLECT;
-          splitmux->max_in_running_time = ctx->in_running_time;
-          GST_LOG_OBJECT (splitmux, "Max in running time now %" GST_TIME_FORMAT,
-              GST_TIME_ARGS (splitmux->max_in_running_time));
           /* Wake up other input pads to collect this GOP */
           GST_SPLITMUX_BROADCAST_INPUT (splitmux);
           check_completed_gop (splitmux, ctx);
@@ -2817,17 +3161,14 @@ handle_mq_input (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
         }
         break;
       case SPLITMUX_INPUT_STATE_WAITING_GOP_COLLECT:{
-        /* We're collecting a GOP. If this is the reference context,
-         * we need to check if this is a keyframe that marks the start
-         * of the next GOP. If it is, it marks the end of the GOP we're
-         * collecting, so sleep and wait until all the other pads also
-         * reach that timestamp - at which point, we have an entire GOP
-         * and either go to ENDING_FILE or release this GOP to the muxer and
-         * go back to COLLECT_GOP_START. */
+        /* We're collecting a GOP, this is only ever called for non-reference
+         * contexts as the reference context would be waiting inside
+         * check_completed_gop() */
+
+        g_assert (!ctx->is_reference);
 
         /* If we overran the target timestamp, it might be time to process
-         * the GOP, otherwise bail out for more data
-         */
+         * the GOP, otherwise bail out for more data. */
         GST_LOG_OBJECT (pad,
             "Checking TS %" GST_STIME_FORMAT " against max %"
             GST_STIME_FORMAT, GST_STIME_ARGS (ctx->in_running_time),
@@ -2853,15 +3194,23 @@ handle_mq_input (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
   }
   while (loop_again);
 
-  if (keyframe) {
+  if (keyframe && ctx->is_reference)
     splitmux->queued_keyframes++;
-    buf_info->keyframe = TRUE;
-  }
+  buf_info->keyframe = keyframe;
 
-  /* Update total input byte counter for overflow detect */
-  splitmux->gop_total_bytes += buf_info->buf_size;
-  if (ctx->is_reference) {
-    splitmux->gop_reference_bytes += buf_info->buf_size;
+  /* Update total input byte counter for overflow detect unless we're after
+   * EOS now */
+  if (splitmux->input_state != SPLITMUX_INPUT_STATE_FINISHING_UP
+      && splitmux->input_state != SPLITMUX_INPUT_STATE_STOPPED) {
+    InputGop *gop = g_queue_peek_tail (&splitmux->pending_input_gops);
+
+    /* We must have a GOP at this point */
+    g_assert (gop != NULL);
+
+    gop->total_bytes += buf_info->buf_size;
+    if (ctx->is_reference) {
+      gop->reference_bytes += buf_info->buf_size;
+    }
   }
 
   /* Now add this buffer to the queue just before returning */
@@ -2871,12 +3220,14 @@ handle_mq_input (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
       " run ts %" GST_STIME_FORMAT, buf, GST_STIME_ARGS (ctx->in_running_time));
 
   GST_SPLITMUX_UNLOCK (splitmux);
+  GST_PAD_PROBE_INFO_FLOW_RETURN (info) = ret;
   return GST_PAD_PROBE_PASS;
 
 beach:
   GST_SPLITMUX_UNLOCK (splitmux);
   if (buf_info)
     mq_stream_buf_free (buf_info);
+  GST_PAD_PROBE_INFO_FLOW_RETURN (info) = ret;
   return GST_PAD_PROBE_PASS;
 }
 
@@ -3102,7 +3453,7 @@ gst_splitmux_sink_request_new_pad (GstElement * element,
     /* Have a muxer pad name */
     if (!(muxpad = gst_element_get_static_pad (splitmux->muxer, muxer_padname))) {
       if ((muxpad =
-              gst_element_get_request_pad (splitmux->muxer, muxer_padname)))
+              gst_element_request_pad_simple (splitmux->muxer, muxer_padname)))
         muxer_is_requestpad = TRUE;
     }
     g_free ((gchar *) muxer_padname);
@@ -3562,13 +3913,18 @@ static void
 gst_splitmux_sink_reset (GstSplitMuxSink * splitmux)
 {
   splitmux->max_in_running_time = GST_CLOCK_STIME_NONE;
-  splitmux->gop_start_time = splitmux->fragment_start_time =
-      GST_CLOCK_STIME_NONE;
-  splitmux->max_out_running_time = 0;
+  splitmux->max_in_running_time_dts = GST_CLOCK_STIME_NONE;
+
+  splitmux->fragment_start_time = GST_CLOCK_STIME_NONE;
+  splitmux->fragment_start_time_pts = GST_CLOCK_STIME_NONE;
+  g_clear_pointer (&splitmux->fragment_start_tc, gst_video_time_code_free);
+
+  g_queue_foreach (&splitmux->pending_input_gops, (GFunc) input_gop_free, NULL);
+  g_queue_clear (&splitmux->pending_input_gops);
+
+  splitmux->max_out_running_time = GST_CLOCK_STIME_NONE;
   splitmux->fragment_total_bytes = 0;
   splitmux->fragment_reference_bytes = 0;
-  splitmux->gop_total_bytes = 0;
-  splitmux->gop_reference_bytes = 0;
   splitmux->muxed_out_bytes = 0;
   splitmux->ready_for_output = FALSE;
 
@@ -3621,9 +3977,10 @@ gst_splitmux_sink_change_state (GstElement * element, GstStateChange transition)
       break;
     }
     case GST_STATE_CHANGE_PAUSED_TO_READY:
+    case GST_STATE_CHANGE_READY_TO_READY:
       g_atomic_int_set (&(splitmux->split_requested), FALSE);
       g_atomic_int_set (&(splitmux->do_split_next_gop), FALSE);
-
+      /* Fall through */
     case GST_STATE_CHANGE_READY_TO_NULL:
       GST_SPLITMUX_STATE_LOCK (splitmux);
       splitmux->shutdown = TRUE;
@@ -3678,26 +4035,25 @@ gst_splitmux_sink_change_state (GstElement * element, GstStateChange transition)
       break;
   }
 
+  return ret;
+
 beach:
-  if (transition == GST_STATE_CHANGE_NULL_TO_READY &&
-      ret == GST_STATE_CHANGE_FAILURE) {
+  if (transition == GST_STATE_CHANGE_NULL_TO_READY) {
     /* Cleanup elements on failed transition out of NULL */
     gst_splitmux_reset_elements (splitmux);
     GST_SPLITMUX_LOCK (splitmux);
     do_async_done (splitmux);
     GST_SPLITMUX_UNLOCK (splitmux);
   }
+  if (transition == GST_STATE_CHANGE_READY_TO_READY) {
+    /* READY to READY transition only happens when we're already
+     * in READY state, but a child element is in NULL, which
+     * happens when there's an error changing the state of the sink.
+     * We need to make sure not to fail the state transition, or
+     * the core won't transition us back to NULL successfully */
+    ret = GST_STATE_CHANGE_SUCCESS;
+  }
   return ret;
-}
-
-gboolean
-register_splitmuxsink (GstPlugin * plugin)
-{
-  GST_DEBUG_CATEGORY_INIT (splitmux_debug, "splitmuxsink", 0,
-      "Split File Muxing Sink");
-
-  return gst_element_register (plugin, "splitmuxsink", GST_RANK_NONE,
-      GST_TYPE_SPLITMUX_SINK);
 }
 
 static void

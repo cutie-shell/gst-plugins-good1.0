@@ -401,7 +401,6 @@ gst_jack_ring_buffer_acquire (GstAudioRingBuffer * buf,
 {
   GstJackAudioSink *sink;
   GstJackRingBuffer *abuf;
-  const char **ports;
   gint sample_rate, buffer_size;
   gint i, rate, bpf, channels, res;
   jack_client_t *client;
@@ -435,7 +434,9 @@ gst_jack_ring_buffer_acquire (GstAudioRingBuffer * buf,
       (GST_SECOND / GST_USECOND), rate * bpf);
   /* segtotal based on buffer-time latency */
   spec->segtotal = spec->buffer_time / spec->latency_time;
-  if (spec->segtotal < 2) {
+
+  /* Use small period when low-latency is enabled regardless of buffer-time */
+  if (spec->segtotal < 2 || sink->low_latency) {
     spec->segtotal = 2;
     spec->buffer_time = spec->latency_time * spec->segtotal;
   }
@@ -457,18 +458,39 @@ gst_jack_ring_buffer_acquire (GstAudioRingBuffer * buf,
   /* if we need to automatically connect the ports, do so now. We must do this
    * after activating the client. */
   if (sink->connect == GST_JACK_CONNECT_AUTO
-      || sink->connect == GST_JACK_CONNECT_AUTO_FORCED) {
+      || sink->connect == GST_JACK_CONNECT_AUTO_FORCED
+      || sink->connect == GST_JACK_CONNECT_EXPLICIT) {
+    const char **available_ports = NULL;
+    const char **jack_ports = NULL;
+    char **user_ports = NULL;
+
     /* find all the physical input ports. A physical input port is a port
      * associated with a hardware device. Someone needs connect to a physical
      * port in order to hear something. */
-    if (sink->port_pattern == NULL) {
-      ports = jack_get_ports (client, NULL, NULL,
-          JackPortIsPhysical | JackPortIsInput);
-    } else {
-      ports = jack_get_ports (client, sink->port_pattern, NULL,
-          JackPortIsInput);
+    if (sink->port_names) {
+      user_ports = gst_jack_audio_client_get_port_names_from_string (client,
+          sink->port_names, JackPortIsInput);
+
+      if (user_ports)
+        available_ports = (const char **) user_ports;
     }
-    if (ports == NULL) {
+
+    if (!available_ports && sink->connect == GST_JACK_CONNECT_EXPLICIT)
+      goto wrong_port_names;
+
+    if (!available_ports) {
+      if (!sink->port_pattern) {
+        jack_ports = jack_get_ports (client, NULL, NULL,
+            JackPortIsPhysical | JackPortIsInput);
+      } else {
+        jack_ports = jack_get_ports (client, sink->port_pattern, NULL,
+            JackPortIsInput);
+      }
+
+      available_ports = jack_ports;
+    }
+
+    if (!available_ports) {
       /* no ports? fine then we don't do anything except for posting a warning
        * message. */
       GST_ELEMENT_WARNING (sink, RESOURCE, NOT_FOUND, (NULL),
@@ -478,7 +500,7 @@ gst_jack_ring_buffer_acquire (GstAudioRingBuffer * buf,
 
     for (i = 0; i < channels; i++) {
       /* stop when all input ports are exhausted */
-      if (ports[i] == NULL) {
+      if (!available_ports[i]) {
         /* post a warning that we could not connect all ports */
         GST_ELEMENT_WARNING (sink, RESOURCE, NOT_FOUND, (NULL),
             ("No more physical ports, leaving some ports unconnected"));
@@ -487,11 +509,18 @@ gst_jack_ring_buffer_acquire (GstAudioRingBuffer * buf,
       GST_DEBUG_OBJECT (sink, "try connecting to %s",
           jack_port_name (sink->ports[i]));
       /* connect the port to a physical port */
-      res = jack_connect (client, jack_port_name (sink->ports[i]), ports[i]);
-      if (res != 0 && res != EEXIST)
+      res = jack_connect (client,
+          jack_port_name (sink->ports[i]), available_ports[i]);
+      if (res != 0 && res != EEXIST) {
+        jack_free (jack_ports);
+        g_strfreev (user_ports);
+
         goto cannot_connect;
+      }
     }
-    jack_free (ports);
+
+    jack_free (jack_ports);
+    g_strfreev (user_ports);
   }
 done:
 
@@ -526,7 +555,12 @@ cannot_connect:
     GST_ELEMENT_ERROR (sink, RESOURCE, SETTINGS, (NULL),
         ("Could not connect output ports to physical ports (%d:%s)",
             res, g_strerror (res)));
-    jack_free (ports);
+    return FALSE;
+  }
+wrong_port_names:
+  {
+    GST_ELEMENT_ERROR (sink, RESOURCE, SETTINGS, (NULL),
+        ("Invalid port-names was provided"));
     return FALSE;
   }
 }
@@ -685,6 +719,7 @@ enum
 #define DEFAULT_PROP_CLIENT_NAME	NULL
 #define DEFAULT_PROP_PORT_PATTERN      	NULL
 #define DEFAULT_PROP_TRANSPORT	GST_JACK_TRANSPORT_AUTONOMOUS
+#define DEFAULT_PROP_LOW_LATENCY  FALSE
 
 enum
 {
@@ -695,11 +730,15 @@ enum
   PROP_CLIENT_NAME,
   PROP_PORT_PATTERN,
   PROP_TRANSPORT,
+  PROP_LOW_LATENCY,
+  PROP_PORT_NAMES,
   PROP_LAST
 };
 
 #define gst_jack_audio_sink_parent_class parent_class
 G_DEFINE_TYPE (GstJackAudioSink, gst_jack_audio_sink, GST_TYPE_AUDIO_BASE_SINK);
+GST_ELEMENT_REGISTER_DEFINE (jackaudiosink, "jackaudiosink",
+    GST_RANK_PRIMARY, GST_TYPE_JACK_AUDIO_SINK);
 
 static void gst_jack_audio_sink_dispose (GObject * object);
 static void gst_jack_audio_sink_set_property (GObject * object, guint prop_id,
@@ -784,6 +823,36 @@ gst_jack_audio_sink_class_init (GstJackAudioSinkClass * klass)
           GST_TYPE_JACK_TRANSPORT, DEFAULT_PROP_TRANSPORT,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+  /**
+   * GstJackAudioSink:low-latency:
+   *
+   * Optimize all settings for lowest latency. When enabled,
+   * #GstAudioBaseSink:buffer-time and #GstAudioBaseSink:latency-time will be
+   * ignored.
+   *
+   * Since: 1.20
+   */
+  g_object_class_install_property (gobject_class, PROP_LOW_LATENCY,
+      g_param_spec_boolean ("low-latency", "Low latency",
+          "Optimize all settings for lowest latency. When enabled, "
+          "\"buffer-time\" and \"latency-time\" will be ignored",
+          DEFAULT_PROP_LOW_LATENCY,
+          GST_PARAM_MUTABLE_READY | G_PARAM_READWRITE |
+          G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GstJackAudioSink:port-names:
+   *
+   * Comma-separated list of port name including "client_name:" prefix
+   *
+   * Since: 1.20
+   */
+  g_object_class_install_property (gobject_class, PROP_PORT_NAMES,
+      g_param_spec_string ("port-names", "Port Names",
+          "Comma-separated list of port name including \"client_name:\" prefix",
+          NULL, GST_PARAM_MUTABLE_READY | G_PARAM_READWRITE |
+          G_PARAM_STATIC_STRINGS));
+
   gst_element_class_set_static_metadata (gstelement_class, "Audio Sink (Jack)",
       "Sink/Audio", "Output audio to a JACK server",
       "Wim Taymans <wim.taymans@gmail.com>");
@@ -814,6 +883,7 @@ gst_jack_audio_sink_init (GstJackAudioSink * sink)
   sink->buffers = NULL;
   sink->client_name = g_strdup (DEFAULT_PROP_CLIENT_NAME);
   sink->transport = DEFAULT_PROP_TRANSPORT;
+  sink->low_latency = DEFAULT_PROP_LOW_LATENCY;
 }
 
 static void
@@ -832,6 +902,8 @@ gst_jack_audio_sink_dispose (GObject * object)
     g_free (sink->port_pattern);
     sink->port_pattern = NULL;
   }
+
+  g_clear_pointer (&sink->port_names, g_free);
 
   G_OBJECT_CLASS (parent_class)->dispose (object);
 }
@@ -869,6 +941,13 @@ gst_jack_audio_sink_set_property (GObject * object, guint prop_id,
     case PROP_TRANSPORT:
       sink->transport = g_value_get_flags (value);
       break;
+    case PROP_LOW_LATENCY:
+      sink->low_latency = g_value_get_boolean (value);
+      break;
+    case PROP_PORT_NAMES:
+      g_free (sink->port_names);
+      sink->port_names = g_value_dup_string (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -902,6 +981,12 @@ gst_jack_audio_sink_get_property (GObject * object, guint prop_id,
     case PROP_TRANSPORT:
       g_value_set_flags (value, sink->transport);
       break;
+    case PROP_LOW_LATENCY:
+      g_value_set_boolean (value, sink->low_latency);
+      break;
+    case PROP_PORT_NAMES:
+      g_value_set_string (value, sink->port_names);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -920,14 +1005,42 @@ gst_jack_audio_sink_getcaps (GstBaseSink * bsink, GstCaps * filter)
   if (sink->client == NULL)
     goto no_client;
 
+  if (sink->connect == GST_JACK_CONNECT_EXPLICIT && !sink->port_names)
+    goto no_port_names;
+
   client = gst_jack_audio_client_get_client (sink->client);
 
-  if (sink->connect == GST_JACK_CONNECT_AUTO) {
+  if (sink->connect == GST_JACK_CONNECT_AUTO ||
+      sink->connect == GST_JACK_CONNECT_EXPLICIT) {
+    max = 0;
+
+    if (sink->port_names) {
+      gchar **user_ports =
+          gst_jack_audio_client_get_port_names_from_string (client,
+          sink->port_names, JackPortIsInput);
+
+      if (user_ports) {
+        max = g_strv_length (user_ports);
+      } else {
+        GST_ELEMENT_WARNING (sink, RESOURCE, NOT_FOUND,
+            ("Invalid \"port-names\" was requested"),
+            ("Requested \"port-names\" %s contains invalid name",
+                sink->port_names));
+      }
+
+      g_strfreev (user_ports);
+    }
+
+    if (max > 0)
+      goto found;
+
+    if (sink->connect == GST_JACK_CONNECT_EXPLICIT)
+      goto no_port_names;
+
     /* get a port count, this is the number of channels we can automatically
      * connect. */
     ports = jack_get_ports (client, NULL, NULL,
         JackPortIsPhysical | JackPortIsInput);
-    max = 0;
     if (ports != NULL) {
       for (; ports[max]; max++);
       jack_free (ports);
@@ -938,7 +1051,13 @@ gst_jack_audio_sink_getcaps (GstBaseSink * bsink, GstCaps * filter)
      * pads. */
     max = G_MAXINT;
   }
-  min = MIN (1, max);
+
+found:
+  if (sink->connect == GST_JACK_CONNECT_EXPLICIT) {
+    min = max;
+  } else {
+    min = MIN (1, max);
+  }
 
   rate = jack_get_sample_rate (client);
 
@@ -947,9 +1066,13 @@ gst_jack_audio_sink_getcaps (GstBaseSink * bsink, GstCaps * filter)
   if (!sink->caps) {
     sink->caps = gst_caps_new_simple ("audio/x-raw",
         "format", G_TYPE_STRING, GST_JACK_FORMAT_STR,
-        "layout", G_TYPE_STRING, "interleaved",
-        "rate", G_TYPE_INT, rate,
-        "channels", GST_TYPE_INT_RANGE, min, max, NULL);
+        "layout", G_TYPE_STRING, "interleaved", "rate", G_TYPE_INT, rate, NULL);
+    if (min == max) {
+      gst_caps_set_simple (sink->caps, "channels", G_TYPE_INT, min, NULL);
+    } else {
+      gst_caps_set_simple (sink->caps,
+          "channels", GST_TYPE_INT_RANGE, min, max, NULL);
+    }
   }
   GST_INFO_OBJECT (sink, "returning caps %" GST_PTR_FORMAT, sink->caps);
 
@@ -960,6 +1083,13 @@ no_client:
   {
     GST_DEBUG_OBJECT (sink, "device not open, using template caps");
     /* base class will get template caps for us when we return NULL */
+    return NULL;
+  }
+no_port_names:
+  {
+    GST_ELEMENT_ERROR (sink, RESOURCE, SETTINGS,
+        ("User must provide valid port names"),
+        ("\"port-names\" contains invalid name or NULL string"));
     return NULL;
   }
 }

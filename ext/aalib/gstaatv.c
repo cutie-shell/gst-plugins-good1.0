@@ -130,6 +130,7 @@ gst_aatv_rain_mode_get_type (void)
 
 #define gst_aatv_parent_class parent_class
 G_DEFINE_TYPE (GstAATv, gst_aatv, GST_TYPE_VIDEO_FILTER);
+GST_ELEMENT_REGISTER_DEFINE (aatv, "aatv", GST_RANK_NONE, GST_TYPE_AATV);
 
 static void
 gst_aatv_scale (GstAATv * aatv, guchar * src, guchar * dest,
@@ -830,27 +831,28 @@ gst_aatv_set_property (GObject * object, guint prop_id, const GValue * value,
       break;
     }
     case PROP_RAIN_DELAY_MIN:{
-      if (g_value_get_float (value) <= aatv->rain_delay_max)
+      if (g_value_get_int (value) <= aatv->rain_delay_max)
         aatv->rain_delay_min = g_value_get_int (value);
       break;
     }
     case PROP_RAIN_DELAY_MAX:{
-      if (g_value_get_float (value) >= aatv->rain_delay_min)
+      if (g_value_get_int (value) >= aatv->rain_delay_min)
         aatv->rain_delay_max = g_value_get_int (value);
       break;
     }
     case PROP_RAIN_LENGTH_MIN:{
-      if (g_value_get_float (value) <= aatv->rain_length_max)
+      if (g_value_get_int (value) <= aatv->rain_length_max)
         aatv->rain_length_min = g_value_get_int (value);
       break;
     }
     case PROP_RAIN_LENGTH_MAX:{
-      if (g_value_get_float (value) >= aatv->rain_length_min)
+      if (g_value_get_int (value) >= aatv->rain_length_min)
         aatv->rain_length_max = g_value_get_int (value);
       break;
     }
     case PROP_RAIN_MODE:{
       aatv->rain_mode = g_value_get_enum (value);
+      gst_aatv_rain_init (aatv);
       break;
     }
     default:

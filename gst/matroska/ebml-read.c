@@ -175,7 +175,7 @@ void
 gst_ebml_read_clear (GstEbmlRead * ebml)
 {
   if (ebml->readers)
-    g_array_free (ebml->readers, TRUE);
+    g_array_unref (ebml->readers);
   ebml->readers = NULL;
   if (ebml->buf) {
     gst_buffer_unmap (ebml->buf, &ebml->map);
@@ -365,6 +365,19 @@ gst_ebml_read_bytes (GstEbmlRead * ebml, guint32 * id, const guint8 ** data,
   /* we just at least peeked the id */
   if (!gst_byte_reader_skip (gst_ebml_read_br (ebml), prefix))
     return GST_FLOW_ERROR;      /* FIXME: do proper error handling */
+
+  /* This shouldn't happen here with the elements read through this function */
+  if (length == GST_EBML_SIZE_UNKNOWN || length == G_MAXUINT64) {
+    GST_ERROR_OBJECT (ebml->el, "element 0x%x has undefined length!", *id);
+    return GST_FLOW_ERROR;
+  }
+
+  /* Sanity check since we're downcasting a 64-bit len to possibly 32-bit here */
+  if (length >= G_MAXUINT) {
+    GST_ERROR_OBJECT (ebml->el, "element 0x%x too large, "
+        "size %" G_GUINT64_FORMAT, *id, length);
+    return GST_FLOW_ERROR;
+  }
 
   *data = NULL;
   if (G_LIKELY (length > 0)) {
@@ -663,7 +676,7 @@ gst_ebml_read_binary (GstEbmlRead * ebml,
     return ret;
 
   *length = size;
-  *binary = g_memdup (data, size);
+  *binary = g_memdup2 (data, size);
 
   return GST_FLOW_OK;
 }

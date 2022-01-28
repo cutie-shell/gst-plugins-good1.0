@@ -125,11 +125,14 @@ static gboolean gst_splitmux_src_activate_part (GstSplitMuxSrc * splitmux,
     guint part, GstSeekFlags extra_flags);
 
 #define _do_init \
-    G_IMPLEMENT_INTERFACE(GST_TYPE_URI_HANDLER, splitmux_src_uri_handler_init);
+    G_IMPLEMENT_INTERFACE(GST_TYPE_URI_HANDLER, splitmux_src_uri_handler_init); \
+    GST_DEBUG_CATEGORY_INIT (splitmux_debug, "splitmuxsrc", 0, "Split File Demuxing Source");
 #define gst_splitmux_src_parent_class parent_class
 
 G_DEFINE_TYPE_EXTENDED (GstSplitMuxSrc, gst_splitmux_src, GST_TYPE_BIN, 0,
     _do_init);
+GST_ELEMENT_REGISTER_DEFINE (splitmuxsrc, "splitmuxsrc", GST_RANK_NONE,
+    GST_TYPE_SPLITMUX_SRC);
 
 static GstURIType
 splitmux_src_uri_get_type (GType type)
@@ -1508,19 +1511,34 @@ splitmux_src_pad_query (GstPad * pad, GstObject * parent, GstQuery * query)
 
       break;
     }
+    case GST_QUERY_SEGMENT:{
+      GstFormat format;
+      gint64 start, stop;
+
+      SPLITMUX_SRC_LOCK (splitmux);
+      format = splitmux->play_segment.format;
+
+      start =
+          gst_segment_to_stream_time (&splitmux->play_segment, format,
+          splitmux->play_segment.start);
+      if (splitmux->play_segment.stop == GST_CLOCK_TIME_NONE) {
+        if (splitmux->play_segment.duration == GST_CLOCK_TIME_NONE)
+          stop = GST_CLOCK_TIME_NONE;
+        else
+          stop = start + splitmux->play_segment.duration;
+      } else {
+        stop = gst_segment_to_stream_time (&splitmux->play_segment, format,
+            splitmux->play_segment.stop);
+      }
+
+      gst_query_set_segment (query, splitmux->play_segment.rate, format, start,
+          stop);
+      ret = TRUE;
+
+      SPLITMUX_SRC_UNLOCK (splitmux);
+    }
     default:
       break;
   }
   return ret;
-}
-
-
-gboolean
-register_splitmuxsrc (GstPlugin * plugin)
-{
-  GST_DEBUG_CATEGORY_INIT (splitmux_debug, "splitmuxsrc", 0,
-      "Split File Demuxing Source");
-
-  return gst_element_register (plugin, "splitmuxsrc", GST_RANK_NONE,
-      GST_TYPE_SPLITMUX_SRC);
 }

@@ -75,6 +75,8 @@ GST_DEBUG_CATEGORY_STATIC (gst_vpxenc_debug);
 #define DEFAULT_TS_RATE_DECIMATOR NULL
 #define DEFAULT_TS_PERIODICITY 0
 #define DEFAULT_TS_LAYER_ID NULL
+#define DEFAULT_TS_LAYER_FLAGS NULL
+#define DEFAULT_TS_LAYER_SYNC_FLAGS NULL
 
 #define DEFAULT_ERROR_RESILIENT 0
 #define DEFAULT_LAG_IN_FRAMES 0
@@ -85,7 +87,7 @@ GST_DEBUG_CATEGORY_STATIC (gst_vpxenc_debug);
 #define DEFAULT_V_SCALING_MODE VP8E_NORMAL
 #define DEFAULT_CPU_USED 0
 #define DEFAULT_ENABLE_AUTO_ALT_REF FALSE
-#define DEFAULT_DEADLINE VPX_DL_BEST_QUALITY
+#define DEFAULT_DEADLINE VPX_DL_GOOD_QUALITY
 #define DEFAULT_NOISE_SENSITIVITY 0
 #define DEFAULT_SHARPNESS 0
 
@@ -130,6 +132,8 @@ enum
   PROP_TS_RATE_DECIMATOR,
   PROP_TS_PERIODICITY,
   PROP_TS_LAYER_ID,
+  PROP_TS_LAYER_FLAGS,
+  PROP_TS_LAYER_SYNC_FLAGS,
   PROP_MULTIPASS_MODE,
   PROP_MULTIPASS_CACHE_FILE,
   PROP_ERROR_RESILIENT,
@@ -316,6 +320,35 @@ gst_vpx_enc_er_flags_get_type (void)
   return id;
 }
 
+#define GST_VPX_ENC_TS_LAYER_FLAGS_TYPE (gst_vpx_enc_ts_layer_flags_get_type())
+static GType
+gst_vpx_enc_ts_layer_flags_get_type (void)
+{
+  static const GFlagsValue values[] = {
+    {VP8_EFLAG_NO_REF_LAST, "Don't reference the last frame", "no-ref-last"},
+    {VP8_EFLAG_NO_REF_GF, "Don't reference the golden frame", "no-ref-golden"},
+    {VP8_EFLAG_NO_REF_ARF, "Don't reference the alternate reference frame",
+        "no-ref-alt"},
+    {VP8_EFLAG_NO_UPD_LAST, "Don't update the last frame", "no-upd-last"},
+    {VP8_EFLAG_NO_UPD_GF, "Don't update the golden frame", "no-upd-golden"},
+    {VP8_EFLAG_NO_UPD_ARF, "Don't update the alternate reference frame",
+        "no-upd-alt"},
+    {VP8_EFLAG_NO_UPD_ENTROPY, "Disable entropy update", "no-upd-entropy"},
+    {0, NULL, NULL}
+  };
+  static GType id = 0;
+
+  if (g_once_init_enter ((gsize *) & id)) {
+    GType _id;
+
+    _id = g_flags_register_static ("GstVPXEncTsLayerFlags", values);
+
+    g_once_init_leave ((gsize *) & id, _id);
+  }
+
+  return id;
+}
+
 static void gst_vpx_enc_finalize (GObject * object);
 static void gst_vpx_enc_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec);
@@ -335,12 +368,13 @@ static gboolean gst_vpx_enc_sink_event (GstVideoEncoder *
     video_encoder, GstEvent * event);
 static gboolean gst_vpx_enc_propose_allocation (GstVideoEncoder * encoder,
     GstQuery * query);
+static gboolean gst_vpx_enc_transform_meta (GstVideoEncoder * encoder,
+    GstVideoCodecFrame * frame, GstMeta * meta);
 
 #define parent_class gst_vpx_enc_parent_class
 G_DEFINE_TYPE_WITH_CODE (GstVPXEnc, gst_vpx_enc, GST_TYPE_VIDEO_ENCODER,
     G_IMPLEMENT_INTERFACE (GST_TYPE_TAG_SETTER, NULL);
-    G_IMPLEMENT_INTERFACE (GST_TYPE_PRESET, NULL);
-    );
+    G_IMPLEMENT_INTERFACE (GST_TYPE_PRESET, NULL););
 
 static void
 gst_vpx_enc_class_init (GstVPXEncClass * klass)
@@ -363,6 +397,7 @@ gst_vpx_enc_class_init (GstVPXEncClass * klass)
   video_encoder_class->finish = gst_vpx_enc_finish;
   video_encoder_class->sink_event = gst_vpx_enc_sink_event;
   video_encoder_class->propose_allocation = gst_vpx_enc_propose_allocation;
+  video_encoder_class->transform_meta = gst_vpx_enc_transform_meta;
 
   g_object_class_install_property (gobject_class, PROP_RC_END_USAGE,
       g_param_spec_enum ("end-usage", "Rate control mode",
@@ -518,7 +553,7 @@ gst_vpx_enc_class_init (GstVPXEncClass * klass)
   g_object_class_install_property (gobject_class, PROP_TS_TARGET_BITRATE,
       g_param_spec_value_array ("temporal-scalability-target-bitrate",
           "Coding layer target bitrates",
-          "Target bitrates for coding layers (one per layer, decreasing)",
+          "Target bitrates (bits/sec) for coding layers (one per layer)",
           g_param_spec_int ("target-bitrate", "Target bitrate",
               "Target bitrate", 0, G_MAXINT, DEFAULT_RC_TARGET_BITRATE,
               G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS |
@@ -555,6 +590,36 @@ gst_vpx_enc_class_init (GstVPXEncClass * klass)
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS |
           GST_PARAM_DOC_SHOW_DEFAULT));
 
+  /**
+   * GstVPXEnc:temporal-scalability-layer-flags:
+   *
+   * Sequence defining coding layer flags
+   *
+   * Since: 1.20
+   */
+  g_object_class_install_property (gobject_class, PROP_TS_LAYER_FLAGS,
+      gst_param_spec_array ("temporal-scalability-layer-flags",
+          "Coding layer flags", "Sequence defining coding layer flags",
+          g_param_spec_flags ("flags", "Flags", "Flags",
+              GST_VPX_ENC_TS_LAYER_FLAGS_TYPE, 0,
+              G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS),
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GstVPXEnc:temporal-scalability-layer-sync-flags:
+   *
+   * Sequence defining coding layer sync flags
+   *
+   * Since: 1.20
+   */
+  g_object_class_install_property (gobject_class, PROP_TS_LAYER_SYNC_FLAGS,
+      gst_param_spec_array ("temporal-scalability-layer-sync-flags",
+          "Coding layer sync flags",
+          "Sequence defining coding layer sync flags",
+          g_param_spec_boolean ("flags", "Flags", "Flags", FALSE,
+              G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS),
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
   g_object_class_install_property (gobject_class, PROP_LAG_IN_FRAMES,
       g_param_spec_int ("lag-in-frames", "Lag in frames",
           "Maximum number of frames to lag",
@@ -578,7 +643,7 @@ gst_vpx_enc_class_init (GstVPXEncClass * klass)
 
   g_object_class_install_property (gobject_class, PROP_DEADLINE,
       g_param_spec_int64 ("deadline", "Deadline",
-          "Deadline per frame (usec, 0=disabled)",
+          "Deadline per frame (usec, 0=best, 1=realtime)",
           0, G_MAXINT64, DEFAULT_DEADLINE,
           (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS |
               GST_PARAM_DOC_SHOW_DEFAULT)));
@@ -744,6 +809,10 @@ gst_vpx_enc_init (GstVPXEnc * gst_vpx_enc)
   gst_vpx_enc->n_ts_rate_decimator = 0;
   gst_vpx_enc->cfg.ts_periodicity = DEFAULT_TS_PERIODICITY;
   gst_vpx_enc->n_ts_layer_id = 0;
+  gst_vpx_enc->n_ts_layer_flags = 0;
+  gst_vpx_enc->ts_layer_flags = NULL;
+  gst_vpx_enc->n_ts_layer_sync_flags = 0;
+  gst_vpx_enc->ts_layer_sync_flags = NULL;
   gst_vpx_enc->cfg.g_error_resilient = DEFAULT_ERROR_RESILIENT;
   gst_vpx_enc->cfg.g_lag_in_frames = DEFAULT_LAG_IN_FRAMES;
   gst_vpx_enc->cfg.g_threads = DEFAULT_THREADS;
@@ -765,6 +834,8 @@ gst_vpx_enc_init (GstVPXEnc * gst_vpx_enc)
   gst_vpx_enc->timebase_n = DEFAULT_TIMEBASE_N;
   gst_vpx_enc->timebase_d = DEFAULT_TIMEBASE_D;
   gst_vpx_enc->bits_per_pixel = DEFAULT_BITS_PER_PIXEL;
+  gst_vpx_enc->tl0picidx = 0;
+  gst_vpx_enc->prev_was_keyframe = FALSE;
 
   gst_vpx_enc->cfg.g_profile = DEFAULT_PROFILE;
 
@@ -780,6 +851,9 @@ gst_vpx_enc_finalize (GObject * object)
 
   g_return_if_fail (GST_IS_VPX_ENC (object));
   gst_vpx_enc = GST_VPX_ENC (object);
+
+  g_free (gst_vpx_enc->ts_layer_flags);
+  g_free (gst_vpx_enc->ts_layer_sync_flags);
 
   g_free (gst_vpx_enc->multipass_cache_prefix);
   g_free (gst_vpx_enc->multipass_cache_file);
@@ -950,7 +1024,7 @@ gst_vpx_enc_set_property (GObject * object, guint prop_id,
 
         for (i = 0; i < va->n_values; i++)
           gst_vpx_enc->cfg.ts_target_bitrate[i] =
-              g_value_get_int (g_value_array_get_nth (va, i));
+              g_value_get_int (g_value_array_get_nth (va, i)) / 1000;
         gst_vpx_enc->n_ts_target_bitrate = va->n_values;
       }
       global = TRUE;
@@ -1000,6 +1074,45 @@ gst_vpx_enc_set_property (GObject * object, guint prop_id,
         gst_vpx_enc->n_ts_layer_id = 0;
       }
       global = TRUE;
+      break;
+    }
+    case PROP_TS_LAYER_FLAGS:{
+      gint l = gst_value_array_get_size (value);
+
+      g_free (gst_vpx_enc->ts_layer_flags);
+      gst_vpx_enc->n_ts_layer_flags = 0;
+
+      if (l > 0) {
+        gint i;
+
+        gst_vpx_enc->ts_layer_flags = g_new (gint, l);
+
+        for (i = 0; i < l; i++)
+          gst_vpx_enc->ts_layer_flags[i] =
+              g_value_get_flags (gst_value_array_get_value (value, i));
+        gst_vpx_enc->n_ts_layer_flags = l;
+      } else {
+        gst_vpx_enc->ts_layer_flags = NULL;
+      }
+      break;
+    }
+    case PROP_TS_LAYER_SYNC_FLAGS:{
+      gint l = gst_value_array_get_size (value);
+
+      g_free (gst_vpx_enc->ts_layer_sync_flags);
+      gst_vpx_enc->n_ts_layer_sync_flags = 0;
+
+      if (l > 0) {
+        gint i;
+
+        gst_vpx_enc->ts_layer_sync_flags = g_new (gboolean, l);
+        for (i = 0; i < l; i++)
+          gst_vpx_enc->ts_layer_sync_flags[i] =
+              g_value_get_boolean (gst_value_array_get_value (value, i));
+        gst_vpx_enc->n_ts_layer_sync_flags = l;
+      } else {
+        gst_vpx_enc->ts_layer_sync_flags = NULL;
+      }
       break;
     }
     case PROP_ERROR_RESILIENT:
@@ -1312,7 +1425,7 @@ gst_vpx_enc_get_property (GObject * object, guint prop_id, GValue * value,
           GValue v = { 0, };
 
           g_value_init (&v, G_TYPE_INT);
-          g_value_set_int (&v, gst_vpx_enc->cfg.ts_target_bitrate[i]);
+          g_value_set_int (&v, gst_vpx_enc->cfg.ts_target_bitrate[i] * 1000);
           g_value_array_append (va, &v);
           g_value_unset (&v);
         }
@@ -1365,6 +1478,32 @@ gst_vpx_enc_get_property (GObject * object, guint prop_id, GValue * value,
         }
         g_value_set_boxed (value, va);
         g_value_array_free (va);
+      }
+      break;
+    }
+    case PROP_TS_LAYER_FLAGS:{
+      gint i;
+
+      for (i = 0; i < gst_vpx_enc->n_ts_layer_flags; i++) {
+        GValue v = { 0, };
+
+        g_value_init (&v, GST_VPX_ENC_TS_LAYER_FLAGS_TYPE);
+        g_value_set_flags (&v, gst_vpx_enc->ts_layer_flags[i]);
+        gst_value_array_append_value (value, &v);
+        g_value_unset (&v);
+      }
+      break;
+    }
+    case PROP_TS_LAYER_SYNC_FLAGS:{
+      gint i;
+
+      for (i = 0; i < gst_vpx_enc->n_ts_layer_sync_flags; i++) {
+        GValue v = { 0, };
+
+        g_value_init (&v, G_TYPE_BOOLEAN);
+        g_value_set_boolean (&v, gst_vpx_enc->ts_layer_sync_flags[i]);
+        gst_value_array_append_value (value, &v);
+        g_value_unset (&v);
       }
       break;
     }
@@ -1495,12 +1634,42 @@ gst_vpx_enc_stop (GstVideoEncoder * video_encoder)
   return TRUE;
 }
 
+#define INVALID_PROFILE -1
+
 static gint
-gst_vpx_enc_get_downstream_profile (GstVPXEnc * encoder)
+gst_vpx_gvalue_to_profile (const GValue * v)
+{
+  gchar *endptr = NULL;
+  gint profile = g_ascii_strtoull (g_value_get_string (v), &endptr, 10);
+
+  if (*endptr != '\0') {
+    profile = INVALID_PROFILE;
+  }
+
+  return profile;
+}
+
+static gint
+gst_vpx_enc_get_downstream_profile (GstVPXEnc * encoder, GstVideoInfo * info)
 {
   GstCaps *allowed;
   GstStructure *s;
-  gint profile = DEFAULT_PROFILE;
+  gint min_profile;
+  gint profile = INVALID_PROFILE;
+
+  switch (GST_VIDEO_INFO_FORMAT (info)) {
+    case GST_VIDEO_FORMAT_Y444:
+      min_profile = 1;
+      break;
+    case GST_VIDEO_FORMAT_I420_10LE:
+      min_profile = 2;
+      break;
+    case GST_VIDEO_FORMAT_I422_10LE:
+      min_profile = 3;
+      break;
+    default:
+      min_profile = 0;
+  }
 
   allowed = gst_pad_get_allowed_caps (GST_VIDEO_ENCODER_SRC_PAD (encoder));
   if (allowed) {
@@ -1508,22 +1677,29 @@ gst_vpx_enc_get_downstream_profile (GstVPXEnc * encoder)
     s = gst_caps_get_structure (allowed, 0);
     if (gst_structure_has_field (s, "profile")) {
       const GValue *v = gst_structure_get_value (s, "profile");
-      const gchar *profile_str = NULL;
 
-      if (GST_VALUE_HOLDS_LIST (v) && gst_value_list_get_size (v) > 0) {
-        profile_str = g_value_get_string (gst_value_list_get_value (v, 0));
+      if (GST_VALUE_HOLDS_LIST (v)) {
+        gint i;
+
+        for (i = 0; i != gst_value_list_get_size (v); ++i) {
+          gint p = gst_vpx_gvalue_to_profile (gst_value_list_get_value (v, i));
+          if (p >= min_profile) {
+            profile = p;
+            break;
+          }
+        }
       } else if (G_VALUE_HOLDS_STRING (v)) {
-        profile_str = g_value_get_string (v);
+        profile = gst_vpx_gvalue_to_profile (v);
       }
 
-      if (profile_str) {
-        gchar *endptr = NULL;
+      if (profile < min_profile || profile > 3) {
+        profile = INVALID_PROFILE;
+      }
 
-        profile = g_ascii_strtoull (profile_str, &endptr, 10);
-        if (*endptr != '\0' || profile < 0 || profile > 3) {
-          GST_ERROR_OBJECT (encoder, "Invalid profile '%s'", profile_str);
-          profile = DEFAULT_PROFILE;
-        }
+      if (profile > 1 && info->finfo->bits == 8) {
+        GST_DEBUG_OBJECT (encoder,
+            "Codec bit-depth 8 not supported in profile > 1");
+        profile = INVALID_PROFILE;
       }
     }
     gst_caps_unref (allowed);
@@ -1541,6 +1717,7 @@ gst_vpx_enc_set_format (GstVideoEncoder * video_encoder,
   GstVPXEnc *encoder;
   vpx_codec_err_t status;
   vpx_image_t *image;
+  vpx_codec_flags_t flags = 0;
   GstCaps *caps;
   gboolean ret = TRUE;
   GstVideoInfo *info = &state->info;
@@ -1562,7 +1739,19 @@ gst_vpx_enc_set_format (GstVideoEncoder * video_encoder,
     g_mutex_lock (&encoder->encoder_lock);
   }
 
-  encoder->cfg.g_profile = gst_vpx_enc_get_downstream_profile (encoder);
+  encoder->cfg.g_bit_depth = encoder->cfg.g_input_bit_depth = info->finfo->bits;
+  if (encoder->cfg.g_bit_depth > 8) {
+    flags |= VPX_CODEC_USE_HIGHBITDEPTH;
+  }
+
+  encoder->cfg.g_profile = gst_vpx_enc_get_downstream_profile (encoder, info);
+  if (encoder->cfg.g_profile == INVALID_PROFILE) {
+    GST_ELEMENT_ERROR (encoder, RESOURCE, OPEN_READ,
+        ("Invalid vpx profile"), (NULL));
+    g_mutex_unlock (&encoder->encoder_lock);
+    return FALSE;
+  }
+
   encoder->cfg.g_w = GST_VIDEO_INFO_WIDTH (info);
   encoder->cfg.g_h = GST_VIDEO_INFO_HEIGHT (info);
 
@@ -1628,7 +1817,7 @@ gst_vpx_enc_set_format (GstVideoEncoder * video_encoder,
 
   status =
       vpx_codec_enc_init (&encoder->encoder, vpx_enc_class->get_algo (encoder),
-      &encoder->cfg, 0);
+      &encoder->cfg, flags);
   if (status != VPX_CODEC_OK) {
     GST_ELEMENT_ERROR (encoder, LIBRARY, INIT,
         ("Failed to initialize encoder"), ("%s", gst_vpx_error_name (status)));
@@ -1726,6 +1915,13 @@ gst_vpx_enc_set_format (GstVideoEncoder * video_encoder,
         gst_vpx_error_name (status));
   }
 
+  if (vpx_enc_class->configure_encoder
+      && !vpx_enc_class->configure_encoder (encoder, state)) {
+    ret = FALSE;
+    g_mutex_unlock (&encoder->encoder_lock);
+    goto done;
+  }
+
   if (GST_VIDEO_INFO_FPS_D (info) == 0 || GST_VIDEO_INFO_FPS_N (info) == 0) {
     /* FIXME: Assume 25fps for unknown framerates. Better than reporting
      * that we introduce no latency while we actually do
@@ -1773,6 +1969,7 @@ gst_vpx_enc_set_format (GstVideoEncoder * video_encoder,
 
   gst_video_encoder_negotiate (GST_VIDEO_ENCODER (encoder));
 
+done:
   return ret;
 }
 
@@ -1787,6 +1984,9 @@ gst_vpx_enc_process (GstVPXEnc * encoder)
   GstFlowReturn ret = GST_FLOW_OK;
   GstVPXEncClass *vpx_enc_class;
   vpx_codec_pts_t pts;
+  guint layer_id = 0;
+  guint8 tl0picidx = 0;
+  gboolean layer_sync = FALSE;
 
   video_encoder = GST_VIDEO_ENCODER (encoder);
   vpx_enc_class = GST_VPX_ENC_GET_CLASS (encoder);
@@ -1843,17 +2043,47 @@ gst_vpx_enc_process (GstVPXEnc * encoder)
     } while (pkt->data.frame.pts > pts);
 
     g_assert (frame != NULL);
-    if ((pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0)
-      GST_VIDEO_CODEC_FRAME_SET_SYNC_POINT (frame);
-    else
-      GST_VIDEO_CODEC_FRAME_UNSET_SYNC_POINT (frame);
 
     /* FIXME : It would be nice to avoid the memory copy ... */
-    buffer =
-        gst_buffer_new_wrapped (g_memdup (pkt->data.frame.buf,
-            pkt->data.frame.sz), pkt->data.frame.sz);
+    buffer = gst_buffer_new_memdup (pkt->data.frame.buf, pkt->data.frame.sz);
 
     user_data = vpx_enc_class->process_frame_user_data (encoder, frame);
+    if (vpx_enc_class->get_frame_temporal_settings &&
+        encoder->cfg.ts_periodicity != 0) {
+      vpx_enc_class->get_frame_temporal_settings (encoder, frame,
+          &layer_id, &tl0picidx, &layer_sync);
+    }
+
+    if (layer_id != 0 && encoder->prev_was_keyframe) {
+      /* Non-base layer frame immediately after a keyframe is a layer sync */
+      layer_sync = TRUE;
+    }
+
+    if ((pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0) {
+      GST_VIDEO_CODEC_FRAME_SET_SYNC_POINT (frame);
+      /* Key frames always live on layer 0 */
+      layer_id = 0;
+      layer_sync = TRUE;
+      encoder->prev_was_keyframe = TRUE;
+    } else {
+      GST_VIDEO_CODEC_FRAME_UNSET_SYNC_POINT (frame);
+      encoder->prev_was_keyframe = FALSE;
+    }
+
+    if ((pkt->data.frame.flags & VPX_FRAME_IS_DROPPABLE) != 0)
+      GST_BUFFER_FLAG_SET (buffer, GST_BUFFER_FLAG_DROPPABLE);
+    else
+      GST_BUFFER_FLAG_UNSET (buffer, GST_BUFFER_FLAG_DROPPABLE);
+
+    if (layer_id == 0) {
+      /* Allocate a new tl0picidx if this is layer 0 */
+      tl0picidx = ++encoder->tl0picidx;
+    }
+
+    if (vpx_enc_class->preflight_buffer) {
+      vpx_enc_class->preflight_buffer (encoder, frame, buffer,
+          layer_sync, layer_id, tl0picidx);
+    }
 
     if (invisible) {
       ret =
@@ -2037,6 +2267,25 @@ gst_vpx_enc_handle_frame (GstVideoEncoder * video_encoder,
     duration = 1;
   }
 
+  if (encoder->n_ts_layer_flags != 0) {
+    /* If we need a keyframe, then the pattern is irrelevant */
+    if ((flags & VPX_EFLAG_FORCE_KF) == 0) {
+      flags |=
+          encoder->ts_layer_flags[frame->system_frame_number %
+          encoder->n_ts_layer_flags];
+    }
+  }
+
+  if (vpx_enc_class->apply_frame_temporal_settings &&
+      encoder->cfg.ts_periodicity != 0 &&
+      encoder->n_ts_layer_id >= encoder->cfg.ts_periodicity) {
+    vpx_enc_class->apply_frame_temporal_settings (encoder, frame,
+        encoder->cfg.ts_layer_id[frame->system_frame_number %
+            encoder->cfg.ts_periodicity], encoder->tl0picidx,
+        encoder->ts_layer_sync_flags[frame->system_frame_number %
+            encoder->n_ts_layer_sync_flags]);
+  }
+
   status = vpx_codec_encode (&encoder->encoder, image,
       pts, duration, flags, encoder->deadline);
 
@@ -2082,6 +2331,24 @@ gst_vpx_enc_propose_allocation (GstVideoEncoder * encoder, GstQuery * query)
 
   return GST_VIDEO_ENCODER_CLASS (parent_class)->propose_allocation (encoder,
       query);
+}
+
+static gboolean
+gst_vpx_enc_transform_meta (GstVideoEncoder * encoder,
+    GstVideoCodecFrame * frame, GstMeta * meta)
+{
+  const GstMetaInfo *info = meta->info;
+  gboolean ret = FALSE;
+
+  /* Do not copy GstVP8Meta from input to output buffer */
+  if (gst_meta_info_is_custom (info)
+      && gst_custom_meta_has_name ((GstCustomMeta *) meta, "GstVP8Meta"))
+    goto done;
+
+  ret = TRUE;
+
+done:
+  return ret;
 }
 
 #endif /* HAVE_VP8_ENCODER || HAVE_VP9_ENCODER */

@@ -37,8 +37,9 @@
 #endif
 #include <string.h>
 
-#include "gstjpegenc.h"
 #include "gstjpeg.h"
+#include "gstjpegenc.h"
+#include "gstjpegelements.h"
 #include <gst/video/video.h>
 #include <gst/video/gstvideometa.h>
 #include <gst/base/base.h>
@@ -93,6 +94,8 @@ static gboolean gst_jpegenc_propose_allocation (GstVideoEncoder * encoder,
 
 #define gst_jpegenc_parent_class parent_class
 G_DEFINE_TYPE (GstJpegEnc, gst_jpegenc, GST_TYPE_VIDEO_ENCODER);
+GST_ELEMENT_REGISTER_DEFINE (jpegenc, "jpegenc", GST_RANK_PRIMARY,
+    GST_TYPE_JPEGENC);
 
 /* *INDENT-OFF* */
 static GstStaticPadTemplate gst_jpegenc_sink_pad_template =
@@ -110,8 +113,8 @@ GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS ("image/jpeg, "
-        "width = (int) [ 16, 65535 ], "
-        "height = (int) [ 16, 65535 ], "
+        "width = (int) [ 1, 65535 ], "
+        "height = (int) [ 1, 65535 ], "
         "framerate = (fraction) [ 0/1, MAX ], "
         "sof-marker = (int) { 0, 1, 2, 4, 9 }")
     );

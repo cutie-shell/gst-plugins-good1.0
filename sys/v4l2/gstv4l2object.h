@@ -68,8 +68,8 @@ typedef enum {
   GST_V4L2_IO_DMABUF_IMPORT = 5
 } GstV4l2IOMode;
 
-typedef gboolean  (*GstV4l2GetInOutFunction)  (GstV4l2Object * v4l2object, gint * input);
-typedef gboolean  (*GstV4l2SetInOutFunction)  (GstV4l2Object * v4l2object, gint input);
+typedef gboolean  (*GstV4l2GetInOutFunction)  (GstV4l2Object * v4l2object, guint32 * input);
+typedef gboolean  (*GstV4l2SetInOutFunction)  (GstV4l2Object * v4l2object, guint32 input);
 typedef gboolean  (*GstV4l2UpdateFpsFunction) (GstV4l2Object * v4l2object);
 
 /* On Android NDK r18b the ioctl() signature uses 'unsigned' instead of
@@ -136,7 +136,6 @@ struct _GstV4l2Object {
   GstV4l2IOMode mode;
 
   gboolean active;
-  gboolean streaming;
 
   /* the current format */
   struct v4l2_fmtdesc *fmtdesc;
@@ -325,10 +324,15 @@ gboolean     gst_v4l2_close          (GstV4l2Object * v4l2object);
 /* norm/input/output */
 gboolean     gst_v4l2_get_norm       (GstV4l2Object * v4l2object, v4l2_std_id * norm);
 gboolean     gst_v4l2_set_norm       (GstV4l2Object * v4l2object, v4l2_std_id norm);
-gboolean     gst_v4l2_get_input      (GstV4l2Object * v4l2object, gint * input);
-gboolean     gst_v4l2_set_input      (GstV4l2Object * v4l2object, gint input);
-gboolean     gst_v4l2_get_output     (GstV4l2Object * v4l2object, gint * output);
-gboolean     gst_v4l2_set_output     (GstV4l2Object * v4l2object, gint output);
+gboolean     gst_v4l2_get_input      (GstV4l2Object * v4l2object, guint32 * input);
+gboolean     gst_v4l2_set_input      (GstV4l2Object * v4l2object, guint32 input);
+gboolean     gst_v4l2_query_input    (GstV4l2Object * v4l2object, struct v4l2_input * input);
+gboolean     gst_v4l2_get_output     (GstV4l2Object * v4l2object, guint32 * output);
+gboolean     gst_v4l2_set_output     (GstV4l2Object * v4l2object, guint32 output);
+
+/* dv timings */
+gboolean     gst_v4l2_set_dv_timings   (GstV4l2Object * v4l2object, struct v4l2_dv_timings *timings);
+gboolean     gst_v4l2_query_dv_timings (GstV4l2Object * v4l2object, struct v4l2_dv_timings *timings);
 
 /* frequency control */
 gboolean     gst_v4l2_get_frequency   (GstV4l2Object * v4l2object, gint tunernum, gulong * frequency);
@@ -340,6 +344,10 @@ gboolean     gst_v4l2_get_attribute   (GstV4l2Object * v4l2object, int attribute
 gboolean     gst_v4l2_set_attribute   (GstV4l2Object * v4l2object, int attribute, const int value);
 gboolean     gst_v4l2_set_string_attribute (GstV4l2Object * v4l2object, int attribute_num, const char *value);
 gboolean     gst_v4l2_set_controls    (GstV4l2Object * v4l2object, GstStructure * controls);
+
+/* events */
+gboolean     gst_v4l2_subscribe_event (GstV4l2Object * v4l2object, guint32 event, guint32 id);
+gboolean     gst_v4l2_dequeue_event   (GstV4l2Object * v4l2object, struct v4l2_event *event);
 
 G_END_DECLS
 

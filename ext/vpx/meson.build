@@ -6,6 +6,7 @@ vpx_sources = [
   'gstvp9enc.c',
   'gstvpxdec.c',
   'gstvpxenc.c',
+  'gstvpxelement.c',
   'plugin.c',
 ]
 
@@ -17,7 +18,7 @@ vpx_features = [
 ]
 
 vpx_option = get_option('vpx')
-vpx_dep = dependency('vpx', version : '>=1.5.0', required : vpx_option)
+vpx_dep = dependency('vpx', version : '>=1.7.0', required : vpx_option)
 
 if vpx_dep.found()
   vpx_args = []
@@ -56,8 +57,15 @@ if vpx_dep.found()
     vpx_args += '-DHAVE_VPX_1_8'
   endif
 
+  gnome = import('gnome')
+
+  gstvpx_enums = gnome.mkenums_simple('gstvpx-enumtypes',
+    sources : ['gstvpxenums.h'],
+    decorator : 'G_GNUC_INTERNAL',
+    install_header: false)
+
   gstvpx = library('gstvpx',
-    vpx_sources,
+    vpx_sources, gstvpx_enums,
     c_args : gst_plugins_good_args + vpx_args,
     include_directories : [configinc],
     dependencies : [gstbase_dep, gsttag_dep, gstvideo_dep, vpx_dep],

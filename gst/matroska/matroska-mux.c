@@ -55,6 +55,7 @@
 #include <gst/tag/tag.h>
 #include <gst/pbutils/codec-utils.h>
 
+#include "gstmatroskaelements.h"
 #include "matroska-mux.h"
 #include "matroska-ids.h"
 
@@ -75,6 +76,7 @@ enum
   PROP_MAX_CLUSTER_DURATION,
   PROP_OFFSET_TO_ZERO,
   PROP_CREATION_TIME,
+  PROP_CLUSTER_TIMESTAMP_OFFSET,
 };
 
 #define  DEFAULT_DOCTYPE_VERSION         2
@@ -85,6 +87,7 @@ enum
 #define  DEFAULT_MIN_CLUSTER_DURATION    500 * GST_MSECOND
 #define  DEFAULT_MAX_CLUSTER_DURATION    65535 * GST_MSECOND
 #define  DEFAULT_OFFSET_TO_ZERO          FALSE
+#define  DEFAULT_CLUSTER_TIMESTAMP_OFFSET 0
 
 /* WAVEFORMATEX is gst_riff_strf_auds + an extra guint16 extension size */
 #define WAVEFORMATEX_SIZE  (2 + sizeof (gst_riff_strf_auds))
@@ -96,8 +99,8 @@ static GstStaticPadTemplate src_templ = GST_STATIC_PAD_TEMPLATE ("src",
     );
 
 #define COMMON_VIDEO_CAPS \
-  "width = (int) [ 16, MAX ], " \
-  "height = (int) [ 16, MAX ] "
+  "width = (int) [ 1, MAX ], " \
+  "height = (int) [ 1, MAX ] "
 
 /* FIXME:
  * * require codec data, etc as needed
@@ -111,9 +114,9 @@ static GstStaticPadTemplate videosink_templ =
         "mpegversion = (int) { 1, 2, 4 }, "
         "systemstream = (boolean) false, "
         COMMON_VIDEO_CAPS "; "
-        "video/x-h264, stream-format=avc, alignment=au, "
+        "video/x-h264, stream-format = (string) { avc, avc3 }, alignment=au, "
         COMMON_VIDEO_CAPS "; "
-        "video/x-h265, stream-format=hvc1, alignment=au, "
+        "video/x-h265, stream-format = (string) { hvc1, hev1 }, alignment=au, "
         COMMON_VIDEO_CAPS "; "
         "video/x-divx, "
         COMMON_VIDEO_CAPS "; "
@@ -143,7 +146,8 @@ static GstStaticPadTemplate videosink_templ =
         "video/x-prores, "
         COMMON_VIDEO_CAPS "; "
         "video/x-wmv, " "wmvversion = (int) [ 1, 3 ], " COMMON_VIDEO_CAPS "; "
-        "video/x-av1, " COMMON_VIDEO_CAPS)
+        "video/x-av1, " COMMON_VIDEO_CAPS ";"
+        "video/x-ffv, ffversion = (int) 1, " COMMON_VIDEO_CAPS)
     );
 
 #define COMMON_AUDIO_CAPS \
@@ -299,6 +303,9 @@ gst_matroska_mux_get_type (void)
   return object_type;
 }
 
+GST_ELEMENT_REGISTER_DEFINE_WITH_CODE (matroskamux, "matroskamux",
+    GST_RANK_PRIMARY, GST_TYPE_MATROSKA_MUX, matroska_element_init (plugin));
+
 static void
 gst_matroska_mux_class_init (GstMatroskaMuxClass * klass)
 {
@@ -375,6 +382,20 @@ gst_matroska_mux_class_init (GstMatroskaMuxClass * klass)
           "Date and time of creation. This will be used for the DateUTC field."
           " NULL means that the current time will be used.",
           G_TYPE_DATE_TIME, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GstMatroskaMux:cluster-timestamp-offset:
+   *
+   * An offset to add to all clusters/blocks (in nanoseconds)
+   *
+   * Since: 1.20
+   */
+  g_object_class_install_property (gobject_class, PROP_CLUSTER_TIMESTAMP_OFFSET,
+      g_param_spec_uint64 ("cluster-timestamp-offset",
+          "Cluster timestamp offset",
+          "An offset to add to all clusters/blocks (in nanoseconds)", 0,
+          G_MAXUINT64, DEFAULT_CLUSTER_TIMESTAMP_OFFSET,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gstelement_class->change_state =
       GST_DEBUG_FUNCPTR (gst_matroska_mux_change_state);
@@ -504,6 +525,7 @@ gst_matroska_mux_init (GstMatroskaMux * mux, gpointer g_class)
   mux->time_scale = DEFAULT_TIMECODESCALE;
   mux->min_cluster_duration = DEFAULT_MIN_CLUSTER_DURATION;
   mux->max_cluster_duration = DEFAULT_MAX_CLUSTER_DURATION;
+  mux->cluster_timestamp_offset = DEFAULT_CLUSTER_TIMESTAMP_OFFSET;
 
   /* initialize internal variables */
   mux->index = NULL;
@@ -940,6 +962,82 @@ gst_matroska_mux_set_codec_id (GstMatroskaTrackContext * context,
   context->codec_id = g_strdup (id);
 }
 
+static gboolean
+check_field (GQuark field_id, const GValue * value, gpointer user_data)
+{
+  GstStructure *structure = (GstStructure *) user_data;
+  const gchar *name = gst_structure_get_name (structure);
+
+  if ((g_strcmp0 (name, "video/x-h264") == 0 &&
+          !g_strcmp0 (gst_structure_get_string (structure, "stream-format"),
+              "avc3")) || (g_strcmp0 (name, "video/x-h265") == 0
+          && !g_strcmp0 (gst_structure_get_string (structure, "stream-format"),
+              "hev1"))
+      ) {
+    /* While in theory, matroska only supports avc1 / hvc1, and doesn't support codec_data
+     * changes, in practice most decoders will use in-band SPS / PPS (avc3 / hev1), if the
+     * input stream is avc3 / hev1 we let the new codec_data slide to support "smart" encoding.
+     *
+     * We don't warn here as we already warned elsewhere.
+     */
+    if (field_id == g_quark_from_static_string ("codec_data")) {
+      return FALSE;
+    } else if (field_id == g_quark_from_static_string ("tier")) {
+      return FALSE;
+    } else if (field_id == g_quark_from_static_string ("profile")) {
+      return FALSE;
+    } else if (field_id == g_quark_from_static_string ("level")) {
+      return FALSE;
+    }
+  } else if (gst_structure_has_name (structure, "video/x-vp8")
+      || gst_structure_has_name (structure, "video/x-vp9")) {
+    /* We do not use profile and streamheader for VPX so let it change
+     * mid stream */
+    if (field_id == g_quark_from_static_string ("streamheader"))
+      return FALSE;
+    else if (field_id == g_quark_from_static_string ("profile"))
+      return FALSE;
+  }
+
+  /* This fields aren't used and are not retained into the bitstream so we can
+   * discard them. */
+  if (g_str_has_prefix (gst_structure_get_name (structure), "video/")) {
+    if (field_id == g_quark_from_static_string ("chroma-site"))
+      return FALSE;
+    else if (field_id == g_quark_from_static_string ("chroma-format"))
+      return FALSE;
+    else if (field_id == g_quark_from_static_string ("bit-depth-luma"))
+      return FALSE;
+  }
+
+  return TRUE;
+}
+
+static gboolean
+check_new_caps (GstCaps * old_caps, GstCaps * new_caps)
+{
+  GstStructure *old_s, *new_s;
+  gboolean ret;
+
+  old_caps = gst_caps_copy (old_caps);
+  new_caps = gst_caps_copy (new_caps);
+
+  new_s = gst_caps_get_structure (new_caps, 0);
+  old_s = gst_caps_get_structure (old_caps, 0);
+
+  gst_structure_filter_and_map_in_place (new_s,
+      (GstStructureFilterMapFunc) check_field, new_s);
+  gst_structure_filter_and_map_in_place (old_s,
+      (GstStructureFilterMapFunc) check_field, old_s);
+
+  ret = gst_caps_is_subset (new_caps, old_caps);
+
+  gst_caps_unref (new_caps);
+  gst_caps_unref (old_caps);
+
+  return ret;
+}
+
 /**
  * gst_matroska_mux_video_pad_setcaps:
  * @pad: Pad which got the caps.
@@ -970,7 +1068,7 @@ gst_matroska_mux_video_pad_setcaps (GstPad * pad, GstCaps * caps)
 
   if ((old_caps = gst_pad_get_current_caps (pad))) {
     if (mux->state >= GST_MATROSKA_MUX_STATE_HEADER
-        && !gst_caps_is_subset (caps, old_caps)) {
+        && !check_new_caps (old_caps, caps)) {
       GST_ELEMENT_ERROR (mux, STREAM, MUX, (NULL),
           ("Caps changes are not supported by Matroska\nCurrent: `%"
               GST_PTR_FORMAT "`\nNew: `%" GST_PTR_FORMAT "`", old_caps, caps));
@@ -1210,6 +1308,13 @@ skip_details:
     gst_matroska_mux_set_codec_id (context,
         GST_MATROSKA_CODEC_ID_VIDEO_MPEG4_AVC);
     gst_matroska_mux_free_codec_priv (context);
+
+    if (!g_strcmp0 (gst_structure_get_string (structure, "stream-format"),
+            "avc3")) {
+      GST_WARNING_OBJECT (mux,
+          "avc3 is not officially supported, only use this format for smart encoding");
+    }
+
     /* Create avcC header */
     if (codec_buf != NULL) {
       context->codec_priv_size = gst_buffer_get_size (codec_buf);
@@ -1220,6 +1325,13 @@ skip_details:
     gst_matroska_mux_set_codec_id (context,
         GST_MATROSKA_CODEC_ID_VIDEO_MPEGH_HEVC);
     gst_matroska_mux_free_codec_priv (context);
+
+    if (!g_strcmp0 (gst_structure_get_string (structure, "stream-format"),
+            "hev1")) {
+      GST_WARNING_OBJECT (mux,
+          "hev1 is not officially supported, only use this format for smart encoding");
+    }
+
     /* Create hvcC header */
     if (codec_buf != NULL) {
       context->codec_priv_size = gst_buffer_get_size (codec_buf);
@@ -1249,6 +1361,12 @@ skip_details:
     gst_matroska_mux_set_codec_id (context, GST_MATROSKA_CODEC_ID_VIDEO_AV1);
     gst_matroska_mux_free_codec_priv (context);
     /* Create av1C header */
+    if (codec_buf != NULL)
+      gst_buffer_extract_dup (codec_buf, 0, gst_buffer_get_size (codec_buf),
+          &context->codec_priv, &context->codec_priv_size);
+  } else if (!strcmp (mimetype, "video/x-ffv")) {
+    gst_matroska_mux_set_codec_id (context, GST_MATROSKA_CODEC_ID_VIDEO_FFV1);
+    gst_matroska_mux_free_codec_priv (context);
     if (codec_buf != NULL)
       gst_buffer_extract_dup (codec_buf, 0, gst_buffer_get_size (codec_buf),
           &context->codec_priv, &context->codec_priv_size);
@@ -3589,7 +3707,7 @@ gst_matroska_mux_finish (GstMatroskaMux * mux)
     gst_ebml_write_seek (ebml, my_pos);
   }
 
-  if (tags != NULL || toc_has_tags) {
+  if (mux->tags_pos != 0 || toc_has_tags) {
     gst_ebml_replace_uint (ebml, mux->seekhead_pos + 144,
         mux->tags_pos - mux->segment_master);
   } else {
@@ -3633,11 +3751,12 @@ gst_matroska_mux_finish (GstMatroskaMux * mux)
         GST_CLOCK_TIME_IS_VALID (collect_pad->end_ts)) {
       collected_duration =
           GST_CLOCK_DIFF (collect_pad->start_ts, collect_pad->end_ts);
-      GST_DEBUG_OBJECT (collect_pad,
+      GST_DEBUG_OBJECT (collect_pad->collect.pad,
           "final track duration: %" GST_TIME_FORMAT,
           GST_TIME_ARGS (collected_duration));
     } else {
-      GST_WARNING_OBJECT (collect_pad, "unable to get final track duration");
+      GST_WARNING_OBJECT (collect_pad->collect.pad,
+          "unable to get final track duration");
     }
     if (GST_CLOCK_TIME_IS_VALID (collected_duration) &&
         duration < collected_duration)
@@ -3909,6 +4028,10 @@ gst_matroska_mux_write_data (GstMatroskaMux * mux, GstMatroskaPad * collect_pad,
       is_video_invisible = TRUE;
     }
   }
+
+  /* From this point on we use the buffer_timestamp to do cluster and other
+   * related arithmetic, so apply the timestamp offset if we have one */
+  buffer_timestamp += mux->cluster_timestamp_offset;
 
   is_audio_only = (collect_pad->track->type == GST_MATROSKA_TRACK_TYPE_AUDIO) &&
       (mux->num_streams == 1);
@@ -4298,6 +4421,9 @@ gst_matroska_mux_set_property (GObject * object,
       g_clear_pointer (&mux->creation_time, g_date_time_unref);
       mux->creation_time = g_value_dup_boxed (value);
       break;
+    case PROP_CLUSTER_TIMESTAMP_OFFSET:
+      mux->cluster_timestamp_offset = g_value_get_uint64 (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -4340,6 +4466,9 @@ gst_matroska_mux_get_property (GObject * object,
       break;
     case PROP_CREATION_TIME:
       g_value_set_boxed (value, mux->creation_time);
+      break;
+    case PROP_CLUSTER_TIMESTAMP_OFFSET:
+      g_value_set_uint64 (value, mux->cluster_timestamp_offset);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

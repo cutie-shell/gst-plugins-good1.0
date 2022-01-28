@@ -54,6 +54,7 @@
 #include <math.h>
 
 #include <gst/audio/audio.h>
+#include <gst/base/gstbitreader.h>
 #include <gst/rtp/gstrtpbuffer.h>
 
 #define DEFAULT_PACKET_INTERVAL  50     /* ms */
@@ -155,6 +156,8 @@ GST_STATIC_PAD_TEMPLATE ("sink",
 
 G_DEFINE_TYPE (GstRtpDTMFDepay, gst_rtp_dtmf_depay,
     GST_TYPE_RTP_BASE_DEPAYLOAD);
+GST_ELEMENT_REGISTER_DEFINE (rtpdtmfdepay, "rtpdtmfdepay", GST_RANK_MARGINAL,
+    GST_TYPE_RTP_DTMF_DEPAY);
 
 static void gst_rtp_dtmf_depay_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec);
@@ -355,7 +358,7 @@ gst_rtp_dtmf_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
 
   GstRtpDTMFDepay *rtpdtmfdepay = NULL;
   GstBuffer *outbuf = NULL;
-  gint payload_len;
+  guint payload_len;
   guint8 *payload = NULL;
   guint32 timestamp;
   GstRTPDTMFPayload dtmf_payload;
@@ -363,6 +366,7 @@ gst_rtp_dtmf_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
   GstStructure *structure = NULL;
   GstMessage *dtmf_message = NULL;
   GstRTPBuffer rtpbuffer = GST_RTP_BUFFER_INIT;
+  GstBitReader bitreader;
 
   rtpdtmfdepay = GST_RTP_DTMF_DEPAY (depayload);
 
@@ -371,10 +375,14 @@ gst_rtp_dtmf_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
   payload_len = gst_rtp_buffer_get_payload_len (&rtpbuffer);
   payload = gst_rtp_buffer_get_payload (&rtpbuffer);
 
-  if (payload_len != sizeof (GstRTPDTMFPayload))
+  if (payload_len != 4)
     goto bad_packet;
 
-  memcpy (&dtmf_payload, payload, sizeof (GstRTPDTMFPayload));
+  gst_bit_reader_init (&bitreader, payload, payload_len);
+  gst_bit_reader_get_bits_uint8 (&bitreader, &dtmf_payload.event, 8);
+  gst_bit_reader_skip (&bitreader, 2);
+  gst_bit_reader_get_bits_uint8 (&bitreader, &dtmf_payload.volume, 6);
+  gst_bit_reader_get_bits_uint16 (&bitreader, &dtmf_payload.duration, 16);
 
   if (dtmf_payload.event > MAX_EVENT)
     goto bad_packet;
@@ -382,8 +390,6 @@ gst_rtp_dtmf_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
   marker = gst_rtp_buffer_get_marker (&rtpbuffer);
 
   timestamp = gst_rtp_buffer_get_timestamp (&rtpbuffer);
-
-  dtmf_payload.duration = g_ntohs (dtmf_payload.duration);
 
   /* clip to whole units of unit_time */
   if (rtpdtmfdepay->unit_time) {
@@ -488,11 +494,4 @@ bad_packet:
     gst_rtp_buffer_unmap (&rtpbuffer);
 
   return NULL;
-}
-
-gboolean
-gst_rtp_dtmf_depay_plugin_init (GstPlugin * plugin)
-{
-  return gst_element_register (plugin, "rtpdtmfdepay",
-      GST_RANK_MARGINAL, GST_TYPE_RTP_DTMF_DEPAY);
 }

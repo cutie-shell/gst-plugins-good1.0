@@ -421,16 +421,26 @@ gst_v4l2_video_dec_finish (GstVideoDecoder * decoder)
   GST_VIDEO_DECODER_STREAM_UNLOCK (decoder);
 
   if (gst_v4l2_decoder_cmd (self->v4l2output, V4L2_DEC_CMD_STOP, 0)) {
-    GstTask *task = decoder->srcpad->task;
+    GstTask *task;
 
-    /* If the decoder stop command succeeded, just wait until processing is
-     * finished */
-    GST_DEBUG_OBJECT (self, "Waiting for decoder stop");
-    GST_OBJECT_LOCK (task);
-    while (GST_TASK_STATE (task) == GST_TASK_STARTED)
-      GST_TASK_WAIT (task);
-    GST_OBJECT_UNLOCK (task);
-    ret = GST_FLOW_FLUSHING;
+    GST_OBJECT_LOCK (decoder->srcpad);
+    task = GST_PAD_TASK (decoder->srcpad);
+    if (task)
+      gst_object_ref (task);
+    GST_OBJECT_UNLOCK (decoder->srcpad);
+
+    if (task) {
+      /* If the decoder stop command succeeded, just wait until processing is
+       * finished */
+      GST_DEBUG_OBJECT (self, "Waiting for decoder stop");
+      GST_OBJECT_LOCK (task);
+      while (GST_TASK_STATE (task) == GST_TASK_STARTED)
+        GST_TASK_WAIT (task);
+      GST_OBJECT_UNLOCK (task);
+
+      ret = GST_FLOW_FLUSHING;
+      gst_object_unref (task);
+    }
   } else {
     /* otherwise keep queuing empty buffers until the processing thread has
      * stopped, _pool_process() will return FLUSHING when that happened */
@@ -438,7 +448,7 @@ gst_v4l2_video_dec_finish (GstVideoDecoder * decoder)
       buffer = gst_buffer_new ();
       ret =
           gst_v4l2_buffer_pool_process (GST_V4L2_BUFFER_POOL (self->
-              v4l2output->pool), &buffer);
+              v4l2output->pool), &buffer, NULL);
       gst_buffer_unref (buffer);
     }
   }
@@ -472,34 +482,20 @@ gst_v4l2_video_dec_drain (GstVideoDecoder * decoder)
   return GST_FLOW_OK;
 }
 
-static GstVideoCodecFrame *
-gst_v4l2_video_dec_get_oldest_frame (GstVideoDecoder * decoder)
+static gboolean
+check_system_frame_number_too_old (guint32 current, guint32 old)
 {
-  GstVideoCodecFrame *frame = NULL;
-  GList *frames, *l;
-  gint count = 0;
+  guint32 absdiff = current > old ? current - old : old - current;
 
-  frames = gst_video_decoder_get_frames (decoder);
-
-  for (l = frames; l != NULL; l = l->next) {
-    GstVideoCodecFrame *f = l->data;
-
-    if (!frame || frame->pts > f->pts)
-      frame = f;
-
-    count++;
+  /* More than 100 frames in the past, or current wrapped around */
+  if (absdiff > 100) {
+    /* Wraparound and difference is actually smaller than 100 */
+    if (absdiff > G_MAXUINT32 - 100)
+      return FALSE;
+    return TRUE;
   }
 
-  if (frame) {
-    GST_LOG_OBJECT (decoder,
-        "Oldest frame is %d %" GST_TIME_FORMAT " and %d frames left",
-        frame->system_frame_number, GST_TIME_ARGS (frame->pts), count - 1);
-    gst_video_codec_frame_ref (frame);
-  }
-
-  g_list_free_full (frames, (GDestroyNotify) gst_video_codec_frame_unref);
-
-  return frame;
+  return FALSE;
 }
 
 static void
@@ -535,16 +531,41 @@ gst_v4l2_video_dec_loop (GstVideoDecoder * decoder)
       goto beach;
 
     GST_LOG_OBJECT (decoder, "Process output buffer");
-    ret = gst_v4l2_buffer_pool_process (v4l2_pool, &buffer);
-
+    ret = gst_v4l2_buffer_pool_process (v4l2_pool, &buffer, NULL);
   } while (ret == GST_V4L2_FLOW_CORRUPTED_BUFFER);
 
   if (ret != GST_FLOW_OK)
     goto beach;
 
-  frame = gst_v4l2_video_dec_get_oldest_frame (decoder);
+  if (GST_BUFFER_TIMESTAMP (buffer) % GST_SECOND != 0)
+    GST_ERROR_OBJECT (decoder,
+        "Driver bug detected - check driver with v4l2-compliance from http://git.linuxtv.org/v4l-utils.git");
+  GST_LOG_OBJECT (decoder, "Got buffer for frame number %u",
+      (guint32) (GST_BUFFER_TIMESTAMP (buffer) / GST_SECOND));
 
+  frame =
+      gst_video_decoder_get_frame (decoder,
+      GST_BUFFER_TIMESTAMP (buffer) / GST_SECOND);
   if (frame) {
+    GstVideoCodecFrame *oldest_frame;
+    gboolean warned = FALSE;
+
+    /* Garbage collect old frames in case of codec bugs */
+    while ((oldest_frame = gst_video_decoder_get_oldest_frame (decoder)) &&
+        check_system_frame_number_too_old (frame->system_frame_number,
+            oldest_frame->system_frame_number)) {
+      gst_video_decoder_drop_frame (decoder, oldest_frame);
+      oldest_frame = NULL;
+
+      if (!warned) {
+        g_warning ("%s: Too old frames, bug in decoder -- please file a bug",
+            GST_ELEMENT_NAME (decoder));
+        warned = TRUE;
+      }
+    }
+    if (oldest_frame)
+      gst_video_codec_frame_unref (oldest_frame);
+
     frame->output_buffer = buffer;
     buffer = NULL;
     ret = gst_video_decoder_finish_frame (decoder, frame);
@@ -633,6 +654,7 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
     GstBuffer *codec_data;
     GstCaps *acquired_caps, *available_caps, *caps, *filter;
     GstStructure *st;
+    guint32 dummy_frame_number = 0;
 
     GST_DEBUG_OBJECT (self, "Sending header");
 
@@ -668,12 +690,19 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
     }
 
     GST_VIDEO_DECODER_STREAM_UNLOCK (decoder);
+    GST_LOG_OBJECT (decoder, "Passing buffer with system frame number %u",
+        processed ? frame->system_frame_number : 0);
     ret =
         gst_v4l2_buffer_pool_process (GST_V4L2_BUFFER_POOL (self->
-            v4l2output->pool), &codec_data);
+            v4l2output->pool), &codec_data,
+        processed ? &frame->system_frame_number : &dummy_frame_number);
     GST_VIDEO_DECODER_STREAM_LOCK (decoder);
 
     gst_buffer_unref (codec_data);
+
+    /* init capture fps according to output */
+    self->v4l2capture->info.fps_d = self->v4l2output->info.fps_d;
+    self->v4l2capture->info.fps_n = self->v4l2output->info.fps_n;
 
     /* For decoders G_FMT returns coded size, G_SELECTION returns visible size
      * in the compose rectangle. gst_v4l2_object_acquire_format() checks both
@@ -769,9 +798,11 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
 
   if (!processed) {
     GST_VIDEO_DECODER_STREAM_UNLOCK (decoder);
+    GST_LOG_OBJECT (decoder, "Passing buffer with system frame number %u",
+        frame->system_frame_number);
     ret =
         gst_v4l2_buffer_pool_process (GST_V4L2_BUFFER_POOL (self->v4l2output->
-            pool), &frame->input_buffer);
+            pool), &frame->input_buffer, &frame->system_frame_number);
     GST_VIDEO_DECODER_STREAM_LOCK (decoder);
 
     if (ret == GST_FLOW_FLUSHING) {

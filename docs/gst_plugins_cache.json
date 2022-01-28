@@ -3947,6 +3947,18 @@
                     }
                 },
                 "properties": {
+                    "hold-eos": {
+                        "blurb": "Hold eos until the next 'Return' keystroke",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "false",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "gboolean",
+                        "writable": true
+                    },
                     "seek-offset": {
                         "blurb": "Time in seconds to seek by",
                         "conditionally-available": false,
@@ -4434,12 +4446,12 @@
                 "long-name": "Deinterlacer",
                 "pad-templates": {
                     "sink": {
-                        "caps": "video/x-raw:\n         format: { AYUV, ARGB, ABGR, RGBA, BGRA, Y444, xRGB, xBGR, RGBx, BGRx, RGB, BGR, YUY2, YVYU, UYVY, Y42B, I420, YV12, Y41B, NV12, NV21 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n\nvideo/x-raw(ANY):\n         format: { AYUV64, ARGB64, GBRA_12LE, GBRA_12BE, Y412_LE, Y412_BE, A444_10LE, GBRA_10LE, A444_10BE, GBRA_10BE, A422_10LE, A422_10BE, A420_10LE, A420_10BE, RGB10A2_LE, BGR10A2_LE, Y410, GBRA, ABGR, VUYA, BGRA, AYUV, ARGB, RGBA, A420, Y444_16LE, Y444_16BE, v216, P016_LE, P016_BE, Y444_12LE, GBR_12LE, Y444_12BE, GBR_12BE, I422_12LE, I422_12BE, Y212_LE, Y212_BE, I420_12LE, I420_12BE, P012_LE, P012_BE, Y444_10LE, GBR_10LE, Y444_10BE, GBR_10BE, r210, I422_10LE, I422_10BE, NV16_10LE32, Y210, v210, UYVP, I420_10LE, I420_10BE, P010_10LE, NV12_10LE32, NV12_10LE40, P010_10BE, Y444, GBR, NV24, xBGR, BGRx, xRGB, RGBx, BGR, IYU2, v308, RGB, Y42B, NV61, NV16, VYUY, UYVY, YVYU, YUY2, I420, YV12, NV21, NV12, NV12_64Z32, NV12_4L4, NV12_32L32, Y41B, IYU1, YVU9, YUV9, RGB16, BGR16, RGB15, BGR15, RGB8P, GRAY16_LE, GRAY16_BE, GRAY10_LE32, GRAY8 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
+                        "caps": "video/x-raw:\n         format: { AYUV, ARGB, ABGR, RGBA, BGRA, Y444, xRGB, xBGR, RGBx, BGRx, RGB, BGR, YUY2, YVYU, UYVY, Y42B, I420, YV12, Y41B, NV12, NV21 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n\nvideo/x-raw(ANY):\n         format: { ABGR64_LE, BGRA64_LE, AYUV64, ARGB64_LE, ARGB64, RGBA64_LE, ABGR64_BE, BGRA64_BE, ARGB64_BE, RGBA64_BE, GBRA_12LE, GBRA_12BE, Y412_LE, Y412_BE, A444_10LE, GBRA_10LE, A444_10BE, GBRA_10BE, A422_10LE, A422_10BE, A420_10LE, A420_10BE, RGB10A2_LE, BGR10A2_LE, Y410, GBRA, ABGR, VUYA, BGRA, AYUV, ARGB, RGBA, A420, AV12, Y444_16LE, Y444_16BE, v216, P016_LE, P016_BE, Y444_12LE, GBR_12LE, Y444_12BE, GBR_12BE, I422_12LE, I422_12BE, Y212_LE, Y212_BE, I420_12LE, I420_12BE, P012_LE, P012_BE, Y444_10LE, GBR_10LE, Y444_10BE, GBR_10BE, r210, I422_10LE, I422_10BE, NV16_10LE32, Y210, v210, UYVP, I420_10LE, I420_10BE, P010_10LE, NV12_10LE32, NV12_10LE40, P010_10BE, Y444, RGBP, GBR, BGRP, NV24, xBGR, BGRx, xRGB, RGBx, BGR, IYU2, v308, RGB, Y42B, NV61, NV16, VYUY, UYVY, YVYU, YUY2, I420, YV12, NV21, NV12, NV12_64Z32, NV12_4L4, NV12_32L32, Y41B, IYU1, YVU9, YUV9, RGB16, BGR16, RGB15, BGR15, RGB8P, GRAY16_LE, GRAY16_BE, GRAY10_LE32, GRAY8 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
                         "direction": "sink",
                         "presence": "always"
                     },
                     "src": {
-                        "caps": "video/x-raw:\n         format: { AYUV, ARGB, ABGR, RGBA, BGRA, Y444, xRGB, xBGR, RGBx, BGRx, RGB, BGR, YUY2, YVYU, UYVY, Y42B, I420, YV12, Y41B, NV12, NV21 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n\nvideo/x-raw(ANY):\n         format: { AYUV64, ARGB64, GBRA_12LE, GBRA_12BE, Y412_LE, Y412_BE, A444_10LE, GBRA_10LE, A444_10BE, GBRA_10BE, A422_10LE, A422_10BE, A420_10LE, A420_10BE, RGB10A2_LE, BGR10A2_LE, Y410, GBRA, ABGR, VUYA, BGRA, AYUV, ARGB, RGBA, A420, Y444_16LE, Y444_16BE, v216, P016_LE, P016_BE, Y444_12LE, GBR_12LE, Y444_12BE, GBR_12BE, I422_12LE, I422_12BE, Y212_LE, Y212_BE, I420_12LE, I420_12BE, P012_LE, P012_BE, Y444_10LE, GBR_10LE, Y444_10BE, GBR_10BE, r210, I422_10LE, I422_10BE, NV16_10LE32, Y210, v210, UYVP, I420_10LE, I420_10BE, P010_10LE, NV12_10LE32, NV12_10LE40, P010_10BE, Y444, GBR, NV24, xBGR, BGRx, xRGB, RGBx, BGR, IYU2, v308, RGB, Y42B, NV61, NV16, VYUY, UYVY, YVYU, YUY2, I420, YV12, NV21, NV12, NV12_64Z32, NV12_4L4, NV12_32L32, Y41B, IYU1, YVU9, YUV9, RGB16, BGR16, RGB15, BGR15, RGB8P, GRAY16_LE, GRAY16_BE, GRAY10_LE32, GRAY8 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
+                        "caps": "video/x-raw:\n         format: { AYUV, ARGB, ABGR, RGBA, BGRA, Y444, xRGB, xBGR, RGBx, BGRx, RGB, BGR, YUY2, YVYU, UYVY, Y42B, I420, YV12, Y41B, NV12, NV21 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n\nvideo/x-raw(ANY):\n         format: { ABGR64_LE, BGRA64_LE, AYUV64, ARGB64_LE, ARGB64, RGBA64_LE, ABGR64_BE, BGRA64_BE, ARGB64_BE, RGBA64_BE, GBRA_12LE, GBRA_12BE, Y412_LE, Y412_BE, A444_10LE, GBRA_10LE, A444_10BE, GBRA_10BE, A422_10LE, A422_10BE, A420_10LE, A420_10BE, RGB10A2_LE, BGR10A2_LE, Y410, GBRA, ABGR, VUYA, BGRA, AYUV, ARGB, RGBA, A420, AV12, Y444_16LE, Y444_16BE, v216, P016_LE, P016_BE, Y444_12LE, GBR_12LE, Y444_12BE, GBR_12BE, I422_12LE, I422_12BE, Y212_LE, Y212_BE, I420_12LE, I420_12BE, P012_LE, P012_BE, Y444_10LE, GBR_10LE, Y444_10BE, GBR_10BE, r210, I422_10LE, I422_10BE, NV16_10LE32, Y210, v210, UYVP, I420_10LE, I420_10BE, P010_10LE, NV12_10LE32, NV12_10LE40, P010_10BE, Y444, RGBP, GBR, BGRP, NV24, xBGR, BGRx, xRGB, RGBx, BGR, IYU2, v308, RGB, Y42B, NV61, NV16, VYUY, UYVY, YVYU, YUY2, I420, YV12, NV21, NV12, NV12_64Z32, NV12_4L4, NV12_32L32, Y41B, IYU1, YVU9, YUV9, RGB16, BGR16, RGB15, BGR15, RGB8P, GRAY16_LE, GRAY16_BE, GRAY10_LE32, GRAY8 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
                         "direction": "src",
                         "presence": "always"
                     }
@@ -6595,7 +6607,7 @@
                         "construct": false,
                         "construct-only": false,
                         "controllable": false,
-                        "default": "GStreamer 1.18.5 FLV muxer",
+                        "default": "GStreamer 1.19.90 FLV muxer",
                         "mutable": "null",
                         "readable": true,
                         "type": "gchararray",
@@ -6607,7 +6619,7 @@
                         "construct": false,
                         "construct-only": false,
                         "controllable": false,
-                        "default": "GStreamer 1.18.5 FLV muxer",
+                        "default": "GStreamer 1.19.90 FLV muxer",
                         "mutable": "null",
                         "readable": true,
                         "type": "gchararray",
@@ -6746,12 +6758,12 @@
                 "long-name": "GdkPixbuf Overlay",
                 "pad-templates": {
                     "sink": {
-                        "caps": "video/x-raw:\n         format: { AYUV64, ARGB64, GBRA_12LE, GBRA_12BE, Y412_LE, Y412_BE, A444_10LE, GBRA_10LE, A444_10BE, GBRA_10BE, A422_10LE, A422_10BE, A420_10LE, A420_10BE, RGB10A2_LE, BGR10A2_LE, Y410, GBRA, ABGR, VUYA, BGRA, AYUV, ARGB, RGBA, A420, Y444_16LE, Y444_16BE, v216, P016_LE, P016_BE, Y444_12LE, GBR_12LE, Y444_12BE, GBR_12BE, I422_12LE, I422_12BE, Y212_LE, Y212_BE, I420_12LE, I420_12BE, P012_LE, P012_BE, Y444_10LE, GBR_10LE, Y444_10BE, GBR_10BE, r210, I422_10LE, I422_10BE, NV16_10LE32, Y210, v210, UYVP, I420_10LE, I420_10BE, P010_10LE, NV12_10LE32, NV12_10LE40, P010_10BE, Y444, GBR, NV24, xBGR, BGRx, xRGB, RGBx, BGR, IYU2, v308, RGB, Y42B, NV61, NV16, VYUY, UYVY, YVYU, YUY2, I420, YV12, NV21, NV12, NV12_64Z32, NV12_4L4, NV12_32L32, Y41B, IYU1, YVU9, YUV9, RGB16, BGR16, RGB15, BGR15, RGB8P, GRAY16_LE, GRAY16_BE, GRAY10_LE32, GRAY8 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
+                        "caps": "video/x-raw:\n         format: { ABGR64_LE, BGRA64_LE, AYUV64, ARGB64_LE, ARGB64, RGBA64_LE, ABGR64_BE, BGRA64_BE, ARGB64_BE, RGBA64_BE, GBRA_12LE, GBRA_12BE, Y412_LE, Y412_BE, A444_10LE, GBRA_10LE, A444_10BE, GBRA_10BE, A422_10LE, A422_10BE, A420_10LE, A420_10BE, RGB10A2_LE, BGR10A2_LE, Y410, GBRA, ABGR, VUYA, BGRA, AYUV, ARGB, RGBA, A420, AV12, Y444_16LE, Y444_16BE, v216, P016_LE, P016_BE, Y444_12LE, GBR_12LE, Y444_12BE, GBR_12BE, I422_12LE, I422_12BE, Y212_LE, Y212_BE, I420_12LE, I420_12BE, P012_LE, P012_BE, Y444_10LE, GBR_10LE, Y444_10BE, GBR_10BE, r210, I422_10LE, I422_10BE, NV16_10LE32, Y210, v210, UYVP, I420_10LE, I420_10BE, P010_10LE, NV12_10LE32, NV12_10LE40, P010_10BE, Y444, RGBP, GBR, BGRP, NV24, xBGR, BGRx, xRGB, RGBx, BGR, IYU2, v308, RGB, Y42B, NV61, NV16, VYUY, UYVY, YVYU, YUY2, I420, YV12, NV21, NV12, NV12_64Z32, NV12_4L4, NV12_32L32, Y41B, IYU1, YVU9, YUV9, RGB16, BGR16, RGB15, BGR15, RGB8P, GRAY16_LE, GRAY16_BE, GRAY10_LE32, GRAY8 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
                         "direction": "sink",
                         "presence": "always"
                     },
                     "src": {
-                        "caps": "video/x-raw:\n         format: { AYUV64, ARGB64, GBRA_12LE, GBRA_12BE, Y412_LE, Y412_BE, A444_10LE, GBRA_10LE, A444_10BE, GBRA_10BE, A422_10LE, A422_10BE, A420_10LE, A420_10BE, RGB10A2_LE, BGR10A2_LE, Y410, GBRA, ABGR, VUYA, BGRA, AYUV, ARGB, RGBA, A420, Y444_16LE, Y444_16BE, v216, P016_LE, P016_BE, Y444_12LE, GBR_12LE, Y444_12BE, GBR_12BE, I422_12LE, I422_12BE, Y212_LE, Y212_BE, I420_12LE, I420_12BE, P012_LE, P012_BE, Y444_10LE, GBR_10LE, Y444_10BE, GBR_10BE, r210, I422_10LE, I422_10BE, NV16_10LE32, Y210, v210, UYVP, I420_10LE, I420_10BE, P010_10LE, NV12_10LE32, NV12_10LE40, P010_10BE, Y444, GBR, NV24, xBGR, BGRx, xRGB, RGBx, BGR, IYU2, v308, RGB, Y42B, NV61, NV16, VYUY, UYVY, YVYU, YUY2, I420, YV12, NV21, NV12, NV12_64Z32, NV12_4L4, NV12_32L32, Y41B, IYU1, YVU9, YUV9, RGB16, BGR16, RGB15, BGR15, RGB8P, GRAY16_LE, GRAY16_BE, GRAY10_LE32, GRAY8 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
+                        "caps": "video/x-raw:\n         format: { ABGR64_LE, BGRA64_LE, AYUV64, ARGB64_LE, ARGB64, RGBA64_LE, ABGR64_BE, BGRA64_BE, ARGB64_BE, RGBA64_BE, GBRA_12LE, GBRA_12BE, Y412_LE, Y412_BE, A444_10LE, GBRA_10LE, A444_10BE, GBRA_10BE, A422_10LE, A422_10BE, A420_10LE, A420_10BE, RGB10A2_LE, BGR10A2_LE, Y410, GBRA, ABGR, VUYA, BGRA, AYUV, ARGB, RGBA, A420, AV12, Y444_16LE, Y444_16BE, v216, P016_LE, P016_BE, Y444_12LE, GBR_12LE, Y444_12BE, GBR_12BE, I422_12LE, I422_12BE, Y212_LE, Y212_BE, I420_12LE, I420_12BE, P012_LE, P012_BE, Y444_10LE, GBR_10LE, Y444_10BE, GBR_10BE, r210, I422_10LE, I422_10BE, NV16_10LE32, Y210, v210, UYVP, I420_10LE, I420_10BE, P010_10LE, NV12_10LE32, NV12_10LE40, P010_10BE, Y444, RGBP, GBR, BGRP, NV24, xBGR, BGRx, xRGB, RGBx, BGR, IYU2, v308, RGB, Y42B, NV61, NV16, VYUY, UYVY, YVYU, YUY2, I420, YV12, NV21, NV12, NV12_64Z32, NV12_4L4, NV12_32L32, Y41B, IYU1, YVU9, YUV9, RGB16, BGR16, RGB15, BGR15, RGB8P, GRAY16_LE, GRAY16_BE, GRAY10_LE32, GRAY8 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
                         "direction": "src",
                         "presence": "always"
                     }
@@ -7102,7 +7114,20 @@
                         "presence": "always"
                     }
                 },
-                "properties": {},
+                "properties": {
+                    "rotate-method": {
+                        "blurb": "rotate method",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "identity (0)",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "GstVideoOrientationMethod",
+                        "writable": true
+                    }
+                },
                 "rank": "none"
             },
             "gtksink": {
@@ -7184,7 +7209,21 @@
                         "controllable": false,
                         "default": "0/1",
                         "max": "2147483647/1",
-                        "min": "0/1",
+                        "min": "0/2147483647",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "GstFraction",
+                        "writable": true
+                    },
+                    "video-aspect-ratio-override": {
+                        "blurb": "The pixel aspect ratio of the video (0/1 = follow stream)",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "0/1",
+                        "max": "2147483647/1",
+                        "min": "0/2147483647",
                         "mutable": "null",
                         "readable": true,
                         "type": "GstFraction",
@@ -7491,6 +7530,7 @@
                 "description": "Multiplex audio and video into a 3GPP file",
                 "hierarchy": [
                     "Gst3GPPMux",
+                    "GstBaseQTMux",
                     "GstAggregator",
                     "GstElement",
                     "GstObject",
@@ -7524,249 +7564,13 @@
                         "type": "GstQTMuxPad"
                     },
                     "video_%%u": {
-                        "caps": "video/x-h263:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/mpeg:\n    mpegversion: 4\n   systemstream: false\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-divx:\n    divxversion: 5\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h264:\n  stream-format: avc\n      alignment: au\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\n",
+                        "caps": "video/x-h263:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/mpeg:\n    mpegversion: 4\n   systemstream: false\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-divx:\n    divxversion: 5\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h264:\n  stream-format: { (string)avc, (string)avc3 }\n      alignment: au\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\n",
                         "direction": "sink",
                         "presence": "request",
                         "type": "GstQTMuxPad"
                     }
                 },
                 "properties": {
-                    "dts-method": {
-                        "blurb": "Method to determine DTS time (DEPRECATED)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "reorder (1)",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "GstQTMuxDtsMethods",
-                        "writable": true
-                    },
-                    "faststart": {
-                        "blurb": "If the file should be formatted for faststart (headers first)",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "faststart-file": {
-                        "blurb": "File that will be used temporarily to store data from the stream when creating a faststart file. If null a filepath will be created automatically",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "NULL",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gchararray",
-                        "writable": true
-                    },
-                    "force-chunks": {
-                        "blurb": "Force multiple chunks to be created even for single-stream files",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "force-create-timecode-trak": {
-                        "blurb": "Create a timecode trak even in unsupported flavors",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "fragment-duration": {
-                        "blurb": "Fragment durations in ms (produce a fragmented file if > 0)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "-1",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
-                        "writable": true
-                    },
-                    "interleave-bytes": {
-                        "blurb": "Interleave between streams in bytes",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "interleave-time": {
-                        "blurb": "Interleave between streams in nanoseconds",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "250000000",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "max-raw-audio-drift": {
-                        "blurb": "Maximum allowed drift of raw audio samples vs. timestamps in nanoseconds",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "40000000",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "moov-recovery-file": {
-                        "blurb": "File to be used to store data for moov atom making movie file recovery possible in case of a crash during muxing. Null for disabled. (Experimental)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "NULL",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gchararray",
-                        "writable": true
-                    },
-                    "movie-timescale": {
-                        "blurb": "Timescale to use in the movie (units per second, 0 == default)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "-1",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
-                        "writable": true
-                    },
-                    "presentation-time": {
-                        "blurb": "Calculate and include presentation/composition time (in addition to decoding time)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "true",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "reserved-bytes-per-sec": {
-                        "blurb": "Multiplier for converting reserved-max-duration into bytes of header to reserve, per second, per track",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "550",
-                        "max": "10000",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
-                        "writable": true
-                    },
-                    "reserved-duration-remaining": {
-                        "blurb": "Reports the approximate amount of remaining moov header space reserved using reserved-max-duration",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "18446744073709551615",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": false
-                    },
-                    "reserved-max-duration": {
-                        "blurb": "When set to a value > 0, reserves space for index tables at the beginning of the file.",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "18446744073709551615",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "reserved-moov-update-period": {
-                        "blurb": "When used with reserved-max-duration, periodically updates the index tables with information muxed so far.",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "18446744073709551615",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "reserved-prefill": {
-                        "blurb": "Prefill samples table of reserved duration",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "start-gap-threshold": {
-                        "blurb": "Threshold for creating an edit list for gaps at the start in nanoseconds",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
                     "streamable": {
                         "blurb": "If set to true, the output should be as if it is to be streamed and hence no indexes written or duration written. (DEPRECATED, only valid for fragmented MP4)",
                         "conditionally-available": false,
@@ -7778,20 +7582,6 @@
                         "readable": true,
                         "type": "gboolean",
                         "writable": true
-                    },
-                    "trak-timescale": {
-                        "blurb": "Timescale to use for the tracks (units per second, 0 is automatic)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "-1",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
-                        "writable": true
                     }
                 },
                 "rank": "primary"
@@ -7801,6 +7591,7 @@
                 "description": "Multiplex audio and video into a ISML file",
                 "hierarchy": [
                     "GstISMLMux",
+                    "GstBaseQTMux",
                     "GstAggregator",
                     "GstElement",
                     "GstObject",
@@ -7828,249 +7619,13 @@
                         "type": "GstAggregatorPad"
                     },
                     "video_%%u": {
-                        "caps": "video/mpeg:\n    mpegversion: 4\n   systemstream: false\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-divx:\n    divxversion: 5\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h264:\n  stream-format: avc\n      alignment: au\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\n",
+                        "caps": "video/mpeg:\n    mpegversion: 4\n   systemstream: false\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-divx:\n    divxversion: 5\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h264:\n  stream-format: { (string)avc, (string)avc3 }\n      alignment: au\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\n",
                         "direction": "sink",
                         "presence": "request",
                         "type": "GstQTMuxPad"
                     }
                 },
                 "properties": {
-                    "dts-method": {
-                        "blurb": "Method to determine DTS time (DEPRECATED)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "reorder (1)",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "GstQTMuxDtsMethods",
-                        "writable": true
-                    },
-                    "faststart": {
-                        "blurb": "If the file should be formatted for faststart (headers first)",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "faststart-file": {
-                        "blurb": "File that will be used temporarily to store data from the stream when creating a faststart file. If null a filepath will be created automatically",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "NULL",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gchararray",
-                        "writable": true
-                    },
-                    "force-chunks": {
-                        "blurb": "Force multiple chunks to be created even for single-stream files",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "force-create-timecode-trak": {
-                        "blurb": "Create a timecode trak even in unsupported flavors",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "fragment-duration": {
-                        "blurb": "Fragment durations in ms (produce a fragmented file if > 0)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "2000",
-                        "max": "-1",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
-                        "writable": true
-                    },
-                    "interleave-bytes": {
-                        "blurb": "Interleave between streams in bytes",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "interleave-time": {
-                        "blurb": "Interleave between streams in nanoseconds",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "250000000",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "max-raw-audio-drift": {
-                        "blurb": "Maximum allowed drift of raw audio samples vs. timestamps in nanoseconds",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "40000000",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "moov-recovery-file": {
-                        "blurb": "File to be used to store data for moov atom making movie file recovery possible in case of a crash during muxing. Null for disabled. (Experimental)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "NULL",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gchararray",
-                        "writable": true
-                    },
-                    "movie-timescale": {
-                        "blurb": "Timescale to use in the movie (units per second, 0 == default)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "-1",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
-                        "writable": true
-                    },
-                    "presentation-time": {
-                        "blurb": "Calculate and include presentation/composition time (in addition to decoding time)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "true",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "reserved-bytes-per-sec": {
-                        "blurb": "Multiplier for converting reserved-max-duration into bytes of header to reserve, per second, per track",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "550",
-                        "max": "10000",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
-                        "writable": true
-                    },
-                    "reserved-duration-remaining": {
-                        "blurb": "Reports the approximate amount of remaining moov header space reserved using reserved-max-duration",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "18446744073709551615",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": false
-                    },
-                    "reserved-max-duration": {
-                        "blurb": "When set to a value > 0, reserves space for index tables at the beginning of the file.",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "18446744073709551615",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "reserved-moov-update-period": {
-                        "blurb": "When used with reserved-max-duration, periodically updates the index tables with information muxed so far.",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "18446744073709551615",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "reserved-prefill": {
-                        "blurb": "Prefill samples table of reserved duration",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "start-gap-threshold": {
-                        "blurb": "Threshold for creating an edit list for gaps at the start in nanoseconds",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
                     "streamable": {
                         "blurb": "If set to true, the output should be as if it is to be streamed and hence no indexes written or duration written.",
                         "conditionally-available": false,
@@ -8082,20 +7637,6 @@
                         "readable": true,
                         "type": "gboolean",
                         "writable": true
-                    },
-                    "trak-timescale": {
-                        "blurb": "Timescale to use for the tracks (units per second, 0 is automatic)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "-1",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
-                        "writable": true
                     }
                 },
                 "rank": "primary"
@@ -8105,6 +7646,7 @@
                 "description": "Multiplex audio and video into a MJ2 file",
                 "hierarchy": [
                     "GstMJ2Mux",
+                    "GstBaseQTMux",
                     "GstAggregator",
                     "GstElement",
                     "GstObject",
@@ -8139,242 +7681,6 @@
                     }
                 },
                 "properties": {
-                    "dts-method": {
-                        "blurb": "Method to determine DTS time (DEPRECATED)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "reorder (1)",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "GstQTMuxDtsMethods",
-                        "writable": true
-                    },
-                    "faststart": {
-                        "blurb": "If the file should be formatted for faststart (headers first)",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "faststart-file": {
-                        "blurb": "File that will be used temporarily to store data from the stream when creating a faststart file. If null a filepath will be created automatically",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "NULL",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gchararray",
-                        "writable": true
-                    },
-                    "force-chunks": {
-                        "blurb": "Force multiple chunks to be created even for single-stream files",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "force-create-timecode-trak": {
-                        "blurb": "Create a timecode trak even in unsupported flavors",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "fragment-duration": {
-                        "blurb": "Fragment durations in ms (produce a fragmented file if > 0)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "-1",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
-                        "writable": true
-                    },
-                    "interleave-bytes": {
-                        "blurb": "Interleave between streams in bytes",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "interleave-time": {
-                        "blurb": "Interleave between streams in nanoseconds",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "250000000",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "max-raw-audio-drift": {
-                        "blurb": "Maximum allowed drift of raw audio samples vs. timestamps in nanoseconds",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "40000000",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "moov-recovery-file": {
-                        "blurb": "File to be used to store data for moov atom making movie file recovery possible in case of a crash during muxing. Null for disabled. (Experimental)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "NULL",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gchararray",
-                        "writable": true
-                    },
-                    "movie-timescale": {
-                        "blurb": "Timescale to use in the movie (units per second, 0 == default)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "-1",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
-                        "writable": true
-                    },
-                    "presentation-time": {
-                        "blurb": "Calculate and include presentation/composition time (in addition to decoding time)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "true",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "reserved-bytes-per-sec": {
-                        "blurb": "Multiplier for converting reserved-max-duration into bytes of header to reserve, per second, per track",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "550",
-                        "max": "10000",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
-                        "writable": true
-                    },
-                    "reserved-duration-remaining": {
-                        "blurb": "Reports the approximate amount of remaining moov header space reserved using reserved-max-duration",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "18446744073709551615",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": false
-                    },
-                    "reserved-max-duration": {
-                        "blurb": "When set to a value > 0, reserves space for index tables at the beginning of the file.",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "18446744073709551615",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "reserved-moov-update-period": {
-                        "blurb": "When used with reserved-max-duration, periodically updates the index tables with information muxed so far.",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "18446744073709551615",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "reserved-prefill": {
-                        "blurb": "Prefill samples table of reserved duration",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "start-gap-threshold": {
-                        "blurb": "Threshold for creating an edit list for gaps at the start in nanoseconds",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
                     "streamable": {
                         "blurb": "If set to true, the output should be as if it is to be streamed and hence no indexes written or duration written. (DEPRECATED, only valid for fragmented MP4)",
                         "conditionally-available": false,
@@ -8386,20 +7692,6 @@
                         "readable": true,
                         "type": "gboolean",
                         "writable": true
-                    },
-                    "trak-timescale": {
-                        "blurb": "Timescale to use for the tracks (units per second, 0 is automatic)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "-1",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
-                        "writable": true
                     }
                 },
                 "rank": "primary"
@@ -8409,6 +7701,7 @@
                 "description": "Multiplex audio and video into a MP4 file",
                 "hierarchy": [
                     "GstMP4Mux",
+                    "GstBaseQTMux",
                     "GstAggregator",
                     "GstElement",
                     "GstObject",
@@ -8442,249 +7735,13 @@
                         "type": "GstQTMuxPad"
                     },
                     "video_%%u": {
-                        "caps": "video/mpeg:\n    mpegversion: 4\n   systemstream: false\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-divx:\n    divxversion: 5\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h264:\n  stream-format: avc\n      alignment: au\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h265:\n  stream-format: { (string)hvc1, (string)hev1 }\n      alignment: au\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-mp4-part:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-av1:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\n",
+                        "caps": "video/mpeg:\n    mpegversion: 4\n   systemstream: false\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-divx:\n    divxversion: 5\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h264:\n  stream-format: { (string)avc, (string)avc3 }\n      alignment: au\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h265:\n  stream-format: { (string)hvc1, (string)hev1 }\n      alignment: au\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-mp4-part:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-av1:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\n",
                         "direction": "sink",
                         "presence": "request",
                         "type": "GstQTMuxPad"
                     }
                 },
                 "properties": {
-                    "dts-method": {
-                        "blurb": "Method to determine DTS time (DEPRECATED)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "reorder (1)",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "GstQTMuxDtsMethods",
-                        "writable": true
-                    },
-                    "faststart": {
-                        "blurb": "If the file should be formatted for faststart (headers first)",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "faststart-file": {
-                        "blurb": "File that will be used temporarily to store data from the stream when creating a faststart file. If null a filepath will be created automatically",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "NULL",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gchararray",
-                        "writable": true
-                    },
-                    "force-chunks": {
-                        "blurb": "Force multiple chunks to be created even for single-stream files",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "force-create-timecode-trak": {
-                        "blurb": "Create a timecode trak even in unsupported flavors",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "fragment-duration": {
-                        "blurb": "Fragment durations in ms (produce a fragmented file if > 0)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "-1",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
-                        "writable": true
-                    },
-                    "interleave-bytes": {
-                        "blurb": "Interleave between streams in bytes",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "interleave-time": {
-                        "blurb": "Interleave between streams in nanoseconds",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "250000000",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "max-raw-audio-drift": {
-                        "blurb": "Maximum allowed drift of raw audio samples vs. timestamps in nanoseconds",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "40000000",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "moov-recovery-file": {
-                        "blurb": "File to be used to store data for moov atom making movie file recovery possible in case of a crash during muxing. Null for disabled. (Experimental)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "NULL",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gchararray",
-                        "writable": true
-                    },
-                    "movie-timescale": {
-                        "blurb": "Timescale to use in the movie (units per second, 0 == default)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "-1",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
-                        "writable": true
-                    },
-                    "presentation-time": {
-                        "blurb": "Calculate and include presentation/composition time (in addition to decoding time)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "true",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "reserved-bytes-per-sec": {
-                        "blurb": "Multiplier for converting reserved-max-duration into bytes of header to reserve, per second, per track",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "550",
-                        "max": "10000",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
-                        "writable": true
-                    },
-                    "reserved-duration-remaining": {
-                        "blurb": "Reports the approximate amount of remaining moov header space reserved using reserved-max-duration",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "18446744073709551615",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": false
-                    },
-                    "reserved-max-duration": {
-                        "blurb": "When set to a value > 0, reserves space for index tables at the beginning of the file.",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "18446744073709551615",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "reserved-moov-update-period": {
-                        "blurb": "When used with reserved-max-duration, periodically updates the index tables with information muxed so far.",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "18446744073709551615",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
-                    "reserved-prefill": {
-                        "blurb": "Prefill samples table of reserved duration",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
-                    "start-gap-threshold": {
-                        "blurb": "Threshold for creating an edit list for gaps at the start in nanoseconds",
-                        "conditionally-available": false,
-                        "construct": false,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "18446744073709551615",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint64",
-                        "writable": true
-                    },
                     "streamable": {
                         "blurb": "If set to true, the output should be as if it is to be streamed and hence no indexes written or duration written. (DEPRECATED, only valid for fragmented MP4)",
                         "conditionally-available": false,
@@ -8695,20 +7752,6 @@
                         "mutable": "null",
                         "readable": true,
                         "type": "gboolean",
-                        "writable": true
-                    },
-                    "trak-timescale": {
-                        "blurb": "Timescale to use for the tracks (units per second, 0 is automatic)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "0",
-                        "max": "-1",
-                        "min": "0",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "guint",
                         "writable": true
                     }
                 },
@@ -8825,6 +7868,7 @@
                 "description": "Multiplex audio and video into a QuickTime file",
                 "hierarchy": [
                     "GstQTMux",
+                    "GstBaseQTMux",
                     "GstAggregator",
                     "GstElement",
                     "GstObject",
@@ -8864,12 +7908,75 @@
                         "type": "GstQTMuxPad"
                     },
                     "video_%%u": {
-                        "caps": "video/x-raw:\n         format: { RGB, UYVY, v210 }\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/mpeg:\n    mpegversion: 4\n   systemstream: false\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-divx:\n    divxversion: 5\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-prores:\n        variant: { (string)standard, (string)lt, (string)hq, (string)proxy, (string)4444, (string)4444xq }\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-cineform:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h263:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h264:\n  stream-format: avc\n      alignment: au\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h265:\n  stream-format: { (string)hvc1, (string)hev1 }\n      alignment: au\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-svq:\n     svqversion: 3\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-dv:\n   systemstream: false\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nimage/jpeg:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nimage/png:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-vp8:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-vp9:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-dirac:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-qt-part:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-av1:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\n",
+                        "caps": "video/x-raw:\n         format: { RGB, UYVY, v210 }\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/mpeg:\n    mpegversion: 4\n   systemstream: false\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-divx:\n    divxversion: 5\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-prores:\n        variant: { (string)standard, (string)lt, (string)hq, (string)proxy, (string)4444, (string)4444xq }\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-cineform:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h263:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h264:\n  stream-format: { (string)avc, (string)avc3 }\n      alignment: au\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h265:\n  stream-format: { (string)hvc1, (string)hev1 }\n      alignment: au\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-svq:\n     svqversion: 3\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-dv:\n   systemstream: false\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nimage/jpeg:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nimage/png:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-vp8:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-vp9:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-dirac:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-qt-part:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-av1:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\n",
                         "direction": "sink",
                         "presence": "request",
                         "type": "GstQTMuxPad"
                     }
                 },
+                "properties": {
+                    "streamable": {
+                        "blurb": "If set to true, the output should be as if it is to be streamed and hence no indexes written or duration written. (DEPRECATED, only valid for fragmented MP4)",
+                        "conditionally-available": false,
+                        "construct": true,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "false",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "gboolean",
+                        "writable": true
+                    }
+                },
+                "rank": "primary"
+            },
+            "rtpxqtdepay": {
+                "author": "Wim Taymans <wim@fluendo.com>",
+                "description": "Extracts Quicktime audio/video from RTP packets",
+                "hierarchy": [
+                    "GstRtpXQTDepay",
+                    "GstRTPBaseDepayload",
+                    "GstElement",
+                    "GstObject",
+                    "GInitiallyUnowned",
+                    "GObject"
+                ],
+                "klass": "Codec/Depayloader/Network",
+                "long-name": "RTP packet depayloader",
+                "pad-templates": {
+                    "sink": {
+                        "caps": "application/x-rtp:\n        payload: [ 96, 127 ]\n          media: { (string)audio, (string)video }\n     clock-rate: [ 1, 2147483647 ]\n  encoding-name: { (string)X-QT, (string)X-QUICKTIME }\n",
+                        "direction": "sink",
+                        "presence": "always"
+                    },
+                    "src": {
+                        "caps": "ANY",
+                        "direction": "src",
+                        "presence": "always"
+                    }
+                },
+                "properties": {},
+                "rank": "marginal"
+            }
+        },
+        "filename": "gstisomp4",
+        "license": "LGPL",
+        "other-types": {
+            "GstBaseQTMux": {
+                "hierarchy": [
+                    "GstBaseQTMux",
+                    "GstAggregator",
+                    "GstElement",
+                    "GstObject",
+                    "GInitiallyUnowned",
+                    "GObject"
+                ],
+                "interfaces": [
+                    "GstTagSetter",
+                    "GstTagXmpWriter",
+                    "GstPreset"
+                ],
+                "kind": "object",
                 "properties": {
                     "dts-method": {
                         "blurb": "Method to determine DTS time (DEPRECATED)",
@@ -8943,6 +8050,18 @@
                         "mutable": "null",
                         "readable": true,
                         "type": "guint",
+                        "writable": true
+                    },
+                    "fragment-mode": {
+                        "blurb": "How to to write fragments to the file.  Only used when 'fragment-duration' is greather than 0",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "dash-or-mss (0)",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "GstQTMuxFragmentMode",
                         "writable": true
                     },
                     "interleave-bytes": {
@@ -9107,18 +8226,6 @@
                         "type": "guint64",
                         "writable": true
                     },
-                    "streamable": {
-                        "blurb": "If set to true, the output should be as if it is to be streamed and hence no indexes written or duration written. (DEPRECATED, only valid for fragmented MP4)",
-                        "conditionally-available": false,
-                        "construct": true,
-                        "construct-only": false,
-                        "controllable": false,
-                        "default": "false",
-                        "mutable": "null",
-                        "readable": true,
-                        "type": "gboolean",
-                        "writable": true
-                    },
                     "trak-timescale": {
                         "blurb": "Timescale to use for the tracks (units per second, 0 is automatic)",
                         "conditionally-available": false,
@@ -9133,41 +8240,8 @@
                         "type": "guint",
                         "writable": true
                     }
-                },
-                "rank": "primary"
+                }
             },
-            "rtpxqtdepay": {
-                "author": "Wim Taymans <wim@fluendo.com>",
-                "description": "Extracts Quicktime audio/video from RTP packets",
-                "hierarchy": [
-                    "GstRtpXQTDepay",
-                    "GstRTPBaseDepayload",
-                    "GstElement",
-                    "GstObject",
-                    "GInitiallyUnowned",
-                    "GObject"
-                ],
-                "klass": "Codec/Depayloader/Network",
-                "long-name": "RTP packet depayloader",
-                "pad-templates": {
-                    "sink": {
-                        "caps": "application/x-rtp:\n        payload: [ 96, 127 ]\n          media: { (string)audio, (string)video }\n     clock-rate: [ 1, 2147483647 ]\n  encoding-name: { (string)X-QT, (string)X-QUICKTIME }\n",
-                        "direction": "sink",
-                        "presence": "always"
-                    },
-                    "src": {
-                        "caps": "ANY",
-                        "direction": "src",
-                        "presence": "always"
-                    }
-                },
-                "properties": {},
-                "rank": "marginal"
-            }
-        },
-        "filename": "gstisomp4",
-        "license": "LGPL",
-        "other-types": {
             "GstQTMuxDtsMethods": {
                 "kind": "enum",
                 "values": [
@@ -9185,6 +8259,21 @@
                         "desc": "ascending",
                         "name": "asc",
                         "value": "2"
+                    }
+                ]
+            },
+            "GstQTMuxFragmentMode": {
+                "kind": "enum",
+                "values": [
+                    {
+                        "desc": "Dash or Smoothstreaming",
+                        "name": "dash-or-mss",
+                        "value": "0"
+                    },
+                    {
+                        "desc": "First MOOV Fragment Then Finalise",
+                        "name": "first-moov-then-finalise",
+                        "value": "1"
                     }
                 ]
             },
@@ -9280,6 +8369,30 @@
                         "mutable": "null",
                         "readable": true,
                         "type": "GstJackConnect",
+                        "writable": true
+                    },
+                    "low-latency": {
+                        "blurb": "Optimize all settings for lowest latency. When enabled, \"buffer-time\" and \"latency-time\" will be ignored",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "false",
+                        "mutable": "ready",
+                        "readable": true,
+                        "type": "gboolean",
+                        "writable": true
+                    },
+                    "port-names": {
+                        "blurb": "Comma-separated list of port name including \"client_name:\" prefix",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "NULL",
+                        "mutable": "ready",
+                        "readable": true,
+                        "type": "gchararray",
                         "writable": true
                     },
                     "port-pattern": {
@@ -9379,6 +8492,30 @@
                         "type": "GstJackConnect",
                         "writable": true
                     },
+                    "low-latency": {
+                        "blurb": "Optimize all settings for lowest latency. When enabled, \"buffer-time\" and \"latency-time\" will be ignored",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "false",
+                        "mutable": "ready",
+                        "readable": true,
+                        "type": "gboolean",
+                        "writable": true
+                    },
+                    "port-names": {
+                        "blurb": "Comma-separated list of port name including \"client_name:\" prefix",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "NULL",
+                        "mutable": "ready",
+                        "readable": true,
+                        "type": "gchararray",
+                        "writable": true
+                    },
                     "port-pattern": {
                         "blurb": "A pattern to select which ports to connect to (NULL = first physical ports)",
                         "conditionally-available": false,
@@ -9439,6 +8576,11 @@
                         "desc": "Automatically connect ports to as many physical ports as possible",
                         "name": "auto-forced",
                         "value": "2"
+                    },
+                    {
+                        "desc": "Connect ports to explicitly requested physical ports",
+                        "name": "explicit",
+                        "value": "3"
                     }
                 ]
             },
@@ -9544,7 +8686,7 @@
                         "presence": "always"
                     },
                     "src": {
-                        "caps": "image/jpeg:\n          width: [ 16, 65535 ]\n         height: [ 16, 65535 ]\n      framerate: [ 0/1, 2147483647/1 ]\n     sof-marker: { (int)0, (int)1, (int)2, (int)4, (int)9 }\n",
+                        "caps": "image/jpeg:\n          width: [ 1, 65535 ]\n         height: [ 1, 65535 ]\n      framerate: [ 0/1, 2147483647/1 ]\n     sof-marker: { (int)0, (int)1, (int)2, (int)4, (int)9 }\n",
                         "direction": "src",
                         "presence": "always"
                     }
@@ -9806,6 +8948,18 @@
                     }
                 },
                 "properties": {
+                    "audio-level-meta": {
+                        "blurb": "Set GstAudioLevelMeta on buffers",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "false",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "gboolean",
+                        "writable": true
+                    },
                     "interval": {
                         "blurb": "Interval of time between message posts (in nanoseconds)",
                         "conditionally-available": false,
@@ -9987,12 +9141,26 @@
                         "presence": "request"
                     },
                     "video_%%u": {
-                        "caps": "video/mpeg:\n    mpegversion: { (int)1, (int)2, (int)4 }\n   systemstream: false\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h264:\n  stream-format: avc\n      alignment: au\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h265:\n  stream-format: hvc1\n      alignment: au\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-divx:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-huffyuv:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-dv:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-h263:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-msmpeg:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nimage/jpeg:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-theora:\nvideo/x-dirac:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-pn-realvideo:\n      rmversion: [ 1, 4 ]\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-vp8:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-vp9:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-raw:\n         format: { YUY2, I420, YV12, UYVY, AYUV, GRAY8, BGR, RGB }\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-prores:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-wmv:\n     wmvversion: [ 1, 3 ]\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\nvideo/x-av1:\n          width: [ 16, 2147483647 ]\n         height: [ 16, 2147483647 ]\n",
+                        "caps": "video/mpeg:\n    mpegversion: { (int)1, (int)2, (int)4 }\n   systemstream: false\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-h264:\n  stream-format: { (string)avc, (string)avc3 }\n      alignment: au\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-h265:\n  stream-format: { (string)hvc1, (string)hev1 }\n      alignment: au\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-divx:\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-huffyuv:\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-dv:\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-h263:\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-msmpeg:\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nimage/jpeg:\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-theora:\nvideo/x-dirac:\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-pn-realvideo:\n      rmversion: [ 1, 4 ]\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-vp8:\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-vp9:\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-raw:\n         format: { YUY2, I420, YV12, UYVY, AYUV, GRAY8, BGR, RGB }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-prores:\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-wmv:\n     wmvversion: [ 1, 3 ]\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-av1:\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\nvideo/x-ffv:\n      ffversion: 1\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n",
                         "direction": "sink",
                         "presence": "request"
                     }
                 },
                 "properties": {
+                    "cluster-timestamp-offset": {
+                        "blurb": "An offset to add to all clusters/blocks (in nanoseconds)",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "0",
+                        "max": "18446744073709551615",
+                        "min": "0",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "guint64",
+                        "writable": true
+                    },
                     "creation-time": {
                         "blurb": "Date and time of creation. This will be used for the DateUTC field. NULL means that the current time will be used.",
                         "conditionally-available": false,
@@ -10523,6 +9691,20 @@
                         "mutable": "null",
                         "readable": true,
                         "type": "guint",
+                        "writable": true
+                    },
+                    "min-keyframe-distance": {
+                        "blurb": "Minimum distance between keyframes to start a new file",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "10000000000",
+                        "max": "18446744073709551615",
+                        "min": "0",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "guint64",
                         "writable": true
                     },
                     "next-file": {
@@ -12058,11 +11240,14 @@
                     "GInitiallyUnowned",
                     "GObject"
                 ],
+                "interfaces": [
+                    "GstNavigation"
+                ],
                 "klass": "Sink/Video",
                 "long-name": "Qt Video Sink",
                 "pad-templates": {
                     "sink": {
-                        "caps": "video/x-raw(memory:GLMemory):\n         format: RGBA\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n texture-target: 2D\n",
+                        "caps": "video/x-raw(memory:GLMemory):\n         format: { RGB, RGBA }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n texture-target: 2D\n",
                         "direction": "sink",
                         "presence": "always"
                     }
@@ -14779,7 +13964,32 @@
                         "presence": "always"
                     }
                 },
-                "properties": {},
+                "properties": {
+                    "request-keyframe": {
+                        "blurb": "Request new keyframe when packet loss is detected",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "false",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "gboolean",
+                        "writable": true
+                    },
+                    "wait-for-keyframe": {
+                        "blurb": "Wait for the next keyframe after packet loss, meaningful only when outputting access units",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "false",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "gboolean",
+                        "writable": true
+                    }
+                },
                 "rank": "secondary"
             },
             "rtph264pay": {
@@ -14932,6 +14142,22 @@
                 },
                 "rank": "secondary"
             },
+            "rtphdrextcolorspace": {
+                "RTP-Header-Extension-URI": "http://www.webrtc.org/experiments/rtp-hdrext/color-space",
+                "author": "Jakub Adam <jakub.adam@collabora.com>",
+                "description": "Extends RTP packets with color space and high dynamic range (HDR) information.",
+                "hierarchy": [
+                    "GstRTPHeaderExtensionColorspace",
+                    "GstRTPHeaderExtension",
+                    "GstElement",
+                    "GstObject",
+                    "GInitiallyUnowned",
+                    "GObject"
+                ],
+                "klass": "Network/Extension/RTPHeader",
+                "long-name": "Color Space",
+                "rank": "marginal"
+            },
             "rtpilbcdepay": {
                 "author": "Philippe Kalaf <philippe.kalaf@collabora.co.uk>",
                 "description": "Extracts iLBC audio from RTP packets (RFC 3952)",
@@ -15000,6 +14226,60 @@
                     }
                 },
                 "properties": {},
+                "rank": "secondary"
+            },
+            "rtpisacdepay": {
+                "author": "Guillaume Desmottes <guillaume.desmottes@collabora.com>",
+                "description": "Extracts iSAC audio from RTP packets",
+                "hierarchy": [
+                    "GstRtpIsacDepay",
+                    "GstRTPBaseDepayload",
+                    "GstElement",
+                    "GstObject",
+                    "GInitiallyUnowned",
+                    "GObject"
+                ],
+                "klass": "Codec/Depayloader/Network/RTP",
+                "long-name": "RTP iSAC depayloader",
+                "pad-templates": {
+                    "sink": {
+                        "caps": "application/x-rtp:\n          media: audio\n        payload: [ 96, 127 ]\n     clock-rate: { (int)16000, (int)32000 }\n  encoding-name: ISAC\n",
+                        "direction": "sink",
+                        "presence": "always"
+                    },
+                    "src": {
+                        "caps": "audio/isac:\n           rate: { (int)16000, (int)32000 }\n       channels: 1\n",
+                        "direction": "src",
+                        "presence": "always"
+                    }
+                },
+                "rank": "secondary"
+            },
+            "rtpisacpay": {
+                "author": "Guillaume Desmottes <guillaume.desmottes@collabora.com>",
+                "description": "Payload-encodes iSAC audio into a RTP packet",
+                "hierarchy": [
+                    "GstRtpIsacPay",
+                    "GstRTPBasePayload",
+                    "GstElement",
+                    "GstObject",
+                    "GInitiallyUnowned",
+                    "GObject"
+                ],
+                "klass": "Codec/Payloader/Network/RTP",
+                "long-name": "RTP iSAC payloader",
+                "pad-templates": {
+                    "sink": {
+                        "caps": "audio/isac:\n           rate: { (int)16000, (int)32000 }\n       channels: 1\n",
+                        "direction": "sink",
+                        "presence": "always"
+                    },
+                    "src": {
+                        "caps": "application/x-rtp:\n          media: audio\n        payload: [ 96, 127 ]\n     clock-rate: { (int)16000, (int)32000 }\n  encoding-name: ISAC\nencoding-params: 1\n",
+                        "direction": "src",
+                        "presence": "always"
+                    }
+                },
                 "rank": "secondary"
             },
             "rtpj2kdepay": {
@@ -15198,6 +14478,33 @@
                 },
                 "properties": {},
                 "rank": "secondary"
+            },
+            "rtpldacpay": {
+                "author": "Sanchayan Maity <sanchayan@asymptotic.io>",
+                "description": "Payload LDAC audio as RTP packets",
+                "hierarchy": [
+                    "GstRtpLdacPay",
+                    "GstRTPBasePayload",
+                    "GstElement",
+                    "GstObject",
+                    "GInitiallyUnowned",
+                    "GObject"
+                ],
+                "klass": "Codec/Payloader/Network",
+                "long-name": "RTP packet payloader",
+                "pad-templates": {
+                    "sink": {
+                        "caps": "audio/x-ldac:\n       channels: [ 1, 2 ]\n           rate: { (int)44100, (int)48000, (int)88200, (int)96000 }\n",
+                        "direction": "sink",
+                        "presence": "always"
+                    },
+                    "src": {
+                        "caps": "application/x-rtp:\n          media: audio\n        payload: [ 96, 127 ]\n     clock-rate: { (int)44100, (int)48000, (int)88200, (int)96000 }\n  encoding-name: X-GST-LDAC\n",
+                        "direction": "src",
+                        "presence": "always"
+                    }
+                },
+                "rank": "none"
             },
             "rtpmp1sdepay": {
                 "author": "Wim Taymans <wim.taymans@gmail.com>",
@@ -15636,12 +14943,12 @@
                 "long-name": "RTP Opus packet depayloader",
                 "pad-templates": {
                     "sink": {
-                        "caps": "application/x-rtp:\n          media: audio\n        payload: [ 96, 127 ]\n     clock-rate: 48000\n  encoding-name: { (string)OPUS, (string)X-GST-OPUS-DRAFT-SPITTKA-00 }\n",
+                        "caps": "application/x-rtp:\n          media: audio\n        payload: [ 96, 127 ]\n     clock-rate: 48000\n  encoding-name: { (string)OPUS, (string)X-GST-OPUS-DRAFT-SPITTKA-00, (string)multiopus }\n",
                         "direction": "sink",
                         "presence": "always"
                     },
                     "src": {
-                        "caps": "audio/x-opus:\nchannel-mapping-family: 0\n",
+                        "caps": "audio/x-opus:\nchannel-mapping-family: [ 0, 1 ]\n",
                         "direction": "src",
                         "presence": "always"
                     }
@@ -15664,17 +14971,30 @@
                 "long-name": "RTP Opus payloader",
                 "pad-templates": {
                     "sink": {
-                        "caps": "audio/x-opus:\nchannel-mapping-family: 0\n",
+                        "caps": "audio/x-opus:\nchannel-mapping-family: 0\naudio/x-opus:\nchannel-mapping-family: 0\n       channels: [ 1, 2 ]\naudio/x-opus:\nchannel-mapping-family: 1\n       channels: [ 3, 255 ]\n",
                         "direction": "sink",
                         "presence": "always"
                     },
                     "src": {
-                        "caps": "application/x-rtp:\n          media: audio\n        payload: [ 96, 127 ]\n     clock-rate: 48000\nencoding-params: 2\n  encoding-name: { (string)OPUS, (string)X-GST-OPUS-DRAFT-SPITTKA-00 }\n",
+                        "caps": "application/x-rtp:\n          media: audio\n        payload: [ 96, 127 ]\n     clock-rate: 48000\n  encoding-name: { (string)OPUS, (string)X-GST-OPUS-DRAFT-SPITTKA-00, (string)multiopus }\n",
                         "direction": "src",
                         "presence": "always"
                     }
                 },
-                "properties": {},
+                "properties": {
+                    "dtx": {
+                        "blurb": "If enabled, the payloader will not transmit empty packets",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "false",
+                        "mutable": "playing",
+                        "readable": true,
+                        "type": "gboolean",
+                        "writable": true
+                    }
+                },
                 "rank": "primary"
             },
             "rtppcmadepay": {
@@ -15872,6 +15192,17 @@
                     }
                 },
                 "properties": {
+                    "payloads": {
+                        "blurb": "All the RED payloads this decoder may encounter",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "GstValueArray",
+                        "writable": true
+                    },
                     "pt": {
                         "blurb": "Payload type FEC packets",
                         "conditionally-available": false,
@@ -16662,6 +15993,18 @@
                     }
                 },
                 "properties": {
+                    "request-keyframe": {
+                        "blurb": "Request new keyframe when packet loss is detected",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "false",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "gboolean",
+                        "writable": true
+                    },
                     "wait-for-keyframe": {
                         "blurb": "Wait for the next keyframe after packet loss",
                         "conditionally-available": false,
@@ -16713,6 +16056,20 @@
                         "mutable": "null",
                         "readable": true,
                         "type": "GstVP8RTPPayMode",
+                        "writable": true
+                    },
+                    "picture-id-offset": {
+                        "blurb": "Offset to add to the initial picture-id (-1 = random)",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "-1",
+                        "max": "32767",
+                        "min": "-1",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "gint",
                         "writable": true
                     }
                 },
@@ -17018,6 +16375,11 @@
                 "klass": "Filter/Network/RTP",
                 "long-name": "RTP Bin",
                 "pad-templates": {
+                    "recv_fec_sink_%%u_%%u": {
+                        "caps": "application/x-rtp:\n",
+                        "direction": "sink",
+                        "presence": "request"
+                    },
                     "recv_rtcp_sink_%%u": {
                         "caps": "application/x-rtcp:\napplication/x-srtcp:\n",
                         "direction": "sink",
@@ -17029,6 +16391,11 @@
                         "presence": "request"
                     },
                     "recv_rtp_src_%%u_%%u_%%u": {
+                        "caps": "application/x-rtp:\n",
+                        "direction": "src",
+                        "presence": "sometimes"
+                    },
+                    "send_fec_src_%%u_%%u": {
                         "caps": "application/x-rtp:\n",
                         "direction": "src",
                         "presence": "sometimes"
@@ -17120,6 +16487,30 @@
                         "mutable": "null",
                         "readable": true,
                         "type": "gboolean",
+                        "writable": true
+                    },
+                    "fec-decoders": {
+                        "blurb": "GstStructure mapping from session index to FEC decoder factory, eg fec-decoders='fec,0=\"rtpst2022-1-fecdec\\ size-time\\=1000000000\";'",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "application/x-rtp-fec-decoders;",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "GstStructure",
+                        "writable": true
+                    },
+                    "fec-encoders": {
+                        "blurb": "GstStructure mapping from session index to FEC encoder factory, eg fec-encoders='fec,0=\"rtpst2022-1-fecenc\\ rows\\=5\\ columns\\=5\";'",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "application/x-rtp-fec-encoders;",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "GstStructure",
                         "writable": true
                     },
                     "ignore-pt": {
@@ -17347,6 +16738,21 @@
                     "clear-pt-map": {
                         "action": true,
                         "args": [],
+                        "return-type": "void",
+                        "when": "last"
+                    },
+                    "clear-ssrc": {
+                        "action": true,
+                        "args": [
+                            {
+                                "name": "arg0",
+                                "type": "guint"
+                            },
+                            {
+                                "name": "arg1",
+                                "type": "guint"
+                            }
+                        ],
                         "return-type": "void",
                         "when": "last"
                     },
@@ -17638,6 +17044,24 @@
                         "return-type": "GstElement",
                         "when": "last"
                     },
+                    "request-fec-decoder-full": {
+                        "args": [
+                            {
+                                "name": "arg0",
+                                "type": "guint"
+                            },
+                            {
+                                "name": "arg1",
+                                "type": "guint"
+                            },
+                            {
+                                "name": "arg2",
+                                "type": "guint"
+                            }
+                        ],
+                        "return-type": "GstElement",
+                        "when": "last"
+                    },
                     "request-fec-encoder": {
                         "args": [
                             {
@@ -17794,6 +17218,68 @@
                     }
                 },
                 "rank": "none"
+            },
+            "rtphdrextclientaudiolevel": {
+                "RTP-Header-Extension-URI": "urn:ietf:params:rtp-hdrext:ssrc-audio-level",
+                "author": "Guillaume Desmottes <guillaume.desmottes@collabora.com>",
+                "description": "Client-to-Mixer Audio Level Indication (RFC6464) RTP Header Extension",
+                "hierarchy": [
+                    "GstRTPHeaderExtensionClientAudioLevel",
+                    "GstRTPHeaderExtension",
+                    "GstElement",
+                    "GstObject",
+                    "GInitiallyUnowned",
+                    "GObject"
+                ],
+                "klass": "Network/Extension/RTPHeader",
+                "long-name": "Client-to-Mixer Audio Level Indication (RFC6464) RTP Header Extension",
+                "properties": {
+                    "vad": {
+                        "blurb": "If the vad extension attribute is enabled or not",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "true",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "gboolean",
+                        "writable": false
+                    }
+                },
+                "rank": "marginal"
+            },
+            "rtphdrexttwcc": {
+                "RTP-Header-Extension-URI": "http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01",
+                "author": "Matthew Waters <matthew@centricular.com>",
+                "description": "Extends RTP packets to add sequence number transport wide.",
+                "hierarchy": [
+                    "GstRTPHeaderExtensionTWCC",
+                    "GstRTPHeaderExtension",
+                    "GstElement",
+                    "GstObject",
+                    "GInitiallyUnowned",
+                    "GObject"
+                ],
+                "klass": "Network/Extension/RTPHeader",
+                "long-name": "Transport Wide Congestion Control",
+                "properties": {
+                    "n-streams": {
+                        "blurb": "The number of separate RTP streams this header applies to",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "1",
+                        "max": "-1",
+                        "min": "1",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "guint",
+                        "writable": true
+                    }
+                },
+                "rank": "marginal"
             },
             "rtpjitterbuffer": {
                 "author": "Philippe Kalaf <philippe.kalaf@collabora.co.uk>, Wim Taymans <wim.taymans@gmail.com>",
@@ -19177,6 +18663,152 @@
                         "when": "last"
                     }
                 }
+            },
+            "rtpst2022-1-fecdec": {
+                "author": "Mathieu Duponchelle <mathieu@centricular.com>",
+                "description": "performs FEC as described by SMPTE 2022-1",
+                "hierarchy": [
+                    "GstRTPST_2022_1_FecDec",
+                    "GstElement",
+                    "GstObject",
+                    "GInitiallyUnowned",
+                    "GObject"
+                ],
+                "klass": "SMPTE 2022-1 FEC decoding",
+                "long-name": "SMPTE 2022-1 FEC decoder",
+                "pad-templates": {
+                    "fec_%%u": {
+                        "caps": "application/x-rtp:\n",
+                        "direction": "sink",
+                        "presence": "request"
+                    },
+                    "sink": {
+                        "caps": "application/x-rtp:\n",
+                        "direction": "sink",
+                        "presence": "always"
+                    },
+                    "src": {
+                        "caps": "application/x-rtp:\n",
+                        "direction": "src",
+                        "presence": "always"
+                    }
+                },
+                "properties": {
+                    "size-time": {
+                        "blurb": "The amount of data to store (in ns, 0-disable)",
+                        "conditionally-available": false,
+                        "construct": true,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "1000000000",
+                        "max": "18446744073709551615",
+                        "min": "0",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "guint64",
+                        "writable": true
+                    }
+                },
+                "rank": "none"
+            },
+            "rtpst2022-1-fecenc": {
+                "author": "Mathieu Duponchelle <mathieu@centricular.com>",
+                "description": "performs FEC as described by SMPTE 2022-1",
+                "hierarchy": [
+                    "GstRTPST_2022_1_FecEnc",
+                    "GstElement",
+                    "GstObject",
+                    "GInitiallyUnowned",
+                    "GObject"
+                ],
+                "klass": "SMPTE 2022-1 FEC encoding",
+                "long-name": "SMPTE 2022-1 FEC encoder",
+                "pad-templates": {
+                    "fec_%%u": {
+                        "caps": "application/x-rtp:\n",
+                        "direction": "src",
+                        "presence": "sometimes"
+                    },
+                    "sink": {
+                        "caps": "application/x-rtp:\n",
+                        "direction": "sink",
+                        "presence": "always"
+                    },
+                    "src": {
+                        "caps": "application/x-rtp:\n",
+                        "direction": "src",
+                        "presence": "always"
+                    }
+                },
+                "properties": {
+                    "columns": {
+                        "blurb": "Number of columns to apply row FEC on, 0=disabled",
+                        "conditionally-available": false,
+                        "construct": true,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "0",
+                        "max": "255",
+                        "min": "0",
+                        "mutable": "ready",
+                        "readable": true,
+                        "type": "guint",
+                        "writable": true
+                    },
+                    "enable-column-fec": {
+                        "blurb": "Whether the encoder should compute and send column FEC",
+                        "conditionally-available": false,
+                        "construct": true,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "true",
+                        "mutable": "playing",
+                        "readable": true,
+                        "type": "gboolean",
+                        "writable": true
+                    },
+                    "enable-row-fec": {
+                        "blurb": "Whether the encoder should compute and send row FEC",
+                        "conditionally-available": false,
+                        "construct": true,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "true",
+                        "mutable": "playing",
+                        "readable": true,
+                        "type": "gboolean",
+                        "writable": true
+                    },
+                    "pt": {
+                        "blurb": "The payload type of FEC packets",
+                        "conditionally-available": false,
+                        "construct": true,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "96",
+                        "max": "255",
+                        "min": "96",
+                        "mutable": "ready",
+                        "readable": true,
+                        "type": "gint",
+                        "writable": true
+                    },
+                    "rows": {
+                        "blurb": "Number of rows to apply column FEC on, 0=disabled",
+                        "conditionally-available": false,
+                        "construct": true,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "0",
+                        "max": "255",
+                        "min": "0",
+                        "mutable": "ready",
+                        "readable": true,
+                        "type": "guint",
+                        "writable": true
+                    }
+                },
+                "rank": "none"
             }
         },
         "filename": "gstrtpmanager",
@@ -19547,6 +19179,20 @@
                         "readable": true,
                         "type": "GstStructure",
                         "writable": false
+                    },
+                    "twcc-feedback-interval": {
+                        "blurb": "The interval to send TWCC reports on",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "18446744073709551615",
+                        "max": "18446744073709551615",
+                        "min": "0",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "guint64",
+                        "writable": true
                     }
                 },
                 "signals": {
@@ -19918,7 +19564,7 @@
                         "construct": false,
                         "construct-only": false,
                         "controllable": false,
-                        "default": "application/x-rtp-source-stats, ssrc=(uint)0, internal=(boolean)false, validated=(boolean)false, received-bye=(boolean)false, is-csrc=(boolean)false, is-sender=(boolean)false, seqnum-base=(int)-1, clock-rate=(int)-1, octets-sent=(guint64)0, packets-sent=(guint64)0, octets-received=(guint64)0, packets-received=(guint64)0, bytes-received=(guint64)0, bitrate=(guint64)0, packets-lost=(int)0, jitter=(uint)0, sent-pli-count=(uint)0, recv-pli-count=(uint)0, sent-fir-count=(uint)0, recv-fir-count=(uint)0, sent-nack-count=(uint)0, recv-nack-count=(uint)0, recv-packet-rate=(uint)0, have-sr=(boolean)false, sr-ntptime=(guint64)0, sr-rtptime=(uint)0, sr-octet-count=(uint)0, sr-packet-count=(uint)0, sent-rb=(boolean)false, sent-rb-fractionlost=(uint)0, sent-rb-packetslost=(int)0, sent-rb-exthighestseq=(uint)0, sent-rb-jitter=(uint)0, sent-rb-lsr=(uint)0, sent-rb-dlsr=(uint)0, have-rb=(boolean)false, rb-fractionlost=(uint)0, rb-packetslost=(int)0, rb-exthighestseq=(uint)0, rb-jitter=(uint)0, rb-lsr=(uint)0, rb-dlsr=(uint)0, rb-round-trip=(uint)0;",
+                        "default": "application/x-rtp-source-stats, ssrc=(uint)0, internal=(boolean)false, validated=(boolean)false, received-bye=(boolean)false, is-csrc=(boolean)false, is-sender=(boolean)false, seqnum-base=(int)-1, clock-rate=(int)-1, octets-sent=(guint64)0, packets-sent=(guint64)0, octets-received=(guint64)0, packets-received=(guint64)0, bytes-received=(guint64)0, bitrate=(guint64)0, packets-lost=(int)0, jitter=(uint)0, sent-pli-count=(uint)0, recv-pli-count=(uint)0, sent-fir-count=(uint)0, recv-fir-count=(uint)0, sent-nack-count=(uint)0, recv-nack-count=(uint)0, recv-packet-rate=(uint)0, have-sr=(boolean)false, sr-ntptime=(guint64)0, sr-rtptime=(uint)0, sr-octet-count=(uint)0, sr-packet-count=(uint)0, sent-rb=(boolean)false, sent-rb-fractionlost=(uint)0, sent-rb-packetslost=(int)0, sent-rb-exthighestseq=(uint)0, sent-rb-jitter=(uint)0, sent-rb-lsr=(uint)0, sent-rb-dlsr=(uint)0, have-rb=(boolean)false, rb-ssrc=(uint)0, rb-fractionlost=(uint)0, rb-packetslost=(int)0, rb-exthighestseq=(uint)0, rb-jitter=(uint)0, rb-lsr=(uint)0, rb-dlsr=(uint)0, rb-round-trip=(uint)0;",
                         "mutable": "null",
                         "readable": true,
                         "type": "GstStructure",
@@ -20217,6 +19863,18 @@
                     },
                     "drop-on-latency": {
                         "blurb": "Tells the jitterbuffer to never exceed the given latency in size",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "false",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "gboolean",
+                        "writable": true
+                    },
+                    "ignore-x-server-reply": {
+                        "blurb": "Whether to ignore the x-server-ip-address server header reply",
                         "conditionally-available": false,
                         "construct": false,
                         "construct-only": false,
@@ -20636,7 +20294,7 @@
                         "construct": false,
                         "construct-only": false,
                         "controllable": false,
-                        "default": "GStreamer/1.18.5",
+                        "default": "GStreamer/1.19.90",
                         "mutable": "null",
                         "readable": true,
                         "type": "gchararray",
@@ -20739,11 +20397,11 @@
                         "args": [
                             {
                                 "name": "arg0",
-                                "type": "gpointer"
+                                "type": "GstRTSPMessage"
                             },
                             {
                                 "name": "arg1",
-                                "type": "gpointer"
+                                "type": "GstRTSPMessage"
                             }
                         ],
                         "return-type": "void"
@@ -22593,7 +22251,7 @@
                         "construct": false,
                         "construct-only": false,
                         "controllable": false,
-                        "default": "GStreamer souphttpsrc 1.18.5 ",
+                        "default": "GStreamer souphttpsrc 1.19.90 ",
                         "mutable": "null",
                         "readable": true,
                         "type": "gchararray",
@@ -24084,6 +23742,18 @@
                         "type": "GSocket",
                         "writable": true
                     },
+                    "socket-timestamp": {
+                        "blurb": "Used for adding alternative timestamp using SO_TIMESTAMP.",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "disabled (0)",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "GstSocketTimestampMode",
+                        "writable": true
+                    },
                     "timeout": {
                         "blurb": "Post a message after timeout nanoseconds (0 = disabled)",
                         "conditionally-available": false,
@@ -24127,7 +23797,23 @@
         },
         "filename": "gstudp",
         "license": "LGPL",
-        "other-types": {},
+        "other-types": {
+            "GstSocketTimestampMode": {
+                "kind": "enum",
+                "values": [
+                    {
+                        "desc": "Disable additional timestamps",
+                        "name": "disabled",
+                        "value": "0"
+                    },
+                    {
+                        "desc": "Timestamp with realtime clock (nsec resolution, may not be monotonic)",
+                        "name": "realtime",
+                        "value": "1"
+                    }
+                ]
+            }
+        },
         "package": "GStreamer Good Plug-ins",
         "source": "gst-plugins-good",
         "tracers": {},
@@ -25246,12 +24932,12 @@
                 "long-name": "aspectratiocrop",
                 "pad-templates": {
                     "sink": {
-                        "caps": "video/x-raw:\n         format: { RGBx, xRGB, BGRx, xBGR, RGBA, ARGB, BGRA, ABGR, RGB, BGR, AYUV, YUY2, YVYU, UYVY, I420, YV12, RGB16, RGB15, GRAY8, NV12, NV21, GRAY16_LE, GRAY16_BE }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
+                        "caps": "video/x-raw:\n         format: { RGB, BGR, RGB16, RGB15, RGBx, xRGB, BGRx, xBGR, RGBA, ARGB, BGRA, ABGR, GRAY8, GRAY16_LE, GRAY16_BE, AYUV, YVYU, YUY2, UYVY, I420, A420, YV12, Y444, Y42B, Y41B, I420_10BE, A420_10BE, Y444_10BE, A444_10BE, I422_10BE, A422_10BE, I420_10LE, A420_10LE, Y444_10LE, A444_10LE, I422_10LE, A422_10LE, I420_12BE, Y444_12BE, I422_12BE, I420_12LE, Y444_12LE, I422_12LE, GBR, GBR_10BE, GBR_10LE, GBR_12BE, GBR_12LE, GBRA, GBRA_10BE, GBRA_10LE, GBRA_12BE, GBRA_12LE, NV12, NV21 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n\nvideo/x-raw(ANY):\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
                         "direction": "sink",
                         "presence": "always"
                     },
                     "src": {
-                        "caps": "video/x-raw:\n         format: { RGBx, xRGB, BGRx, xBGR, RGBA, ARGB, BGRA, ABGR, RGB, BGR, AYUV, YUY2, YVYU, UYVY, I420, YV12, RGB16, RGB15, GRAY8, NV12, NV21, GRAY16_LE, GRAY16_BE }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
+                        "caps": "video/x-raw:\n         format: { RGB, BGR, RGB16, RGB15, RGBx, xRGB, BGRx, xBGR, RGBA, ARGB, BGRA, ABGR, GRAY8, GRAY16_LE, GRAY16_BE, AYUV, YVYU, YUY2, UYVY, I420, A420, YV12, Y444, Y42B, Y41B, I420_10BE, A420_10BE, Y444_10BE, A444_10BE, I422_10BE, A422_10BE, I420_10LE, A420_10LE, Y444_10LE, A444_10LE, I422_10LE, A422_10LE, I420_12BE, Y444_12BE, I422_12BE, I420_12LE, Y444_12LE, I422_12LE, GBR, GBR_10BE, GBR_10LE, GBR_12BE, GBR_12LE, GBRA, GBRA_10BE, GBRA_10LE, GBRA_12BE, GBRA_12LE, NV12, NV21 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n\nvideo/x-raw(ANY):\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
                         "direction": "src",
                         "presence": "always"
                     }
@@ -25290,12 +24976,12 @@
                 "long-name": "Crop",
                 "pad-templates": {
                     "sink": {
-                        "caps": "video/x-raw:\n         format: { RGBx, xRGB, BGRx, xBGR, RGBA, ARGB, BGRA, ABGR, RGB, BGR, AYUV, YUY2, Y444, Y42B, Y41B, YVYU, UYVY, I420, YV12, RGB16, RGB15, GRAY8, NV12, NV21, GRAY16_LE, GRAY16_BE }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
+                        "caps": "video/x-raw:\n         format: { RGB, BGR, RGB16, RGB15, RGBx, xRGB, BGRx, xBGR, RGBA, ARGB, BGRA, ABGR, GRAY8, GRAY16_LE, GRAY16_BE, AYUV, YVYU, YUY2, UYVY, I420, A420, YV12, Y444, Y42B, Y41B, I420_10BE, A420_10BE, Y444_10BE, A444_10BE, I422_10BE, A422_10BE, I420_10LE, A420_10LE, Y444_10LE, A444_10LE, I422_10LE, A422_10LE, I420_12BE, Y444_12BE, I422_12BE, I420_12LE, Y444_12LE, I422_12LE, GBR, GBR_10BE, GBR_10LE, GBR_12BE, GBR_12LE, GBRA, GBRA_10BE, GBRA_10LE, GBRA_12BE, GBRA_12LE, NV12, NV21 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n\nvideo/x-raw(ANY):\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
                         "direction": "sink",
                         "presence": "always"
                     },
                     "src": {
-                        "caps": "video/x-raw:\n         format: { RGBx, xRGB, BGRx, xBGR, RGBA, ARGB, BGRA, ABGR, RGB, BGR, AYUV, YUY2, Y444, Y42B, Y41B, YVYU, UYVY, I420, YV12, RGB16, RGB15, GRAY8, NV12, NV21, GRAY16_LE, GRAY16_BE }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
+                        "caps": "video/x-raw:\n         format: { RGB, BGR, RGB16, RGB15, RGBx, xRGB, BGRx, xBGR, RGBA, ARGB, BGRA, ABGR, GRAY8, GRAY16_LE, GRAY16_BE, AYUV, YVYU, YUY2, UYVY, I420, A420, YV12, Y444, Y42B, Y41B, I420_10BE, A420_10BE, Y444_10BE, A444_10BE, I422_10BE, A422_10BE, I420_10LE, A420_10LE, Y444_10LE, A444_10LE, I422_10LE, A422_10LE, I420_12BE, Y444_12BE, I422_12BE, I420_12LE, Y444_12LE, I422_12LE, GBR, GBR_10BE, GBR_10LE, GBR_12BE, GBR_12LE, GBRA, GBRA_10BE, GBRA_10LE, GBRA_12BE, GBRA_12LE, NV12, NV21 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n\nvideo/x-raw(ANY):\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
                         "direction": "src",
                         "presence": "always"
                     }
@@ -25684,7 +25370,7 @@
         "elements": {
             "videomixer": {
                 "author": "Wim Taymans <wim@fluendo.com>, Sebastian Dröge <sebastian.droege@collabora.co.uk>",
-                "description": "Mix multiple video streams",
+                "description": "Deprecated by compositor. Mix multiple video streams",
                 "hierarchy": [
                     "GstVideoMixer2",
                     "GstElement",
@@ -25846,7 +25532,7 @@
                         "presence": "always"
                     },
                     "src": {
-                        "caps": "video/x-raw:\n         format: { I420, YV12, Y42B, Y444, GBR }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
+                        "caps": "video/x-raw:\n         format: { I420, YV12, Y42B, Y444, GBR, I420_10LE, I422_10LE }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
                         "direction": "src",
                         "presence": "always"
                     }
@@ -25874,7 +25560,7 @@
                 "long-name": "On2 VP9 Encoder",
                 "pad-templates": {
                     "sink": {
-                        "caps": "video/x-raw:\n         format: { I420, YV12 }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
+                        "caps": "video/x-raw:\n         format: { I420, YV12, Y444, I420_10LE, I422_10LE }\n          width: [ 1, 2147483647 ]\n         height: [ 1, 2147483647 ]\n      framerate: [ 0/1, 2147483647/1 ]\n",
                         "direction": "sink",
                         "presence": "always"
                     },
@@ -25884,13 +25570,125 @@
                         "presence": "always"
                     }
                 },
-                "properties": {},
+                "properties": {
+                    "aq-mode": {
+                        "blurb": "Which adaptive quantization mode should be used",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "off (0)",
+                        "max": "4",
+                        "min": "0",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "GstVPXAQ",
+                        "writable": true
+                    },
+                    "frame-parallel-decoding": {
+                        "blurb": "Whether encoded bitstream should allow parallel processing of video frames in the decoder (default is on)",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "true",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "gboolean",
+                        "writable": true
+                    },
+                    "row-mt": {
+                        "blurb": "Whether each row should be encoded using multiple threads",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "false",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "gboolean",
+                        "writable": true
+                    },
+                    "tile-columns": {
+                        "blurb": "Number of tile columns, log2",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "6",
+                        "max": "6",
+                        "min": "0",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "gint",
+                        "writable": true
+                    },
+                    "tile-rows": {
+                        "blurb": "Number of tile rows, log2",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "default": "0",
+                        "max": "2",
+                        "min": "0",
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "gint",
+                        "writable": true
+                    }
+                },
                 "rank": "primary"
             }
         },
         "filename": "gstvpx",
         "license": "LGPL",
         "other-types": {
+            "GstVPXAQ": {
+                "kind": "enum",
+                "values": [
+                    {
+                        "desc": "GST_VPX_AQ_OFF",
+                        "name": "off",
+                        "value": "0"
+                    },
+                    {
+                        "desc": "GST_VPX_AQ_VARIANCE",
+                        "name": "variance",
+                        "value": "1"
+                    },
+                    {
+                        "desc": "GST_VPX_AQ_COMPLEXITY",
+                        "name": "complexity",
+                        "value": "2"
+                    },
+                    {
+                        "desc": "GST_VPX_AQ_CYCLIC_REFRESH",
+                        "name": "cyclic-refresh",
+                        "value": "3"
+                    },
+                    {
+                        "desc": "GST_VPX_AQ_EQUATOR360",
+                        "name": "equator360",
+                        "value": "4"
+                    },
+                    {
+                        "desc": "GST_VPX_AQ_PERCEPTUAL",
+                        "name": "perceptual",
+                        "value": "5"
+                    },
+                    {
+                        "desc": "GST_VPX_AQ_PSNR",
+                        "name": "psnr",
+                        "value": "6"
+                    },
+                    {
+                        "desc": "GST_VPX_AQ_LOOKAHEAD",
+                        "name": "lookahead",
+                        "value": "7"
+                    }
+                ]
+            },
             "GstVPXDec": {
                 "hierarchy": [
                     "GstVPXDec",
@@ -26149,12 +25947,12 @@
                         "writable": true
                     },
                     "deadline": {
-                        "blurb": "Deadline per frame (usec, 0=disabled)",
+                        "blurb": "Deadline per frame (usec, 0=best, 1=realtime)",
                         "conditionally-available": false,
                         "construct": false,
                         "construct-only": false,
                         "controllable": false,
-                        "default": "0",
+                        "default": "1000000",
                         "max": "9223372036854775807",
                         "min": "0",
                         "mutable": "null",
@@ -26428,6 +26226,17 @@
                         "type": "gint",
                         "writable": true
                     },
+                    "temporal-scalability-layer-flags": {
+                        "blurb": "Sequence defining coding layer flags",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "GstValueArray",
+                        "writable": true
+                    },
                     "temporal-scalability-layer-id": {
                         "blurb": "Sequence defining coding layer membership",
                         "conditionally-available": false,
@@ -26437,6 +26246,17 @@
                         "mutable": "null",
                         "readable": true,
                         "type": "GValueArray",
+                        "writable": true
+                    },
+                    "temporal-scalability-layer-sync-flags": {
+                        "blurb": "Sequence defining coding layer sync flags",
+                        "conditionally-available": false,
+                        "construct": false,
+                        "construct-only": false,
+                        "controllable": false,
+                        "mutable": "null",
+                        "readable": true,
+                        "type": "GstValueArray",
                         "writable": true
                     },
                     "temporal-scalability-number-layers": {
@@ -26479,7 +26299,7 @@
                         "writable": true
                     },
                     "temporal-scalability-target-bitrate": {
-                        "blurb": "Target bitrates for coding layers (one per layer, decreasing)",
+                        "blurb": "Target bitrates (bits/sec) for coding layers (one per layer)",
                         "conditionally-available": false,
                         "construct": false,
                         "construct-only": false,

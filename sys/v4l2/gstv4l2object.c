@@ -1057,8 +1057,6 @@ gst_v4l2_object_format_get_rank (const struct v4l2_fmtdesc *fmt)
       rank = GREY_BASE_RANK;
       break;
 
-    case V4L2_PIX_FMT_NV12:    /* 12  Y/CbCr 4:2:0  */
-    case V4L2_PIX_FMT_NV12M:   /* Same as NV12      */
     case V4L2_PIX_FMT_NV12MT:  /* NV12 64x32 tile   */
     case V4L2_PIX_FMT_NV21:    /* 12  Y/CrCb 4:2:0  */
     case V4L2_PIX_FMT_NV21M:   /* Same as NV21      */
@@ -1081,6 +1079,10 @@ gst_v4l2_object_format_get_rank (const struct v4l2_fmtdesc *fmt)
     case V4L2_PIX_FMT_YUV420:  /* I420, 12 bits per pixel */
     case V4L2_PIX_FMT_YUV420M:
       rank = YUV_BASE_RANK + 7;
+      break;
+    case V4L2_PIX_FMT_NV12:    /* Y/CbCr 4:2:0, 12 bits per pixel */
+    case V4L2_PIX_FMT_NV12M:   /* Same as NV12      */
+      rank = YUV_BASE_RANK + 8;
       break;
     case V4L2_PIX_FMT_YUYV:    /* YUY2, 16 bits per pixel */
       rank = YUV_BASE_RANK + 10;
@@ -2217,6 +2219,27 @@ done:
   return ret;
 }
 
+static gboolean
+gst_v4l2_object_get_streamparm (GstV4l2Object * v4l2object, GstVideoInfo * info)
+{
+  struct v4l2_streamparm streamparm;
+  memset (&streamparm, 0x00, sizeof (struct v4l2_streamparm));
+  streamparm.type = v4l2object->type;
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_G_PARM, &streamparm) < 0) {
+    GST_WARNING_OBJECT (v4l2object->dbg_obj, "VIDIOC_G_PARM failed");
+    return FALSE;
+  }
+  if ((streamparm.parm.capture.timeperframe.numerator != 0)
+      && (v4l2object->type == V4L2_BUF_TYPE_VIDEO_CAPTURE
+          || v4l2object->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)) {
+    GST_VIDEO_INFO_FPS_N (info) =
+        streamparm.parm.capture.timeperframe.denominator;
+    GST_VIDEO_INFO_FPS_D (info) =
+        streamparm.parm.capture.timeperframe.numerator;
+  }
+  return TRUE;
+}
+
 static int
 gst_v4l2_object_try_fmt (GstV4l2Object * v4l2object,
     struct v4l2_format *try_fmt)
@@ -2910,6 +2933,10 @@ default_frame_sizes:
           "Could not probe maximum capture size for pixelformat %"
           GST_FOURCC_FORMAT, GST_FOURCC_ARGS (pixelformat));
     }
+    if (min_w == 0 || min_h == 0)
+      min_w = min_h = 1;
+    if (max_w == 0 || max_h == 0)
+      max_w = max_h = GST_V4L2_MAX_SIZE;
 
     /* Since we can't get framerate directly, try to use the current norm */
     if (v4l2object->tv_norm && v4l2object->norms) {
@@ -2958,9 +2985,19 @@ default_frame_sizes:
         pixelformat);
 
     if (!v4l2object->skip_try_fmt_probes) {
+      gint probed_w, probed_h;
+      if (v4l2object->info.width >= min_w && v4l2object->info.width <= max_w &&
+          v4l2object->info.height >= min_h
+          && v4l2object->info.height <= max_h) {
+        probed_w = v4l2object->info.width;
+        probed_h = v4l2object->info.height;
+      } else {
+        probed_w = max_w;
+        probed_h = max_h;
+      }
       /* We could consider to check colorspace for min too, in case it depends on
        * the size. But in this case, min and max could not be enough */
-      gst_v4l2_object_add_colorspace (v4l2object, tmp, max_w, max_h,
+      gst_v4l2_object_add_colorspace (v4l2object, tmp, probed_w, probed_h,
           pixelformat);
     }
 
@@ -4206,6 +4243,15 @@ gst_v4l2_object_acquire_format (GstV4l2Object * v4l2object, GstVideoInfo * info)
       height);
 
   gst_v4l2_object_get_colorspace (v4l2object, &fmt, &info->colorimetry);
+  gst_v4l2_object_get_streamparm (v4l2object, info);
+  if ((info->fps_n == 0 && v4l2object->info.fps_d != 0)
+      && (v4l2object->type == V4L2_BUF_TYPE_VIDEO_CAPTURE
+          || v4l2object->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)) {
+    info->fps_d = v4l2object->info.fps_d;
+    info->fps_n = v4l2object->info.fps_n;
+    GST_DEBUG_OBJECT (v4l2object->dbg_obj, "Set capture fps to %d/%d",
+        info->fps_n, info->fps_d);
+  }
 
   gst_v4l2_object_save_format (v4l2object, fmtdesc, &fmt, info, &align);
 
@@ -4554,6 +4600,18 @@ gst_v4l2_object_match_buffer_layout (GstV4l2Object * obj, guint n_planes,
           " is higher than %" G_GSIZE_FORMAT " on plane %u",
           offset[p], obj->info.offset[p], p);
       need_fmt_update = TRUE;
+    }
+
+    if (padded_height) {
+      guint fmt_height;
+
+      if (V4L2_TYPE_IS_MULTIPLANAR (obj->type))
+        fmt_height = obj->format.fmt.pix_mp.height;
+      else
+        fmt_height = obj->format.fmt.pix.height;
+
+      if (padded_height > fmt_height)
+        need_fmt_update = TRUE;
     }
   }
 
@@ -5021,7 +5079,7 @@ no_downstream_pool:
 gboolean
 gst_v4l2_object_propose_allocation (GstV4l2Object * obj, GstQuery * query)
 {
-  GstBufferPool *pool;
+  GstBufferPool *pool = NULL;
   /* we need at least 2 buffers to operate */
   guint size, min, max;
   GstCaps *caps;
@@ -5040,11 +5098,12 @@ gst_v4l2_object_propose_allocation (GstV4l2Object * obj, GstQuery * query)
   switch (obj->mode) {
     case GST_V4L2_IO_MMAP:
     case GST_V4L2_IO_DMABUF:
-      if ((pool = obj->pool))
-        gst_object_ref (pool);
+      if (need_pool && obj->pool) {
+        if (!gst_buffer_pool_is_active (obj->pool))
+          pool = gst_object_ref (obj->pool);
+      }
       break;
     default:
-      pool = NULL;
       break;
   }
 

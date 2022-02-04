@@ -132,7 +132,7 @@ Section: libs
 Depends: ${misc:Depends},
          ${shlibs:Depends},
          gstreamer1.0-audiosink,
-         gstreamer1.0-plugins-base,
+         gstreamer1.0-plugins-base (>= 1.20.0),
          libsoup2.4-1 (>= 2.48) | libsoup3.0-0
 Recommends: gstreamer1.0-x
 Replaces: gstreamer1.0-plugins-bad (<< 1.15.1),

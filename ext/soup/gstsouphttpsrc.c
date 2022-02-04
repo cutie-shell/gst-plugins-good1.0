@@ -125,7 +125,6 @@ _soup_session_finalize_cb (gpointer user_data)
 {
   GstSoupSession *sess = user_data;
 
-  g_clear_object (&sess->session);
   g_main_loop_quit (sess->loop);
 
   return FALSE;
@@ -1031,27 +1030,6 @@ thread_func (gpointer user_data)
   _soup_session_add_feature_by_type (session->session,
       _soup_cookie_jar_get_type ());
 
-  if (src->session_is_shared) {
-    GstContext *context;
-    GstMessage *message;
-    GstStructure *s;
-
-    GST_DEBUG_OBJECT (session, "Sharing session %p", session->session);
-
-    context = gst_context_new (GST_SOUP_SESSION_CONTEXT, TRUE);
-    s = gst_context_writable_structure (context);
-    gst_structure_set (s, "session", GST_TYPE_SOUP_SESSION, session, NULL);
-
-    /* during this time the src is locked by the parent thread,
-     * which is waiting, so this is safe to do
-     */
-    GST_OBJECT_UNLOCK (src);
-    gst_element_set_context (GST_ELEMENT_CAST (src), context);
-    message = gst_message_new_have_context (GST_OBJECT_CAST (src), context);
-    gst_element_post_message (GST_ELEMENT_CAST (src), message);
-    GST_OBJECT_LOCK (src);
-  }
-
   /* soup2: connect the authenticate handler for the src that spawned the
    * session (i.e. the first owner); other users of this session will connect
    * their own after fetching the external session; the callback will handle
@@ -1084,6 +1062,13 @@ thread_func (gpointer user_data)
   src = NULL;
 
   g_main_loop_run (session->loop);
+
+  /* Abort any pending operations on the session ... */
+  _soup_session_abort (session->session);
+  g_clear_object (&session->session);
+
+  /* ... and iterate the main context until nothing is pending anymore */
+  while (g_main_context_iteration (ctx, FALSE));
 
   g_main_context_pop_thread_default (ctx);
 
@@ -1199,6 +1184,22 @@ gst_soup_http_src_session_open (GstSoupHTTPSrc * src)
 
   GST_OBJECT_UNLOCK (src);
 
+  if (src->session_is_shared) {
+    GstContext *context;
+    GstMessage *message;
+    GstStructure *s;
+
+    GST_DEBUG_OBJECT (src->session, "Sharing session %p", src->session);
+
+    context = gst_context_new (GST_SOUP_SESSION_CONTEXT, TRUE);
+    s = gst_context_writable_structure (context);
+    gst_structure_set (s, "session", GST_TYPE_SOUP_SESSION, src->session, NULL);
+
+    gst_element_set_context (GST_ELEMENT_CAST (src), context);
+    message = gst_message_new_have_context (GST_OBJECT_CAST (src), context);
+    gst_element_post_message (GST_ELEMENT_CAST (src), message);
+  }
+
   return TRUE;
 
 err:
@@ -1219,9 +1220,6 @@ _session_close_cb (gpointer user_data)
         src->cancellable);
     g_clear_object (&src->msg);
   }
-
-  if (!src->session_is_shared)
-    _soup_session_abort (src->session->session);
 
   /* there may be multiple of this callback attached to the session,
    * each with different data pointer; disconnect the one we are closing

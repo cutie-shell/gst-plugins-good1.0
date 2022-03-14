@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good-1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-02-03 19:54+0000\n"
+"POT-Creation-Date: 2022-03-14 11:37+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,14 +21,14 @@ msgstr ""
 msgid "Jack server not found"
 msgstr ""
 
-#: ext/jpeg/gstjpegdec.c:974 ext/jpeg/gstjpegdec.c:1239
-#: ext/jpeg/gstjpegdec.c:1248 ext/jpeg/gstjpegdec.c:1258
-#: ext/jpeg/gstjpegdec.c:1267 ext/jpeg/gstjpegdec.c:1551
-#: ext/jpeg/gstjpegdec.c:1579
+#: ext/jpeg/gstjpegdec.c:974 ext/jpeg/gstjpegdec.c:1246
+#: ext/jpeg/gstjpegdec.c:1255 ext/jpeg/gstjpegdec.c:1265
+#: ext/jpeg/gstjpegdec.c:1274 ext/jpeg/gstjpegdec.c:1558
+#: ext/jpeg/gstjpegdec.c:1586
 msgid "Failed to decode JPEG image"
 msgstr ""
 
-#: ext/jpeg/gstjpegdec.c:1539
+#: ext/jpeg/gstjpegdec.c:1546
 msgid "Failed to read memory"
 msgstr ""
 

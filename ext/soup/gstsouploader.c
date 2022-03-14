@@ -33,8 +33,15 @@
 GST_DEBUG_CATEGORY_EXTERN (gst_soup_debug);
 #define GST_CAT_DEFAULT gst_soup_debug
 
+/* G_OS_WIN32 is handled separately below */
+#ifdef __APPLE__
+#define LIBSOUP_3_SONAME "libsoup-3.0.0.dylib"
+#define LIBSOUP_2_SONAME "libsoup-2.4.1.dylib"
+#else
 #define LIBSOUP_3_SONAME "libsoup-3.0.so.0"
 #define LIBSOUP_2_SONAME "libsoup-2.4.so.1"
+#endif
+
 
 #define LOAD_SYMBOL(name) G_STMT_START {                                \
     if (!g_module_symbol (module, G_STRINGIFY (name), (gpointer *) &G_PASTE (vtable->_, name))) { \
@@ -808,11 +815,10 @@ _soup_session_send_async (SoupSession * session, SoupMessage * msg,
 {
 #ifdef STATIC_SOUP
 #if STATIC_SOUP == 2
-  return soup_session_send_async (session, msg, cancellable,
-      callback, user_data);
+  soup_session_send_async (session, msg, cancellable, callback, user_data);
 #else
-  return soup_session_send_async (session, msg, G_PRIORITY_DEFAULT,
-      cancellable, callback, user_data);
+  soup_session_send_async (session, msg, G_PRIORITY_DEFAULT, cancellable,
+      callback, user_data);
 #endif
 #else
   if (gst_soup_vtable.lib_version == 3) {

@@ -1,6 +1,10 @@
 gst-plugins-good1.0 (1.20.3-1) unstable; urgency=medium
 
+  [ Sebastian Dröge ]
   * New upstream bugfix release.
+
+  [ Debian Janitor ]
+  * Add missing ${misc:Depends} to Depends for gstreamer1.0-pulseaudio.
 
  -- Sebastian Dröge <slomo@debian.org>  Thu, 16 Jun 2022 09:36:08 +0300
 

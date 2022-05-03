@@ -61,7 +61,7 @@ Package: gstreamer1.0-pulseaudio
 Architecture: any
 Multi-Arch: same
 Section: sound
-Depends: gstreamer1.0-plugins-good (>= 1.20.0)
+Depends: gstreamer1.0-plugins-good (>= 1.20.0), ${misc:Depends}
 Description: GStreamer plugin for PulseAudio (transitional package)
  GStreamer is a streaming media framework, based on graphs of filters
  which operate on media data.  Applications using this library can do

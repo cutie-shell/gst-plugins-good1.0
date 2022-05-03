@@ -566,6 +566,7 @@ gst_v4l2_video_dec_loop (GstVideoDecoder * decoder)
     if (oldest_frame)
       gst_video_codec_frame_unref (oldest_frame);
 
+    frame->duration = self->v4l2capture->duration;
     frame->output_buffer = buffer;
     buffer = NULL;
     ret = gst_video_decoder_finish_frame (decoder, frame);
@@ -761,6 +762,7 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
 
     /* Copy the rest of the information, there might be more in the future */
     output_state->info.interlace_mode = info.interlace_mode;
+    output_state->info.colorimetry = info.colorimetry;
     gst_video_codec_state_unref (output_state);
 
     if (!gst_video_decoder_negotiate (decoder)) {

@@ -2158,6 +2158,8 @@ iterate_adapter:
     GST_DEBUG_OBJECT (wav, "marking DISCONT");
     GST_BUFFER_FLAG_SET (buf, GST_BUFFER_FLAG_DISCONT);
     wav->discont = FALSE;
+  } else {
+    GST_BUFFER_FLAG_UNSET (buf, GST_BUFFER_FLAG_DISCONT);
   }
 
   GST_BUFFER_TIMESTAMP (buf) = timestamp;
@@ -2657,12 +2659,11 @@ gst_wavparse_pad_query (GstPad * pad, GstObject * parent, GstQuery * query)
   gboolean res = TRUE;
   GstWavParse *wav = GST_WAVPARSE (parent);
 
-  /* only if we know */
-  if (wav->state != GST_WAVPARSE_DATA) {
-    return FALSE;
-  }
-
   GST_LOG_OBJECT (pad, "%s query", GST_QUERY_TYPE_NAME (query));
+
+  if (wav->state != GST_WAVPARSE_DATA) {
+    return gst_pad_query_default (pad, parent, query);
+  }
 
   switch (GST_QUERY_TYPE (query)) {
     case GST_QUERY_POSITION:

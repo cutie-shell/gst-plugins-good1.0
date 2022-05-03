@@ -5,6 +5,8 @@ gst-plugins-good1.0 (1.20.3-1) unstable; urgency=medium
 
   [ Debian Janitor ]
   * Add missing ${misc:Depends} to Depends for gstreamer1.0-pulseaudio.
+  * Move transitional package gstreamer1.0-pulseaudio to oldlibs/optional per
+    policy 4.0.1.
 
  -- Sebastian Dröge <slomo@debian.org>  Thu, 16 Jun 2022 09:36:08 +0300
 

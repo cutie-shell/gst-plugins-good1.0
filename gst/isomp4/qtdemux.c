@@ -3575,11 +3575,13 @@ qtdemux_parse_tfhd (GstQTDemux * qtdemux, GstByteReader * tfhd,
       goto invalid_track;
 
   /* obtain stream defaults */
-  qtdemux_parse_trex (qtdemux, *stream,
-      default_sample_duration, default_sample_size, default_sample_flags);
+  if (qtdemux_parse_trex (qtdemux, *stream,
+          default_sample_duration, default_sample_size, default_sample_flags)) {
 
-  (*stream)->stsd_sample_description_id =
-      (*stream)->def_sample_description_index - 1;
+    /* Default sample description index is only valid if trex parsing succeeded */
+    (*stream)->stsd_sample_description_id =
+        (*stream)->def_sample_description_index - 1;
+  }
 
   if (flags & TF_SAMPLE_DESCRIPTION_INDEX) {
     guint32 sample_description_index;
@@ -6393,6 +6395,7 @@ gst_qtdemux_loop_state_movie (GstQTDemux * qtdemux)
       /* gaps can only be sent after segment is activated (segment.stop is no longer -1) */
       while (GST_CLOCK_TIME_IS_VALID (stream->segment.stop) &&
           GST_CLOCK_TIME_IS_VALID (stream->segment.position) &&
+          stream->segment.position < (G_MAXUINT64 - gap_threshold) &&
           stream->segment.position + gap_threshold < min_time) {
         GstEvent *gap =
             gst_event_new_gap (stream->segment.position, gap_threshold);
@@ -13360,7 +13363,8 @@ qtdemux_reuse_and_configure_stream (GstQTDemux * qtdemux,
 
   /* unset new_stream to prevent stream-start event, unless we are EOS in which
    * case we need to force one through */
-  newstream->new_stream = GST_PAD_IS_EOS (newstream->pad);
+  newstream->new_stream = newstream->pad != NULL
+      && GST_PAD_IS_EOS (newstream->pad);
 
   return gst_qtdemux_configure_stream (qtdemux, newstream);
 }

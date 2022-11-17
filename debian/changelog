@@ -1,3 +1,10 @@
+gst-plugins-good1.0 (1.20.4-1) UNRELEASED; urgency=medium
+
+  * Team upload
+  * New upstream release
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 17 Nov 2022 15:27:45 -0500
+
 gst-plugins-good1.0 (1.20.3-1) unstable; urgency=medium
 
   [ Sebastian Dröge ]

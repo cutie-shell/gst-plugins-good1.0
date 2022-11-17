@@ -810,6 +810,16 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
    * TLS certificate validation flags used to validate server
    * certificate.
    *
+   * GLib guarantees that if certificate verification fails, at least one
+   * error will be set, but it does not guarantee that all possible errors
+   * will be set. Accordingly, you may not safely decide to ignore any
+   * particular type of error.
+   *
+   * For example, it would be incorrect to mask %G_TLS_CERTIFICATE_EXPIRED if
+   * you want to allow expired certificates, because this could potentially be
+   * the only error flag set even if other problems exist with the
+   * certificate.
+   *
    * Since: 1.2.1
    */
   g_object_class_install_property (gobject_class, PROP_TLS_VALIDATION_FLAGS,
@@ -2375,41 +2385,13 @@ gst_rtspsrc_create_stream (GstRTSPSrc * src, GstSDPMessage * sdp, gint idx,
     if (g_str_has_prefix (control_path, "rtsp://"))
       stream->conninfo.location = g_strdup (control_path);
     else {
+      const gchar *base;
+
+      base = get_aggregate_control (src);
       if (g_strcmp0 (control_path, "*") == 0)
-        control_path = "";
-      /* handle url with query */
-      if (src->conninfo.url && src->conninfo.url->query) {
-        stream->conninfo.location =
-            gst_rtsp_url_get_request_uri_with_control (src->conninfo.url,
-            control_path);
-      } else {
-        const gchar *base;
-        gboolean has_slash;
-        const gchar *slash;
-        const gchar *actual_control_path = NULL;
-
-        base = get_aggregate_control (src);
-        has_slash = g_str_has_suffix (base, "/");
-        /* manage existence or non-existence of / in control path */
-        if (control_path && strlen (control_path) > 0) {
-          gboolean control_has_slash = g_str_has_prefix (control_path, "/");
-
-          actual_control_path = control_path;
-          if (has_slash && control_has_slash) {
-            if (strlen (control_path) == 1) {
-              actual_control_path = NULL;
-            } else {
-              actual_control_path = control_path + 1;
-            }
-          } else {
-            has_slash = has_slash || control_has_slash;
-          }
-        }
-        slash = (!has_slash && (actual_control_path != NULL)) ? "/" : "";
-        /* concatenate the two strings, insert / when not present */
-        stream->conninfo.location =
-            g_strdup_printf ("%s%s%s", base, slash, control_path);
-      }
+        control_path = g_strdup (base);
+      else
+        stream->conninfo.location = gst_uri_join_strings (base, control_path);
     }
   }
   GST_DEBUG_OBJECT (src, " setup: %s",
@@ -7366,6 +7348,7 @@ gst_rtspsrc_setup_streams_start (GstRTSPSrc * src, gboolean async)
     GstRTSPConnInfo *conninfo;
     gchar *transports;
     gint retry = 0;
+    gboolean tried_non_compliant_url = FALSE;
     guint mask = 0;
     gboolean selected;
     GstCaps *caps;
@@ -7558,6 +7541,47 @@ gst_rtspsrc_setup_streams_start (GstRTSPSrc * src, gboolean async)
           continue;
         else
           goto retry;
+      case GST_RTSP_STS_BAD_REQUEST:
+      case GST_RTSP_STS_NOT_FOUND:
+        /* There are various non-compliant servers that don't require control
+         * URLs that are not resolved correctly but instead are just appended.
+         * See e.g.
+         *   https://gitlab.freedesktop.org/gstreamer/gst-plugins-good/-/issues/922
+         *   https://gitlab.freedesktop.org/gstreamer/gstreamer/-/issues/1447
+         */
+        if (!tried_non_compliant_url && stream->control_url
+            && !g_str_has_prefix (stream->control_url, "rtsp://")) {
+          const gchar *base;
+
+          gst_rtsp_message_unset (&request);
+          gst_rtsp_message_unset (&response);
+          gst_rtspsrc_stream_free_udp (stream);
+
+          g_free (stream->conninfo.location);
+          base = get_aggregate_control (src);
+
+          /* Make sure to not accumulate too many `/` */
+          if ((g_str_has_suffix (base, "/")
+                  && !g_str_has_suffix (stream->control_url, "/"))
+              || (!g_str_has_suffix (base, "/")
+                  && g_str_has_suffix (stream->control_url, "/"))
+              )
+            stream->conninfo.location =
+                g_strconcat (base, stream->control_url, NULL);
+          else if (g_str_has_suffix (base, "/")
+              && g_str_has_suffix (stream->control_url, "/"))
+            stream->conninfo.location =
+                g_strconcat (base, stream->control_url + 1, NULL);
+          else
+            stream->conninfo.location =
+                g_strconcat (base, "/", stream->control_url, NULL);
+
+          tried_non_compliant_url = TRUE;
+
+          goto retry;
+        }
+
+        /* fall through */
       default:
         /* cleanup of leftover transport and move to the next stream */
         gst_rtspsrc_stream_free_udp (stream);

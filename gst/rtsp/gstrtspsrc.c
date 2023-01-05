@@ -1550,6 +1550,9 @@ gst_rtspsrc_finalize (GObject * object)
   if (rtspsrc->tls_interaction)
     g_object_unref (rtspsrc->tls_interaction);
 
+  if (rtspsrc->initial_seek)
+    gst_event_unref (rtspsrc->initial_seek);
+
   /* free locks */
   g_rec_mutex_clear (&rtspsrc->stream_rec_lock);
   g_rec_mutex_clear (&rtspsrc->state_rec_lock);
@@ -4352,12 +4355,47 @@ gst_rtspsrc_get_transport_info (GstRTSPSrc * src, GstRTSPStream * stream,
   }
 }
 
+static GstElement *
+element_make_from_addr (const GstURIType type, const char *addr_s,
+    int port, const char *name, GError ** error)
+{
+  GInetAddress *addr;
+  GstElement *element = NULL;
+  char *uri = NULL;
+
+  addr = g_inet_address_new_from_string (addr_s);
+  if (addr == NULL) {
+    /* Address is a hostname, not an IP address */
+    uri = g_strdup_printf ("udp://%s:%i", addr_s, port);
+  } else {
+    switch (g_inet_address_get_family (addr)) {
+      case G_SOCKET_FAMILY_IPV6:
+        uri = g_strdup_printf ("udp://[%s]:%i", addr_s, port);
+        break;
+      case G_SOCKET_FAMILY_INVALID:
+        GST_ERROR ("Unknown family type for %s", addr_s);
+        goto out;
+      case G_SOCKET_FAMILY_UNIX:
+        GST_ERROR ("Unexpected family type UNIX for %s", addr_s);
+        goto out;
+      case G_SOCKET_FAMILY_IPV4:
+        uri = g_strdup_printf ("udp://%s:%i", addr_s, port);
+        break;
+    }
+  }
+
+  element = gst_element_make_from_uri (type, uri, name, error);
+out:
+  g_clear_object (&addr);
+  g_free (uri);
+  return element;
+}
+
 /* For multicast create UDP sources and join the multicast group. */
 static gboolean
 gst_rtspsrc_stream_configure_mcast (GstRTSPSrc * src, GstRTSPStream * stream,
     GstRTSPTransport * transport, GstPad ** outpad)
 {
-  gchar *uri;
   const gchar *destination;
   gint min, max;
 
@@ -4382,10 +4420,8 @@ gst_rtspsrc_stream_configure_mcast (GstRTSPSrc * src, GstRTSPStream * stream,
 
   /* creating UDP source for RTP */
   if (min != -1) {
-    uri = g_strdup_printf ("udp://%s:%d", destination, min);
     stream->udpsrc[0] =
-        gst_element_make_from_uri (GST_URI_SRC, uri, NULL, NULL);
-    g_free (uri);
+        element_make_from_addr (GST_URI_SRC, destination, min, NULL, NULL);
     if (stream->udpsrc[0] == NULL)
       goto no_element;
 
@@ -4409,10 +4445,8 @@ gst_rtspsrc_stream_configure_mcast (GstRTSPSrc * src, GstRTSPStream * stream,
   if (max != -1) {
     GstCaps *caps;
 
-    uri = g_strdup_printf ("udp://%s:%d", destination, max);
     stream->udpsrc[1] =
-        gst_element_make_from_uri (GST_URI_SRC, uri, NULL, NULL);
-    g_free (uri);
+        element_make_from_addr (GST_URI_SRC, destination, max, NULL, NULL);
     if (stream->udpsrc[1] == NULL)
       goto no_element;
 
@@ -4552,7 +4586,7 @@ gst_rtspsrc_stream_configure_udp_sinks (GstRTSPSrc * src,
   gint rtp_port, rtcp_port;
   gboolean do_rtp, do_rtcp;
   const gchar *destination;
-  gchar *uri, *name;
+  gchar *name;
   guint ttl = 0;
   GSocket *socket;
 
@@ -4576,10 +4610,8 @@ gst_rtspsrc_stream_configure_udp_sinks (GstRTSPSrc * src,
     GST_DEBUG_OBJECT (src, "configure RTP UDP sink for %s:%d", destination,
         rtp_port);
 
-    uri = g_strdup_printf ("udp://%s:%d", destination, rtp_port);
-    stream->udpsink[0] =
-        gst_element_make_from_uri (GST_URI_SINK, uri, NULL, NULL);
-    g_free (uri);
+    stream->udpsink[0] = element_make_from_addr (GST_URI_SINK, destination,
+        rtp_port, NULL, NULL);
     if (stream->udpsink[0] == NULL)
       goto no_sink_element;
 
@@ -4641,10 +4673,8 @@ gst_rtspsrc_stream_configure_udp_sinks (GstRTSPSrc * src,
     GST_DEBUG_OBJECT (src, "configure RTCP UDP sink for %s:%d", destination,
         rtcp_port);
 
-    uri = g_strdup_printf ("udp://%s:%d", destination, rtcp_port);
-    stream->udpsink[1] =
-        gst_element_make_from_uri (GST_URI_SINK, uri, NULL, NULL);
-    g_free (uri);
+    stream->udpsink[1] = element_make_from_addr (GST_URI_SINK, destination,
+        rtcp_port, NULL, NULL);
     if (stream->udpsink[1] == NULL)
       goto no_sink_element;
 
@@ -6270,21 +6300,21 @@ gst_rtsp_auth_method_to_string (GstRTSPAuthMethod method)
  *
  * At the moment, for Basic auth, we just do a minimal check and don't
  * even parse out the realm */
-static void
+static gboolean
 gst_rtspsrc_parse_auth_hdr (GstRTSPMessage * response,
     GstRTSPAuthMethod * methods, GstRTSPConnection * conn, gboolean * stale)
 {
   GstRTSPAuthCredential **credentials, **credential;
 
-  g_return_if_fail (response != NULL);
-  g_return_if_fail (methods != NULL);
-  g_return_if_fail (stale != NULL);
+  g_return_val_if_fail (response != NULL, FALSE);
+  g_return_val_if_fail (methods != NULL, FALSE);
+  g_return_val_if_fail (stale != NULL, FALSE);
 
   credentials =
       gst_rtsp_message_parse_auth_credentials (response,
       GST_RTSP_HDR_WWW_AUTHENTICATE);
   if (!credentials)
-    return;
+    return FALSE;
 
   credential = credentials;
   while (*credential) {
@@ -6312,6 +6342,8 @@ gst_rtspsrc_parse_auth_hdr (GstRTSPMessage * response,
   }
 
   gst_rtsp_auth_credentials_free (credentials);
+
+  return TRUE;
 }
 
 /**
@@ -6340,10 +6372,14 @@ gst_rtspsrc_setup_auth (GstRTSPSrc * src, GstRTSPMessage * response)
   GstRTSPConnection *conn;
   gboolean stale = FALSE;
 
+  g_return_val_if_fail (response != NULL, FALSE);
+
   conn = src->conninfo.connection;
 
-  /* Identify the available auth methods and see if any are supported */
-  gst_rtspsrc_parse_auth_hdr (response, &avail_methods, conn, &stale);
+  /* Identify the available auth methods and see if any are supported. If no
+   * headers were found, propagate the HTTP error. */
+  if (!gst_rtspsrc_parse_auth_hdr (response, &avail_methods, conn, &stale))
+    goto propagate_error;
 
   if (avail_methods == GST_RTSP_AUTH_NONE)
     goto no_auth_available;
@@ -6375,9 +6411,10 @@ gst_rtspsrc_setup_auth (GstRTSPSrc * src, GstRTSPMessage * response)
    * already, request a username and passwd from the application via some kind
    * of credentials request message */
 
-  /* If we don't have a username and passwd at this point, bail out. */
+  /* If we don't have a username and passwd at this point, bail out and
+   * propagate the normal NOT_AUTHORIZED error. */
   if (user == NULL || pass == NULL)
-    goto no_user_pass;
+    goto propagate_error;
 
   /* Try to configure for each available authentication method, strongest to
    * weakest */
@@ -6410,10 +6447,11 @@ no_auth_available:
         ("No supported authentication protocol was found"));
     return FALSE;
   }
-no_user_pass:
+
+propagate_error:
   {
     /* We don't fire an error message, we just return FALSE and let the
-     * normal NOT_AUTHORIZED error be propagated */
+     * normal error be propagated */
     return FALSE;
   }
 }
@@ -9401,12 +9439,12 @@ gst_rtspsrc_send_event (GstElement * element, GstEvent * event)
   if (GST_EVENT_TYPE (event) == GST_EVENT_SEEK) {
     if (rtspsrc->state >= GST_RTSP_STATE_READY) {
       res = gst_rtspsrc_perform_seek (rtspsrc, event);
-      gst_event_unref (event);
     } else {
       /* Store for later use */
       res = TRUE;
-      rtspsrc->initial_seek = event;
+      gst_event_replace (&rtspsrc->initial_seek, event);
     }
+    gst_event_unref (event);
   } else if (GST_EVENT_IS_DOWNSTREAM (event)) {
     res = gst_rtspsrc_push_event (rtspsrc, event);
   } else {

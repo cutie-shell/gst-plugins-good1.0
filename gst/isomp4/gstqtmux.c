@@ -2695,7 +2695,8 @@ prefill_raw_audio_prepare_buf_func (GstQTMuxPad * qtpad, GstBuffer * buf,
       qtpad->sample_size : gst_adapter_available (qtpad->raw_audio_adapter));
   GST_BUFFER_PTS (buf) = input_timestamp;
   GST_BUFFER_DTS (buf) = GST_CLOCK_TIME_NONE;
-  GST_BUFFER_DURATION (buf) = GST_CLOCK_TIME_NONE;
+  GST_BUFFER_DURATION (buf) = gst_util_uint64_scale (nsamples, GST_SECOND,
+      atom_trak_get_timescale (qtpad->trak));
 
   qtpad->raw_audio_adapter_offset += nsamples;
 
@@ -4046,10 +4047,9 @@ gst_qt_mux_stop_file (GstQTMux * qtmux)
 
         if (qpad->trak->edts
             && g_slist_length (qpad->trak->edts->elst.entries) > 1) {
+          GST_OBJECT_UNLOCK (qtmux);
           GST_ELEMENT_ERROR (qtmux, STREAM, MUX, (NULL),
               ("Can't support gaps in prefill mode"));
-
-          GST_OBJECT_UNLOCK (qtmux);
 
           return GST_FLOW_ERROR;
         }
@@ -5502,6 +5502,7 @@ find_best_pad (GstQTMux * qtmux)
        * to be written at */
       block_idx = current_block_idx = prefill_get_block_index (qtmux, qtpad);
       if (!qtpad->samples || block_idx >= qtpad->samples->len) {
+        GST_OBJECT_UNLOCK (qtmux);
         GST_ELEMENT_ERROR (qtmux, RESOURCE, SETTINGS,
             ("Failed to create samples in prefill mode"), (NULL));
         return NULL;

@@ -79,9 +79,13 @@ typedef struct {
  * @pt: the payload type of the packet
  * @rtptime: the RTP time of the packet
  * @marker: the marker bit
- *
- * @tw_seqnum_ext_id: the extension-header ID for transport-wide seqnums
- * @tw_seqnum: the transport-wide seqnum of the packet
+ * @csrc_count: Number of CSRCs in @csrcs
+ * @csrcs: CSRCs
+ * @header_ext: Header extension data
+ * @header_ext_bit_pattern: Header extension bit pattern
+ * @ntp64_ext_id: Extension header ID for RFC6051 64-bit NTP timestamp.
+ * @have_ntp64_ext: If there is at least one 64-bit NTP timestamp header
+ *     extension.
  *
  * Structure holding information about the packet.
  */
@@ -108,6 +112,8 @@ typedef struct {
   guint32       csrcs[16];
   GBytes        *header_ext;
   guint16       header_ext_bit_pattern;
+  guint8        ntp64_ext_id;
+  gboolean      have_ntp64_ext;
 } RTPPacketInfo;
 
 /**

@@ -1611,6 +1611,10 @@ gst_vpx_enc_destroy_encoder (GstVPXEnc * encoder)
     encoder->cfg.rc_twopass_stats_in.buf = NULL;
     encoder->cfg.rc_twopass_stats_in.sz = 0;
   }
+
+  encoder->last_pts = GST_CLOCK_TIME_NONE;
+  encoder->last_input_duration = GST_CLOCK_TIME_NONE;
+
   g_mutex_unlock (&encoder->encoder_lock);
 }
 
@@ -1662,9 +1666,13 @@ gst_vpx_enc_get_downstream_profile (GstVPXEnc * encoder, GstVideoInfo * info)
       min_profile = 1;
       break;
     case GST_VIDEO_FORMAT_I420_10LE:
+    case GST_VIDEO_FORMAT_I420_12LE:
       min_profile = 2;
       break;
     case GST_VIDEO_FORMAT_I422_10LE:
+    case GST_VIDEO_FORMAT_I422_12LE:
+    case GST_VIDEO_FORMAT_Y444_10LE:
+    case GST_VIDEO_FORMAT_Y444_12LE:
       min_profile = 3;
       break;
     default:
@@ -1735,6 +1743,8 @@ gst_vpx_enc_set_format (GstVideoEncoder * video_encoder,
     vpx_codec_destroy (&encoder->encoder);
     encoder->inited = FALSE;
     encoder->multipass_cache_idx++;
+    encoder->last_pts = GST_CLOCK_TIME_NONE;
+    encoder->last_input_duration = GST_CLOCK_TIME_NONE;
   } else {
     g_mutex_lock (&encoder->encoder_lock);
   }
@@ -2030,6 +2040,8 @@ gst_vpx_enc_process (GstVPXEnc * encoder)
     /* discard older frames that were dropped by libvpx */
     frame = NULL;
     do {
+      GstClockTime pts_rt;
+
       if (frame)
         gst_video_encoder_finish_frame (video_encoder, frame);
       frame = gst_video_encoder_get_oldest_frame (video_encoder);
@@ -2040,8 +2052,12 @@ gst_vpx_enc_process (GstVPXEnc * encoder)
         goto out;
       }
 
+      pts_rt =
+          gst_segment_to_running_time (&video_encoder->input_segment,
+          GST_FORMAT_TIME, frame->pts);
+
       pts =
-          gst_util_uint64_scale (frame->pts,
+          gst_util_uint64_scale (pts_rt,
           encoder->cfg.g_timebase.den,
           encoder->cfg.g_timebase.num * (GstClockTime) GST_SECOND);
       GST_TRACE_OBJECT (encoder, "vpx pts: %" G_GINT64_FORMAT
@@ -2122,14 +2138,20 @@ gst_vpx_enc_drain (GstVideoEncoder * video_encoder)
   vpx_codec_err_t status;
   gint64 deadline;
   vpx_codec_pts_t pts;
+  GstClockTime gst_pts = 0;
 
   encoder = GST_VPX_ENC (video_encoder);
 
   g_mutex_lock (&encoder->encoder_lock);
   deadline = encoder->deadline;
 
+  if (GST_CLOCK_TIME_IS_VALID (encoder->last_pts))
+    gst_pts = encoder->last_pts;
+  if (GST_CLOCK_TIME_IS_VALID (encoder->last_input_duration))
+    gst_pts += encoder->last_input_duration;
+
   pts =
-      gst_util_uint64_scale (encoder->last_pts,
+      gst_util_uint64_scale (gst_pts,
       encoder->cfg.g_timebase.den,
       encoder->cfg.g_timebase.num * (GstClockTime) GST_SECOND);
 
@@ -2227,6 +2249,7 @@ gst_vpx_enc_handle_frame (GstVideoEncoder * video_encoder,
   int flags = 0;
   vpx_image_t *image;
   GstVideoFrame vframe;
+  GstClockTime pts_rt;
   vpx_codec_pts_t pts;
   unsigned long duration;
   GstVPXEncClass *vpx_enc_class;
@@ -2251,11 +2274,28 @@ gst_vpx_enc_handle_frame (GstVideoEncoder * video_encoder,
   }
 
   g_mutex_lock (&encoder->encoder_lock);
+
+  /* the input pts needs to be strictly increasing, see vpx_codec_encode() doc, so convert it to
+   * running time as we don't want to reset the encoder for each segment. */
+  pts_rt =
+      gst_segment_to_running_time (&video_encoder->input_segment,
+      GST_FORMAT_TIME, frame->pts);
+
+  /* vpx_codec_encode() enforces us to pass strictly increasing pts */
+  if (GST_CLOCK_TIME_IS_VALID (encoder->last_pts)
+      && pts_rt <= encoder->last_pts) {
+    GST_WARNING_OBJECT (encoder,
+        "decreasing pts %" GST_TIME_FORMAT " previous buffer was %"
+        GST_TIME_FORMAT " enforce increasing pts", GST_TIME_ARGS (pts_rt),
+        GST_TIME_ARGS (encoder->last_pts));
+    pts_rt = encoder->last_pts + 1;
+  }
+
   pts =
-      gst_util_uint64_scale (frame->pts,
+      gst_util_uint64_scale (pts_rt,
       encoder->cfg.g_timebase.den,
       encoder->cfg.g_timebase.num * (GstClockTime) GST_SECOND);
-  encoder->last_pts = frame->pts;
+  encoder->last_pts = pts_rt;
 
   if (frame->duration != GST_CLOCK_TIME_NONE) {
     duration =
@@ -2263,7 +2303,7 @@ gst_vpx_enc_handle_frame (GstVideoEncoder * video_encoder,
         encoder->cfg.g_timebase.num * (GstClockTime) GST_SECOND);
 
     if (duration > 0) {
-      encoder->last_pts += frame->duration;
+      encoder->last_input_duration = frame->duration;
     } else {
       /* We force the path ignoring the duration if we end up with a zero
        * value for duration after scaling (e.g. duration value too small) */

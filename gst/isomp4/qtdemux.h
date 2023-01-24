@@ -89,6 +89,7 @@ struct _GstQTDemux {
   gint     n_video_streams;
   gint     n_audio_streams;
   gint     n_sub_streams;
+  gint     n_meta_streams;
 
   GstFlowCombiner *flowcombiner;
 
@@ -117,6 +118,10 @@ struct _GstQTDemux {
 
   /* Global duration (in global timescale). Use QTTIME macros to get GstClockTime */
   guint64 duration;
+
+  /* Start UTC time as extracted from the AFIdentification box, reset on every
+   * moov */
+  GstClockTime start_utc_time;
 
   /* Total size of header atoms. Used to calculate fallback overall bitrate */
   guint header_size;

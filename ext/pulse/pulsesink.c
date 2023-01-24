@@ -53,7 +53,7 @@
 #include <gst/base/gstbasesink.h>
 #include <gst/gsttaglist.h>
 #include <gst/audio/audio.h>
-#include <gst/gst-i18n-plugin.h>
+#include <glib/gi18n-lib.h>
 
 #include <gst/pbutils/pbutils.h>        /* only used for GST_PLUGINS_BASE_VERSION_* */
 
@@ -323,6 +323,7 @@ gst_pulsering_destroy_stream (GstPulseRingBuffer * pbuf)
     pa_stream_set_write_callback (pbuf->stream, NULL, NULL);
     pa_stream_set_underflow_callback (pbuf->stream, NULL, NULL);
     pa_stream_set_overflow_callback (pbuf->stream, NULL, NULL);
+    pa_stream_set_latency_update_callback (pbuf->stream, NULL, NULL);
 
     pa_stream_unref (pbuf->stream);
     pbuf->stream = NULL;

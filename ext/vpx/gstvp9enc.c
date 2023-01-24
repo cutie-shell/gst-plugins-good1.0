@@ -87,15 +87,9 @@ enum
   PROP_FRAME_PARALLEL_DECODING,
 };
 
-/* FIXME: Y42B do not work yet it seems */
-static GstStaticPadTemplate gst_vp9_enc_sink_template =
-GST_STATIC_PAD_TEMPLATE ("sink",
-    GST_PAD_SINK,
-    GST_PAD_ALWAYS,
-    /*GST_STATIC_CAPS (GST_VIDEO_CAPS_MAKE ("{ I420, YV12, Y42B, Y444 }")) */
-    GST_STATIC_CAPS (GST_VIDEO_CAPS_MAKE
-        ("{ I420, YV12, Y444, I420_10LE, I422_10LE }"))
-    );
+#define GST_VP9_ENC_VIDEO_FORMATS_8BIT "I420, YV12, Y444"
+#define GST_VP9_ENC_VIDEO_FORMATS_HIGHBIT \
+    "I420_10LE, I420_12LE, I422_10LE, I422_12LE, Y444_10LE, Y444_12LE"
 
 static GstStaticPadTemplate gst_vp9_enc_src_template =
 GST_STATIC_PAD_TEMPLATE ("src",
@@ -130,12 +124,24 @@ static gboolean gst_vp9_enc_configure_encoder (GstVPXEnc * encoder,
 
 #define DEFAULT_BITS_PER_PIXEL 0.0289
 
+static GstCaps *
+gst_vp9_enc_get_sink_caps (void)
+{
+#define CAPS_8BIT GST_VIDEO_CAPS_MAKE ("{ " GST_VP9_ENC_VIDEO_FORMATS_8BIT " }")
+#define CAPS_HIGHBIT GST_VIDEO_CAPS_MAKE ( "{ " GST_VP9_ENC_VIDEO_FORMATS_8BIT ", " \
+    GST_VP9_ENC_VIDEO_FORMATS_HIGHBIT "}")
+
+  return gst_caps_from_string ((vpx_codec_get_caps (gst_vp9_enc_get_algo (NULL))
+          & VPX_CODEC_CAP_HIGHBITDEPTH) ? CAPS_HIGHBIT : CAPS_8BIT);
+}
+
 static void
 gst_vp9_enc_class_init (GstVP9EncClass * klass)
 {
   GObjectClass *gobject_class;
   GstElementClass *element_class;
   GstVPXEncClass *vpx_encoder_class;
+  GstCaps *caps;
 
   gobject_class = G_OBJECT_CLASS (klass);
   element_class = GST_ELEMENT_CLASS (klass);
@@ -213,8 +219,11 @@ gst_vp9_enc_class_init (GstVP9EncClass * klass)
 
   gst_element_class_add_static_pad_template (element_class,
       &gst_vp9_enc_src_template);
-  gst_element_class_add_static_pad_template (element_class,
-      &gst_vp9_enc_sink_template);
+
+  caps = gst_vp9_enc_get_sink_caps ();
+  gst_element_class_add_pad_template (element_class,
+      gst_pad_template_new ("sink", GST_PAD_SINK, GST_PAD_ALWAYS, caps));
+  gst_clear_caps (&caps);
 
   gst_element_class_set_static_metadata (element_class,
       "On2 VP9 Encoder",
@@ -387,6 +396,7 @@ gst_vp9_get_vpx_colorspace (GstVPXEnc * encoder, GstVideoColorimetry * in_cinfo,
   gchar *colorimetry_str;
   guint i;
 
+  /* *INDENT-OFF* */
   static const struct
   {
     const gchar *str;
@@ -398,6 +408,7 @@ gst_vp9_get_vpx_colorspace (GstVPXEnc * encoder, GstVideoColorimetry * in_cinfo,
     GST_VIDEO_COLORIMETRY_SMPTE240M, VPX_CS_SMPTE_240}, {
     GST_VIDEO_COLORIMETRY_BT2020, VPX_CS_BT_2020}
   };
+  /* *INDENT-ON* */
 
   /* We support any range, all mapped CSC are by default reduced range. */
   cinfo.range = GST_VIDEO_COLOR_RANGE_16_235;
@@ -525,36 +536,67 @@ gst_vp9_enc_set_image_format (GstVPXEnc * enc, vpx_image_t * image)
 {
   switch (enc->input_state->info.finfo->format) {
     case GST_VIDEO_FORMAT_I420:
-      image->fmt = VPX_IMG_FMT_I420;
+      image->fmt = (vpx_img_fmt_t) GST_VPX_IMG_FMT_I420;
       image->bps = 12;
+      image->bit_depth = 8;
       image->x_chroma_shift = image->y_chroma_shift = 1;
       break;
     case GST_VIDEO_FORMAT_YV12:
-      image->fmt = VPX_IMG_FMT_YV12;
+      image->fmt = (vpx_img_fmt_t) GST_VPX_IMG_FMT_YV12;
       image->bps = 12;
+      image->bit_depth = 8;
       image->x_chroma_shift = image->y_chroma_shift = 1;
       break;
     case GST_VIDEO_FORMAT_Y42B:
-      image->fmt = VPX_IMG_FMT_I422;
+      image->fmt = (vpx_img_fmt_t) GST_VPX_IMG_FMT_I422;
       image->bps = 16;
+      image->bit_depth = 8;
       image->x_chroma_shift = 1;
       image->y_chroma_shift = 0;
       break;
     case GST_VIDEO_FORMAT_Y444:
-      image->fmt = VPX_IMG_FMT_I444;
+      image->fmt = (vpx_img_fmt_t) GST_VPX_IMG_FMT_I444;
       image->bps = 24;
+      image->bit_depth = 8;
       image->x_chroma_shift = image->y_chroma_shift = 0;
       break;
     case GST_VIDEO_FORMAT_I420_10LE:
-      image->fmt = VPX_IMG_FMT_I42016;
+      image->fmt = (vpx_img_fmt_t) GST_VPX_IMG_FMT_I42016;
       image->bps = 15;
+      image->bit_depth = 10;
+      image->x_chroma_shift = image->y_chroma_shift = 1;
+      break;
+    case GST_VIDEO_FORMAT_I420_12LE:
+      image->fmt = (vpx_img_fmt_t) GST_VPX_IMG_FMT_I42016;
+      image->bps = 18;
+      image->bit_depth = 12;
       image->x_chroma_shift = image->y_chroma_shift = 1;
       break;
     case GST_VIDEO_FORMAT_I422_10LE:
-      image->fmt = VPX_IMG_FMT_I42216;
+      image->fmt = (vpx_img_fmt_t) GST_VPX_IMG_FMT_I42216;
       image->bps = 20;
+      image->bit_depth = 10;
       image->x_chroma_shift = 1;
       image->y_chroma_shift = 0;
+      break;
+    case GST_VIDEO_FORMAT_I422_12LE:
+      image->fmt = (vpx_img_fmt_t) GST_VPX_IMG_FMT_I42216;
+      image->bps = 24;
+      image->bit_depth = 12;
+      image->x_chroma_shift = 1;
+      image->y_chroma_shift = 0;
+      break;
+    case GST_VIDEO_FORMAT_Y444_10LE:
+      image->fmt = (vpx_img_fmt_t) GST_VPX_IMG_FMT_I44416;
+      image->bps = 30;
+      image->bit_depth = 10;
+      image->x_chroma_shift = image->y_chroma_shift = 0;
+      break;
+    case GST_VIDEO_FORMAT_Y444_12LE:
+      image->fmt = (vpx_img_fmt_t) GST_VPX_IMG_FMT_I44416;
+      image->bps = 36;
+      image->bit_depth = 12;
+      image->x_chroma_shift = image->y_chroma_shift = 0;
       break;
     default:
       g_assert_not_reached ();

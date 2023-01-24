@@ -41,6 +41,7 @@ good_tests = [
   [ 'elements/dtmf', get_option('dtmf').disabled()],
   [ 'elements/flvdemux', get_option('flv').disabled()],
   [ 'elements/flvmux', get_option('flv').disabled()],
+  [ 'elements/hlsdemux_m3u8' , not hls_dep.found() or not adaptivedemux2_dep.found(), [hls_dep, adaptivedemux2_dep] ],
   [ 'elements/mulawdec', get_option('law').disabled()],
   [ 'elements/mulawenc', get_option('law').disabled()],
   [ 'elements/icydemux', get_option('icydemux').disabled()],
@@ -74,6 +75,7 @@ good_tests = [
   [ 'pipelines/wavenc', get_option('wavenc').disabled()],
   [ 'elements/wavparse', get_option('wavparse').disabled(), [gstriff_dep] ],
   [ 'elements/wavpackparse', get_option('audioparsers').disabled()],
+  [ 'elements/xingmux', get_option('xingmux').disabled()],
   [ 'elements/y4menc', get_option('y4m').disabled()],
   [ 'pipelines/effectv', get_option('effectv').disabled()],
   [ 'elements/equalizer', get_option('equalizer').disabled()],
@@ -97,6 +99,7 @@ if not get_option('rtp').disabled() and not get_option('rtpmanager').disabled()
     [ 'elements/rtpcollision' ],
     [ 'elements/rtpfunnel' ],
     [ 'elements/rtphdrextclientaudiolevel', false, [gstsdp_dep, gstaudio_dep] ],
+    [ 'elements/rtphdrextsdes', false, [gstrtp_dep, gstsdp_dep] ],
     [ 'elements/rtpjitterbuffer' ],
     [ 'elements/rtpjpeg' ],
 
@@ -133,6 +136,7 @@ libsoup3_dep = dependency('libsoup-3.0', required : false,
 # FIXME: unistd dependency or not tested yet on windows
 if host_machine.system() != 'windows'
   good_tests += [
+    [ 'elements/dash_mpd', not adaptivedemux2_dep.found(), [adaptivedemux2_dep] ],
     [ 'pipelines/flacdec', not flac_dep.found() ],
     [ 'elements/gdkpixbufsink', not gdkpixbuf_dep.found(), [gdkpixbuf_dep] ],
     [ 'elements/gdkpixbufoverlay', not gdkpixbuf_dep.found() ],
@@ -152,14 +156,6 @@ if host_machine.system() != 'windows'
     [ 'pipelines/wavpack', not wavpack_dep.found() ],
   ]
 endif
-
-foo='''
-if HAVE_ORC
-check_orc = orc/deinterlace orc/videomixer orc/videobox
-else
-check_orc =
-endif
-'''
 
 test_defines = [
   '-UG_DISABLE_ASSERT',
@@ -200,7 +196,7 @@ state_ignore_elements = '''aasink autoaudiosrc autoaudiosink autovideosrc
 # FIXME: check, also + PTHREAD_CFLAGS
 test_deps = [gst_dep, gstbase_dep, gstnet_dep, gstcheck_dep, gstaudio_dep,
   gstvideo_dep, gstpbutils_dep, gstrtp_dep, gstrtsp_dep, gsttag_dep,
-  gstapp_dep, gio_dep, valgrind_dep] + glib_deps
+  gstapp_dep, gio_dep, valgrind_dep]
 
 # FIXME: add valgrind suppression common/gst.supp gst-plugins-good.supp
 foreach t : good_tests
@@ -232,6 +228,7 @@ endforeach
 
 # orc tests
 orc_tests = [
+  ['orc_audiopanorama', files('../../gst/audiofx/audiopanoramaorc.orc')],
   ['orc_deinterlace', files('../../gst/deinterlace/tvtime.orc')],
   ['orc_videomixer', files('../../gst/videomixer/videomixerorc.orc')],
   ['orc_videobox', files('../../gst/videobox/gstvideoboxorc.orc')],

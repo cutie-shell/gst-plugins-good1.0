@@ -30,8 +30,14 @@
 #endif
 #endif /* G_OS_WIN32 */
 
+#ifdef BUILDING_ADAPTIVEDEMUX2
+GST_DEBUG_CATEGORY (gst_adaptivedemux_soup_debug);
+#define GST_CAT_DEFAULT gst_adaptivedemux_soup_debug
+#else
 GST_DEBUG_CATEGORY (gst_soup_debug);
 #define GST_CAT_DEFAULT gst_soup_debug
+#endif
+
 
 #ifndef STATIC_SOUP
 
@@ -106,6 +112,9 @@ typedef struct _GstSoupVTable
   goffset (*_soup_message_headers_get_content_length) (SoupMessageHeaders * hdrs);
   const char *(*_soup_message_headers_get_content_type) (SoupMessageHeaders * hdrs,
     GHashTable ** value);
+  gboolean (*_soup_message_headers_get_content_range) (SoupMessageHeaders *hdrs, goffset *start,
+    goffset *end, goffset *total_length);
+  void (*_soup_message_headers_set_range) (SoupMessageHeaders *hdrs, goffset start, goffset end);
   SoupEncoding (*_soup_message_headers_get_encoding) (SoupMessageHeaders * hdrs);
   const char *(*_soup_message_headers_get_one) (SoupMessageHeaders * hdrs,
     const char * name);
@@ -146,7 +155,12 @@ gst_soup_load_library (void)
 
   g_assert (g_module_supported ());
 
+#ifdef BUILDING_ADAPTIVEDEMUX2
+  GST_DEBUG_CATEGORY_INIT (gst_adaptivedemux_soup_debug, "adaptivedemux2-soup",
+      0, "adaptivedemux2-soup");
+#else
   GST_DEBUG_CATEGORY_INIT (gst_soup_debug, "soup", 0, "soup");
+#endif
 
 #ifdef HAVE_RTLD_NOLOAD
   {
@@ -264,6 +278,8 @@ gst_soup_load_library (void)
       LOAD_SYMBOL (soup_message_headers_foreach);
       LOAD_SYMBOL (soup_message_headers_get_content_length);
       LOAD_SYMBOL (soup_message_headers_get_content_type);
+      LOAD_SYMBOL (soup_message_headers_get_content_range);
+      LOAD_SYMBOL (soup_message_headers_set_range);
       LOAD_SYMBOL (soup_message_headers_get_encoding);
       LOAD_SYMBOL (soup_message_headers_get_one);
       LOAD_SYMBOL (soup_message_headers_remove);
@@ -791,6 +807,32 @@ _soup_message_headers_get_content_type (SoupMessageHeaders * hdrs,
 #else
   g_assert (gst_soup_vtable._soup_message_headers_get_content_type != NULL);
   return gst_soup_vtable._soup_message_headers_get_content_type (hdrs, params);
+#endif
+}
+
+gboolean
+_soup_message_headers_get_content_range (SoupMessageHeaders * hdrs,
+    goffset * start, goffset * end, goffset * total_length)
+{
+#ifdef STATIC_SOUP
+  return soup_message_headers_get_content_range (hdrs, start, end,
+      total_length);
+#else
+  g_assert (gst_soup_vtable._soup_message_headers_get_content_range != NULL);
+  return gst_soup_vtable._soup_message_headers_get_content_range (hdrs, start,
+      end, total_length);
+#endif
+}
+
+void
+_soup_message_headers_set_range (SoupMessageHeaders * hdrs, goffset start,
+    goffset end)
+{
+#ifdef STATIC_SOUP
+  soup_message_headers_set_range (hdrs, start, end);
+#else
+  g_assert (gst_soup_vtable._soup_message_headers_set_range != NULL);
+  gst_soup_vtable._soup_message_headers_set_range (hdrs, start, end);
 #endif
 }
 

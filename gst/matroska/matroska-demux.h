@@ -68,8 +68,10 @@ typedef struct _GstMatroskaDemux {
   gboolean                 seek_first;
 
   /* did we parse cues/tracks/segmentinfo already? */
-  gboolean                 tracks_parsed;
   GList                   *seek_parsed;
+  /* Offset of the last Tracks element parsed,
+   * to avoid reparsing or recreating tracks unecessarily */
+  guint64                 tracks_ebml_offset;
 
   /* cluster positions (optional) */
   GArray                  *clusters;
@@ -105,6 +107,10 @@ typedef struct _GstMatroskaDemux {
   GstPad                  *deferred_seek_pad;
   gboolean                 need_segment;
   guint32                  segment_seqnum;
+  /* If TRUE, matroskamux received upstream newsegment in TIME format
+   * which likely means that upstream is driving the pipeline (such as
+   * adaptive demuxers) */
+  gboolean                 upstream_format_is_time;
 
   /* reverse playback */
   GArray                  *seek_index;

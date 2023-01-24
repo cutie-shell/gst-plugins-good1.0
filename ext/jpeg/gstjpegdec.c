@@ -44,8 +44,11 @@
 #include <gst/video/video.h>
 #include <gst/video/gstvideometa.h>
 #include <gst/video/gstvideopool.h>
-#include "gst/gst-i18n-plugin.h"
+#include <glib/gi18n-lib.h>
 #include <jerror.h>
+
+/* Disable libjpeg-turbo support for now, due to unresolved cornercases */
+#undef JCS_EXTENSIONS
 
 #define MIN_WIDTH  1
 #define MAX_WIDTH  65535
@@ -601,10 +604,16 @@ static gboolean
 gst_jpeg_dec_set_format (GstVideoDecoder * dec, GstVideoCodecState * state)
 {
   GstJpegDec *jpeg = GST_JPEG_DEC (dec);
+  GstStructure *structure;
+  gboolean parsed = FALSE;
 
   if (jpeg->input_state)
     gst_video_codec_state_unref (jpeg->input_state);
   jpeg->input_state = gst_video_codec_state_ref (state);
+
+  structure = gst_caps_get_structure (state->caps, 0);
+  gst_structure_get_boolean (structure, "parsed", &parsed);
+  gst_video_decoder_set_packetized (dec, parsed);
 
   return TRUE;
 }

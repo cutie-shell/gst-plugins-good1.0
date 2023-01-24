@@ -270,6 +270,7 @@ struct _GstRTSPSrc {
   gchar            *user_agent;
   gint              max_rtcp_rtp_time_diff;
   gboolean          rfc7273_sync;
+  gboolean          add_reference_timestamp_meta;
   guint64           max_ts_offset_adjustment;
   gint64            max_ts_offset;
   gboolean          max_ts_offset_is_set;
@@ -338,6 +339,7 @@ struct _GstRTSPSrcClass {
   gboolean (*get_parameters) (GstRTSPSrc *rtsp, gchar **parameters, const gchar *content_type, GstPromise *promise);
   gboolean (*set_parameter) (GstRTSPSrc *rtsp, const gchar *name, const gchar *value, const gchar *content_type, GstPromise *promise);
   GstFlowReturn (*push_backchannel_buffer) (GstRTSPSrc *src, guint id, GstSample *sample);
+  GstFlowReturn (*push_backchannel_sample) (GstRTSPSrc *src, guint id, GstSample *sample);
 };
 
 GType gst_rtspsrc_get_type(void);

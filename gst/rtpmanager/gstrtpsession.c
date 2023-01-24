@@ -111,6 +111,7 @@
 
 #include "gstrtpsession.h"
 #include "rtpsession.h"
+#include "gstrtputils.h"
 
 GST_DEBUG_CATEGORY_STATIC (gst_rtp_session_debug);
 #define GST_CAT_DEFAULT gst_rtp_session_debug
@@ -222,6 +223,7 @@ enum
 #define DEFAULT_RTP_PROFILE          GST_RTP_PROFILE_AVP
 #define DEFAULT_NTP_TIME_SOURCE      GST_RTP_NTP_TIME_SOURCE_NTP
 #define DEFAULT_RTCP_SYNC_SEND_TIME  TRUE
+#define DEFAULT_UPDATE_NTP64_HEADER_EXT  TRUE
 
 enum
 {
@@ -243,7 +245,8 @@ enum
   PROP_TWCC_STATS,
   PROP_RTP_PROFILE,
   PROP_NTP_TIME_SOURCE,
-  PROP_RTCP_SYNC_SEND_TIME
+  PROP_RTCP_SYNC_SEND_TIME,
+  PROP_UPDATE_NTP64_HEADER_EXT
 };
 
 #define GST_RTP_SESSION_LOCK(sess)   g_mutex_lock (&(sess)->priv->lock)
@@ -297,7 +300,7 @@ static GstFlowReturn gst_rtp_session_send_rtcp (RTPSession * sess,
     RTPSource * src, GstBuffer * buffer, gboolean eos, gpointer user_data);
 static GstFlowReturn gst_rtp_session_sync_rtcp (RTPSession * sess,
     GstBuffer * buffer, gpointer user_data);
-static gint gst_rtp_session_clock_rate (RTPSession * sess, guint8 payload,
+static GstCaps *gst_rtp_session_caps (RTPSession * sess, guint8 payload,
     gpointer user_data);
 static void gst_rtp_session_reconsider (RTPSession * sess, gpointer user_data);
 static void gst_rtp_session_request_key_unit (RTPSession * sess, guint32 ssrc,
@@ -327,7 +330,7 @@ static RTPSessionCallbacks callbacks = {
   gst_rtp_session_send_rtp,
   gst_rtp_session_sync_rtcp,
   gst_rtp_session_send_rtcp,
-  gst_rtp_session_clock_rate,
+  gst_rtp_session_caps,
   gst_rtp_session_reconsider,
   gst_rtp_session_request_key_unit,
   gst_rtp_session_request_time,
@@ -351,7 +354,7 @@ static GstPad *gst_rtp_session_request_new_pad (GstElement * element,
     GstPadTemplate * templ, const gchar * name, const GstCaps * caps);
 static void gst_rtp_session_release_pad (GstElement * element, GstPad * pad);
 
-static gboolean gst_rtp_session_sink_setcaps (GstPad * pad,
+static gboolean gst_rtp_session_setcaps_recv_rtp (GstPad * pad,
     GstRtpSession * rtpsession, GstCaps * caps);
 static gboolean gst_rtp_session_setcaps_send_rtp (GstPad * pad,
     GstRtpSession * rtpsession, GstCaps * caps);
@@ -809,6 +812,22 @@ gst_rtp_session_class_init (GstRtpSessionClass * klass)
           DEFAULT_RTCP_SYNC_SEND_TIME,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+  /**
+   * GstRtpSession:update-ntp64-header-ext:
+   *
+   * Whether RTP NTP header extension should be updated with actual
+   * NTP time. If not, use the NTP time from buffer timestamp metadata
+   *
+   * Since: 1.22
+   */
+  g_object_class_install_property (gobject_class,
+      PROP_UPDATE_NTP64_HEADER_EXT,
+      g_param_spec_boolean ("update-ntp64-header-ext",
+          "Update NTP-64 RTP Header Extension",
+          "Whether RTP NTP header extension should be updated with actual NTP time",
+          DEFAULT_UPDATE_NTP64_HEADER_EXT,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
   gstelement_class->change_state =
       GST_DEBUG_FUNCPTR (gst_rtp_session_change_state);
   gstelement_class->request_new_pad =
@@ -981,6 +1000,10 @@ gst_rtp_session_set_property (GObject * object, guint prop_id,
     case PROP_RTCP_SYNC_SEND_TIME:
       priv->rtcp_sync_send_time = g_value_get_boolean (value);
       break;
+    case PROP_UPDATE_NTP64_HEADER_EXT:
+      g_object_set_property (G_OBJECT (priv->session),
+          "update-ntp64-header-ext", value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -1060,6 +1083,10 @@ gst_rtp_session_get_property (GObject * object, guint prop_id,
     case PROP_RTCP_SYNC_SEND_TIME:
       g_value_set_boolean (value, priv->rtcp_sync_send_time);
       break;
+    case PROP_UPDATE_NTP64_HEADER_EXT:
+      g_object_get_property (G_OBJECT (priv->session),
+          "update-ntp64-header-ext", value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -1101,7 +1128,7 @@ get_current_times (GstRtpSession * rtpsession, GstClockTime * running_time,
     if (rtpsession->priv->use_pipeline_clock) {
       ntpns = rt;
       /* add constant to convert from 1970 based time to 1900 based time */
-      ntpns += (2208988800LL * GST_SECOND);
+      ntpns += (GST_RTP_NTP_UNIX_OFFSET * GST_SECOND);
     } else {
       switch (rtpsession->priv->ntp_time_source) {
         case GST_RTP_NTP_TIME_SOURCE_NTP:
@@ -1111,7 +1138,7 @@ get_current_times (GstRtpSession * rtpsession, GstClockTime * running_time,
 
           /* add constant to convert from 1970 based time to 1900 based time */
           if (rtpsession->priv->ntp_time_source == GST_RTP_NTP_TIME_SOURCE_NTP)
-            ntpns += (2208988800LL * GST_SECOND);
+            ntpns += (GST_RTP_NTP_UNIX_OFFSET * GST_SECOND);
           break;
         }
         case GST_RTP_NTP_TIME_SOURCE_RUNNING_TIME:
@@ -1309,6 +1336,7 @@ gst_rtp_session_change_state (GstElement * element, GstStateChange transition)
     case GST_STATE_CHANGE_READY_TO_PAUSED:
       GST_RTP_SESSION_LOCK (rtpsession);
       rtpsession->priv->wait_send = TRUE;
+      rtpsession->priv->send_latency = GST_CLOCK_TIME_NONE;
       GST_RTP_SESSION_UNLOCK (rtpsession);
       break;
     case GST_STATE_CHANGE_PAUSED_TO_PLAYING:
@@ -1676,41 +1704,12 @@ no_caps:
 }
 
 /* called when the session manager needs the clock rate */
-static gint
-gst_rtp_session_clock_rate (RTPSession * sess, guint8 payload,
-    gpointer user_data)
+static GstCaps *
+gst_rtp_session_caps (RTPSession * sess, guint8 payload, gpointer user_data)
 {
-  gint result = -1;
-  GstRtpSession *rtpsession;
-  GstCaps *caps;
-  const GstStructure *s;
+  GstRtpSession *rtpsession = GST_RTP_SESSION_CAST (user_data);
 
-  rtpsession = GST_RTP_SESSION_CAST (user_data);
-
-  caps = gst_rtp_session_get_caps_for_pt (rtpsession, payload);
-
-  if (!caps)
-    goto done;
-
-  s = gst_caps_get_structure (caps, 0);
-  if (!gst_structure_get_int (s, "clock-rate", &result))
-    goto no_clock_rate;
-
-  gst_caps_unref (caps);
-
-  GST_DEBUG_OBJECT (rtpsession, "parsed clock-rate %d", result);
-
-done:
-
-  return result;
-
-  /* ERRORS */
-no_clock_rate:
-  {
-    gst_caps_unref (caps);
-    GST_DEBUG_OBJECT (rtpsession, "No clock-rate in caps!");
-    goto done;
-  }
+  return gst_rtp_session_get_caps_for_pt (rtpsession, payload);
 }
 
 /* called when the session manager asks us to reconsider the timeout */
@@ -1747,7 +1746,7 @@ gst_rtp_session_event_recv_rtp_sink (GstPad * pad, GstObject * parent,
 
       /* process */
       gst_event_parse_caps (event, &caps);
-      gst_rtp_session_sink_setcaps (pad, rtpsession, caps);
+      gst_rtp_session_setcaps_recv_rtp (pad, rtpsession, caps);
       ret = gst_pad_push_event (rtpsession->recv_rtp_src, event);
       break;
     }
@@ -1965,7 +1964,7 @@ gst_rtp_session_iterate_internal_links (GstPad * pad, GstObject * parent)
 }
 
 static gboolean
-gst_rtp_session_sink_setcaps (GstPad * pad, GstRtpSession * rtpsession,
+gst_rtp_session_setcaps_recv_rtp (GstPad * pad, GstRtpSession * rtpsession,
     GstCaps * caps)
 {
   GST_RTP_SESSION_LOCK (rtpsession);
@@ -2402,6 +2401,8 @@ gst_rtp_session_chain_send_rtp_common (GstRtpSession * rtpsession,
   GstFlowReturn ret;
   GstClockTime timestamp, running_time;
   GstClockTime current_time;
+  guint64 ntpnstime;
+  GstClock *clock;
 
   priv = rtpsession->priv;
 
@@ -2427,16 +2428,98 @@ gst_rtp_session_chain_send_rtp_common (GstRtpSession * rtpsession,
     running_time =
         gst_segment_to_running_time (&rtpsession->send_rtp_seg, GST_FORMAT_TIME,
         timestamp);
-    if (priv->rtcp_sync_send_time)
-      running_time += priv->send_latency;
+    if (priv->rtcp_sync_send_time) {
+      if (priv->send_latency != GST_CLOCK_TIME_NONE) {
+        running_time += priv->send_latency;
+      } else {
+        GST_WARNING_OBJECT (rtpsession,
+            "Can't determine running time for this packet without knowing configured latency");
+        running_time = -1;
+      }
+    }
   } else {
     /* no timestamp. */
     running_time = -1;
   }
 
   current_time = gst_clock_get_time (priv->sysclock);
+
+  /* Calculate the NTP time of this packet based on the session configuration
+   * and the running time from above */
+  GST_OBJECT_LOCK (rtpsession);
+  if (running_time != -1 && (clock = GST_ELEMENT_CLOCK (rtpsession))) {
+    GstClockTime base_time;
+    base_time = GST_ELEMENT_CAST (rtpsession)->base_time;
+    gst_object_ref (clock);
+    GST_OBJECT_UNLOCK (rtpsession);
+
+    if (rtpsession->priv->use_pipeline_clock) {
+      ntpnstime = running_time;
+      /* add constant to convert from 1970 based time to 1900 based time */
+      ntpnstime += (GST_RTP_NTP_UNIX_OFFSET * GST_SECOND);
+    } else {
+      switch (rtpsession->priv->ntp_time_source) {
+        case GST_RTP_NTP_TIME_SOURCE_NTP:
+        case GST_RTP_NTP_TIME_SOURCE_UNIX:{
+          GstClockTime wallclock_now, pipeline_now;
+
+          /* pipeline clock time for this packet */
+          ntpnstime = running_time + base_time;
+
+          /* get current wallclock and pipeline clock time */
+          wallclock_now = g_get_real_time () * GST_USECOND;
+          pipeline_now = gst_clock_get_time (clock);
+
+          /* adjust pipeline clock time by the current diff.
+           * Note that this will include some jitter for each packet */
+          if (wallclock_now > pipeline_now) {
+            GstClockTime diff = wallclock_now - pipeline_now;
+
+            ntpnstime += diff;
+          } else {
+            GstClockTime diff = pipeline_now - wallclock_now;
+
+            if (diff > ntpnstime) {
+              /* This can't really happen unless the clock configuration is
+               * broken */
+              ntpnstime = GST_CLOCK_TIME_NONE;
+            } else {
+              ntpnstime -= diff;
+            }
+          }
+
+          /* add constant to convert from 1970 based time to 1900 based time */
+          if (ntpnstime != GST_CLOCK_TIME_NONE
+              && rtpsession->priv->ntp_time_source ==
+              GST_RTP_NTP_TIME_SOURCE_NTP)
+            ntpnstime += (GST_RTP_NTP_UNIX_OFFSET * GST_SECOND);
+          break;
+        }
+        case GST_RTP_NTP_TIME_SOURCE_RUNNING_TIME:
+          ntpnstime = running_time;
+          break;
+        case GST_RTP_NTP_TIME_SOURCE_CLOCK_TIME:
+          ntpnstime = running_time + base_time;
+          break;
+        default:
+          ntpnstime = -1;
+          g_assert_not_reached ();
+          break;
+      }
+    }
+
+    gst_object_unref (clock);
+  } else {
+    if (!GST_ELEMENT_CLOCK (rtpsession)) {
+      GST_WARNING_OBJECT (rtpsession,
+          "Don't have a clock yet and can't determine NTP time for this packet");
+    }
+    GST_OBJECT_UNLOCK (rtpsession);
+    ntpnstime = GST_CLOCK_TIME_NONE;
+  }
+
   ret = rtp_session_send_rtp (priv->session, data, is_list, current_time,
-      running_time);
+      running_time, ntpnstime);
   if (ret != GST_FLOW_OK)
     goto push_error;
 

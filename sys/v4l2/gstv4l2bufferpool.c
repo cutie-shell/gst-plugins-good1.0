@@ -43,7 +43,7 @@
 #include <gstv4l2bufferpool.h>
 
 #include "gstv4l2object.h"
-#include "gst/gst-i18n-plugin.h"
+#include <glib/gi18n-lib.h>
 #include <gst/glib-compat-private.h>
 
 GST_DEBUG_CATEGORY_STATIC (v4l2bufferpool_debug);
@@ -259,16 +259,9 @@ gst_v4l2_buffer_pool_import_userptr (GstV4l2BufferPool * pool,
     for (i = 0; i < GST_VIDEO_FORMAT_INFO_N_PLANES (finfo); i++) {
       if (GST_VIDEO_FORMAT_INFO_IS_TILED (finfo)) {
         gint tinfo = GST_VIDEO_FRAME_PLANE_STRIDE (&data->frame, i);
-        gint pstride;
-        guint pheight;
-
-        pstride = GST_VIDEO_TILE_X_TILES (tinfo) <<
-            GST_VIDEO_FORMAT_INFO_TILE_WS (finfo);
-
-        pheight = GST_VIDEO_TILE_Y_TILES (tinfo) <<
-            GST_VIDEO_FORMAT_INFO_TILE_HS (finfo);
-
-        size[i] = pstride * pheight;
+        size[i] = GST_VIDEO_TILE_X_TILES (tinfo) *
+            GST_VIDEO_TILE_Y_TILES (tinfo) *
+            GST_VIDEO_FORMAT_INFO_TILE_SIZE (finfo, i);
       } else {
         size[i] = GST_VIDEO_FRAME_PLANE_STRIDE (&data->frame, i) *
             GST_VIDEO_FRAME_COMP_HEIGHT (&data->frame, i);
@@ -283,7 +276,7 @@ gst_v4l2_buffer_pool_import_userptr (GstV4l2BufferPool * pool,
       for (i = 0; i < (GST_VIDEO_FORMAT_INFO_N_PLANES (finfo) - 1); i++) {
         const struct v4l2_pix_format *pix_fmt = &pool->obj->format.fmt.pix;
         gpointer tmp;
-        gint estride = gst_v4l2_object_extrapolate_stride (finfo, i,
+        gint estride = gst_video_format_info_extrapolate_stride (finfo, i,
             pix_fmt->bytesperline);
         guint eheight = GST_VIDEO_FORMAT_INFO_SCALE_HEIGHT (finfo, i,
             pix_fmt->height);

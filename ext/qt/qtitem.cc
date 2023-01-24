@@ -124,6 +124,12 @@ QtGLVideoItem::QtGLVideoItem()
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
+  setAcceptTouchEvents(true);
+#else
+  GST_INFO ("Qt version is below 5.10, touchscreen events will not work");
+#endif
+
   GST_DEBUG ("%p init Qt Video Item", this);
 }
 
@@ -424,6 +430,27 @@ QtGLVideoItem::mapPointToStreamSize(QPointF pos)
   return QPointF(stream_x, stream_y);
 }
 
+static GstNavigationModifierType
+translateModifiers(Qt::KeyboardModifiers modifiers)
+{
+  return (GstNavigationModifierType)(
+    ((modifiers & Qt::KeyboardModifier::ShiftModifier) ? GST_NAVIGATION_MODIFIER_SHIFT_MASK : 0) |
+    ((modifiers & Qt::KeyboardModifier::ControlModifier) ? GST_NAVIGATION_MODIFIER_CONTROL_MASK : 0) |
+    ((modifiers & Qt::KeyboardModifier::AltModifier) ? GST_NAVIGATION_MODIFIER_MOD1_MASK : 0) |
+    ((modifiers & Qt::KeyboardModifier::MetaModifier) ? GST_NAVIGATION_MODIFIER_META_MASK : 0));
+}
+
+static GstNavigationModifierType
+translateMouseButtons(Qt::MouseButtons buttons)
+{
+  return (GstNavigationModifierType)(
+    ((buttons & Qt::LeftButton) ? GST_NAVIGATION_MODIFIER_BUTTON1_MASK : 0) |
+    ((buttons & Qt::RightButton) ? GST_NAVIGATION_MODIFIER_BUTTON2_MASK : 0) |
+    ((buttons & Qt::MiddleButton) ? GST_NAVIGATION_MODIFIER_BUTTON3_MASK : 0) |
+    ((buttons & Qt::BackButton) ? GST_NAVIGATION_MODIFIER_BUTTON4_MASK : 0) |
+    ((buttons & Qt::ForwardButton) ? GST_NAVIGATION_MODIFIER_BUTTON5_MASK : 0));
+}
+
 void
 QtGLVideoItem::wheelEvent(QWheelEvent * event)
 {
@@ -437,8 +464,11 @@ QtGLVideoItem::wheelEvent(QWheelEvent * event)
 #else
     auto position = *event;
 #endif
-    gst_navigation_send_mouse_scroll_event (GST_NAVIGATION (element),
-                                            position.x(), position.y(), delta.x(), delta.y());
+    gst_navigation_send_event_simple (GST_NAVIGATION (element),
+        gst_navigation_event_new_mouse_scroll (position.x(), position.y(),
+                                               delta.x(), delta.y(),
+                                               (GstNavigationModifierType) (
+                                                 translateModifiers(event->modifiers()) | translateMouseButtons(event->buttons()))));
     g_object_unref (element);
   }
   g_mutex_unlock (&this->priv->lock);
@@ -462,8 +492,6 @@ QtGLVideoItem::hoverMoveEvent(QHoverEvent * event)
   if (!mouseHovering)
     return;
 
-  quint32 button = !!mousePressedButton;
-
   g_mutex_lock (&this->priv->lock);
 
   /* can't do anything when we don't have input format */
@@ -477,8 +505,9 @@ QtGLVideoItem::hoverMoveEvent(QHoverEvent * event)
     GstElement *element = GST_ELEMENT_CAST (g_weak_ref_get (&this->priv->sink));
 
     if (element != NULL) {
-      gst_navigation_send_mouse_event (GST_NAVIGATION (element), "mouse-move",
-                                       button, pos.x(), pos.y());
+      gst_navigation_send_event_simple (GST_NAVIGATION (element),
+          gst_navigation_event_new_mouse_move (pos.x(), pos.y(),
+                                               translateModifiers(event->modifiers())));
       g_object_unref (element);
     }
   }
@@ -486,7 +515,69 @@ QtGLVideoItem::hoverMoveEvent(QHoverEvent * event)
 }
 
 void
-QtGLVideoItem::sendMouseEvent(QMouseEvent * event, const gchar * type)
+QtGLVideoItem::touchEvent(QTouchEvent * event)
+{
+  g_mutex_lock (&this->priv->lock);
+
+  /* can't do anything when we don't have input format */
+  if (!this->priv->caps) {
+    g_mutex_unlock (&this->priv->lock);
+    return;
+  }
+
+  GstElement *element = GST_ELEMENT_CAST (g_weak_ref_get (&this->priv->sink));
+  if (element == NULL)
+    return;
+
+  if (event->type() == QEvent::TouchCancel) {
+    gst_navigation_send_event_simple (GST_NAVIGATION (element),
+        gst_navigation_event_new_touch_cancel (translateModifiers(event->modifiers())));
+  } else {
+    const QList<QTouchEvent::TouchPoint> points = event->touchPoints();
+    gboolean sent_event = FALSE;
+
+    for (int i = 0; i < points.count(); i++) {
+      GstEvent *nav_event;
+      QPointF pos = mapPointToStreamSize(points[i].pos());
+
+      switch (points[i].state()) {
+        case Qt::TouchPointPressed:
+          nav_event = gst_navigation_event_new_touch_down ((guint) points[i].id(),
+              pos.x(), pos.y(), (gdouble) points[i].pressure(), translateModifiers(event->modifiers()));
+          break;
+        case Qt::TouchPointMoved:
+          nav_event = gst_navigation_event_new_touch_motion ((guint) points[i].id(),
+              pos.x(), pos.y(), (gdouble) points[i].pressure(), translateModifiers(event->modifiers()));
+          break;
+        case Qt::TouchPointReleased:
+          nav_event = gst_navigation_event_new_touch_up ((guint) points[i].id(),
+              pos.x(), pos.y(), translateModifiers(event->modifiers()));
+          break;
+        /* Don't send an event if the point did not change */
+        default:
+          nav_event = NULL;
+          break;
+      }
+
+      if (nav_event) {
+        gst_navigation_send_event_simple (GST_NAVIGATION (element), nav_event);
+        sent_event = TRUE;
+      }
+    }
+
+    /* Group simultaneos touch events with a frame event */
+    if (sent_event) {
+      gst_navigation_send_event_simple (GST_NAVIGATION (element),
+          gst_navigation_event_new_touch_frame (translateModifiers(event->modifiers())));
+    }
+  }
+
+  g_object_unref (element);
+  g_mutex_unlock (&this->priv->lock);
+}
+
+void
+QtGLVideoItem::sendMouseEvent(QMouseEvent * event, gboolean is_press)
 {
   quint32 button = 0;
 
@@ -512,16 +603,21 @@ QtGLVideoItem::sendMouseEvent(QMouseEvent * event, const gchar * type)
   }
 
   QPointF pos = mapPointToStreamSize(event->pos());
-  gchar* event_type = g_strconcat ("mouse-button-", type, NULL);
   GstElement *element = GST_ELEMENT_CAST (g_weak_ref_get (&this->priv->sink));
 
   if (element != NULL) {
-    gst_navigation_send_mouse_event (GST_NAVIGATION (element), event_type,
-                                     button, pos.x(), pos.y());
+    gst_navigation_send_event_simple (GST_NAVIGATION (element),
+        (is_press) ? gst_navigation_event_new_mouse_button_press (button,
+                pos.x(), pos.y(),
+                (GstNavigationModifierType) (
+                  translateModifiers(event->modifiers()) | translateMouseButtons(event->buttons()))) :
+            gst_navigation_event_new_mouse_button_release (button, pos.x(),
+                pos.y(),
+                (GstNavigationModifierType) (
+                  translateModifiers(event->modifiers()) | translateMouseButtons(event->buttons()))));
     g_object_unref (element);
   }
 
-  g_free (event_type);
   g_mutex_unlock (&this->priv->lock);
 }
 
@@ -529,13 +625,13 @@ void
 QtGLVideoItem::mousePressEvent(QMouseEvent * event)
 {
   forceActiveFocus();
-  sendMouseEvent(event, "press");
+  sendMouseEvent(event, TRUE);
 }
 
 void
 QtGLVideoItem::mouseReleaseEvent(QMouseEvent * event)
 {
-  sendMouseEvent(event, "release");
+  sendMouseEvent(event, FALSE);
 }
 
 void

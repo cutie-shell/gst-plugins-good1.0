@@ -30,6 +30,7 @@
 
 #include <gst/gst.h>
 #include <gst/video/gstvideoencoder.h>
+#include "gstvpxcompat.h"
 
 /* FIXME: Undef HAVE_CONFIG_H because vpx_codec.h uses it,
  * which causes compilation failures */
@@ -114,7 +115,10 @@ struct _GstVPXEnc
 
   vpx_image_t image;
 
+  /* last input pts, in running time */
   GstClockTime last_pts;
+  /* duration of the last input buffer */
+  GstClockTime last_input_duration;
 
   GstVideoCodecState *input_state;
 };

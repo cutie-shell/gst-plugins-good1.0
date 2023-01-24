@@ -97,16 +97,16 @@ typedef GstFlowReturn (*RTPSessionSendRTCP) (RTPSession *sess, RTPSource *src, G
 typedef GstFlowReturn (*RTPSessionSyncRTCP) (RTPSession *sess, GstBuffer *buffer, gpointer user_data);
 
 /**
- * RTPSessionClockRate:
+ * RTPSessionCaps:
  * @sess: an #RTPSession
  * @payload: the payload
  * @user_data: user data specified when registering
  *
- * This callback will be called when @sess needs the clock-rate of @payload.
+ * This callback will be called when @sess needs the caps of @payload.
  *
- * Returns: the clock-rate of @pt.
+ * Returns: the caps of @pt.
  */
-typedef gint (*RTPSessionClockRate) (RTPSession *sess, guint8 payload, gpointer user_data);
+typedef GstCaps * (*RTPSessionCaps) (RTPSession *sess, guint8 payload, gpointer user_data);
 
 /**
  * RTPSessionReconsider:
@@ -209,7 +209,7 @@ typedef struct {
   RTPSessionSendRTP     send_rtp;
   RTPSessionSyncRTCP    sync_rtcp;
   RTPSessionSendRTCP    send_rtcp;
-  RTPSessionClockRate   clock_rate;
+  RTPSessionCaps        caps;
   RTPSessionReconsider  reconsider;
   RTPSessionRequestKeyUnit request_key_unit;
   RTPSessionRequestTime request_time;
@@ -280,6 +280,7 @@ struct _RTPSession {
 
   GstClockTime  next_early_rtcp_time;
 
+  gboolean      sr_req_pending;
   gboolean      scheduled_bye;
 
   RTPSessionCallbacks   callbacks;
@@ -287,7 +288,7 @@ struct _RTPSession {
   gpointer              send_rtp_user_data;
   gpointer              send_rtcp_user_data;
   gpointer              sync_rtcp_user_data;
-  gpointer              clock_rate_user_data;
+  gpointer              caps_user_data;
   gpointer              reconsider_user_data;
   gpointer              request_key_unit_user_data;
   gpointer              request_time_user_data;
@@ -309,11 +310,14 @@ struct _RTPSession {
 
   gboolean timestamp_sender_reports;
 
+  /* RFC6051 64-bit NTP header extension */
+  guint8 send_ntp64_ext_id;
+
+  gboolean update_ntp64_header_ext;
+
   /* Transport-wide cc-extension */
   RTPTWCCManager *twcc;
   RTPTWCCStats *twcc_stats;
-  guint8 twcc_recv_ext_id;
-  guint8 twcc_send_ext_id;
 };
 
 /**
@@ -373,8 +377,8 @@ void            rtp_session_set_send_rtcp_callback   (RTPSession * sess,
 void            rtp_session_set_sync_rtcp_callback   (RTPSession * sess,
                                                     RTPSessionSyncRTCP callback,
                                                     gpointer user_data);
-void            rtp_session_set_clock_rate_callback   (RTPSession * sess,
-                                                    RTPSessionClockRate callback,
+void            rtp_session_set_caps_callback        (RTPSession * sess,
+                                                    RTPSessionCaps callback,
                                                     gpointer user_data);
 void            rtp_session_set_reconsider_callback (RTPSession * sess,
                                                     RTPSessionReconsider callback,
@@ -412,7 +416,8 @@ GstFlowReturn   rtp_session_process_rtcp           (RTPSession *sess, GstBuffer 
 /* processing packets for sending */
 void            rtp_session_update_send_caps       (RTPSession *sess, GstCaps *caps);
 GstFlowReturn   rtp_session_send_rtp               (RTPSession *sess, gpointer data, gboolean is_list,
-                                                    GstClockTime current_time, GstClockTime running_time);
+                                                    GstClockTime current_time, GstClockTime running_time,
+                                                    guint64 ntpnstime);
 
 /* scheduling bye */
 void            rtp_session_mark_all_bye           (RTPSession *sess, const gchar *reason);

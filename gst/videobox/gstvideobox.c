@@ -2949,11 +2949,13 @@ gst_video_box_transform_caps (GstBaseTransform * trans,
       gst_structure_set_value (structure, "format", &val);
       g_value_unset (&val);
       g_value_unset (&list);
+
+      /* format list above makes for non-fixed caps;
+       * so basetransform and peers will be enlisted to decide these parts,
+       * otherwise leave as-is for passthrough case */
+      gst_structure_remove_field (structure, "colorimetry");
+      gst_structure_remove_field (structure, "chroma-site");
     }
-
-    gst_structure_remove_field (structure, "colorimetry");
-    gst_structure_remove_field (structure, "chroma-site");
-
     gst_caps_append_structure (to, structure);
   }
 
@@ -3187,42 +3189,25 @@ static gboolean
 gst_video_box_src_event (GstBaseTransform * trans, GstEvent * event)
 {
   GstVideoBox *video_box = GST_VIDEO_BOX (trans);
-  GstStructure *new_structure;
-  const GstStructure *structure;
-  const gchar *event_name;
-  gdouble pointer_x;
-  gdouble pointer_y;
+  gdouble x, y, new_x, new_y;
 
   GST_OBJECT_LOCK (video_box);
-  if (GST_EVENT_TYPE (event) == GST_EVENT_NAVIGATION &&
-      (video_box->box_left != 0 || video_box->box_top != 0)) {
-    structure = gst_event_get_structure (event);
-    event_name = gst_structure_get_string (structure, "event");
 
-    if (event_name &&
-        (strcmp (event_name, "mouse-move") == 0 ||
-            strcmp (event_name, "mouse-button-press") == 0 ||
-            strcmp (event_name, "mouse-button-release") == 0)) {
-      if (gst_structure_get_double (structure, "pointer_x", &pointer_x) &&
-          gst_structure_get_double (structure, "pointer_y", &pointer_y)) {
-        gdouble new_pointer_x, new_pointer_y;
-        GstEvent *new_event;
+  switch (GST_EVENT_TYPE (event)) {
+    case GST_EVENT_NAVIGATION:
+      if ((video_box->box_left != 0 || video_box->box_top != 0)
+          && gst_navigation_event_get_coordinates (event, &x, &y)) {
 
-        new_pointer_x = pointer_x + video_box->box_left;
-        new_pointer_y = pointer_y + video_box->box_top;
+        event = gst_event_make_writable (event);
+        new_x = x + video_box->box_left;
+        new_y = y + video_box->box_top;
 
-        new_structure = gst_structure_copy (structure);
-        gst_structure_set (new_structure,
-            "pointer_x", G_TYPE_DOUBLE, (gdouble) (new_pointer_x),
-            "pointer_y", G_TYPE_DOUBLE, (gdouble) (new_pointer_y), NULL);
-
-        new_event = gst_event_new_navigation (new_structure);
-        gst_event_unref (event);
-        event = new_event;
-      } else {
-        GST_WARNING_OBJECT (video_box, "Failed to read navigation event");
+        GST_TRACE_OBJECT (video_box, "from %fx%f to %fx%f", x, y, new_x, new_y);
+        gst_navigation_event_set_coordinates (event, new_x, new_y);
       }
-    }
+      break;
+    default:
+      break;
   }
   GST_OBJECT_UNLOCK (video_box);
 

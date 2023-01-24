@@ -142,6 +142,25 @@ _audio_device_is_alive (AudioDeviceID device_id, gboolean output)
   return alive;
 }
 
+static inline gboolean
+_audio_device_is_hidden (AudioDeviceID device_id)
+{
+  OSStatus status = noErr;
+  UInt32 hidden = FALSE;
+  UInt32 property_size = sizeof (hidden);
+  AudioObjectPropertyAddress property_address;
+
+  property_address.mSelector = kAudioDevicePropertyIsHidden;
+
+  status = AudioObjectGetPropertyData (device_id,
+      &property_address, 0, NULL, &property_size, &hidden);
+  if (status != noErr) {
+    return FALSE;
+  }
+
+  return hidden;
+}
+
 static inline guint
 _audio_device_get_latency (AudioDeviceID device_id)
 {
@@ -1187,56 +1206,18 @@ done:
 static gboolean
 gst_core_audio_select_device_impl (GstCoreAudio * core_audio)
 {
-  AudioDeviceID *devices = NULL;
   AudioDeviceID device_id = core_audio->device_id;
-  AudioDeviceID default_device_id = 0;
-  gint i, ndevices = 0;
   gboolean output = !core_audio->is_src;
   gboolean res = FALSE;
-#ifdef GST_CORE_AUDIO_DEBUG
-  AudioChannelLayout *channel_layout;
-#endif
-
-  devices = _audio_system_get_devices (&ndevices);
-
-  if (ndevices < 1) {
-    GST_ERROR ("no audio output devices found");
-    goto done;
-  }
-
-  GST_DEBUG ("found %d audio device(s)", ndevices);
-
-#ifdef GST_CORE_AUDIO_DEBUG
-  for (i = 0; i < ndevices; i++) {
-    gchar *device_name;
-
-    if ((device_name = _audio_device_get_name (devices[i], output))) {
-      if (!_audio_device_has_output (devices[i])) {
-        GST_DEBUG ("Input Device ID: %u Name: %s",
-            (unsigned) devices[i], device_name);
-      } else {
-        GST_DEBUG ("Output Device ID: %u Name: %s",
-            (unsigned) devices[i], device_name);
-
-        channel_layout =
-            gst_core_audio_audio_device_get_channel_layout (devices[i], output);
-        if (channel_layout) {
-          gst_core_audio_dump_channel_layout (channel_layout);
-          g_free (channel_layout);
-        }
-      }
-
-      g_free (device_name);
-    }
-  }
-#endif
-
-  /* Find the ID of the default output device */
-  default_device_id = _audio_system_get_default_device (output);
 
   /* Here we decide if selected device is valid or autoselect
    * the default one when required */
   if (device_id == kAudioDeviceUnknown) {
+    AudioDeviceID default_device_id;
+
+    /* Find the ID of the default output device */
+    default_device_id = _audio_system_get_default_device (output);
+
     if (default_device_id != kAudioDeviceUnknown) {
       device_id = default_device_id;
       res = TRUE;
@@ -1244,7 +1225,56 @@ gst_core_audio_select_device_impl (GstCoreAudio * core_audio)
       GST_ERROR ("No device of required type available");
       res = FALSE;
     }
+  } else if (_audio_device_is_hidden (device_id)) {
+    if (_audio_device_is_alive (device_id, output)) {
+      res = TRUE;
+    } else {
+      GST_ERROR ("Requested hidden device not usable");
+      res = FALSE;
+    }
   } else {
+    AudioDeviceID *devices = NULL;
+    gint i, ndevices = 0;
+#ifdef GST_CORE_AUDIO_DEBUG
+    AudioChannelLayout *channel_layout;
+#endif
+
+    devices = _audio_system_get_devices (&ndevices);
+
+    if (ndevices < 1) {
+      GST_ERROR ("no audio output devices found");
+      g_free (devices);
+      return res;
+    }
+
+    GST_DEBUG ("found %d audio device(s)", ndevices);
+
+#ifdef GST_CORE_AUDIO_DEBUG
+    for (i = 0; i < ndevices; i++) {
+      gchar *device_name;
+
+      if ((device_name = _audio_device_get_name (devices[i], output))) {
+        if (!_audio_device_has_output (devices[i])) {
+          GST_DEBUG ("Input Device ID: %u Name: %s",
+              (unsigned) devices[i], device_name);
+        } else {
+          GST_DEBUG ("Output Device ID: %u Name: %s",
+              (unsigned) devices[i], device_name);
+
+          channel_layout =
+              gst_core_audio_audio_device_get_channel_layout (devices[i],
+              output);
+          if (channel_layout) {
+            gst_core_audio_dump_channel_layout (channel_layout);
+            g_free (channel_layout);
+          }
+        }
+
+        g_free (device_name);
+      }
+    }
+#endif
+
     for (i = 0; i < ndevices; i++) {
       if (device_id == devices[i]) {
         res = TRUE;
@@ -1252,18 +1282,17 @@ gst_core_audio_select_device_impl (GstCoreAudio * core_audio)
       }
     }
 
+    g_free (devices);
+
     if (res && !_audio_device_is_alive (device_id, output)) {
       GST_ERROR ("Requested device not usable");
       res = FALSE;
-      goto done;
     }
   }
 
   if (res)
     core_audio->device_id = device_id;
 
-done:
-  g_free (devices);
   return res;
 }
 

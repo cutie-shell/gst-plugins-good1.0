@@ -277,6 +277,7 @@ gboolean     gst_v4l2_object_get_property_helper       (GstV4l2Object *v4l2objec
 gboolean     gst_v4l2_object_open            (GstV4l2Object * v4l2object, GstV4l2Error * error);
 gboolean     gst_v4l2_object_open_shared     (GstV4l2Object * v4l2object, GstV4l2Object * other);
 gboolean     gst_v4l2_object_close           (GstV4l2Object * v4l2object);
+gboolean     gst_v4l2_object_clear_format_list (GstV4l2Object * v4l2object);
 
 /* probing */
 
@@ -285,9 +286,6 @@ GstCaps*     gst_v4l2_object_get_all_caps (void);
 GstCaps*     gst_v4l2_object_get_raw_caps (void);
 
 GstCaps*     gst_v4l2_object_get_codec_caps (void);
-
-gint         gst_v4l2_object_extrapolate_stride (const GstVideoFormatInfo * finfo,
-                                                  gint plane, gint stride);
 
 gboolean     gst_v4l2_object_set_format  (GstV4l2Object * v4l2object, GstCaps * caps, GstV4l2Error * error);
 gboolean     gst_v4l2_object_try_format  (GstV4l2Object * v4l2object, GstCaps * caps, GstV4l2Error * error);
@@ -319,6 +317,8 @@ GstStructure * gst_v4l2_object_v4l2fourcc_to_structure (guint32 fourcc);
 
 /* crop / compose */
 gboolean     gst_v4l2_object_set_crop (GstV4l2Object * obj, struct v4l2_rect *result);
+gboolean     gst_v4l2_object_get_crop_bounds (GstV4l2Object * obj, struct v4l2_rect *bounds);
+gboolean     gst_v4l2_object_get_crop_default (GstV4l2Object * obj, struct v4l2_rect *bounds);
 
 /* TODO Move to proper namespace */
 /* open/close the device */

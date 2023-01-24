@@ -103,6 +103,7 @@ protected:
     void hoverMoveEvent (QHoverEvent *) override;
     void mousePressEvent(QMouseEvent*) override;
     void mouseReleaseEvent(QMouseEvent*) override;
+    void touchEvent(QTouchEvent*) override;
 
 private:
 
@@ -112,7 +113,7 @@ private:
     void fitStreamToAllocatedSize(GstVideoRectangle * result);
     QPointF mapPointToStreamSize(QPointF);
 
-    void sendMouseEvent(QMouseEvent * event, const gchar * type);
+    void sendMouseEvent(QMouseEvent * event, gboolean is_press);
 
     quint32 mousePressedButton;
     bool mouseHovering;

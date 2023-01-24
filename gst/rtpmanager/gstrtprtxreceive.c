@@ -145,7 +145,7 @@
 #endif
 
 #include <gst/gst.h>
-#include <gst/rtp/gstrtpbuffer.h>
+#include <gst/rtp/rtp.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -159,11 +159,25 @@ GST_DEBUG_CATEGORY_STATIC (gst_rtp_rtx_receive_debug);
 enum
 {
   PROP_0,
+  PROP_SSRC_MAP,
   PROP_PAYLOAD_TYPE_MAP,
   PROP_NUM_RTX_REQUESTS,
   PROP_NUM_RTX_PACKETS,
   PROP_NUM_RTX_ASSOC_PACKETS
 };
+
+enum
+{
+  SIGNAL_0,
+  SIGNAL_ADD_EXTENSION,
+  SIGNAL_CLEAR_EXTENSIONS,
+  LAST_SIGNAL
+};
+
+static guint gst_rtp_rtx_receive_signals[LAST_SIGNAL] = { 0, };
+
+#define RTPHDREXT_STREAM_ID GST_RTP_HDREXT_BASE "sdes:rtp-stream-id"
+#define RTPHDREXT_REPAIRED_STREAM_ID GST_RTP_HDREXT_BASE "sdes:repaired-rtp-stream-id"
 
 static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
@@ -198,6 +212,40 @@ GST_ELEMENT_REGISTER_DEFINE (rtprtxreceive, "rtprtxreceive", GST_RANK_NONE,
     GST_TYPE_RTP_RTX_RECEIVE);
 
 static void
+gst_rtp_rtx_receive_add_extension (GstRtpRtxReceive * rtx,
+    GstRTPHeaderExtension * ext)
+{
+  g_return_if_fail (GST_IS_RTP_HEADER_EXTENSION (ext));
+  g_return_if_fail (gst_rtp_header_extension_get_id (ext) > 0);
+
+  GST_OBJECT_LOCK (rtx);
+  if (g_strcmp0 (gst_rtp_header_extension_get_uri (ext),
+          RTPHDREXT_STREAM_ID) == 0) {
+    gst_clear_object (&rtx->rid_stream);
+    rtx->rid_stream = gst_object_ref (ext);
+  } else if (g_strcmp0 (gst_rtp_header_extension_get_uri (ext),
+          RTPHDREXT_REPAIRED_STREAM_ID) == 0) {
+    gst_clear_object (&rtx->rid_repaired);
+    rtx->rid_repaired = gst_object_ref (ext);
+  } else {
+    g_warning ("rtprtxsend (%s) doesn't know how to deal with the "
+        "RTP Header Extension with URI \'%s\'", GST_OBJECT_NAME (rtx),
+        gst_rtp_header_extension_get_uri (ext));
+  }
+  /* XXX: check for other duplicate ids? */
+  GST_OBJECT_UNLOCK (rtx);
+}
+
+static void
+gst_rtp_rtx_receive_clear_extensions (GstRtpRtxReceive * rtx)
+{
+  GST_OBJECT_LOCK (rtx);
+  gst_clear_object (&rtx->rid_stream);
+  gst_clear_object (&rtx->rid_repaired);
+  GST_OBJECT_UNLOCK (rtx);
+}
+
+static void
 gst_rtp_rtx_receive_class_init (GstRtpRtxReceiveClass * klass)
 {
   GObjectClass *gobject_class;
@@ -209,6 +257,22 @@ gst_rtp_rtx_receive_class_init (GstRtpRtxReceiveClass * klass)
   gobject_class->get_property = gst_rtp_rtx_receive_get_property;
   gobject_class->set_property = gst_rtp_rtx_receive_set_property;
   gobject_class->finalize = gst_rtp_rtx_receive_finalize;
+
+  /**
+   * GstRtpRtxReceive:ssrc-map:
+   *
+   * Map of SSRCs to their retransmission SSRCs for SSRC-multiplexed mode.
+   *
+   * If an application know this information already (WebRTC signals this
+   * in their SDP), it can allow the rtxreceive element to know a packet
+   * is a "valid" RTX packet even if it has not been requested.
+   *
+   * Since: 1.22
+   */
+  g_object_class_install_property (gobject_class, PROP_SSRC_MAP,
+      g_param_spec_boxed ("ssrc-map", "SSRC Map",
+          "Map of SSRCs to their retransmission SSRCs for SSRC-multiplexed mode",
+          GST_TYPE_STRUCTURE, G_PARAM_WRITABLE | G_PARAM_STATIC_STRINGS));
 
   g_object_class_install_property (gobject_class, PROP_PAYLOAD_TYPE_MAP,
       g_param_spec_boxed ("payload-type-map", "Payload Type Map",
@@ -230,6 +294,38 @@ gst_rtp_rtx_receive_class_init (GstRtpRtxReceiveClass * klass)
           "Num RTX Associated Packets", "Number of retransmission packets "
           "correctly associated with retransmission requests", 0, G_MAXUINT,
           0, G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+  /**
+   * rtprtxreceive::add-extension:
+   *
+   * Add @ext as an extension for writing part of an RTP header extension onto
+   * outgoing RTP packets.  Currently only supports using the following
+   * extension URIs. All other RTP header extensions are copied as-is.
+   *   - "urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id": will be removed
+   *   - "urn:ietf:params:rtp-hdrext:sdes:repaired-rtp-stream-id": will be
+   *     written instead of the "rtp-stream-id" header extension.
+   *
+   * Since: 1.22
+   */
+  gst_rtp_rtx_receive_signals[SIGNAL_ADD_EXTENSION] =
+      g_signal_new_class_handler ("add-extension", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
+      G_CALLBACK (gst_rtp_rtx_receive_add_extension), NULL, NULL, NULL,
+      G_TYPE_NONE, 1, GST_TYPE_RTP_HEADER_EXTENSION);
+
+  /**
+   * rtprtxreceive::clear-extensions:
+   * @object: the #GstRTPBasePayload
+   *
+   * Clear all RTP header extensions used by rtprtxreceive.
+   *
+   * Since: 1.22
+   */
+  gst_rtp_rtx_receive_signals[SIGNAL_CLEAR_EXTENSIONS] =
+      g_signal_new_class_handler ("clear-extensions", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
+      G_CALLBACK (gst_rtp_rtx_receive_clear_extensions), NULL, NULL, NULL,
+      G_TYPE_NONE, 0);
 
   gst_element_class_add_static_pad_template (gstelement_class, &src_factory);
   gst_element_class_add_static_pad_template (gstelement_class, &sink_factory);
@@ -261,10 +357,17 @@ gst_rtp_rtx_receive_finalize (GObject * object)
   GstRtpRtxReceive *rtx = GST_RTP_RTX_RECEIVE_CAST (object);
 
   g_hash_table_unref (rtx->ssrc2_ssrc1_map);
+  if (rtx->external_ssrc_map)
+    gst_structure_free (rtx->external_ssrc_map);
   g_hash_table_unref (rtx->seqnum_ssrc1_map);
   g_hash_table_unref (rtx->rtx_pt_map);
   if (rtx->rtx_pt_map_structure)
     gst_structure_free (rtx->rtx_pt_map_structure);
+
+  gst_clear_object (&rtx->rid_stream);
+  gst_clear_object (&rtx->rid_repaired);
+
+  gst_clear_buffer (&rtx->dummy_writable);
 
   G_OBJECT_CLASS (gst_rtp_rtx_receive_parent_class)->finalize (object);
 }
@@ -320,6 +423,8 @@ gst_rtp_rtx_receive_init (GstRtpRtxReceive * rtx)
       NULL, (GDestroyNotify) ssrc_assoc_free);
 
   rtx->rtx_pt_map = g_hash_table_new (g_direct_hash, g_direct_equal);
+
+  rtx->dummy_writable = gst_buffer_new ();
 }
 
 static gboolean
@@ -446,13 +551,169 @@ gst_rtp_rtx_receive_src_event (GstPad * pad, GstObject * parent,
   return res;
 }
 
+static GstMemory *
+rewrite_header_extensions (GstRtpRtxReceive * rtx, GstRTPBuffer * rtp)
+{
+  gsize out_size = rtp->size[1] + 32;
+  guint16 bit_pattern;
+  guint8 *pdata;
+  guint wordlen;
+  GstMemory *mem;
+  GstMapInfo map;
+
+  mem = gst_allocator_alloc (NULL, out_size, NULL);
+
+  gst_memory_map (mem, &map, GST_MAP_READWRITE);
+
+  if (gst_rtp_buffer_get_extension_data (rtp, &bit_pattern, (gpointer) & pdata,
+          &wordlen)) {
+    GstRTPHeaderExtensionFlags ext_flags = 0;
+    gsize bytelen = wordlen * 4;
+    guint hdr_unit_bytes;
+    gsize read_offset = 0, write_offset = 4;
+
+    if (bit_pattern == 0xBEDE) {
+      /* one byte extensions */
+      hdr_unit_bytes = 1;
+      ext_flags |= GST_RTP_HEADER_EXTENSION_ONE_BYTE;
+    } else if (bit_pattern >> 4 == 0x100) {
+      /* two byte extensions */
+      hdr_unit_bytes = 2;
+      ext_flags |= GST_RTP_HEADER_EXTENSION_TWO_BYTE;
+    } else {
+      GST_DEBUG_OBJECT (rtx, "unknown extension bit pattern 0x%02x%02x",
+          bit_pattern >> 8, bit_pattern & 0xff);
+      goto copy_as_is;
+    }
+
+    GST_WRITE_UINT16_BE (map.data, bit_pattern);
+
+    while (TRUE) {
+      guint8 read_id, read_len;
+
+      if (read_offset + hdr_unit_bytes >= bytelen)
+        /* not enough remaning data */
+        break;
+
+      if (ext_flags & GST_RTP_HEADER_EXTENSION_ONE_BYTE) {
+        read_id = GST_READ_UINT8 (pdata + read_offset) >> 4;
+        read_len = (GST_READ_UINT8 (pdata + read_offset) & 0x0F) + 1;
+        read_offset += 1;
+
+        if (read_id == 0)
+          /* padding */
+          continue;
+
+        if (read_id == 15)
+          /* special id for possible future expansion */
+          break;
+      } else {
+        read_id = GST_READ_UINT8 (pdata + read_offset);
+        read_offset += 1;
+
+        if (read_id == 0)
+          /* padding */
+          continue;
+
+        read_len = GST_READ_UINT8 (pdata + read_offset);
+        read_offset += 1;
+      }
+      GST_TRACE_OBJECT (rtx, "found rtp header extension with id %u and "
+          "length %u", read_id, read_len);
+
+      /* Ignore extension headers where the size does not fit */
+      if (read_offset + read_len > bytelen) {
+        GST_WARNING_OBJECT (rtx, "Extension length extends past the "
+            "size of the extension data");
+        break;
+      }
+
+      /* rewrite the rtp-stream-id into a repaired-stream-id */
+      if (rtx->rid_stream
+          && read_id == gst_rtp_header_extension_get_id (rtx->rid_repaired)) {
+        if (!gst_rtp_header_extension_read (rtx->rid_repaired, ext_flags,
+                &pdata[read_offset], read_len, rtx->dummy_writable)) {
+          GST_WARNING_OBJECT (rtx, "RTP header extension (%s) could "
+              "not read payloaded data", GST_OBJECT_NAME (rtx->rid_stream));
+          goto copy_as_is;
+        }
+        if (rtx->rid_repaired) {
+          guint8 write_id = gst_rtp_header_extension_get_id (rtx->rid_stream);
+          gsize written;
+          char *rid;
+
+          g_object_get (rtx->rid_repaired, "rid", &rid, NULL);
+          g_object_set (rtx->rid_stream, "rid", rid, NULL);
+          g_clear_pointer (&rid, g_free);
+
+          written =
+              gst_rtp_header_extension_write (rtx->rid_stream, rtp->buffer,
+              ext_flags, rtx->dummy_writable,
+              &map.data[write_offset + hdr_unit_bytes],
+              map.size - write_offset - hdr_unit_bytes);
+          GST_TRACE_OBJECT (rtx->rid_repaired, "wrote %" G_GSIZE_FORMAT,
+              written);
+          if (written <= 0) {
+            GST_WARNING_OBJECT (rtx, "Failed to rewrite RID for RTX");
+            goto copy_as_is;
+          } else {
+            if (ext_flags & GST_RTP_HEADER_EXTENSION_ONE_BYTE) {
+              map.data[write_offset] =
+                  ((write_id & 0x0F) << 4) | ((written - 1) & 0x0F);
+            } else if (ext_flags & GST_RTP_HEADER_EXTENSION_TWO_BYTE) {
+              map.data[write_offset] = write_id & 0xFF;
+              map.data[write_offset + 1] = written & 0xFF;
+            } else {
+              g_assert_not_reached ();
+              goto copy_as_is;
+            }
+            write_offset += written + hdr_unit_bytes;
+          }
+        }
+      } else {
+        /* TODO: may need to write mid at different times to the original
+         * buffer to account for the difference in timing of acknowledgement
+         * of the rtx ssrc from the original ssrc.  This may add extra data to
+         * the header extension space that needs to be accounted for.
+         */
+        memcpy (&map.data[write_offset],
+            &pdata[read_offset - hdr_unit_bytes], read_len + hdr_unit_bytes);
+        write_offset += read_len + hdr_unit_bytes;
+      }
+
+      read_offset += read_len;
+    }
+
+    /* subtract the ext header */
+    wordlen = write_offset / 4 + ((write_offset % 4) ? 1 : 0);
+
+    /* wordlen in the ext data doesn't include the 4-byte header */
+    GST_WRITE_UINT16_BE (map.data + 2, wordlen - 1);
+
+    if (wordlen * 4 > write_offset)
+      memset (&map.data[write_offset], 0, wordlen * 4 - write_offset);
+
+    GST_MEMDUMP_OBJECT (rtx, "generated ext data", map.data, wordlen * 4);
+  } else {
+  copy_as_is:
+    wordlen = rtp->size[1] / 4;
+    memcpy (map.data, rtp->data[1], rtp->size[1]);
+    GST_LOG_OBJECT (rtx, "copying data as-is");
+  }
+
+  gst_memory_unmap (mem, &map);
+  gst_memory_resize (mem, 0, wordlen * 4);
+
+  return mem;
+}
+
 /* Copy fixed header and extension. Replace current ssrc by ssrc1,
  * remove OSN and replace current seq num by OSN.
  * Copy memory to avoid to manually copy each rtp buffer field.
  */
 static GstBuffer *
-_gst_rtp_buffer_new_from_rtx (GstRTPBuffer * rtp, guint32 ssrc1,
-    guint16 orign_seqnum, guint8 origin_payload_type)
+_gst_rtp_buffer_new_from_rtx (GstRtpRtxReceive * rtx, GstRTPBuffer * rtp,
+    guint32 ssrc1, guint16 orign_seqnum, guint8 origin_payload_type)
 {
   GstMemory *mem = NULL;
   GstRTPBuffer new_rtp = GST_RTP_BUFFER_INIT;
@@ -467,18 +728,17 @@ _gst_rtp_buffer_new_from_rtx (GstRTPBuffer * rtp, guint32 ssrc1,
 
   /* copy extension if any */
   if (rtp->size[1]) {
-    mem = gst_memory_copy (rtp->map[1].memory,
-        (guint8 *) rtp->data[1] - rtp->map[1].data, rtp->size[1]);
+    mem = rewrite_header_extensions (rtx, rtp);
     gst_buffer_append_memory (new_buffer, mem);
   }
 
   /* copy payload and remove OSN */
+  g_assert_cmpint (rtp->size[2], >, 1);
   payload_len = rtp->size[2] - 2;
   mem = gst_allocator_alloc (NULL, payload_len, NULL);
 
   gst_memory_map (mem, &map, GST_MAP_WRITE);
-  if (rtp->size[2])
-    memcpy (map.data, (guint8 *) rtp->data[2] + 2, payload_len);
+  memcpy (map.data, (guint8 *) rtp->data[2] + 2, payload_len);
   gst_memory_unmap (mem, &map);
   gst_buffer_append_memory (new_buffer, mem);
 
@@ -530,9 +790,16 @@ gst_rtp_rtx_receive_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
   gboolean is_rtx;
   gboolean drop = FALSE;
 
+  if (rtx->rtx_pt_map_structure == NULL)
+    goto no_map;
+
   /* map current rtp packet to parse its header */
   if (!gst_rtp_buffer_map (buffer, GST_MAP_READ, &rtp))
     goto invalid_buffer;
+
+  GST_MEMDUMP_OBJECT (rtx, "rtp header", rtp.map[0].data, rtp.map[0].size);
+  GST_MEMDUMP_OBJECT (rtx, "rtp ext", rtp.map[1].data, rtp.map[1].size);
+  GST_MEMDUMP_OBJECT (rtx, "rtp payload", rtp.map[2].data, rtp.map[2].size);
 
   ssrc = gst_rtp_buffer_get_ssrc (&rtp);
   seqnum = gst_rtp_buffer_get_seq (&rtp);
@@ -579,67 +846,76 @@ gst_rtp_rtx_receive_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
     /* increase our statistic */
     ++rtx->num_rtx_packets;
 
-    /* read OSN in the rtx payload */
-    orign_seqnum = GST_READ_UINT16_BE (gst_rtp_buffer_get_payload (&rtp));
-    origin_payload_type =
-        GPOINTER_TO_UINT (g_hash_table_lookup (rtx->rtx_pt_map,
-            GUINT_TO_POINTER (payload_type)));
+    /* check if there enough data to read OSN from the paylaod,
+       we need at least two bytes
+     */
+    if (gst_rtp_buffer_get_payload_len (&rtp) > 1) {
+      /* read OSN in the rtx payload */
+      orign_seqnum = GST_READ_UINT16_BE (gst_rtp_buffer_get_payload (&rtp));
+      origin_payload_type =
+          GPOINTER_TO_UINT (g_hash_table_lookup (rtx->rtx_pt_map,
+              GUINT_TO_POINTER (payload_type)));
 
-    GST_DEBUG_OBJECT (rtx, "Got rtx packet: rtx seqnum %u, rtx ssrc %X, "
-        "rtx pt %u, orig seqnum %u, orig pt %u", seqnum, ssrc, payload_type,
-        orign_seqnum, origin_payload_type);
+      GST_DEBUG_OBJECT (rtx, "Got rtx packet: rtx seqnum %u, rtx ssrc %X, "
+          "rtx pt %u, orig seqnum %u, orig pt %u", seqnum, ssrc, payload_type,
+          orign_seqnum, origin_payload_type);
 
-    /* first we check if we already have associated this retransmission stream
-     * to a master stream */
-    if (g_hash_table_lookup_extended (rtx->ssrc2_ssrc1_map,
-            GUINT_TO_POINTER (ssrc), NULL, &ssrc1)) {
-      GST_TRACE_OBJECT (rtx,
-          "packet is from retransmission stream %X already associated to "
-          "master stream %X", ssrc, GPOINTER_TO_UINT (ssrc1));
-      ssrc2 = ssrc;
-    } else {
-      SsrcAssoc *assoc;
-
-      /* the current retransmitted packet has its rtx stream not already
-       * associated to a master stream, so retrieve it from our request
-       * history */
-      if (g_hash_table_lookup_extended (rtx->seqnum_ssrc1_map,
-              GUINT_TO_POINTER (orign_seqnum), NULL, (gpointer *) & assoc)) {
-        GST_LOG_OBJECT (rtx,
-            "associating retransmitted stream %X to master stream %X thanks "
-            "to rtx packet %u (orig seqnum %u)", ssrc, assoc->ssrc, seqnum,
-            orign_seqnum);
-        ssrc1 = GUINT_TO_POINTER (assoc->ssrc);
+      /* first we check if we already have associated this retransmission stream
+       * to a master stream */
+      if (g_hash_table_lookup_extended (rtx->ssrc2_ssrc1_map,
+              GUINT_TO_POINTER (ssrc), NULL, &ssrc1)) {
+        GST_TRACE_OBJECT (rtx,
+            "packet is from retransmission stream %X already associated to "
+            "master stream %X", ssrc, GPOINTER_TO_UINT (ssrc1));
         ssrc2 = ssrc;
-
-        /* just put a guard */
-        if (GPOINTER_TO_UINT (ssrc1) == ssrc2)
-          GST_WARNING_OBJECT (rtx, "RTX receiver ssrc2_ssrc1_map bad state, "
-              "master and rtx SSRCs are the same (%X)\n", ssrc);
-
-        /* free the spot so that this seqnum can be used to do another
-         * association */
-        g_hash_table_remove (rtx->seqnum_ssrc1_map,
-            GUINT_TO_POINTER (orign_seqnum));
-
-        /* actually do the association between rtx stream and master stream */
-        g_hash_table_insert (rtx->ssrc2_ssrc1_map, GUINT_TO_POINTER (ssrc2),
-            ssrc1);
-
-        /* also do the association between master stream and rtx stream
-         * every ssrc are unique so we can use the same hash table
-         * for both retrieving the ssrc1 from ssrc2 and also ssrc2 from ssrc1
-         */
-        g_hash_table_insert (rtx->ssrc2_ssrc1_map, ssrc1,
-            GUINT_TO_POINTER (ssrc2));
-
       } else {
-        /* we are not able to associate this rtx packet with a master stream */
-        GST_INFO_OBJECT (rtx,
-            "dropping rtx packet %u because its orig seqnum (%u) is not in our"
-            " pending retransmission requests", seqnum, orign_seqnum);
-        drop = TRUE;
+        SsrcAssoc *assoc;
+
+        /* the current retransmitted packet has its rtx stream not already
+         * associated to a master stream, so retrieve it from our request
+         * history */
+        if (g_hash_table_lookup_extended (rtx->seqnum_ssrc1_map,
+                GUINT_TO_POINTER (orign_seqnum), NULL, (gpointer *) & assoc)) {
+          GST_LOG_OBJECT (rtx,
+              "associating retransmitted stream %X to master stream %X thanks "
+              "to rtx packet %u (orig seqnum %u)", ssrc, assoc->ssrc, seqnum,
+              orign_seqnum);
+          ssrc1 = GUINT_TO_POINTER (assoc->ssrc);
+          ssrc2 = ssrc;
+
+          /* just put a guard */
+          if (GPOINTER_TO_UINT (ssrc1) == ssrc2)
+            GST_WARNING_OBJECT (rtx, "RTX receiver ssrc2_ssrc1_map bad state, "
+                "master and rtx SSRCs are the same (%X)\n", ssrc);
+
+          /* free the spot so that this seqnum can be used to do another
+           * association */
+          g_hash_table_remove (rtx->seqnum_ssrc1_map,
+              GUINT_TO_POINTER (orign_seqnum));
+
+          /* actually do the association between rtx stream and master stream */
+          g_hash_table_insert (rtx->ssrc2_ssrc1_map, GUINT_TO_POINTER (ssrc2),
+              ssrc1);
+
+          /* also do the association between master stream and rtx stream
+           * every ssrc are unique so we can use the same hash table
+           * for both retrieving the ssrc1 from ssrc2 and also ssrc2 from ssrc1
+           */
+          g_hash_table_insert (rtx->ssrc2_ssrc1_map, ssrc1,
+              GUINT_TO_POINTER (ssrc2));
+
+        } else {
+          /* we are not able to associate this rtx packet with a master stream */
+          GST_INFO_OBJECT (rtx,
+              "dropping rtx packet %u because its orig seqnum (%u) is not in our"
+              " pending retransmission requests", seqnum, orign_seqnum);
+          drop = TRUE;
+        }
       }
+    } else {
+      /* the rtx packet is empty */
+      GST_DEBUG_OBJECT (rtx, "drop rtx packet because it is empty");
+      drop = TRUE;
     }
   }
 
@@ -659,7 +935,7 @@ gst_rtp_rtx_receive_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
   /* create the retransmission packet */
   if (is_rtx)
     new_buffer =
-        _gst_rtp_buffer_new_from_rtx (&rtp, GPOINTER_TO_UINT (ssrc1),
+        _gst_rtp_buffer_new_from_rtx (rtx, &rtp, GPOINTER_TO_UINT (ssrc1),
         orign_seqnum, origin_payload_type);
 
   gst_rtp_buffer_unmap (&rtp);
@@ -679,10 +955,14 @@ gst_rtp_rtx_receive_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
 
   return ret;
 
+no_map:
+  {
+    GST_DEBUG_OBJECT (pad, "No map set, passthrough");
+    return gst_pad_push (rtx->srcpad, buffer);
+  }
 invalid_buffer:
   {
-    GST_ELEMENT_WARNING (rtx, STREAM, DECODE, (NULL),
-        ("Received invalid RTP payload, dropping"));
+    GST_INFO_OBJECT (pad, "Received invalid RTP payload, dropping");
     gst_buffer_unref (buffer);
     return GST_FLOW_OK;
   }
@@ -745,6 +1025,16 @@ gst_rtp_rtx_receive_set_property (GObject * object,
   GstRtpRtxReceive *rtx = GST_RTP_RTX_RECEIVE_CAST (object);
 
   switch (prop_id) {
+    case PROP_SSRC_MAP:
+      GST_OBJECT_LOCK (rtx);
+      if (rtx->external_ssrc_map)
+        gst_structure_free (rtx->external_ssrc_map);
+      rtx->external_ssrc_map = g_value_dup_boxed (value);
+      g_hash_table_remove_all (rtx->ssrc2_ssrc1_map);
+      gst_structure_foreach (rtx->external_ssrc_map,
+          structure_to_hash_table_inv, rtx->ssrc2_ssrc1_map);
+      GST_OBJECT_UNLOCK (rtx);
+      break;
     case PROP_PAYLOAD_TYPE_MAP:
       GST_OBJECT_LOCK (rtx);
       if (rtx->rtx_pt_map_structure)

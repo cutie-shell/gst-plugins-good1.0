@@ -25,7 +25,7 @@
 #define __GST_RTP_RTX_RECEIVE_H__
 
 #include <gst/gst.h>
-#include <gst/rtp/gstrtpbuffer.h>
+#include <gst/rtp/rtp.h>
 
 G_BEGIN_DECLS
 typedef struct _GstRtpRtxReceive GstRtpRtxReceive;
@@ -52,6 +52,8 @@ struct _GstRtpRtxReceive
    * as we make sure all ssrc are unique */
   GHashTable *ssrc2_ssrc1_map;
 
+  GstStructure *external_ssrc_map;
+
   /* contains seqnum of request packets of whom their ssrc have
    * not been associated to a rtx stream yet */
   GHashTable *seqnum_ssrc1_map;
@@ -67,6 +69,11 @@ struct _GstRtpRtxReceive
   guint num_rtx_assoc_packets;
 
   GstClockTime last_time;
+
+  GstRTPHeaderExtension *rid_stream;
+  GstRTPHeaderExtension *rid_repaired;
+
+  GstBuffer *dummy_writable;
 };
 
 struct _GstRtpRtxReceiveClass

@@ -649,7 +649,7 @@ rtp_source_set_callbacks (RTPSource * src, RTPSourceCallbacks * cb,
   g_return_if_fail (RTP_IS_SOURCE (src));
 
   src->callbacks.push_rtp = cb->push_rtp;
-  src->callbacks.clock_rate = cb->clock_rate;
+  src->callbacks.caps = cb->caps;
   src->user_data = user_data;
 }
 
@@ -820,11 +820,12 @@ rtp_source_get_bye_reason (RTPSource * src)
  * Parse @caps and store all relevant information in @source.
  */
 void
-rtp_source_update_caps (RTPSource * src, GstCaps * caps)
+rtp_source_update_send_caps (RTPSource * src, GstCaps * caps)
 {
   GstStructure *s;
   guint val;
   gint ival;
+  guint ssrc, rtx_ssrc = -1;
   gboolean rtx;
 
   /* nothing changed, return */
@@ -833,7 +834,17 @@ rtp_source_update_caps (RTPSource * src, GstCaps * caps)
 
   s = gst_caps_get_structure (caps, 0);
 
-  rtx = (gst_structure_get_uint (s, "rtx-ssrc", &val) && val == src->ssrc);
+  if (!gst_structure_get_uint (s, "ssrc", &ssrc))
+    return;
+  gst_structure_get_uint (s, "rtx-ssrc", &rtx_ssrc);
+
+  if (src->ssrc != ssrc && src->ssrc != rtx_ssrc) {
+    GST_WARNING ("got ssrc %u/%u that doesn't match with this source's ssrc %u",
+        ssrc, rtx_ssrc, src->ssrc);
+    return;
+  }
+
+  rtx = (rtx_ssrc == src->ssrc);
 
   if (gst_structure_get_int (s, rtx ? "rtx-payload" : "payload", &ival))
     src->payload = ival;
@@ -859,6 +870,12 @@ rtp_source_update_caps (RTPSource * src, GstCaps * caps)
       src->seqnum_offset);
 
   gst_caps_replace (&src->caps, caps);
+
+  if (rtx) {
+    src->media_ssrc = ssrc;
+  } else {
+    src->media_ssrc = -1;
+  }
 }
 
 /**
@@ -923,7 +940,7 @@ push_packet (RTPSource * src, GstBuffer * buffer)
 }
 
 static void
-fetch_clock_rate_from_payload (RTPSource * src, guint8 payload)
+fetch_caps_for_payload (RTPSource * src, guint8 payload)
 {
   if (src->payload == -1) {
     /* first payload received, nothing was in the caps, lock on to this payload */
@@ -937,16 +954,40 @@ fetch_clock_rate_from_payload (RTPSource * src, guint8 payload)
     src->stats.transit = -1;
   }
 
-  if (src->clock_rate == -1) {
-    gint clock_rate = -1;
+  if (src->clock_rate == -1 || !src->caps) {
+    GstCaps *caps = NULL;
 
-    if (src->callbacks.clock_rate)
-      clock_rate = src->callbacks.clock_rate (src, payload, src->user_data);
+    if (src->callbacks.caps) {
+      caps = src->callbacks.caps (src, payload, src->user_data);
+    }
 
-    GST_DEBUG ("got clock-rate %d", clock_rate);
+    GST_DEBUG ("got caps %" GST_PTR_FORMAT, caps);
 
-    src->clock_rate = clock_rate;
-    gst_rtp_packet_rate_ctx_reset (&src->packet_rate_ctx, clock_rate);
+    if (caps) {
+      const GstStructure *s;
+      gint clock_rate = -1;
+      const gchar *encoding_name;
+
+      s = gst_caps_get_structure (caps, 0);
+
+      if (gst_structure_get_int (s, "clock-rate", &clock_rate)) {
+        src->clock_rate = clock_rate;
+        gst_rtp_packet_rate_ctx_reset (&src->packet_rate_ctx, clock_rate);
+      } else {
+        GST_DEBUG ("No clock-rate in caps!");
+      }
+
+      encoding_name = gst_structure_get_string (s, "encoding-name");
+      /* Disable probation for RTX sources as packets will arrive very
+       * irregularly and waiting for a second packet usually exceeds the
+       * deadline of the retransmission */
+      if (g_strcmp0 (encoding_name, "rtx") == 0) {
+        src->probation = src->curr_probation = 0;
+      }
+    }
+
+    gst_caps_replace (&src->caps, caps);
+    gst_clear_caps (&caps);
   }
 }
 
@@ -1210,6 +1251,28 @@ update_receiver_stats (RTPSource * src, RTPPacketInfo * pinfo,
       GST_INFO ("duplicate or reordered packet (seqnr %u, expected %u)",
           seqnr, expected);
     }
+  } else {
+    /* Sender stats - update the outbound sequence number */
+    expected = src->stats.max_seq + 1;
+    delta = gst_rtp_buffer_compare_seqnum (expected, seqnr);
+    /* No probation for local senders, just check for lost / dropouts */
+    if (delta >= 0 && delta < max_dropout) {
+      stats->bad_seq = RTP_SEQ_MOD + 1; /* so seq == bad_seq is false */
+      /* in order, with permissible gap */
+      if (seqnr < stats->max_seq) {
+        /* sequence number wrapped - count another 64K cycle. */
+        stats->cycles += RTP_SEQ_MOD;
+      }
+      stats->max_seq = seqnr;
+    } else if (delta < -max_misorder || delta >= max_dropout) {
+      /* the sequence number made a very large jump */
+      if (seqnr != stats->bad_seq) {
+        /* unacceptable jump */
+        stats->bad_seq = (seqnr + 1) & (RTP_SEQ_MOD - 1);
+      }
+    } else {                    /* delta < 0 && delta >= -max_misorder */
+      stats->bad_seq = RTP_SEQ_MOD + 1; /* so seq == bad_seq is false */
+    }
   }
 
   src->stats.octets_received += pinfo->payload_len;
@@ -1263,7 +1326,7 @@ rtp_source_process_rtp (RTPSource * src, RTPPacketInfo * pinfo)
   g_return_val_if_fail (RTP_IS_SOURCE (src), GST_FLOW_ERROR);
   g_return_val_if_fail (pinfo != NULL, GST_FLOW_ERROR);
 
-  fetch_clock_rate_from_payload (src, pinfo->pt);
+  fetch_caps_for_payload (src, pinfo->pt);
 
   if (!update_receiver_stats (src, pinfo, TRUE))
     return GST_FLOW_OK;
@@ -1555,7 +1618,7 @@ rtp_source_get_new_sr (RTPSource * src, guint64 ntpnstime,
   if (src->clock_rate == -1 && src->pt_set) {
     GST_INFO ("no clock-rate, getting for pt %u and SSRC %u", src->pt,
         src->ssrc);
-    fetch_clock_rate_from_payload (src, src->pt);
+    fetch_caps_for_payload (src, src->pt);
   }
 
   if (src->clock_rate != -1) {

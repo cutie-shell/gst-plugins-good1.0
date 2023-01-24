@@ -15,8 +15,11 @@ gstequalizer = library('gstequalizer',
   install : true,
   install_dir : plugins_install_dir,
 )
-pkgconfig.generate(gstequalizer, install_dir : plugins_pkgconfig_install_dir)
 plugins += [gstequalizer]
 
 install_data(sources: ['GstIirEqualizer3Bands.prs',
   'GstIirEqualizer10Bands.prs'], install_dir: presetdir)
+
+env = environment()
+env.prepend('GST_PRESET_PATH', meson.current_source_dir())
+meson.add_devenv(env)

@@ -1,5 +1,14 @@
 build_hotdoc = false
 
+if static_build
+    if get_option('doc').enabled()
+        error('Documentation enabled but not supported when building statically.')
+    endif
+
+    message('Building statically, can\'t build the documentation')
+    subdir_done()
+endif
+
 if meson.is_cross_build()
     if get_option('doc').enabled()
         error('Documentation enabled but building the doc while cross building is not supported yet.')
@@ -22,7 +31,7 @@ plugins_cache = join_paths(meson.current_source_dir(), 'gst_plugins_cache.json')
 if plugins.length() == 0
     message('All good plugins have been disabled')
 elif plugins_cache_generator.found()
-    plugins_doc_dep = custom_target('good-plugins-doc-cache',
+    gst_plugins_doc_dep = custom_target('good-plugins-doc-cache',
         command: [plugins_cache_generator, plugins_cache, '@OUTPUT@', '@INPUT@'],
         input: plugins,
         output: 'gst_plugins_cache.json',
@@ -95,10 +104,11 @@ foreach plugin_name: list_plugin_res.stdout().split(':')
       gst_c_sources: [
         '../sys/*/*.[cmh]',
         '../ext/*/*.[ch]',
+        '../ext/*/*/*.[ch]',
         '../gst/*/*.[ch]',
       ],
       gst_c_source_filters: excludes,
-      dependencies: [gst_dep, plugins],
+      dependencies: [gst_dep],
       gst_order_generated_subpages: true,
       install: false,
       disable_incremental_build: true,

@@ -39,7 +39,7 @@
 #include "gstv4l2tuner.h"
 #include "gstv4l2colorbalance.h"
 
-#include "gst/gst-i18n-plugin.h"
+#include <glib/gi18n-lib.h>
 
 #include <gst/video/video.h>
 #include <gst/allocators/gstdmabuf.h>
@@ -54,6 +54,8 @@ GST_DEBUG_CATEGORY_EXTERN (v4l2_debug);
 #define DEFAULT_PROP_IO_MODE            GST_V4L2_IO_AUTO
 
 #define ENCODED_BUFFER_SIZE             (2 * 1024 * 1024)
+#define GST_V4L2_DEFAULT_WIDTH          320
+#define GST_V4L2_DEFAULT_HEIGHT         240
 
 enum
 {
@@ -152,6 +154,8 @@ static const GstV4L2FormatDesc gst_v4l2_formats[] = {
   {V4L2_PIX_FMT_NV12M, TRUE, GST_V4L2_RAW},
   {V4L2_PIX_FMT_NV12MT, TRUE, GST_V4L2_RAW},
   {V4L2_PIX_FMT_NV12MT_16X16, TRUE, GST_V4L2_RAW},
+  {V4L2_PIX_FMT_NV12M_8L128, TRUE, GST_V4L2_RAW},
+  {V4L2_PIX_FMT_NV12M_10BE_8L128, TRUE, GST_V4L2_RAW},
   {V4L2_PIX_FMT_NV21, TRUE, GST_V4L2_RAW},
   {V4L2_PIX_FMT_NV21M, TRUE, GST_V4L2_RAW},
   {V4L2_PIX_FMT_NV16, TRUE, GST_V4L2_RAW},
@@ -160,6 +164,7 @@ static const GstV4L2FormatDesc gst_v4l2_formats[] = {
   {V4L2_PIX_FMT_NV61M, TRUE, GST_V4L2_RAW},
   {V4L2_PIX_FMT_NV24, TRUE, GST_V4L2_RAW},
   {V4L2_PIX_FMT_NV42, TRUE, GST_V4L2_RAW},
+  {V4L2_PIX_FMT_MM21, TRUE, GST_V4L2_RAW},
 
   /* Bayer formats - see http://www.siliconimaging.com/RGB%20Bayer.htm */
   {V4L2_PIX_FMT_SBGGR8, TRUE, GST_V4L2_RAW},
@@ -545,9 +550,6 @@ gst_v4l2_object_new (GstElement * element,
   return v4l2object;
 }
 
-static gboolean gst_v4l2_object_clear_format_list (GstV4l2Object * v4l2object);
-
-
 void
 gst_v4l2_object_destroy (GstV4l2Object * v4l2object)
 {
@@ -573,7 +575,7 @@ gst_v4l2_object_destroy (GstV4l2Object * v4l2object)
 }
 
 
-static gboolean
+gboolean
 gst_v4l2_object_clear_format_list (GstV4l2Object * v4l2object)
 {
   g_slist_foreach (v4l2object->formats, (GFunc) g_free, NULL);
@@ -1067,6 +1069,9 @@ gst_v4l2_object_format_get_rank (const struct v4l2_fmtdesc *fmt)
     case V4L2_PIX_FMT_NV61:    /* 16  Y/CrCb 4:2:2  */
     case V4L2_PIX_FMT_NV61M:   /* Same as NV61      */
     case V4L2_PIX_FMT_NV24:    /* 24  Y/CrCb 4:4:4  */
+    case V4L2_PIX_FMT_MM21:    /* NV12 Y 16x32, UV 16x16 tile */
+    case V4L2_PIX_FMT_NV12M_8L128:
+    case V4L2_PIX_FMT_NV12M_10BE_8L128:
       rank = YUV_ODD_BASE_RANK;
       break;
 
@@ -1343,6 +1348,15 @@ gst_v4l2_object_v4l2fourcc_to_video_format (guint32 fourcc)
     case V4L2_PIX_FMT_NV12MT:
       format = GST_VIDEO_FORMAT_NV12_64Z32;
       break;
+    case V4L2_PIX_FMT_MM21:
+      format = GST_VIDEO_FORMAT_NV12_16L32S;
+      break;
+    case V4L2_PIX_FMT_NV12M_8L128:
+      format = GST_VIDEO_FORMAT_NV12_8L128;
+      break;
+    case V4L2_PIX_FMT_NV12M_10BE_8L128:
+      format = GST_VIDEO_FORMAT_NV12_10BE_8L128;
+      break;
     case V4L2_PIX_FMT_NV21:
     case V4L2_PIX_FMT_NV21M:
       format = GST_VIDEO_FORMAT_NV21;
@@ -1511,6 +1525,9 @@ gst_v4l2_object_v4l2fourcc_to_bare_struct (guint32 fourcc)
     case V4L2_PIX_FMT_NV12:    /* 12  Y/CbCr 4:2:0  */
     case V4L2_PIX_FMT_NV12M:
     case V4L2_PIX_FMT_NV12MT:
+    case V4L2_PIX_FMT_MM21:
+    case V4L2_PIX_FMT_NV12M_8L128:
+    case V4L2_PIX_FMT_NV12M_10BE_8L128:
     case V4L2_PIX_FMT_NV21:    /* 12  Y/CrCb 4:2:0  */
     case V4L2_PIX_FMT_NV21M:
     case V4L2_PIX_FMT_NV16:    /* 16  Y/CbCr 4:2:2  */
@@ -1790,6 +1807,15 @@ gst_v4l2_object_get_caps_info (GstV4l2Object * v4l2object, GstCaps * caps,
         break;
       case GST_VIDEO_FORMAT_NV12_64Z32:
         fourcc_nc = V4L2_PIX_FMT_NV12MT;
+        break;
+      case GST_VIDEO_FORMAT_NV12_16L32S:
+        fourcc_nc = V4L2_PIX_FMT_MM21;
+        break;
+      case GST_VIDEO_FORMAT_NV12_8L128:
+        fourcc_nc = V4L2_PIX_FMT_NV12M_8L128;
+        break;
+      case GST_VIDEO_FORMAT_NV12_10BE_8L128:
+        fourcc_nc = V4L2_PIX_FMT_NV12M_10BE_8L128;
         break;
       case GST_VIDEO_FORMAT_NV21:
         fourcc = V4L2_PIX_FMT_NV21;
@@ -3184,6 +3210,40 @@ no_supported_capture_method:
   }
 }
 
+static gboolean
+gst_v4l2_object_reset_compose_region (GstV4l2Object * obj)
+{
+  struct v4l2_selection sel = { 0 };
+
+  GST_V4L2_CHECK_OPEN (obj);
+
+  sel.type = obj->type;
+  sel.target = V4L2_SEL_TGT_COMPOSE_DEFAULT;
+
+  if (obj->ioctl (obj->video_fd, VIDIOC_G_SELECTION, &sel) < 0) {
+    if (errno == ENOTTY) {
+      /* No-op when selection API is not supported */
+      return TRUE;
+    } else {
+      GST_WARNING_OBJECT (obj->dbg_obj,
+          "Failed to get default compose rectangle with VIDIOC_G_SELECTION: %s",
+          g_strerror (errno));
+      return FALSE;
+    }
+  }
+
+  sel.target = V4L2_SEL_TGT_COMPOSE;
+
+  if (obj->ioctl (obj->video_fd, VIDIOC_S_SELECTION, &sel) < 0) {
+    GST_WARNING_OBJECT (obj->dbg_obj,
+        "Failed to set default compose rectangle with VIDIOC_S_SELECTION: %s",
+        g_strerror (errno));
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
 static void
 gst_v4l2_object_set_stride (GstVideoInfo * info, GstVideoAlignment * align,
     gint plane, gint stride)
@@ -3191,19 +3251,16 @@ gst_v4l2_object_set_stride (GstVideoInfo * info, GstVideoAlignment * align,
   const GstVideoFormatInfo *finfo = info->finfo;
 
   if (GST_VIDEO_FORMAT_INFO_IS_TILED (finfo)) {
-    gint x_tiles, y_tiles, ws, hs, tile_height, padded_height;
+    gint x_tiles, y_tiles, tile_height, padded_height;
 
-
-    ws = GST_VIDEO_FORMAT_INFO_TILE_WS (finfo);
-    hs = GST_VIDEO_FORMAT_INFO_TILE_HS (finfo);
-    tile_height = 1 << hs;
+    tile_height = GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (finfo, plane);
 
     padded_height = GST_VIDEO_FORMAT_INFO_SCALE_HEIGHT (finfo, plane,
         info->height + align->padding_top + align->padding_bottom);
-    padded_height = GST_ROUND_UP_N (padded_height, tile_height);
+    padded_height = (padded_height + tile_height - 1) / tile_height;
 
-    x_tiles = stride >> ws;
-    y_tiles = padded_height >> hs;
+    x_tiles = stride / GST_VIDEO_FORMAT_INFO_TILE_STRIDE (finfo, plane);
+    y_tiles = padded_height / tile_height;
     info->stride[plane] = GST_VIDEO_TILE_MAKE_STRIDE (x_tiles, y_tiles);
   } else {
     info->stride[plane] = stride;
@@ -3225,7 +3282,7 @@ gst_v4l2_object_extrapolate_info (GstV4l2Object * v4l2object,
       align->padding_bottom;
 
   for (i = 0; i < finfo->n_planes; i++) {
-    estride = gst_v4l2_object_extrapolate_stride (finfo, i, stride);
+    estride = gst_video_format_info_extrapolate_stride (finfo, i, stride);
 
     gst_v4l2_object_set_stride (info, align, i, estride);
 
@@ -3290,12 +3347,9 @@ gst_v4l2_object_save_format (GstV4l2Object * v4l2object,
   padded_height = format->fmt.pix.height;
 
   if (GST_VIDEO_FORMAT_INFO_IS_TILED (finfo)) {
-    guint hs, tile_height;
-
-    hs = GST_VIDEO_FORMAT_INFO_TILE_HS (finfo);
-    tile_height = 1 << hs;
-
-    padded_height = GST_ROUND_UP_N (padded_height, tile_height);
+    guint tile_height;
+    tile_height = GST_VIDEO_FORMAT_INFO_TILE_HEIGHT (finfo, 0);
+    padded_height = (padded_height + tile_height - 1) / tile_height;
   }
 
   align->padding_bottom =
@@ -3390,30 +3444,6 @@ store_info:
   }
 }
 
-gint
-gst_v4l2_object_extrapolate_stride (const GstVideoFormatInfo * finfo,
-    gint plane, gint stride)
-{
-  gint estride;
-
-  switch (finfo->format) {
-    case GST_VIDEO_FORMAT_NV12:
-    case GST_VIDEO_FORMAT_NV12_64Z32:
-    case GST_VIDEO_FORMAT_NV21:
-    case GST_VIDEO_FORMAT_NV16:
-    case GST_VIDEO_FORMAT_NV61:
-    case GST_VIDEO_FORMAT_NV24:
-      estride = (plane == 0 ? 1 : 2) *
-          GST_VIDEO_FORMAT_INFO_SCALE_WIDTH (finfo, plane, stride);
-      break;
-    default:
-      estride = GST_VIDEO_FORMAT_INFO_SCALE_WIDTH (finfo, plane, stride);
-      break;
-  }
-
-  return estride;
-}
-
 static enum v4l2_field
 get_v4l2_field_for_info (GstVideoInfo * info)
 {
@@ -3469,6 +3499,18 @@ gst_v4l2_video_colorimetry_matches (const GstVideoColorimetry * cinfo,
   if (gst_video_colorimetry_is_equal (&info.colorimetry, &ci_likely_jpeg)
       && gst_video_colorimetry_is_equal (cinfo, &ci_jpeg))
     return TRUE;
+
+  /* bypass check the below transfer types, because those types are cast to
+   * V4L2_XFER_FUNC_NONE type when try format or set format and V4L2_XFER_FUNC_NONE
+   * type is cast to GST_VIDEO_TRANSFER_GAMMA10 type in gst_v4l2_object_get_colorspace */
+  if ((info.colorimetry.transfer == GST_VIDEO_TRANSFER_GAMMA18) ||
+      (info.colorimetry.transfer == GST_VIDEO_TRANSFER_GAMMA20) ||
+      (info.colorimetry.transfer == GST_VIDEO_TRANSFER_GAMMA22) ||
+      (info.colorimetry.transfer == GST_VIDEO_TRANSFER_GAMMA28)) {
+    info.colorimetry.transfer = GST_VIDEO_TRANSFER_GAMMA10;
+    if (gst_video_colorimetry_is_equal (&info.colorimetry, cinfo))
+      return TRUE;
+  }
 
   return FALSE;
 }
@@ -3545,6 +3587,11 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
   pixelformat = fmtdesc->pixelformat;
   width = GST_VIDEO_INFO_WIDTH (&info);
   height = GST_VIDEO_INFO_FIELD_HEIGHT (&info);
+  /* if caps has no width and height info, use default value */
+  if (V4L2_TYPE_IS_OUTPUT (v4l2object->type) && width == 0 && height == 0) {
+    width = GST_V4L2_DEFAULT_WIDTH;
+    height = GST_V4L2_DEFAULT_HEIGHT;
+  }
   fps_n = GST_VIDEO_INFO_FPS_N (&info);
   fps_d = GST_VIDEO_INFO_FPS_D (&info);
 
@@ -3725,8 +3772,8 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
       gint stride = GST_VIDEO_INFO_PLANE_STRIDE (&info, i);
 
       if (GST_VIDEO_FORMAT_INFO_IS_TILED (info.finfo))
-        stride = GST_VIDEO_TILE_X_TILES (stride) <<
-            GST_VIDEO_FORMAT_INFO_TILE_WS (info.finfo);
+        stride = GST_VIDEO_TILE_X_TILES (stride) *
+            GST_VIDEO_FORMAT_INFO_TILE_STRIDE (info.finfo, i);
 
       format.fmt.pix_mp.plane_fmt[i].bytesperline = stride;
     }
@@ -3744,8 +3791,8 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
     format.fmt.pix.field = field;
 
     if (GST_VIDEO_FORMAT_INFO_IS_TILED (info.finfo))
-      stride = GST_VIDEO_TILE_X_TILES (stride) <<
-          GST_VIDEO_FORMAT_INFO_TILE_WS (info.finfo);
+      stride = GST_VIDEO_TILE_X_TILES (stride) *
+          GST_VIDEO_FORMAT_INFO_TILE_STRIDE (info.finfo, i);
 
     /* try to ask our preferred stride */
     format.fmt.pix.bytesperline = stride;
@@ -4012,6 +4059,9 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
 done:
   /* add boolean return, so we can fail on drivers bugs */
   gst_v4l2_object_save_format (v4l2object, fmtdesc, &format, &info, &align);
+
+  /* reset composition region to match the S_FMT size */
+  gst_v4l2_object_reset_compose_region (v4l2object);
 
   /* now configure the pool */
   if (!gst_v4l2_object_setup_pool (v4l2object, caps))
@@ -4411,6 +4461,60 @@ gst_v4l2_object_setup_padding (GstV4l2Object * obj)
   return gst_v4l2_object_set_crop (obj, &crop);
 }
 
+static gboolean
+gst_v4l2_object_get_crop_rect (GstV4l2Object * obj, guint target,
+    struct v4l2_rect *result)
+{
+  struct v4l2_rect *res_rect;
+
+  struct v4l2_selection sel = { 0 };
+  struct v4l2_cropcap cropcap = { 0 };
+
+  GST_V4L2_CHECK_OPEN (obj);
+
+  if (target != V4L2_SEL_TGT_CROP_BOUNDS && target != V4L2_SEL_TGT_CROP_DEFAULT)
+    return FALSE;
+
+  sel.type = obj->type;
+  sel.target = target;
+
+  res_rect = &sel.r;
+
+  if (obj->ioctl (obj->video_fd, VIDIOC_G_SELECTION, &sel) < 0) {
+    if (errno != ENOTTY) {
+      GST_WARNING_OBJECT (obj->dbg_obj,
+          "Failed to get default crop rectangle with VIDIOC_G_SELECTION: %s",
+          g_strerror (errno));
+      return FALSE;
+    } else {
+      if (obj->ioctl (obj->video_fd, VIDIOC_CROPCAP, &cropcap) < 0) {
+        GST_WARNING_OBJECT (obj->dbg_obj, "VIDIOC_CROPCAP failed");
+        return FALSE;
+      }
+      if (target == V4L2_SEL_TGT_CROP_BOUNDS)
+        res_rect = &cropcap.bounds;
+      else if (target == V4L2_SEL_TGT_CROP_DEFAULT)
+        res_rect = &cropcap.defrect;
+    }
+  }
+
+  *result = *res_rect;
+  return TRUE;
+}
+
+gboolean
+gst_v4l2_object_get_crop_bounds (GstV4l2Object * obj, struct v4l2_rect * result)
+{
+  return gst_v4l2_object_get_crop_rect (obj, V4L2_SEL_TGT_CROP_BOUNDS, result);
+}
+
+gboolean
+gst_v4l2_object_get_crop_default (GstV4l2Object * obj,
+    struct v4l2_rect * result)
+{
+  return gst_v4l2_object_get_crop_rect (obj, V4L2_SEL_TGT_CROP_DEFAULT, result);
+}
+
 gboolean
 gst_v4l2_object_caps_equal (GstV4l2Object * v4l2object, GstCaps * caps)
 {
@@ -4735,8 +4839,8 @@ gst_v4l2_object_match_buffer_layout (GstV4l2Object * obj, guint n_planes,
         gint plane_stride = stride[i];
 
         if (GST_VIDEO_FORMAT_INFO_IS_TILED (obj->info.finfo))
-          plane_stride = GST_VIDEO_TILE_X_TILES (plane_stride) <<
-              GST_VIDEO_FORMAT_INFO_TILE_WS (obj->info.finfo);
+          plane_stride = GST_VIDEO_TILE_X_TILES (plane_stride) *
+              GST_VIDEO_FORMAT_INFO_TILE_STRIDE (obj->info.finfo, i);
 
         format.fmt.pix_mp.plane_fmt[i].bytesperline = plane_stride;
         format.fmt.pix_mp.height = padded_height;
@@ -4749,8 +4853,8 @@ gst_v4l2_object_match_buffer_layout (GstV4l2Object * obj, guint n_planes,
       GST_DEBUG_OBJECT (obj->dbg_obj, "Wanted stride: %i", plane_stride);
 
       if (GST_VIDEO_FORMAT_INFO_IS_TILED (obj->info.finfo))
-        plane_stride = GST_VIDEO_TILE_X_TILES (plane_stride) <<
-            GST_VIDEO_FORMAT_INFO_TILE_WS (obj->info.finfo);
+        plane_stride = GST_VIDEO_TILE_X_TILES (plane_stride) *
+            GST_VIDEO_FORMAT_INFO_TILE_STRIDE (obj->info.finfo, 0);
 
       format.fmt.pix.bytesperline = plane_stride;
       format.fmt.pix.height = padded_height;

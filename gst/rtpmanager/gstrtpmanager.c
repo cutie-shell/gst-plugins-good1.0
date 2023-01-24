@@ -36,6 +36,10 @@
 #include "gstrtpst2022-1-fecenc.h"
 #include "gstrtphdrext-twcc.h"
 #include "gstrtphdrext-clientaudiolevel.h"
+#include "gstrtphdrext-mid.h"
+#include "gstrtphdrext-ntp.h"
+#include "gstrtphdrext-repairedstreamid.h"
+#include "gstrtphdrext-streamid.h"
 
 static gboolean
 plugin_init (GstPlugin * plugin)
@@ -57,6 +61,10 @@ plugin_init (GstPlugin * plugin)
   ret |= GST_ELEMENT_REGISTER (rtpst2022_1_fecenc, plugin);
   ret |= GST_ELEMENT_REGISTER (rtphdrexttwcc, plugin);
   ret |= GST_ELEMENT_REGISTER (rtphdrextclientaudiolevel, plugin);
+  ret |= GST_ELEMENT_REGISTER (rtphdrextmid, plugin);
+  ret |= GST_ELEMENT_REGISTER (rtphdrextntp64, plugin);
+  ret |= GST_ELEMENT_REGISTER (rtphdrextstreamid, plugin);
+  ret |= GST_ELEMENT_REGISTER (rtphdrextrepairedstreamid, plugin);
 
   return ret;
 }

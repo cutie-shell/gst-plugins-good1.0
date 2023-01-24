@@ -74,10 +74,14 @@ struct _GstRtpBin {
   guint32         max_dropout_time;
   guint32         max_misorder_time;
   gboolean        rfc7273_sync;
+  gboolean        add_reference_timestamp_meta;
   guint           max_streams;
   guint64         max_ts_offset_adjustment;
   gint64          max_ts_offset;
   gboolean        max_ts_offset_is_set;
+  guint64         min_ts_offset;
+  gboolean        min_ts_offset_is_set;
+  guint           ts_offset_smoothing_factor;
 
   /* a list of session */
   GSList         *sessions;
@@ -93,6 +97,8 @@ struct _GstRtpBin {
 
   /* the default FEC encoder factories for sessions */
   GstStructure   *fec_encoders;
+
+  gboolean       update_ntp64_header_ext;
 
   /*< private >*/
   GstRtpBinPrivate *priv;

@@ -1,3 +1,11 @@
+gst-plugins-good1.0 (1.20.5-2) unstable; urgency=medium
+
+  * Fix alternate dependency on libsoup3 (Closes: #1023215)
+  * debian/rules: Set -Dauto_features=enabled
+  * Update standards version to 4.6.2, no changes needed
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 24 Jan 2023 18:58:12 -0500
+
 gst-plugins-good1.0 (1.20.5-1) unstable; urgency=medium
 
   * Team upload

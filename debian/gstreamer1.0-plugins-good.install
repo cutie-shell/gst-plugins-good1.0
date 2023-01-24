@@ -1,5 +1,6 @@
 usr/share/gstreamer-1.0/presets/
 usr/lib/*/gstreamer-1.0/libgstaasink.so
+usr/lib/*/gstreamer-1.0/libgstadaptivedemux2.so
 usr/lib/*/gstreamer-1.0/libgstalaw.so
 usr/lib/*/gstreamer-1.0/libgstalphacolor.so
 usr/lib/*/gstreamer-1.0/libgstalpha.so
@@ -65,5 +66,6 @@ usr/lib/*/gstreamer-1.0/libgstwavenc.so
 usr/lib/*/gstreamer-1.0/libgstwavpack.so
 usr/lib/*/gstreamer-1.0/libgstwavparse.so
 usr/lib/*/gstreamer-1.0/libgstximagesrc.so
+usr/lib/*/gstreamer-1.0/libgstxingmux.so
 usr/lib/*/gstreamer-1.0/libgsty4menc.so
 usr/share/locale

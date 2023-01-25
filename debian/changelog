@@ -1,3 +1,10 @@
+gst-plugins-good1.0 (1.22.0-1) UNRELEASED; urgency=medium
+
+  * Team upload
+  * New upstream release
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 24 Jan 2023 19:00:42 -0500
+
 gst-plugins-good1.0 (1.20.5-2) unstable; urgency=medium
 
   * Fix alternate dependency on libsoup3 (Closes: #1023215)

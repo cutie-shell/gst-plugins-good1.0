@@ -3,6 +3,7 @@ gst-plugins-good1.0 (1.22.0-1) experimental; urgency=medium
   * Team upload
   * New upstream release
   * Build-Depend on libxml2-dev
+  * debian/control: Bump minimum gstreamer, glib, and meson
   * debian/gstreamer1.0-plugins-good.install: Add new plugins
   * Add Qt6 plugin package
 

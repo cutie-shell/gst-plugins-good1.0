@@ -44,6 +44,9 @@ Build-Depends: debhelper,
                qtbase5-dev,
                qtbase5-private-dev,
                qtdeclarative5-dev,
+               qt6-base-dev,
+               qt6-declarative-dev,
+               qt6-tools-dev,
                libqt5x11extras5-dev,
                libqt5waylandclient5-dev [linux-any],
                libraw1394-dev (>= 2.0.0) [linux-any],
@@ -99,6 +102,29 @@ Description: GStreamer plugin for Qt5
  installing new plug-ins.
  .
  This package contains the GStreamer plugin for Qt5.
+
+Package: gstreamer1.0-qt6
+Architecture: any
+Multi-Arch: same
+Section: graphics
+Depends: ${misc:Depends},
+         ${shlibs:Depends}
+XB-GStreamer-Version: ${gstreamer:Version}
+XB-GStreamer-Elements: ${gstreamer:Elements}
+XB-GStreamer-URI-Sources: ${gstreamer:URISources}
+XB-GStreamer-URI-Sinks: ${gstreamer:URISinks}
+XB-GStreamer-Encoders: ${gstreamer:Encoders}
+XB-GStreamer-Decoders: ${gstreamer:Decoders}
+Provides: ${gstreamer:Provides}
+Description: GStreamer plugin for Qt6
+ GStreamer is a streaming media framework, based on graphs of filters
+ which operate on media data.  Applications using this library can do
+ anything from real-time sound processing to playing videos, and just
+ about anything else media-related.  Its plugin-based architecture means
+ that new data types or processing capabilities can be added simply by
+ installing new plug-ins.
+ .
+ This package contains the GStreamer plugin for Qt6.
 
 Package: gstreamer1.0-gtk3
 Architecture: any

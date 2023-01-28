@@ -1,3 +1,10 @@
+gst-plugins-good1.0 (1.22.0-3) unstable; urgency=medium
+
+  * Build-Depend on libgirepository1.0-dev
+  * Release to unstable
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Sat, 28 Jan 2023 14:00:56 -0500
+
 gst-plugins-good1.0 (1.22.0-2) experimental; urgency=medium
 
   * Team upload

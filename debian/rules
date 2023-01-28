@@ -31,7 +31,7 @@ GST_PACKAGE_ORIGIN="https://launchpad.net/ubuntu/+source/gst-plugins-good1.0"
 endif
 
 conf_flags = -Dpackage-name=$(GST_PACKAGE_NAME) -Dpackage-origin=$(GST_PACKAGE_ORIGIN)
-conf_flags += -Dauto_features=enabled -Ddoc=disabled -Drpicamsrc=disabled -Dqt6=disabled
+conf_flags += -Dauto_features=enabled -Ddoc=disabled -Drpicamsrc=disabled
 
 ifeq ($(DEB_HOST_ARCH_OS),hurd)
 conf_flags += -Doss4=disabled

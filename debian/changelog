@@ -1,8 +1,6 @@
-gst-plugins-good1.0 (1.22.0-0.1) experimental; urgency=medium
+gst-plugins-good1.0 (1.22.0-2) experimental; urgency=medium
 
-  * Non-maintainer upload
-  * Temporarily disable qt6 plugin to unblock builds of the 1.22
-    series while waiting for NEW processing
+  * Team upload
   * debian/control: Bump minimum gstreamer, glib, and meson
   * debian/rules: Fix configure flags for non-Linux
 

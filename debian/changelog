@@ -1,3 +1,10 @@
+gst-plugins-good1.0 (1.22.0-4) unstable; urgency=medium
+
+  * Add Breaks/Replaces against gst-plugins-ugly which used to provide
+    libgstxingmux.so (Closes: #1029923)
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Sun, 29 Jan 2023 10:44:36 -0500
+
 gst-plugins-good1.0 (1.22.0-3) unstable; urgency=medium
 
   * Build-Depend on libgirepository1.0-dev

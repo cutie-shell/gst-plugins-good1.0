@@ -162,10 +162,10 @@ Depends: ${misc:Depends},
          libsoup2.4-1 (>= 2.48) | libsoup-3.0-0
 Recommends: gstreamer1.0-x
 Replaces: gstreamer1.0-plugins-bad (<< 1.15.1),
-          gstreamer1.0-plugins-ugly (<< 1.13.1),
+          gstreamer1.0-plugins-ugly (<< 1.22),
           gstreamer1.0-pulseaudio (<< 1.18.0)
 Breaks: gstreamer1.0-plugins-bad (<< 1.15.1),
-        gstreamer1.0-plugins-ugly (<< 1.13.1),
+        gstreamer1.0-plugins-ugly (<< 1.22),
         gstreamer1.0-pulseaudio (<< 1.18.0)
 XB-GStreamer-Version: ${gstreamer:Version}
 XB-GStreamer-Elements: ${gstreamer:Elements}

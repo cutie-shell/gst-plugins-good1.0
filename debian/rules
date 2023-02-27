@@ -10,6 +10,8 @@ version=$(shell dpkg-parsechangelog | grep ^Version: | cut -d ' ' -f 2)
 # upstream version
 gst_version=$(shell echo $(version) | cut -d '-' -f 1)
 
+built_binaries := $(shell dh_listpackages)
+
 CFLAGS += -Wno-error
 CXXFLAGS += -Wno-error
 LDFLAGS += -Wl,-z,defs -Wl,-O1
@@ -39,6 +41,13 @@ endif
 
 ifneq ($(DEB_HOST_ARCH_OS),linux)
 conf_flags += -Ddv1394=disabled -Dv4l2=disabled
+endif
+
+ifeq ($(filter gstreamer1.0-qt5,$(built_binaries)),)
+conf_flags += -Dqt5=disabled
+endif
+ifeq ($(filter gstreamer1.0-qt6,$(built_binaries)),)
+conf_flags += -Dqt6=disabled
 endif
 
 %:

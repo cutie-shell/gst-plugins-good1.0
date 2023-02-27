@@ -42,14 +42,14 @@ Build-Depends: debhelper,
                libmp3lame-dev,
                libmpg123-dev (>= 1.13),
                libtwolame-dev (>= 0.3.10),
-               qtbase5-dev,
-               qtbase5-private-dev,
-               qtdeclarative5-dev,
-               qt6-base-dev,
-               qt6-declarative-dev,
-               qt6-tools-dev,
-               libqt5x11extras5-dev,
-               libqt5waylandclient5-dev [linux-any],
+               qtbase5-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x hurd-i386 powerpc ppc64 riscv64 sparc64],
+               qtbase5-private-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x hurd-i386 powerpc ppc64 riscv64 sparc64],
+               qtdeclarative5-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x hurd-i386 powerpc ppc64 riscv64 sparc64],
+               qt6-base-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x hurd-i386 powerpc ppc64 riscv64 sparc64],
+               qt6-declarative-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x hurd-i386 powerpc ppc64 riscv64 sparc64],
+               qt6-tools-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x hurd-i386 powerpc ppc64 riscv64 sparc64],
+               libqt5x11extras5-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x hurd-i386 powerpc ppc64 riscv64 sparc64],
+               libqt5waylandclient5-dev [amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64 riscv64 sparc64],
                libraw1394-dev (>= 2.0.0) [linux-any],
                libiec61883-dev (>= 1.0.0) [linux-any],
                libavc1394-dev [linux-any],
@@ -80,7 +80,7 @@ Description: GStreamer plugin for PulseAudio (transitional package)
  This is a transitional package.
 
 Package: gstreamer1.0-qt5
-Architecture: any
+Architecture: amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x hurd-i386 powerpc ppc64 riscv64 sparc64
 Multi-Arch: same
 Section: graphics
 Depends: ${misc:Depends},
@@ -105,7 +105,7 @@ Description: GStreamer plugin for Qt5
  This package contains the GStreamer plugin for Qt5.
 
 Package: gstreamer1.0-qt6
-Architecture: any
+Architecture: amd64 arm64 armel armhf i386 mips64el mipsel ppc64el s390x hurd-i386 powerpc ppc64 riscv64 sparc64
 Multi-Arch: same
 Section: graphics
 Depends: ${misc:Depends},

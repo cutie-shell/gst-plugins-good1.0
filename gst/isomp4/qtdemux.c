@@ -1897,12 +1897,16 @@ gst_qtdemux_setcaps (GstQTDemux * demux, GstCaps * caps)
   structure = gst_caps_get_structure (caps, 0);
   variant = gst_structure_get_string (structure, "variant");
 
+  if (variant && strcmp (variant, "mse-bytestream") == 0) {
+    demux->variant = VARIANT_MSE_BYTESTREAM;
+  }
+
   if (variant && strcmp (variant, "mss-fragmented") == 0) {
     QtDemuxStream *stream;
     const GValue *value;
 
     demux->fragmented = TRUE;
-    demux->mss_mode = TRUE;
+    demux->variant = VARIANT_MSS_FRAGMENTED;
 
     if (QTDEMUX_N_STREAMS (demux) > 1) {
       /* can't do this, we can only renegotiate for another mss format */
@@ -1973,8 +1977,6 @@ gst_qtdemux_setcaps (GstQTDemux * demux, GstCaps * caps)
       }
     }
     gst_caps_replace (&demux->media_caps, (GstCaps *) mediacaps);
-  } else {
-    demux->mss_mode = FALSE;
   }
 
   return TRUE;
@@ -2062,7 +2064,7 @@ gst_qtdemux_reset (GstQTDemux * qtdemux, gboolean hard)
     qtdemux->n_meta_streams = 0;
     qtdemux->exposed = FALSE;
     qtdemux->fragmented = FALSE;
-    qtdemux->mss_mode = FALSE;
+    qtdemux->variant = VARIANT_NONE;
     gst_caps_replace (&qtdemux->media_caps, NULL);
     qtdemux->timescale = 0;
     qtdemux->got_moov = FALSE;
@@ -2083,7 +2085,7 @@ gst_qtdemux_reset (GstQTDemux * qtdemux, gboolean hard)
       g_free (qtdemux->preferred_protection_system_id);
       qtdemux->preferred_protection_system_id = NULL;
     }
-  } else if (qtdemux->mss_mode) {
+  } else if (qtdemux->variant == VARIANT_MSS_FRAGMENTED) {
     gst_flow_combiner_reset (qtdemux->flowcombiner);
     g_ptr_array_foreach (qtdemux->active_streams,
         (GFunc) gst_qtdemux_stream_clear, NULL);
@@ -3121,7 +3123,7 @@ qtdemux_parse_cstb (GstQTDemux * qtdemux, GstByteReader * data)
 
 /* caller verifies at least 8 bytes in buf */
 static void
-extract_initial_length_and_fourcc (const guint8 * data, guint size,
+extract_initial_length_and_fourcc (const guint8 * data, gsize size,
     guint64 * plength, guint32 * pfourcc)
 {
   guint64 length;
@@ -3629,7 +3631,7 @@ qtdemux_find_stream (GstQTDemux * qtdemux, guint32 id)
     if (stream->track_id == id)
       return stream;
   }
-  if (qtdemux->mss_mode) {
+  if (qtdemux->variant == VARIANT_MSS_FRAGMENTED) {
     /* mss should have only 1 stream anyway */
     return QTDEMUX_NTH_STREAM (qtdemux, 0);
   }
@@ -3696,7 +3698,7 @@ qtdemux_parse_tfhd (GstQTDemux * qtdemux, GstByteReader * tfhd,
     (*stream)->stsd_sample_description_id = sample_description_index - 1;
   }
 
-  if (qtdemux->mss_mode) {
+  if (qtdemux->variant == VARIANT_MSS_FRAGMENTED) {
     /* mss has no stsd entry */
     (*stream)->stsd_sample_description_id = 0;
   }
@@ -4299,7 +4301,9 @@ qtdemux_parse_moof (GstQTDemux * qtdemux, const guint8 * buffer, guint length,
     pssh_node = qtdemux_tree_get_sibling_by_type (pssh_node, FOURCC_pssh);
   }
 
-  if (!qtdemux->upstream_format_is_time && !qtdemux->first_moof_already_parsed
+  if (!qtdemux->upstream_format_is_time
+      && qtdemux->variant != VARIANT_MSE_BYTESTREAM
+      && !qtdemux->first_moof_already_parsed
       && !qtdemux->received_seek && GST_CLOCK_TIME_IS_VALID (min_dts)
       && min_dts != 0) {
     /* Unless the user has explicitly requested another seek, perform an
@@ -4642,6 +4646,36 @@ gst_qtdemux_loop_state_header (GstQTDemux * qtdemux)
         goto beach;
       }
 
+      if (length == G_MAXUINT64) {
+        /* Read until the end */
+        gint64 duration;
+        if (!gst_pad_peer_query_duration (qtdemux->sinkpad, GST_FORMAT_BYTES,
+                &duration)) {
+          GST_ELEMENT_ERROR (qtdemux, STREAM, DEMUX,
+              (_("Cannot query file size")),
+              ("Duration query on sink pad failed"));
+          ret = GST_FLOW_ERROR;
+          goto beach;
+        }
+        if (G_UNLIKELY (cur_offset > duration)) {
+          GST_ELEMENT_ERROR (qtdemux, STREAM, DEMUX,
+              (_("Cannot query file size")),
+              ("Duration %" G_GINT64_FORMAT " < current offset %"
+                  G_GUINT64_FORMAT, duration, cur_offset));
+          ret = GST_FLOW_ERROR;
+          goto beach;
+        }
+        length = duration - cur_offset;
+        if (length > QTDEMUX_MAX_ATOM_SIZE) {
+          GST_ELEMENT_ERROR (qtdemux, STREAM, DEMUX,
+              (_("Cannot demux file")),
+              ("Moov atom size %" G_GINT64_FORMAT " > maximum %d", length,
+                  QTDEMUX_MAX_ATOM_SIZE));
+          ret = GST_FLOW_ERROR;
+          goto beach;
+        }
+      }
+
       ret = gst_pad_pull_range (qtdemux->sinkpad, cur_offset, length, &moov);
       if (ret != GST_FLOW_OK)
         goto beach;
@@ -4676,8 +4710,8 @@ gst_qtdemux_loop_state_header (GstQTDemux * qtdemux)
         GST_ELEMENT_ERROR (qtdemux, STREAM, DEMUX,
             (_("This file is incomplete and cannot be played.")),
             ("We got less than expected (received %" G_GSIZE_FORMAT
-                ", wanted %u, offset %" G_GUINT64_FORMAT ")", map.size,
-                (guint) length, cur_offset));
+                ", wanted %" G_GUINT64_FORMAT ", offset %" G_GUINT64_FORMAT ")",
+                map.size, length, cur_offset));
         gst_buffer_unmap (moov, &map);
         gst_buffer_unref (moov);
         ret = GST_FLOW_ERROR;
@@ -7553,7 +7587,7 @@ gst_qtdemux_process_adapter (GstQTDemux * demux, gboolean force)
             }
 
             /* in MSS we need to expose the pads after the first moof as we won't get a moov */
-            if (demux->mss_mode && !demux->exposed) {
+            if (demux->variant == VARIANT_MSS_FRAGMENTED && !demux->exposed) {
               QTDEMUX_EXPOSE_LOCK (demux);
               qtdemux_expose_streams (demux);
               QTDEMUX_EXPOSE_UNLOCK (demux);
@@ -12174,46 +12208,73 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
                 {
                   /* parse, if found */
                   GstBuffer *buf;
-                  guint8 pres_delay_field;
 
                   GST_DEBUG_OBJECT (qtdemux,
                       "found av1C codec_data in stsd of size %d", size);
 
                   /* not enough data, just ignore and hope for the best */
-                  if (size < 5)
+                  if (size < 4)
                     break;
 
                   /* Content is:
                    * 4 bytes: atom length
                    * 4 bytes: fourcc
-                   * 1 byte: version
-                   * 3 bytes: flags
-                   * 3 bits: reserved
-                   * 1 bits:  initial_presentation_delay_present
-                   * 4 bits: initial_presentation_delay (if present else reserved
+                   *
+                   * version 1 (marker=1):
+                   *
+                   *  unsigned int (1) marker = 1;
+                   *  unsigned int (7) version = 1;
+                   *  unsigned int (3) seq_profile;
+                   *  unsigned int (5) seq_level_idx_0;
+                   *  unsigned int (1) seq_tier_0;
+                   *  unsigned int (1) high_bitdepth;
+                   *  unsigned int (1) twelve_bit;
+                   *  unsigned int (1) monochrome;
+                   *  unsigned int (1) chroma_subsampling_x;
+                   *  unsigned int (1) chroma_subsampling_y;
+                   *  unsigned int (2) chroma_sample_position;
+                   *  unsigned int (3) reserved = 0;
+                   *
+                   *  unsigned int (1) initial_presentation_delay_present;
+                   *  if (initial_presentation_delay_present) {
+                   *    unsigned int (4) initial_presentation_delay_minus_one;
+                   *  } else {
+                   *    unsigned int (4) reserved = 0;
+                   *  }
+                   *
+                   *  unsigned int (8) configOBUs[];
+                   *
                    * rest: OBUs.
                    */
 
-                  if (av1_data[9] != 0) {
-                    GST_WARNING ("Unknown version %d of av1C box", av1_data[9]);
-                    break;
+                  switch (av1_data[9]) {
+                    case 0x81:{
+                      guint8 pres_delay_field;
+
+                      /* We let profile and the other parts be figured out by
+                       * av1parse and only include the presentation delay here
+                       * if present */
+                      /* We skip initial_presentation_delay* for now */
+                      pres_delay_field = *(av1_data + 11);
+                      if (pres_delay_field & (1 << 5)) {
+                        gst_caps_set_simple (entry->caps,
+                            "presentation-delay", G_TYPE_INT,
+                            (gint) (pres_delay_field & 0x0F) + 1, NULL);
+                      }
+
+                      buf = gst_buffer_new_and_alloc (size);
+                      GST_BUFFER_FLAG_SET (buf, GST_BUFFER_FLAG_HEADER);
+                      gst_buffer_fill (buf, 0, av1_data + 8, size);
+                      gst_caps_set_simple (entry->caps,
+                          "codec_data", GST_TYPE_BUFFER, buf, NULL);
+                      gst_buffer_unref (buf);
+                    }
+                    default:
+                      GST_WARNING ("Unknown version %d of av1C box",
+                          av1_data[9]);
+                      break;
                   }
 
-                  /* We skip initial_presentation_delay* for now */
-                  pres_delay_field = *(av1_data + 12);
-                  if (pres_delay_field & (1 << 5)) {
-                    gst_caps_set_simple (entry->caps,
-                        "presentation-delay", G_TYPE_INT,
-                        (gint) (pres_delay_field & 0x0F) + 1, NULL);
-                  }
-                  if (size > 5) {
-                    buf = gst_buffer_new_and_alloc (size - 5);
-                    GST_BUFFER_FLAG_SET (buf, GST_BUFFER_FLAG_HEADER);
-                    gst_buffer_fill (buf, 0, av1_data + 13, size - 5);
-                    gst_caps_set_simple (entry->caps,
-                        "codec_data", GST_TYPE_BUFFER, buf, NULL);
-                    gst_buffer_unref (buf);
-                  }
                   break;
                 }
                 default:

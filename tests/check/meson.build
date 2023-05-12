@@ -40,7 +40,7 @@ good_tests = [
   [ 'elements/deinterlace', get_option('deinterlace').disabled()],
   [ 'elements/dtmf', get_option('dtmf').disabled()],
   [ 'elements/flvdemux', get_option('flv').disabled()],
-  [ 'elements/flvmux', get_option('flv').disabled()],
+  [ 'elements/flvmux', true],
   [ 'elements/hlsdemux_m3u8' , not hls_dep.found() or not adaptivedemux2_dep.found(), [hls_dep, adaptivedemux2_dep] ],
   [ 'elements/mulawdec', get_option('law').disabled()],
   [ 'elements/mulawenc', get_option('law').disabled()],
